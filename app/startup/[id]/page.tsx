@@ -72,7 +72,7 @@ export default async function StartupPage({
     // rather than only the sends the matcher turned into shares.
     supabase
       .from('mail_log')
-      .select('gmail_id,direction,subject,sent_at,from_email,to_emails,investor_id,investors(id,name)')
+      .select('gmail_id,direction,subject,sent_at,from_email,to_emails,investor_id,reply_gist,reply_kind,investors(id,name)')
       .eq('startup_id', id)
       .order('sent_at', { ascending: false })
       .limit(1500),
@@ -316,7 +316,7 @@ export default async function StartupPage({
               </div>
             ) : (
             <table>
-              <thead><tr><th>When</th><th>Investor</th><th>Reply</th></tr></thead>
+              <thead><tr><th>When</th><th>Investor</th><th></th><th>What they said</th></tr></thead>
               <tbody>
                 {investorReplies.slice(0, 300).map((m) => {
                   const inv = m.investors as Row | null;
@@ -327,7 +327,14 @@ export default async function StartupPage({
                         {inv ? <Link href={`/investor/${inv.id}`}>{inv.name}</Link>
                           : <span className="dim">{String(m.from_email ?? '—')}</span>}
                       </td>
-                      <td className="txt">{m.subject ?? '—'}</td>
+                      <td>
+                        {m.reply_kind && m.reply_kind !== 'other'
+                          ? <span className={`pill ${m.reply_kind === 'pass' ? 'c' : 'g'}`}>{label(m.reply_kind)}</span>
+                          : null}
+                      </td>
+                      <td className="txt">
+                        {m.reply_gist ?? <span className="dim">{m.subject ?? '—'}</span>}
+                      </td>
                     </tr>
                   );
                 })}
@@ -560,7 +567,9 @@ export default async function StartupPage({
                         {inv ? <Link href={`/investor/${inv.id}`}>{inv.name}</Link>
                           : <span className="dim">{String(other ?? '—').split(',')[0]}</span>}
                       </td>
-                      <td className="txt">{m.subject ?? '—'}</td>
+                      <td className="txt">
+                        {m.direction === 'in' && m.reply_gist ? m.reply_gist : (m.subject ?? '—')}
+                      </td>
                     </tr>
                   );
                 })}

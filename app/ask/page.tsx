@@ -90,7 +90,7 @@ export default async function Ask({ searchParams }: { searchParams?: { q?: strin
           ) : key === 'owed' ? (
             <table>
               <thead>
-                <tr><th>Waiting</th><th>Investor</th><th>Startup</th><th>They said</th><th>Last message</th><th>Owner</th></tr>
+                <tr><th>Waiting</th><th>Investor</th><th>Startup</th><th>They said</th><th>Owner</th></tr>
               </thead>
               <tbody>
                 {rows.slice(0, 200).map((r, i) => (
@@ -113,7 +113,9 @@ export default async function Ask({ searchParams }: { searchParams?: { q?: strin
                         ? <span className={`pill ${r.kind === 'pass' ? 'c' : r.kind === 'interested' ? 'g' : ''}`}>{label(r.kind)}</span>
                         : <span className="dim">—</span>}
                     </td>
-                    <td className="txt">{r.subject ?? '—'}</td>
+                    <td className="txt">
+                      {r.gist ?? <span className="dim">{r.subject ?? '—'}</span>}
+                    </td>
                     <td>{r.owner_name ?? '—'}</td>
                   </tr>
                 ))}

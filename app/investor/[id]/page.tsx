@@ -61,7 +61,7 @@ export default async function InvestorPage({
     // introductions, scheduling. That is still relationship history.
     supabase
       .from('mail_log')
-      .select('gmail_id,direction,subject,sent_at,startup_id,startups(id,name)')
+      .select('gmail_id,direction,subject,sent_at,startup_id,reply_gist,reply_kind,startups(id,name)')
       .eq('investor_id', id)
       .order('sent_at', { ascending: false })
       .limit(1000),
@@ -402,7 +402,9 @@ export default async function InvestorPage({
                         {st ? <Link href={`/startup/${st.id}`}>{st.name}</Link>
                           : <span className="dim">No deal</span>}
                       </td>
-                      <td className="txt">{m.subject ?? '—'}</td>
+                      <td className="txt">
+                        {m.direction === 'in' && m.reply_gist ? m.reply_gist : (m.subject ?? '—')}
+                      </td>
                     </tr>
                   );
                 })}
