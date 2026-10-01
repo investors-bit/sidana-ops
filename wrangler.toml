@@ -25,3 +25,9 @@ compatibility_flags = ["nodejs_compat"]
 [vars]
 NEXT_PUBLIC_SUPABASE_URL = "https://elwaquzawoscotlojtnv.supabase.co"
 NEXT_PUBLIC_SUPABASE_ANON_KEY = "sb_publishable_0Uoh7ZQjv_yq9swBZO8eLQ_zi6I7-Q7"
+
+# Preview deployments get their own environment and do NOT inherit [vars].
+# Without this block every preview build 500s exactly as production did.
+[env.preview.vars]
+NEXT_PUBLIC_SUPABASE_URL = "https://elwaquzawoscotlojtnv.supabase.co"
+NEXT_PUBLIC_SUPABASE_ANON_KEY = "sb_publishable_0Uoh7ZQjv_yq9swBZO8eLQ_zi6I7-Q7"
