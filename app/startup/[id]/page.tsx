@@ -30,7 +30,7 @@ export default async function StartupPage({
   const id = Number(params.id);
   const win = readWindow(searchParams?.win);
 
-  const [sRes, shareRes, matchRes, meetRes, replyRes, docRes] = await Promise.all([
+  const [sRes, shareRes, matchRes, meetRes, replyRes, docRes, mailRes] = await Promise.all([
     supabase.from('startups').select('*').eq('id', id).maybeSingle(),
     supabase
       .from('shares')
@@ -61,6 +61,14 @@ export default async function StartupPage({
       .select('doc_type,requested_at,received_at,classification')
       .eq('startup_id', id)
       .limit(20),
+    // Raw mail, both directions, so the page can show what actually happened
+    // rather than only the sends the matcher turned into shares.
+    supabase
+      .from('mail_log')
+      .select('gmail_id,direction,subject,sent_at,from_email,to_emails,investor_id,investors(id,name)')
+      .eq('startup_id', id)
+      .order('sent_at', { ascending: false })
+      .limit(1500),
   ]);
 
   const s: Row | null = sRes.data;
@@ -80,6 +88,7 @@ export default async function StartupPage({
   const meetings: Row[] = meetRes.data ?? [];
   const replies: Row[] = replyRes.data ?? [];
   const docs: Row[] = docRes.data ?? [];
+  const mail: Row[] = mailRes.data ?? [];
 
   // Forward-looking sections (the queue, meetings still to come) always show
   // everything. Everything historical answers to the window. inWindow only
@@ -87,6 +96,8 @@ export default async function StartupPage({
   const wShares = inWindow(shares, 'sent_at', win);
   const wReplies = inWindow(replies, 'received_at', win);
   const wMeetings = inWindow(meetings, 'scheduled_at', win);
+  const wMail = inWindow(mail, 'sent_at', win);
+  const mailIn = wMail.filter((m) => m.direction === 'in');
 
   // Sent history collapsed to one line per investor rather than per email.
   type Sent = { id: number; name: string; type: string; n: number; first: string; last: string; maxFu: number; mailbox: string };
@@ -426,6 +437,44 @@ export default async function StartupPage({
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+
+      {wMail.length > 0 && (
+        <div className="sec">
+          <div className="sechead">
+            <h2>All correspondence</h2>
+            <div className="note">
+              {wMail.length} messages · {mailIn.length} inbound · {win.label.toLowerCase()}
+            </div>
+          </div>
+          <div className="card tscroll">
+            <table>
+              <thead>
+                <tr><th>When</th><th>Way</th><th>Counterparty</th><th>Subject</th></tr>
+              </thead>
+              <tbody>
+                {wMail.slice(0, 500).map((m) => {
+                  const inv = m.investors as Row | null;
+                  const other = m.direction === 'in' ? m.from_email : m.to_emails;
+                  return (
+                    <tr key={m.gmail_id}>
+                      <td className="num">{date(m.sent_at)}</td>
+                      <td>{m.direction === 'in' ? 'In' : 'Out'}</td>
+                      <td>
+                        {inv ? <Link href={`/investor/${inv.id}`}>{inv.name}</Link>
+                          : <span className="dim">{String(other ?? '—').split(',')[0]}</span>}
+                      </td>
+                      <td className="txt">{m.subject ?? '—'}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          {wMail.length > 500 && (
+            <div className="winnote">Showing the most recent 500 of {wMail.length}.</div>
+          )}
         </div>
       )}
 

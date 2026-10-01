@@ -34,7 +34,7 @@ export default async function InvestorPage({
   const id = Number(params.id);
   const win = readWindow(searchParams?.win);
 
-  const [iRes, shareRes, meetRes, replyRes] = await Promise.all([
+  const [iRes, shareRes, meetRes, replyRes, mailRes] = await Promise.all([
     supabase.from('investors').select('*').eq('id', id).maybeSingle(),
     // The real deal history. `matches` is empty; `shares` is what actually went out.
     supabase
@@ -56,6 +56,14 @@ export default async function InvestorPage({
       .eq('investor_id', id)
       .order('received_at', { ascending: false })
       .limit(20),
+    // Includes the threads that carried no deal at all: thesis calls,
+    // introductions, scheduling. That is still relationship history.
+    supabase
+      .from('mail_log')
+      .select('gmail_id,direction,subject,sent_at,startup_id,startups(id,name)')
+      .eq('investor_id', id)
+      .order('sent_at', { ascending: false })
+      .limit(1000),
   ]);
 
   const v: Row | null = iRes.data;
@@ -81,6 +89,8 @@ export default async function InvestorPage({
   const shares = inWindow(allShares, 'sent_at', win);
   const meetings = inWindow(allMeetings, 'scheduled_at', win);
   const replies = inWindow(allReplies, 'received_at', win);
+  const mail = inWindow((mailRes.data ?? []) as Row[], 'sent_at', win);
+  const mailIn = mail.filter((m) => m.direction === 'in');
 
   // One line per startup, not per email: how many touches, when it started,
   // when it last went out, and how deep the follow-up chain ran.
@@ -366,6 +376,41 @@ export default async function InvestorPage({
               );
             })}
           </div>
+        </div>
+      )}
+
+      {mail.length > 0 && (
+        <div className="sec">
+          <div className="sechead">
+            <h2>All correspondence</h2>
+            <div className="note">
+              {mail.length} messages · {mailIn.length} from them · {win.label.toLowerCase()}
+            </div>
+          </div>
+          <div className="card tscroll">
+            <table>
+              <thead><tr><th>When</th><th>Way</th><th>About</th><th>Subject</th></tr></thead>
+              <tbody>
+                {mail.slice(0, 500).map((m) => {
+                  const st = m.startups as Row | null;
+                  return (
+                    <tr key={m.gmail_id}>
+                      <td className="num">{date(m.sent_at)}</td>
+                      <td>{m.direction === 'in' ? 'In' : 'Out'}</td>
+                      <td>
+                        {st ? <Link href={`/startup/${st.id}`}>{st.name}</Link>
+                          : <span className="dim">No deal</span>}
+                      </td>
+                      <td className="txt">{m.subject ?? '—'}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          {mail.length > 500 && (
+            <div className="winnote">Showing the most recent 500 of {mail.length}.</div>
+          )}
         </div>
       )}
 
