@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import { createClient } from '@/lib/supabase/server';
 import { cr, date, label, num, tone } from '@/lib/format';
+import WindowBar, { inWindow, readWindow } from '@/components/Window';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'edge';
@@ -22,17 +23,25 @@ function fact(labelText: string, value: unknown): [string, string] | null {
   return s ? [labelText, s] : null;
 }
 
-export default async function InvestorPage({ params }: { params: { id: string } }) {
+export default async function InvestorPage({
+  params,
+  searchParams,
+}: {
+  params: { id: string };
+  searchParams?: { win?: string };
+}) {
   const supabase = createClient();
   const id = Number(params.id);
+  const win = readWindow(searchParams?.win);
 
   const [iRes, shareRes, meetRes, replyRes] = await Promise.all([
     supabase.from('investors').select('*').eq('id', id).maybeSingle(),
     // The real deal history. `matches` is empty; `shares` is what actually went out.
     supabase
       .from('shares')
-      .select('sent_at,is_followup,followup_no,mailbox,type,opened_at,replied_at,startups(id,name,bucket,sector,stage,status,ask_current_cr)')
+      .select('sent_at,is_followup,followup_no,mailbox,type,opened_at,replied_at,subject,source,startups(id,name,bucket,sector,stage,status,ask_current_cr)')
       .eq('investor_id', id)
+      .is('superseded_by', null)
       .order('sent_at', { ascending: false })
       .limit(2000),
     supabase
@@ -65,9 +74,13 @@ export default async function InvestorPage({ params }: { params: { id: string } 
     );
   }
 
-  const shares: Row[] = shareRes.data ?? [];
-  const meetings: Row[] = meetRes.data ?? [];
-  const replies: Row[] = replyRes.data ?? [];
+  const allShares: Row[] = shareRes.data ?? [];
+  const allMeetings: Row[] = meetRes.data ?? [];
+  const allReplies: Row[] = replyRes.data ?? [];
+
+  const shares = inWindow(allShares, 'sent_at', win);
+  const meetings = inWindow(allMeetings, 'scheduled_at', win);
+  const replies = inWindow(allReplies, 'received_at', win);
 
   // One line per startup, not per email: how many touches, when it started,
   // when it last went out, and how deep the follow-up chain ran.
@@ -172,6 +185,8 @@ export default async function InvestorPage({ params }: { params: { id: string } 
         </div>
       </div>
 
+      <WindowBar base={`/investor/${id}`} active={win.key} />
+
       <div className="sec">
         <div className="sechead">
           <h2>Thesis on file</h2>
@@ -206,7 +221,7 @@ export default async function InvestorPage({ params }: { params: { id: string } 
       <div className="sec">
         <div className="sechead">
           <h2>Engagement</h2>
-          <div className="note">all time</div>
+          <div className="note">{win.label.toLowerCase()}</div>
         </div>
         <div className="card funnel">
           {funnel.map((n, i) => (
@@ -227,7 +242,11 @@ export default async function InvestorPage({ params }: { params: { id: string } 
         </div>
         <div className="card tscroll">
           {deals.length === 0 ? (
-            <div className="empty">Nothing has ever been sent to this investor.</div>
+            <div className="empty">
+              {win.since === null
+                ? 'Nothing has ever been sent to this investor.'
+                : `Nothing went out to them in the ${win.label.toLowerCase()}.`}
+            </div>
           ) : (
             <table>
               <thead>
@@ -262,6 +281,40 @@ export default async function InvestorPage({ params }: { params: { id: string } 
           )}
         </div>
       </div>
+
+      {shares.length > 0 && (
+        <div className="sec">
+          <div className="sechead">
+            <h2>Every email, newest first</h2>
+            <div className="note">{shares.length} in {win.label.toLowerCase()}</div>
+          </div>
+          <div className="card tscroll">
+            <table>
+              <thead>
+                <tr><th>Sent</th><th>Startup</th><th>Touch</th><th>Mailbox</th><th>Subject</th><th>Replied</th></tr>
+              </thead>
+              <tbody>
+                {shares.slice(0, 400).map((sh, i) => {
+                  const st = sh.startups as Row | null;
+                  return (
+                    <tr key={i}>
+                      <td className="num">{date(sh.sent_at)}</td>
+                      <td>{st ? <Link href={`/startup/${st.id}`}>{st.name}</Link> : '—'}</td>
+                      <td>{sh.is_followup ? `Follow-up ${sh.followup_no ?? ''}`.trim() : 'First touch'}</td>
+                      <td>{sh.mailbox ?? '—'}</td>
+                      <td className="txt">{sh.subject ?? '—'}</td>
+                      <td className="num">{sh.replied_at ? date(sh.replied_at) : '—'}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          {shares.length > 400 && (
+            <div className="winnote">Showing the most recent 400 of {shares.length}.</div>
+          )}
+        </div>
+      )}
 
       {meetings.length > 0 && (
         <div className="sec">

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import { createClient } from '@/lib/supabase/server';
 import { cr, date, label, num, tone } from '@/lib/format';
+import WindowBar, { inWindow, readWindow } from '@/components/Window';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'edge';
@@ -18,16 +19,24 @@ function fact(l: string, value: unknown): [string, string] | null {
   return s ? [l, s] : null;
 }
 
-export default async function StartupPage({ params }: { params: { id: string } }) {
+export default async function StartupPage({
+  params,
+  searchParams,
+}: {
+  params: { id: string };
+  searchParams?: { win?: string };
+}) {
   const supabase = createClient();
   const id = Number(params.id);
+  const win = readWindow(searchParams?.win);
 
   const [sRes, shareRes, matchRes, meetRes, replyRes, docRes] = await Promise.all([
     supabase.from('startups').select('*').eq('id', id).maybeSingle(),
     supabase
       .from('shares')
-      .select('sent_at,is_followup,followup_no,mailbox,type,replied_at,investors(id,name,type,status)')
+      .select('sent_at,is_followup,followup_no,mailbox,type,replied_at,subject,to_email,source,investors(id,name,type,status)')
       .eq('startup_id', id)
+      .is('superseded_by', null)
       .order('sent_at', { ascending: false })
       .limit(3000),
     supabase
@@ -72,10 +81,17 @@ export default async function StartupPage({ params }: { params: { id: string } }
   const replies: Row[] = replyRes.data ?? [];
   const docs: Row[] = docRes.data ?? [];
 
+  // Forward-looking sections (the queue, meetings still to come) always show
+  // everything. Everything historical answers to the window. inWindow only
+  // drops rows OLDER than the cutoff, so a future meeting always survives.
+  const wShares = inWindow(shares, 'sent_at', win);
+  const wReplies = inWindow(replies, 'received_at', win);
+  const wMeetings = inWindow(meetings, 'scheduled_at', win);
+
   // Sent history collapsed to one line per investor rather than per email.
   type Sent = { id: number; name: string; type: string; n: number; first: string; last: string; maxFu: number; mailbox: string };
   const sentBy = new Map<number, Sent>();
-  for (const sh of shares) {
+  for (const sh of wShares) {
     const inv = sh.investors as Row | null;
     if (!inv) continue;
     const d = sentBy.get(inv.id) ?? {
@@ -96,17 +112,17 @@ export default async function StartupPage({ params }: { params: { id: string } }
   const paused = matches.filter((m) => m.state === 'paused');
 
   const now = new Date().toISOString();
-  const upcoming = meetings
+  const upcoming = wMeetings
     .filter((m) => m.scheduled_at >= now)
     .sort((a, b) => (a.scheduled_at > b.scheduled_at ? 1 : -1));
-  const past = meetings.filter((m) => m.scheduled_at < now);
+  const past = wMeetings.filter((m) => m.scheduled_at < now);
 
   const funnel = [
     sent.length,
-    shares.length,
-    shares.filter((x) => x.replied_at).length || replies.length,
-    meetings.length,
-    meetings.filter((m) => m.is_second).length,
+    wShares.length,
+    wShares.filter((x) => x.replied_at).length || wReplies.length,
+    wMeetings.length,
+    wMeetings.filter((m) => m.is_second).length,
   ];
 
   const deskName =
@@ -153,6 +169,8 @@ export default async function StartupPage({ params }: { params: { id: string } }
         </div>
       </div>
 
+      <WindowBar base={`/startup/${id}`} active={win.key} />
+
       {resetMissing && (
         <div className="sec"><div className="card">
           <div style={{ padding: '11px 13px', fontSize: 13 }}>
@@ -178,7 +196,7 @@ export default async function StartupPage({ params }: { params: { id: string } }
       <div className="sec">
         <div className="sechead">
           <h2>Distribution</h2>
-          <div className="note">all time</div>
+          <div className="note">{win.label.toLowerCase()}</div>
         </div>
         <div className="card funnel">
           {funnel.map((n, i) => (
@@ -260,11 +278,17 @@ export default async function StartupPage({ params }: { params: { id: string } }
       <div className="sec">
         <div className="sechead">
           <h2>Already sent to</h2>
-          <div className="note">{sent.length} investors, {shares.length} emails</div>
+          <div className="note">
+            {sent.length} investors, {wShares.length} emails · {win.label.toLowerCase()}
+          </div>
         </div>
         <div className="card tscroll">
           {sent.length === 0 ? (
-            <div className="empty">Nothing has ever been sent for this startup.</div>
+            <div className="empty">
+              {win.since === null
+                ? 'Nothing has ever been sent for this startup.'
+                : `Nothing went out in the ${win.label.toLowerCase()}.`}
+            </div>
           ) : (
             <table>
               <thead>
@@ -288,14 +312,51 @@ export default async function StartupPage({ params }: { params: { id: string } }
         </div>
       </div>
 
-      {replies.length > 0 && (
+      {wShares.length > 0 && (
+        <div className="sec">
+          <div className="sechead">
+            <h2>Every email, newest first</h2>
+            <div className="note">{wShares.length} in {win.label.toLowerCase()}</div>
+          </div>
+          <div className="card tscroll">
+            <table>
+              <thead>
+                <tr><th>Sent</th><th>Investor</th><th>Touch</th><th>Mailbox</th><th>Subject</th><th>Replied</th></tr>
+              </thead>
+              <tbody>
+                {wShares.slice(0, 400).map((sh, i) => {
+                  const inv = sh.investors as Row | null;
+                  return (
+                    <tr key={i}>
+                      <td className="num">{date(sh.sent_at)}</td>
+                      <td>
+                        {inv ? <Link href={`/investor/${inv.id}`}>{inv.name}</Link>
+                          : sh.to_email ?? '—'}
+                      </td>
+                      <td>{sh.is_followup ? `Follow-up ${sh.followup_no ?? ''}`.trim() : 'First touch'}</td>
+                      <td>{sh.mailbox ?? '—'}</td>
+                      <td className="txt">{sh.subject ?? '—'}</td>
+                      <td className="num">{sh.replied_at ? date(sh.replied_at) : '—'}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          {wShares.length > 400 && (
+            <div className="winnote">Showing the most recent 400 of {wShares.length}.</div>
+          )}
+        </div>
+      )}
+
+      {wReplies.length > 0 && (
         <div className="sec">
           <div className="sechead">
             <h2>Replies and passes</h2>
             <div className="note">reasons are quoted, not paraphrased</div>
           </div>
           <div className="card tl">
-            {replies.map((r, i) => {
+            {wReplies.map((r, i) => {
               const inv = r.investors as Row | null;
               return (
                 <div className="tlrow" key={i}>

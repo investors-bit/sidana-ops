@@ -119,6 +119,16 @@ a { color: var(--accent); }
 }
 .chip:hover { border-color: var(--accent); color: var(--accent); }
 
+/* Time-window filter row. Sits under the page title and drives ?win=. */
+.filters { display: flex; gap: 6px; flex-wrap: wrap; margin: 0 0 16px; }
+.filters .chip { text-decoration: none; }
+.chip.on {
+  background: var(--accent); border-color: var(--accent);
+  color: #fff; font-weight: 600;
+}
+.chip.on:hover { color: #fff; }
+.winnote { font-size: 12px; color: var(--fg-faint); margin: -8px 0 16px; }
+
 /* ---- sections ---- */
 .sec { margin-top: 26px; }
 .sechead { display: flex; align-items: baseline; gap: 9px; margin-bottom: 10px; }
