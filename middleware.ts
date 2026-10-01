@@ -59,5 +59,5 @@ async function run(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|diag).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
 };
