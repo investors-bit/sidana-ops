@@ -8,32 +8,45 @@ export const runtime = 'edge';
 
 type Row = Record<string, any>;
 
-const FUNNEL = ['Deals sent', 'Opened', 'Replied', 'Meetings', '2nd mtgs'];
+const FUNNEL = ['Deals sent', 'Emails sent', 'Replied', 'Meetings', '2nd mtgs'];
+
+/** A row only renders if there is something in it. Keeps the thesis block
+ *  honest: a blank field is a gap in the book, not a line saying "—". */
+function fact(labelText: string, value: unknown): [string, string] | null {
+  if (value === null || value === undefined) return null;
+  if (Array.isArray(value)) {
+    return value.length ? [labelText, value.join(', ')] : null;
+  }
+  if (typeof value === 'boolean') return [labelText, value ? 'Yes' : 'No'];
+  const s = String(value).trim();
+  return s ? [labelText, s] : null;
+}
 
 export default async function InvestorPage({ params }: { params: { id: string } }) {
   const supabase = createClient();
   const id = Number(params.id);
 
-  const [iRes, shareRes, meetRes, matchRes, replyRes] = await Promise.all([
+  const [iRes, shareRes, meetRes, replyRes] = await Promise.all([
     supabase.from('investors').select('*').eq('id', id).maybeSingle(),
-    supabase.from('shares').select('opened_at,replied_at').eq('investor_id', id).limit(2000),
+    // The real deal history. `matches` is empty; `shares` is what actually went out.
+    supabase
+      .from('shares')
+      .select('sent_at,is_followup,followup_no,mailbox,type,opened_at,replied_at,startups(id,name,bucket,sector,stage,status,ask_current_cr)')
+      .eq('investor_id', id)
+      .order('sent_at', { ascending: false })
+      .limit(2000),
     supabase
       .from('meetings')
-      .select('scheduled_at,is_second,startups(id,name)')
+      .select('scheduled_at,is_second,held,startups(id,name)')
       .eq('investor_id', id)
       .order('scheduled_at', { ascending: false })
       .limit(20),
-    supabase
-      .from('matches')
-      .select('type,state,score,startups(id,name,bucket)')
-      .eq('investor_id', id)
-      .limit(25),
     supabase
       .from('replies')
       .select('received_at,kind,reason,startups(id,name)')
       .eq('investor_id', id)
       .order('received_at', { ascending: false })
-      .limit(10),
+      .limit(20),
   ]);
 
   const v: Row | null = iRes.data;
@@ -54,45 +67,94 @@ export default async function InvestorPage({ params }: { params: { id: string } 
 
   const shares: Row[] = shareRes.data ?? [];
   const meetings: Row[] = meetRes.data ?? [];
-  const matches: Row[] = matchRes.data ?? [];
   const replies: Row[] = replyRes.data ?? [];
 
+  // One line per startup, not per email: how many touches, when it started,
+  // when it last went out, and how deep the follow-up chain ran.
+  type Deal = {
+    id: number; name: string; bucket: string; sector: string; stage: string;
+    ask: number | null; sends: number; first: string; last: string; maxFu: number;
+  };
+  const byStartup = new Map<number, Deal>();
+  for (const s of shares) {
+    const st = s.startups as Row | null;
+    if (!st) continue;
+    const d = byStartup.get(st.id) ?? {
+      id: st.id, name: st.name, bucket: st.bucket, sector: st.sector,
+      stage: st.stage, ask: st.ask_current_cr, sends: 0,
+      first: s.sent_at, last: s.sent_at, maxFu: 0,
+    };
+    d.sends += 1;
+    if (s.sent_at < d.first) d.first = s.sent_at;
+    if (s.sent_at > d.last) d.last = s.sent_at;
+    if (s.followup_no && s.followup_no > d.maxFu) d.maxFu = s.followup_no;
+    byStartup.set(st.id, d);
+  }
+  const deals = [...byStartup.values()].sort((a, b) => (a.last < b.last ? 1 : -1));
+
   const funnel = [
+    deals.length,
     shares.length,
-    shares.filter((s) => s.opened_at).length,
     shares.filter((s) => s.replied_at).length,
     meetings.length,
     meetings.filter((m) => m.is_second).length,
   ];
 
-  const cheque =
+  const chequeBand =
     v.cheque_min_cr !== null && v.cheque_max_cr !== null
-      ? `${cr(v.cheque_min_cr)} – ${cr(v.cheque_max_cr)}`
-      : (v.cheque_as_written ?? '—');
+      ? `${cr(v.cheque_min_cr)} to ${cr(v.cheque_max_cr)}`
+      : v.cheque_min_cr !== null
+        ? `${cr(v.cheque_min_cr)} and up`
+        : v.cheque_max_cr !== null
+          ? `up to ${cr(v.cheque_max_cr)}`
+          : null;
 
-  const facts: [string, string][] = [
-    ['Cheque', cheque],
-    ['Stage', (v.stage_pref ?? []).join(', ') || 'Not set'],
-    ['Sectors', (v.sectors ?? []).join(', ') || 'Not set'],
-    ['Geography', v.geography ?? '—'],
-    ['Thesis call', v.thesis_call_on ? date(v.thesis_call_on) : 'Not done'],
-    ['Last contacted', date(v.last_contacted_on)],
-  ];
+  const stageBand =
+    v.stage_min || v.stage_max
+      ? [v.stage_min, v.stage_max].filter(Boolean).join(' to ').replace(/_/g, ' ')
+      : null;
+
+  // Everything we hold on what they will and will not look at. Fields only
+  // appear once they exist in the table and carry a value.
+  const thesis = [
+    fact('Cheque', chequeBand ?? v.cheque_as_written),
+    fact('As written', chequeBand && v.cheque_as_written ? v.cheque_as_written : null),
+    fact('Will lead up to', v.lead_max_cr === null ? null : cr(v.lead_max_cr)),
+    fact('Max round size', v.round_max_cr === null ? null : cr(v.round_max_cr)),
+    fact('Stage', (v.stage_pref ?? []).length ? v.stage_pref : stageBand),
+    fact('Sectors', v.sectors),
+    fact('Sector mode', v.sector_mode),
+    fact('Will NOT look at', v.sectors_excluded),
+    fact('Business models', v.models_in),
+    fact('Models excluded', v.models_excluded),
+    fact('Minimum ARR', v.arr_min_cr === null ? null : cr(v.arr_min_cr)),
+    fact('ARR is a hard floor', v.arr_min_strict),
+    fact('Revenue required', v.revenue_required),
+    fact('Women-led only', v.women_only),
+    fact('Geography', v.geography),
+    fact('Thesis confirmed', v.confirmed),
+    fact('Thesis call', v.thesis_call_on ? date(v.thesis_call_on) : null),
+    fact('Last contacted', v.last_contacted_on ? date(v.last_contacted_on) : null),
+    fact('Contacted by', v.contacted_by),
+    fact('Email', v.email),
+  ].filter(Boolean) as [string, string][];
 
   const usable =
-    !v.do_not_contact &&
-    !v.suppressed &&
-    (v.sectors ?? []).length > 0 &&
-    (v.stage_pref ?? []).length > 0 &&
-    v.cheque_min_cr !== null &&
-    v.cheque_max_cr !== null;
+    !v.do_not_contact && !v.suppressed &&
+    (v.sectors ?? []).length > 0 && (v.stage_pref ?? []).length > 0 &&
+    v.cheque_min_cr !== null && v.cheque_max_cr !== null;
+
+  const missing = [
+    (v.sectors ?? []).length ? null : 'sectors',
+    (v.stage_pref ?? []).length ? null : 'stage',
+    v.cheque_min_cr === null ? 'cheque floor' : null,
+    v.cheque_max_cr === null ? 'cheque ceiling' : null,
+  ].filter(Boolean);
 
   return (
     <div className="wrap">
       <Header />
-      <Link href="/" className="back">
-        ← Today
-      </Link>
+      <Link href="/" className="back">← Today</Link>
 
       <div className="dhead">
         <div className="dtitle">
@@ -104,21 +166,21 @@ export default async function InvestorPage({ params }: { params: { id: string } 
           <span className={`pill ${tone(v.status)}`}>{label(v.status)}</span>
           {v.do_not_contact ? <span className="pill c">Do not contact</span> : null}
           {v.suppressed ? <span className="pill c">Suppressed</span> : null}
-          {usable ? (
-            <span className="pill g">Matcher can use</span>
-          ) : (
-            <span className="pill w">Thesis incomplete</span>
-          )}
+          {usable
+            ? <span className="pill g">Matcher can use</span>
+            : <span className="pill w">Thesis incomplete</span>}
         </div>
       </div>
 
       <div className="sec">
         <div className="sechead">
           <h2>Thesis on file</h2>
-          {!usable && <div className="note">missing fields block the matcher</div>}
+          {missing.length > 0 && (
+            <div className="note">missing {missing.join(', ')}, so the matcher skips them</div>
+          )}
         </div>
         <div className="card facts">
-          {facts.map(([l, val]) => (
+          {thesis.map(([l, val]) => (
             <div className="fact" key={l}>
               <div className="fl">{l}</div>
               <div className={`fv${/^[A-Za-z]/.test(val) ? ' txt' : ''}`}>{val}</div>
@@ -126,6 +188,20 @@ export default async function InvestorPage({ params }: { params: { id: string } 
           ))}
         </div>
       </div>
+
+      {v.other_requirements && (
+        <div className="sec">
+          <div className="sechead">
+            <h2>Other requirements</h2>
+            <div className="note">things they said that no column covers</div>
+          </div>
+          <div className="card">
+            <div style={{ padding: '11px 13px', fontSize: 13, lineHeight: 1.6 }}>
+              {v.other_requirements}
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="sec">
         <div className="sechead">
@@ -144,34 +220,43 @@ export default async function InvestorPage({ params }: { params: { id: string } 
 
       <div className="sec">
         <div className="sechead">
-          <h2>Deals with them</h2>
-          <div className="note">{matches.length} shown</div>
+          <h2>Startups shared with them</h2>
+          <div className="note">
+            {deals.length} {deals.length === 1 ? 'company' : 'companies'}, {shares.length} emails
+          </div>
         </div>
         <div className="card tscroll">
-          {matches.length === 0 ? (
-            <div className="empty">No deals matched to this investor.</div>
+          {deals.length === 0 ? (
+            <div className="empty">Nothing has ever been sent to this investor.</div>
           ) : (
             <table>
               <thead>
                 <tr>
                   <th>Startup</th>
+                  <th>Sector</th>
+                  <th>Stage</th>
                   <th>Bucket</th>
-                  <th>Match</th>
-                  <th>State</th>
+                  <th>Ask</th>
+                  <th>Emails</th>
+                  <th>Chased to</th>
+                  <th>First sent</th>
+                  <th>Last sent</th>
                 </tr>
               </thead>
               <tbody>
-                {matches.map((m, i) => {
-                  const st = m.startups as Row | null;
-                  return (
-                    <tr key={i}>
-                      <td>{st ? <Link href={`/startup/${st.id}`}>{st.name}</Link> : '—'}</td>
-                      <td>{st?.bucket ?? '—'}</td>
-                      <td>{label(m.type)}</td>
-                      <td>{label(m.state)}</td>
-                    </tr>
-                  );
-                })}
+                {deals.map((d) => (
+                  <tr key={d.id}>
+                    <td><Link href={`/startup/${d.id}`}>{d.name}</Link></td>
+                    <td>{d.sector ?? '—'}</td>
+                    <td>{d.stage ?? '—'}</td>
+                    <td>{d.bucket ?? '—'}</td>
+                    <td className="num">{d.ask === null ? '—' : cr(d.ask)}</td>
+                    <td className="num">{d.sends}</td>
+                    <td>{d.maxFu ? `follow-up ${d.maxFu}` : 'initial only'}</td>
+                    <td className="num">{date(d.first)}</td>
+                    <td className="num">{date(d.last)}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           )}
@@ -180,18 +265,10 @@ export default async function InvestorPage({ params }: { params: { id: string } 
 
       {meetings.length > 0 && (
         <div className="sec">
-          <div className="sechead">
-            <h2>Meetings given</h2>
-          </div>
+          <div className="sechead"><h2>Meetings given</h2></div>
           <div className="card tscroll">
             <table>
-              <thead>
-                <tr>
-                  <th>When</th>
-                  <th>Startup</th>
-                  <th>Second</th>
-                </tr>
-              </thead>
+              <thead><tr><th>When</th><th>Startup</th><th>Second</th><th>Held</th></tr></thead>
               <tbody>
                 {meetings.map((m, i) => {
                   const st = m.startups as Row | null;
@@ -200,6 +277,7 @@ export default async function InvestorPage({ params }: { params: { id: string } 
                       <td className="num">{date(m.scheduled_at)}</td>
                       <td>{st ? <Link href={`/startup/${st.id}`}>{st.name}</Link> : '—'}</td>
                       <td>{m.is_second ? 'Yes' : '—'}</td>
+                      <td>{m.held === null ? '—' : m.held ? 'Yes' : 'No'}</td>
                     </tr>
                   );
                 })}
@@ -213,6 +291,7 @@ export default async function InvestorPage({ params }: { params: { id: string } 
         <div className="sec">
           <div className="sechead">
             <h2>Replies</h2>
+            <div className="note">a pass with a reason is free thesis data</div>
           </div>
           <div className="card tl">
             {replies.map((r, i) => {
@@ -234,11 +313,9 @@ export default async function InvestorPage({ params }: { params: { id: string } 
 
       {v.notes && (
         <div className="sec">
-          <div className="sechead">
-            <h2>Notes</h2>
-          </div>
+          <div className="sechead"><h2>Thesis summary</h2></div>
           <div className="card">
-            <div style={{ padding: '11px 13px', fontSize: 13 }}>{v.notes}</div>
+            <div style={{ padding: '11px 13px', fontSize: 13, lineHeight: 1.6 }}>{v.notes}</div>
           </div>
         </div>
       )}

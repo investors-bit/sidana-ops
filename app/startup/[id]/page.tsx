@@ -8,38 +8,50 @@ export const runtime = 'edge';
 
 type Row = Record<string, any>;
 
-const FUNNEL = ['Sent', 'Opened', 'Replied', 'Meetings', '2nd mtgs'];
+const FUNNEL = ['Investors sent to', 'Emails sent', 'Replied', 'Meetings', '2nd mtgs'];
+
+function fact(l: string, value: unknown): [string, string] | null {
+  if (value === null || value === undefined) return null;
+  if (Array.isArray(value)) return value.length ? [l, value.join(', ')] : null;
+  if (typeof value === 'boolean') return [l, value ? 'Yes' : 'No'];
+  const s = String(value).trim();
+  return s ? [l, s] : null;
+}
 
 export default async function StartupPage({ params }: { params: { id: string } }) {
   const supabase = createClient();
   const id = Number(params.id);
 
-  const [sRes, fRes, mRes, meetRes, docRes, logRes] = await Promise.all([
+  const [sRes, shareRes, matchRes, meetRes, replyRes, docRes] = await Promise.all([
     supabase.from('startups').select('*').eq('id', id).maybeSingle(),
-    supabase.from('v_startup_funnel').select('*').eq('id', id).maybeSingle(),
+    supabase
+      .from('shares')
+      .select('sent_at,is_followup,followup_no,mailbox,type,replied_at,investors(id,name,type,status)')
+      .eq('startup_id', id)
+      .order('sent_at', { ascending: false })
+      .limit(3000),
     supabase
       .from('matches')
-      .select('type,state,score,priority,investors(id,name,type,status)')
+      .select('type,state,priority,investors(id,name,type,status,cheque_min_cr,cheque_max_cr,geography)')
       .eq('startup_id', id)
-      .order('priority', { ascending: true })
-      .limit(40),
+      .limit(1000),
     supabase
       .from('meetings')
-      .select('scheduled_at,is_second,held,investors(id,name)')
+      .select('scheduled_at,is_second,held,meet_link,from_matcher,investors(id,name)')
       .eq('startup_id', id)
       .order('scheduled_at', { ascending: false })
-      .limit(10),
+      .limit(50),
+    supabase
+      .from('replies')
+      .select('received_at,kind,reason,investors(id,name)')
+      .eq('startup_id', id)
+      .order('received_at', { ascending: false })
+      .limit(50),
     supabase
       .from('docs')
       .select('doc_type,requested_at,received_at,classification')
       .eq('startup_id', id)
-      .limit(10),
-    supabase
-      .from('ai_log')
-      .select('ran_at,workflow,action,decision,reasoning,ok')
-      .eq('entity_name', (await supabase.from('startups').select('name').eq('id', id).maybeSingle()).data?.name ?? '')
-      .order('ran_at', { ascending: false })
-      .limit(10),
+      .limit(20),
   ]);
 
   const s: Row | null = sRes.data;
@@ -47,68 +59,117 @@ export default async function StartupPage({ params }: { params: { id: string } }
     return (
       <div className="wrap">
         <Header />
-        <div className="sec">
-          <div className="card">
-            <div className="empty">
-              No startup with id {params.id}, or your role does not have access to it.
-            </div>
-          </div>
-        </div>
+        <div className="sec"><div className="card">
+          <div className="empty">No startup with id {params.id}, or your role does not have access.</div>
+        </div></div>
       </div>
     );
   }
 
-  const f: Row = fRes.data ?? {};
-  const matches: Row[] = mRes.data ?? [];
+  const shares: Row[] = shareRes.data ?? [];
+  const matches: Row[] = matchRes.data ?? [];
   const meetings: Row[] = meetRes.data ?? [];
+  const replies: Row[] = replyRes.data ?? [];
   const docs: Row[] = docRes.data ?? [];
-  const logs: Row[] = logRes.data ?? [];
 
-  const funnel = [f.sent ?? 0, f.opened ?? 0, f.replied ?? 0, f.meetings ?? 0, f.second_meetings ?? 0];
+  // Sent history collapsed to one line per investor rather than per email.
+  type Sent = { id: number; name: string; type: string; n: number; first: string; last: string; maxFu: number; mailbox: string };
+  const sentBy = new Map<number, Sent>();
+  for (const sh of shares) {
+    const inv = sh.investors as Row | null;
+    if (!inv) continue;
+    const d = sentBy.get(inv.id) ?? {
+      id: inv.id, name: inv.name, type: inv.type,
+      n: 0, first: sh.sent_at, last: sh.sent_at, maxFu: 0, mailbox: sh.mailbox,
+    };
+    d.n += 1;
+    if (sh.sent_at < d.first) d.first = sh.sent_at;
+    if (sh.sent_at > d.last) d.last = sh.sent_at;
+    if (sh.followup_no && sh.followup_no > d.maxFu) d.maxFu = sh.followup_no;
+    sentBy.set(inv.id, d);
+  }
+  const sent = [...sentBy.values()].sort((a, b) => (a.last < b.last ? 1 : -1));
 
-  const facts: [string, string][] = [
-    ['Ask (current)', cr(s.ask_current_cr)],
-    ['Ask (reset)', s.ask_reset_cr === null ? 'Not set' : cr(s.ask_reset_cr)],
-    ['Revenue', s.revenue_note ?? (s.revenue_inr_l ? `₹${s.revenue_inr_l} L` : '—')],
-    ['Burn', s.burn_inr_l ? `₹${s.burn_inr_l} L/mo` : '—'],
-    ['Runway', s.runway_months ? `${s.runway_months} months` : '—'],
-    ['Mandate signed', date(s.mandate_signed_on)],
+  const queued = matches
+    .filter((m) => m.state === 'queued')
+    .sort((a, b) => (a.priority ?? 9) - (b.priority ?? 9));
+  const paused = matches.filter((m) => m.state === 'paused');
+
+  const now = new Date().toISOString();
+  const upcoming = meetings
+    .filter((m) => m.scheduled_at >= now)
+    .sort((a, b) => (a.scheduled_at > b.scheduled_at ? 1 : -1));
+  const past = meetings.filter((m) => m.scheduled_at < now);
+
+  const funnel = [
+    sent.length,
+    shares.length,
+    shares.filter((x) => x.replied_at).length || replies.length,
+    meetings.length,
+    meetings.filter((m) => m.is_second).length,
   ];
+
+  const deskName =
+    s.bucket === 'HOT10' ? 'Hot deal'
+      : s.bucket === 'A' ? 'Angel desk (A)'
+        : s.bucket === 'B' ? 'Bucket B'
+          : s.bucket === 'C' ? 'Middle desk (C)'
+            : s.bucket;
+
+  const round = [
+    fact('Ask (current)', s.ask_current_cr === null ? null : cr(s.ask_current_cr)),
+    fact('Ask (reset)', s.ask_reset_cr === null ? null : cr(s.ask_reset_cr)),
+    fact('Revenue', s.revenue_note),
+    fact('Burn', s.burn_inr_l === null ? null : `₹${s.burn_inr_l} L/mo`),
+    fact('Runway', s.runway_months === null ? null : `${s.runway_months} months`),
+    fact('Sector', s.sector),
+    fact('Sub-sector', s.subsector),
+    fact('Stage', s.stage),
+    fact('Desk', deskName),
+    fact('Owner', s.owner_name),
+    fact('Score', s.score),
+    fact('Rule tier', s.rule_tier),
+    fact('Mandate signed', s.mandate_signed_on ? date(s.mandate_signed_on) : null),
+  ].filter(Boolean) as [string, string][];
+
+  const resetMissing = (s.bucket === 'A' || s.bucket === 'B') && s.ask_reset_cr === null;
 
   return (
     <div className="wrap">
       <Header />
-      <Link href="/" className="back">
-        ← Today
-      </Link>
+      <Link href="/" className="back">← Today</Link>
 
       <div className="dhead">
         <div className="dtitle">
           <h1>{s.name}</h1>
-          {s.score !== null && s.score !== undefined ? (
-            <span className="pill acc">Score {s.score}</span>
-          ) : (
-            <span className="pill c">Not scored</span>
-          )}
+          {s.bucket === 'HOT10' ? <span className="pill acc">Hot deal</span> : null}
         </div>
         <div className="pills">
           {s.sector ? <span className="pill">{s.sector}</span> : null}
           {s.stage ? <span className="pill">{s.stage}</span> : null}
-          <span className="pill">Bucket {s.bucket}</span>
           {s.owner_name ? <span className="pill">Owner: {s.owner_name}</span> : null}
           <span className={`pill ${tone(s.status)}`}>{label(s.status)}</span>
+          {s.status === 'blocked' ? <span className="pill c">Not being sent</span> : null}
         </div>
       </div>
 
+      {resetMissing && (
+        <div className="sec"><div className="card">
+          <div style={{ padding: '11px 13px', fontSize: 13 }}>
+            <b>Reset ask not recorded.</b> Bucket {s.bucket}, still matching on the current ask
+            of {cr(s.ask_current_cr)}. Until the agreed reset is written here, the matcher keeps
+            using the old number.
+          </div>
+        </div></div>
+      )}
+
       <div className="sec">
-        <div className="sechead">
-          <h2>The round</h2>
-        </div>
+        <div className="sechead"><h2>The round</h2></div>
         <div className="card facts">
-          {facts.map(([l, v]) => (
+          {round.map(([l, val]) => (
             <div className="fact" key={l}>
               <div className="fl">{l}</div>
-              <div className={`fv${/^[A-Za-z]/.test(v) ? ' txt' : ''}`}>{v}</div>
+              <div className={`fv${/^[A-Za-z₹]/.test(val) ? ' txt' : ''}`}>{val}</div>
             </div>
           ))}
         </div>
@@ -117,49 +178,71 @@ export default async function StartupPage({ params }: { params: { id: string } }
       <div className="sec">
         <div className="sechead">
           <h2>Distribution</h2>
-          <div className="note">since mandate</div>
+          <div className="note">all time</div>
         </div>
         <div className="card funnel">
-          {funnel.map((v, i) => (
-            <div className={`fn${v === 0 ? ' zero' : ''}`} key={FUNNEL[i]}>
-              <div className="fnv">{num(v)}</div>
+          {funnel.map((n, i) => (
+            <div className={`fn${n === 0 ? ' zero' : ''}`} key={FUNNEL[i]}>
+              <div className="fnv">{num(n)}</div>
               <div className="fnl">{FUNNEL[i]}</div>
             </div>
           ))}
         </div>
       </div>
 
-      <div className="sec">
-        <div className="sechead">
-          <h2>Matched investors</h2>
-          <div className="note">{matches.length} shown</div>
-        </div>
-        <div className="card tscroll">
-          {matches.length === 0 ? (
-            <div className="empty">No matches recorded.</div>
-          ) : (
+      {upcoming.length > 0 && (
+        <div className="sec">
+          <div className="sechead"><h2>Upcoming meetings</h2></div>
+          <div className="card tscroll">
             <table>
-              <thead>
-                <tr>
-                  <th>Investor</th>
-                  <th>Type</th>
-                  <th>Match</th>
-                  <th>State</th>
-                  <th>Score</th>
-                </tr>
-              </thead>
+              <thead><tr><th>When</th><th>Investor</th><th>Second</th><th>Link</th></tr></thead>
               <tbody>
-                {matches.map((m, i) => {
+                {upcoming.map((m, i) => {
                   const inv = m.investors as Row | null;
                   return (
                     <tr key={i}>
-                      <td>
-                        {inv ? <Link href={`/investor/${inv.id}`}>{inv.name}</Link> : '—'}
-                      </td>
+                      <td className="num">{date(m.scheduled_at)}</td>
+                      <td>{inv ? <Link href={`/investor/${inv.id}`}>{inv.name}</Link> : '—'}</td>
+                      <td>{m.is_second ? 'Yes' : '—'}</td>
+                      <td>{m.meet_link ? <a href={m.meet_link}>join</a> : '—'}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      <div className="sec">
+        <div className="sechead">
+          <h2>Queued to go out</h2>
+          <div className="note">{queued.length} investors, not yet sent</div>
+        </div>
+        <div className="card tscroll">
+          {queued.length === 0 ? (
+            <div className="empty">Nothing queued. Either everything has gone, or the matcher finds nobody.</div>
+          ) : (
+            <table>
+              <thead>
+                <tr><th>Investor</th><th>Type</th><th>Match</th><th>Cheque</th><th>Geography</th><th>Status</th></tr>
+              </thead>
+              <tbody>
+                {queued.map((m, i) => {
+                  const inv = m.investors as Row | null;
+                  const lo = inv?.cheque_min_cr, hi = inv?.cheque_max_cr;
+                  return (
+                    <tr key={i}>
+                      <td>{inv ? <Link href={`/investor/${inv.id}`}>{inv.name}</Link> : '—'}</td>
                       <td>{label(inv?.type)}</td>
-                      <td>{label(m.type)}</td>
-                      <td>{label(m.state)}</td>
-                      <td className="num">{m.score ?? '—'}</td>
+                      <td>{m.type === 'strict' ? 'Strict' : label(m.type)}</td>
+                      <td className="num">
+                        {lo === null || lo === undefined ? '—'
+                          : hi === null || hi === undefined ? `${cr(lo)}+`
+                            : `${cr(lo)} to ${cr(hi)}`}
+                      </td>
+                      <td>{inv?.geography ?? '—'}</td>
+                      <td>{label(inv?.status)}</td>
                     </tr>
                   );
                 })}
@@ -171,23 +254,67 @@ export default async function StartupPage({ params }: { params: { id: string } }
 
       <div className="sec">
         <div className="sechead">
-          <h2>Meetings</h2>
+          <h2>Already sent to</h2>
+          <div className="note">{sent.length} investors, {shares.length} emails</div>
         </div>
         <div className="card tscroll">
-          {meetings.length === 0 ? (
-            <div className="empty">No meetings recorded.</div>
+          {sent.length === 0 ? (
+            <div className="empty">Nothing has ever been sent for this startup.</div>
           ) : (
             <table>
               <thead>
-                <tr>
-                  <th>When</th>
-                  <th>Investor</th>
-                  <th>Second</th>
-                  <th>Held</th>
-                </tr>
+                <tr><th>Investor</th><th>Type</th><th>Emails</th><th>Chased to</th><th>First</th><th>Last</th><th>Mailbox</th></tr>
               </thead>
               <tbody>
-                {meetings.map((m, i) => {
+                {sent.map((d) => (
+                  <tr key={d.id}>
+                    <td><Link href={`/investor/${d.id}`}>{d.name}</Link></td>
+                    <td>{label(d.type)}</td>
+                    <td className="num">{d.n}</td>
+                    <td>{d.maxFu ? `follow-up ${d.maxFu}` : 'initial only'}</td>
+                    <td className="num">{date(d.first)}</td>
+                    <td className="num">{date(d.last)}</td>
+                    <td>{d.mailbox ?? '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+
+      {replies.length > 0 && (
+        <div className="sec">
+          <div className="sechead">
+            <h2>Replies and passes</h2>
+            <div className="note">reasons are quoted, not paraphrased</div>
+          </div>
+          <div className="card tl">
+            {replies.map((r, i) => {
+              const inv = r.investors as Row | null;
+              return (
+                <div className="tlrow" key={i}>
+                  <div className="tld">{date(r.received_at)}</div>
+                  <div className="tlm">
+                    <b>{label(r.kind)}</b>
+                    {inv ? ` — ${inv.name}` : ''}
+                    {r.reason ? ` · ${r.reason}` : ''}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {past.length > 0 && (
+        <div className="sec">
+          <div className="sechead"><h2>Meetings held</h2></div>
+          <div className="card tscroll">
+            <table>
+              <thead><tr><th>When</th><th>Investor</th><th>Second</th><th>Held</th><th>From matcher</th></tr></thead>
+              <tbody>
+                {past.map((m, i) => {
                   const inv = m.investors as Row | null;
                   return (
                     <tr key={i}>
@@ -195,30 +322,48 @@ export default async function StartupPage({ params }: { params: { id: string } }
                       <td>{inv ? <Link href={`/investor/${inv.id}`}>{inv.name}</Link> : '—'}</td>
                       <td>{m.is_second ? 'Yes' : '—'}</td>
                       <td>{m.held === null ? '—' : m.held ? 'Yes' : 'No'}</td>
+                      <td>{m.from_matcher === null ? '—' : m.from_matcher ? 'Yes' : 'Warm'}</td>
                     </tr>
                   );
                 })}
               </tbody>
             </table>
-          )}
+          </div>
         </div>
-      </div>
+      )}
 
-      {docs.length > 0 && (
+      {paused.length > 0 && (
         <div className="sec">
           <div className="sechead">
-            <h2>Documents</h2>
+            <h2>Paused or closed</h2>
+            <div className="note">{paused.length} investors the matcher will not send to</div>
           </div>
           <div className="card tscroll">
             <table>
-              <thead>
-                <tr>
-                  <th>Document</th>
-                  <th>Requested</th>
-                  <th>Received</th>
-                  <th>Classification</th>
-                </tr>
-              </thead>
+              <thead><tr><th>Investor</th><th>Match</th><th>State</th></tr></thead>
+              <tbody>
+                {paused.slice(0, 60).map((m, i) => {
+                  const inv = m.investors as Row | null;
+                  return (
+                    <tr key={i}>
+                      <td>{inv ? <Link href={`/investor/${inv.id}`}>{inv.name}</Link> : '—'}</td>
+                      <td>{label(m.type)}</td>
+                      <td>{label(m.state)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {docs.length > 0 && (
+        <div className="sec">
+          <div className="sechead"><h2>Documents</h2></div>
+          <div className="card tscroll">
+            <table>
+              <thead><tr><th>Document</th><th>Requested</th><th>Received</th><th>Classification</th></tr></thead>
               <tbody>
                 {docs.map((d, i) => (
                   <tr key={i}>
@@ -234,27 +379,14 @@ export default async function StartupPage({ params }: { params: { id: string } }
         </div>
       )}
 
-      <div className="sec">
-        <div className="sechead">
-          <h2>AI activity</h2>
+      {s.notes && (
+        <div className="sec">
+          <div className="sechead"><h2>Notes</h2></div>
+          <div className="card">
+            <div style={{ padding: '11px 13px', fontSize: 13, lineHeight: 1.6 }}>{s.notes}</div>
+          </div>
         </div>
-        <div className="card tl">
-          {logs.length === 0 ? (
-            <div className="empty">Nothing logged for this startup yet.</div>
-          ) : (
-            logs.map((l, i) => (
-              <div className="tlrow" key={i}>
-                <div className="tld">{date(l.ran_at)}</div>
-                <div className="tlm">
-                  <b>{l.workflow}</b> {label(l.action)}
-                  {l.decision ? ` · ${l.decision}` : ''}
-                  {l.reasoning ? ` — ${l.reasoning}` : ''}
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
+      )}
     </div>
   );
 }
