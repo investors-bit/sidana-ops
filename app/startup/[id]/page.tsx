@@ -296,6 +296,53 @@ export default async function StartupPage({
         </div>
       )}
 
+      {/* Always rendered. A section that disappears when empty reads as a
+          missing feature rather than an empty one. */}
+      <div className="sec">
+        <div className="sechead">
+            <h2>Live conversations</h2>
+            <div className="note">
+              {investorReplies.length} replies from{' '}
+              {new Set(investorReplies.map((m) => m.investor_id)).size} investors
+              {' · '}{win.label.toLowerCase()}
+            </div>
+          </div>
+          <div className="card tscroll">
+            {investorReplies.length === 0 ? (
+              <div className="empty">
+                {win.since === null
+                  ? 'No investor has written back about this startup yet.'
+                  : `No investor wrote back in the ${win.label.toLowerCase()}.`}
+              </div>
+            ) : (
+            <table>
+              <thead><tr><th>When</th><th>Investor</th><th>Reply</th></tr></thead>
+              <tbody>
+                {investorReplies.slice(0, 300).map((m) => {
+                  const inv = m.investors as Row | null;
+                  return (
+                    <tr key={m.gmail_id}>
+                      <td className="num">{date(m.sent_at)}</td>
+                      <td>
+                        {inv ? <Link href={`/investor/${inv.id}`}>{inv.name}</Link>
+                          : <span className="dim">{String(m.from_email ?? '—')}</span>}
+                      </td>
+                      <td className="txt">{m.subject ?? '—'}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            )}
+          </div>
+          {investorReplies.length > 0 && (
+            <div className="winnote">
+              Dates are what the mailbox proves. Whether a reply was interest or a pass
+              is not in the message metadata, so it is not guessed here.
+            </div>
+          )}
+      </div>
+
       <div className="sec">
         <div className="sechead">
           <h2>Queued to go out</h2>
@@ -484,42 +531,6 @@ export default async function StartupPage({
                 })}
               </tbody>
             </table>
-          </div>
-        </div>
-      )}
-
-      {investorReplies.length > 0 && (
-        <div className="sec">
-          <div className="sechead">
-            <h2>Investor replies</h2>
-            <div className="note">
-              {investorReplies.length} from {new Set(investorReplies.map((m) => m.investor_id)).size} investors
-              {' · '}{win.label.toLowerCase()}
-            </div>
-          </div>
-          <div className="card tscroll">
-            <table>
-              <thead><tr><th>When</th><th>Investor</th><th>Reply</th></tr></thead>
-              <tbody>
-                {investorReplies.slice(0, 300).map((m) => {
-                  const inv = m.investors as Row | null;
-                  return (
-                    <tr key={m.gmail_id}>
-                      <td className="num">{date(m.sent_at)}</td>
-                      <td>
-                        {inv ? <Link href={`/investor/${inv.id}`}>{inv.name}</Link>
-                          : <span className="dim">{String(m.from_email ?? '—')}</span>}
-                      </td>
-                      <td className="txt">{m.subject ?? '—'}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-          <div className="winnote">
-            Dates are what the mailbox proves. Whether a reply was interest or a pass is
-            not in the message metadata, so it is not guessed here.
           </div>
         </div>
       )}
