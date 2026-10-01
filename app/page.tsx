@@ -171,6 +171,9 @@ export default async function Today() {
                     <td>{s.owner_name ?? '—'}</td>
                     <td className="num">
                       {s.ask_as_written ?? (s.ask_current_cr === null ? '—' : cr(s.ask_current_cr))}
+                      {s.allocation_left_as_written
+                        ? <span className="dim"> · {s.allocation_left_as_written} left</span>
+                        : null}
                     </td>
                     <td className="num">{num(s.sent)}</td>
                     <td className="num">{num(s.replied)}</td>

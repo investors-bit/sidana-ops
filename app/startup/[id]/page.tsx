@@ -148,6 +148,7 @@ export default async function StartupPage({
     // A dollar round is never shown converted to rupees.
     fact('Raising', s.ask_as_written ?? (s.ask_current_cr === null ? null : cr(s.ask_current_cr))),
     fact('Ask (reset)', s.ask_reset_cr === null ? null : cr(s.ask_reset_cr)),
+    fact('Still open', s.allocation_left_as_written),
     fact('Raise last confirmed', s.ask_updated_on ? date(s.ask_updated_on) : null),
     fact('Raise source', s.ask_source),
     fact('Revenue', s.revenue_note),
