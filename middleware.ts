@@ -1,39 +1,28 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { SUPABASE_URL, SUPABASE_KEY } from '@/lib/supabase/config';
 
 /**
  * Refreshes the Supabase session on every request and gates the app.
  * Anything other than /login requires a session. There is no signup route.
  */
 export async function middleware(request: NextRequest) {
-  try {
-    return await run(request);
-  } catch (e: any) {
-    // TEMPORARY: the Worker was returning a blank 500 on every route with no
-    // way to see why. Remove once the cause is fixed.
-    return new Response(
-      JSON.stringify(
-        {
-          where: 'middleware',
-          error: `${e?.name}: ${e?.message}`,
-          stack: String(e?.stack ?? '').split(String.fromCharCode(10)).slice(0, 8),
-          urlSeen: process.env.NEXT_PUBLIC_SUPABASE_URL ?? null,
-          keyLen: (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '').length,
-        },
-        null,
-        2
-      ),
-      { status: 500, headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } }
-    );
+  // A clear failure beats a blank 500 if the config is ever empty again.
+  if (!SUPABASE_URL || !SUPABASE_KEY) {
+    return new Response('Supabase is not configured for this deployment.', {
+      status: 500,
+      headers: { 'content-type': 'text/plain' },
+    });
   }
+  return run(request);
 }
 
 async function run(request: NextRequest) {
   let response = NextResponse.next({ request: { headers: request.headers } });
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY)!,
+    SUPABASE_URL,
+    SUPABASE_KEY,
     {
       cookies: {
         get(name: string) {

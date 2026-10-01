@@ -17,19 +17,30 @@
 const SUPABASE_URL = 'https://elwaquzawoscotlojtnv.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_0Uoh7ZQjv_yq9swBZO8eLQ_zi6I7-Q7';
 
+const pick = (...v) => {
+  for (const x of v) {
+    const t = String(x ?? '').trim();
+    if (t) return t;
+  }
+  return '';
+};
+
 const nextConfig = {
   reactStrictMode: true,
   env: {
-    NEXT_PUBLIC_SUPABASE_URL:
-      process.env.NEXT_PUBLIC_SUPABASE_URL || SUPABASE_URL,
-    NEXT_PUBLIC_SUPABASE_ANON_KEY:
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-      SUPABASE_PUBLISHABLE_KEY,
-    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:
-      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-      SUPABASE_PUBLISHABLE_KEY,
+    // pick() trims. The configured value in Cloudflare had trailing spaces,
+    // and baking those into the bundle is what broke every route.
+    NEXT_PUBLIC_SUPABASE_URL: pick(process.env.NEXT_PUBLIC_SUPABASE_URL, SUPABASE_URL),
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: pick(
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+      SUPABASE_PUBLISHABLE_KEY
+    ),
+    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: pick(
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      SUPABASE_PUBLISHABLE_KEY
+    ),
   },
 };
 
