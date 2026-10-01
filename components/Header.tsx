@@ -16,6 +16,10 @@ export default async function Header() {
         <Link href="/" className="brand">
           Sidana <span>Ops Console</span>
         </Link>
+        <nav className="nav">
+          <Link href="/ask">Ask</Link>
+          <Link href="/changes">What changed</Link>
+        </nav>
         <div className="stamp">{STAMP.format(new Date())}</div>
         <div className="who">
           <span>{data.user?.email}</span>

@@ -129,6 +129,20 @@ a { color: var(--accent); }
 .chip.on:hover { color: #fff; }
 .winnote { font-size: 12px; color: var(--fg-faint); margin: -8px 0 16px; }
 
+/* Header nav to the two standing views. */
+.nav { display: flex; gap: 12px; font-size: 13px; }
+.nav a { color: var(--fg-dim); text-decoration: none; }
+.nav a:hover { color: var(--accent); }
+
+/* Count badge inside a question chip. */
+.qn { font-family: var(--font-num); font-weight: 600; opacity: 0.75; margin-left: 2px; }
+
+/* Day heading in the change log. */
+.daybar {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.07em;
+  color: var(--fg-faint); font-weight: 600; margin: 0 0 6px 2px;
+}
+
 /* ---- sections ---- */
 .sec { margin-top: 26px; }
 .sechead { display: flex; align-items: baseline; gap: 9px; margin-bottom: 10px; }
@@ -247,6 +261,29 @@ td.num { font-family: var(--font-num); font-variant-numeric: tabular-nums; white
   .alert { flex-wrap: wrap; }
   .alert .aw { margin-left: 0; width: 100%; padding-top: 3px; }
   .tlrow { grid-template-columns: 1fr; gap: 2px; }
+
+  /* Phone layout. Tables keep their shape and scroll sideways rather than
+     being crushed: a squeezed column of numbers is harder to read than a
+     swipe. The shadow on the right edge is the only hint people need. */
+  .wrap { padding-inline: 12px; }
+  .tiles { grid-template-columns: repeat(2, 1fr); }
+  .facts { grid-template-columns: 1fr 1fr; }
+  .tscroll {
+    -webkit-overflow-scrolling: touch;
+    background:
+      linear-gradient(to right, var(--surface) 30%, transparent) left / 24px 100% no-repeat,
+      linear-gradient(to left,  var(--surface) 30%, transparent) right / 24px 100% no-repeat;
+    background-attachment: local, local;
+  }
+  table { min-width: 560px; }
+  .sechead { flex-wrap: wrap; gap: 4px 9px; }
+  .sechead .note { margin-left: 0; width: 100%; }
+  .filters { gap: 5px; }
+  .filters .chip { font-size: 12px; padding: 4px 9px; }
+  .brandrow { gap: 6px 10px; }
+  .who { margin-left: 0; width: 100%; justify-content: space-between; }
+  .nav { order: 3; width: 100%; }
+  .pills { gap: 5px; }
 }
 
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }

@@ -30,7 +30,7 @@ export default async function StartupPage({
   const id = Number(params.id);
   const win = readWindow(searchParams?.win);
 
-  const [sRes, shareRes, matchRes, meetRes, replyRes, docRes, mailRes] = await Promise.all([
+  const [sRes, shareRes, matchRes, meetRes, replyRes, docRes, fundRes, mailRes] = await Promise.all([
     supabase.from('startups').select('*').eq('id', id).maybeSingle(),
     supabase
       .from('shares')
@@ -62,6 +62,12 @@ export default async function StartupPage({
       .select('doc_type,requested_at,received_at,classification')
       .eq('startup_id', id)
       .limit(20),
+    supabase
+      .from('funding_rounds')
+      .select('closed_on,as_written,amount,currency,round_name,instrument,lead_investor_name,notes,investors(id,name)')
+      .eq('startup_id', id)
+      .order('closed_on', { ascending: false })
+      .limit(20),
     // Raw mail, both directions, so the page can show what actually happened
     // rather than only the sends the matcher turned into shares.
     supabase
@@ -90,6 +96,7 @@ export default async function StartupPage({
   const replies: Row[] = replyRes.data ?? [];
   const docs: Row[] = docRes.data ?? [];
   const mail: Row[] = mailRes.data ?? [];
+  const funding: Row[] = fundRes.data ?? [];
 
   // Forward-looking sections (the queue, meetings still to come) always show
   // everything. Everything historical answers to the window. inWindow only
@@ -199,6 +206,38 @@ export default async function StartupPage({
             using the old number.
           </div>
         </div></div>
+      )}
+
+      {funding.length > 0 && (
+        <div className="sec">
+          <div className="sechead">
+            <h2>Money in</h2>
+            <div className="note">closed, not asked for</div>
+          </div>
+          <div className="card tscroll">
+            <table>
+              <thead><tr><th>Closed</th><th>Round</th><th>Amount</th><th>Instrument</th><th>Lead</th><th>Note</th></tr></thead>
+              <tbody>
+                {funding.map((f, i) => {
+                  const lead = f.investors as Row | null;
+                  return (
+                    <tr key={i}>
+                      <td className="num">{f.closed_on ? date(f.closed_on) : '—'}</td>
+                      <td>{f.round_name ?? '—'}</td>
+                      <td className="num"><b>{f.as_written ?? '—'}</b></td>
+                      <td>{f.instrument ?? '—'}</td>
+                      <td>
+                        {lead ? <Link href={`/investor/${lead.id}`}>{lead.name}</Link>
+                          : f.lead_investor_name ?? '—'}
+                      </td>
+                      <td className="txt">{f.notes ?? '—'}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
       )}
 
       <div className="sec">
