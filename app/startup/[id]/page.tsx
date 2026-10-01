@@ -48,6 +48,7 @@ export default async function StartupPage({
       .from('meetings')
       .select('scheduled_at,is_second,held,meet_link,from_matcher,investor_name,in_book,investors(id,name)')
       .eq('startup_id', id)
+      .is('superseded_by', null)
       .order('scheduled_at', { ascending: false })
       .limit(50),
     supabase
@@ -98,6 +99,9 @@ export default async function StartupPage({
   const wMeetings = inWindow(meetings, 'scheduled_at', win);
   const wMail = inWindow(mail, 'sent_at', win);
   const mailIn = wMail.filter((m) => m.direction === 'in');
+  // A reply from a fund, as opposed to inbound mail from the founder or anyone
+  // else on the thread. Only messages we can attribute to an investor count.
+  const investorReplies = mailIn.filter((m) => m.investor_id);
 
   // Sent history collapsed to one line per investor rather than per email.
   type Sent = { id: number; name: string; type: string; n: number; first: string; last: string; maxFu: number; mailbox: string };
@@ -441,6 +445,42 @@ export default async function StartupPage({
                 })}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {investorReplies.length > 0 && (
+        <div className="sec">
+          <div className="sechead">
+            <h2>Investor replies</h2>
+            <div className="note">
+              {investorReplies.length} from {new Set(investorReplies.map((m) => m.investor_id)).size} investors
+              {' · '}{win.label.toLowerCase()}
+            </div>
+          </div>
+          <div className="card tscroll">
+            <table>
+              <thead><tr><th>When</th><th>Investor</th><th>Reply</th></tr></thead>
+              <tbody>
+                {investorReplies.slice(0, 300).map((m) => {
+                  const inv = m.investors as Row | null;
+                  return (
+                    <tr key={m.gmail_id}>
+                      <td className="num">{date(m.sent_at)}</td>
+                      <td>
+                        {inv ? <Link href={`/investor/${inv.id}`}>{inv.name}</Link>
+                          : <span className="dim">{String(m.from_email ?? '—')}</span>}
+                      </td>
+                      <td className="txt">{m.subject ?? '—'}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          <div className="winnote">
+            Dates are what the mailbox proves. Whether a reply was interest or a pass is
+            not in the message metadata, so it is not guessed here.
           </div>
         </div>
       )}

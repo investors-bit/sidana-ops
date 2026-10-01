@@ -48,6 +48,7 @@ export default async function InvestorPage({
       .from('meetings')
       .select('scheduled_at,is_second,held,startup_name,startups(id,name)')
       .eq('investor_id', id)
+      .is('superseded_by', null)
       .order('scheduled_at', { ascending: false })
       .limit(20),
     supabase
