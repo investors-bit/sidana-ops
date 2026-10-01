@@ -1,0 +1,15 @@
+name = "sidana-ops"
+compatibility_date = "2026-10-01"
+
+# next-on-pages output. `npm run pages:build` writes here.
+pages_build_output_dir = ".vercel/output/static"
+
+# Required for Next on Cloudflare: the Supabase client and parts of the Next
+# runtime use Node built-ins, which only exist on Workers with this flag.
+compatibility_flags = ["nodejs_compat"]
+
+# Environment variables are NOT set here. They live in the Cloudflare dashboard
+# under Settings > Environment variables, so the repo never carries a key.
+# Needed in production:
+#   NEXT_PUBLIC_SUPABASE_URL
+#   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY   (publishable only, never the secret)

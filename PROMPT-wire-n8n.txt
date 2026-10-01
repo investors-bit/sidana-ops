@@ -1,0 +1,114 @@
+Make the Sidana Ops Console self-updating by writing n8n's output into Supabase.
+
+Right now the dashboard shows a one-time snapshot. Nothing writes to Supabase,
+so it goes stale. This task fixes that.
+
+CONTEXT
+- Project folder: C:\Users\Aditya\Downloads\sidana-ops  (you are in it)
+- Schema: sidana-schema.sql in this folder. ALREADY APPLIED. Read it for the
+  exact table and column names. DO NOT change the schema.
+- Supabase project URL: https://elwaquzawoscotlojtnv.supabase.co
+- LOG-AI-ACTION.json and daily-digest.json in this folder are ready to import.
+- You have n8n access through n8n-mcp. Read the real workflows before editing
+  them. Do not guess node names.
+
+ONE-TIME SETUP IN N8N
+Create a Header Auth credential named "Supabase service":
+  Header name:  apikey
+  Header value: the Supabase service_role / secret key
+Add a second header on each HTTP node, or in the credential if your n8n
+version supports two:
+  Authorization: Bearer <the same service_role key>
+Set an n8n environment variable SUPABASE_URL to the project URL above.
+
+The service_role key belongs ONLY in n8n. It must never go into the
+sidana-ops project folder or into .env.local.
+
+DO THESE IN ORDER. Stop after each and show me what changed.
+
+--- 1. SYNC-BOOK (new workflow) -------------------------------------------
+Keeps startups and investors current.
+
+- Schedule trigger, hourly.
+- Read the same sheets ENGINE-DAILY reads for the startup book and the
+  investor book. Find them from ENGINE-DAILY's own configuration.
+- Upsert into Supabase:
+    startups  on name
+    investors on name
+  POST {{$env.SUPABASE_URL}}/rest/v1/startups
+  with header  Prefer: resolution=merge-duplicates
+  and query    ?on_conflict=name
+- Blank cell -> NULL. Never a default, never an inferred value.
+- A sector or stage string that will not parse into text[] -> leave NULL and
+  log the row. investors_usable correctly excludes incomplete records and that
+  is wanted behaviour.
+- Deduplicate by name BEFORE the request. Two rows with the same name in one
+  request make Postgres fail with "ON CONFLICT DO UPDATE cannot affect row a
+  second time".
+
+--- 2. ENGINE-DAILY -> shares ---------------------------------------------
+This is the important one. It is what finally answers how many deals go out a
+month, which nobody can currently answer.
+
+- After each successful send, insert one row into `shares`:
+    startup_id   look up by startup name
+    investor_id  look up by investor name
+    sent_at      now
+    mailbox      which sending mailbox was used
+    type         strict / sector_only / etc if the workflow knows it
+    is_followup  true for follow-ups, with followup_no 1, 2 or 3
+- Do not batch this into one row per run. One row per send.
+
+--- 3. CAL-CREATE -> meetings ---------------------------------------------
+- After a booking succeeds, insert into `meetings`:
+    startup_id, investor_id, scheduled_at, source, meet_link, fireflies_id
+    is_second    true if this startup and investor already have a meeting row
+    from_matcher true if it came from a matcher send, false if manual or warm
+- from_matcher is what separates real system conversion from warm-route
+  conversion. Set it honestly.
+
+--- 4. REPLY-PARSE -> replies, and update the investor ---------------------
+- Insert into `replies`: share_id if known, investor_id, startup_id,
+  received_at, kind (interested/pass/unclear/out_of_office/bounce), reason.
+- Then UPDATE the investor record with anything the reply revealed:
+  stage_pref, sectors, cheque_min_cr, cheque_max_cr.
+  A pass with a reason is more valuable than a new contact - it is free thesis
+  data. Do not let it sit unread in an inbox.
+
+--- 5. DOC-CLASSIFY -> docs -----------------------------------------------
+- Insert or update `docs`: startup_id, doc_type, requested_at, received_at,
+  classification (strong/weak/needs_review), classify_note.
+
+--- 6. LOG-AI-ACTION on every AI node --------------------------------------
+- Import LOG-AI-ACTION.json from this folder.
+- After EVERY AI step in ENGINE-DAILY, HOT-SCORE, DOC-CLASSIFY and
+  REPLY-PARSE, add an Execute Workflow node calling it, passing:
+    workflow     e.g. ENGINE-DAILY
+    action       sent / scored / classified / extracted / added / skipped / error
+    entity_name  e.g. the startup or investor name
+    decision     the output - a score, STRONG, matched
+    reasoning    why, one or two sentences
+    model        which model ran it
+    cost_usd     the call cost if available
+    ok           false on failure, with error_msg
+- ALSO log skips. When ENGINE-DAILY passes over a startup, log action=skipped
+  with the reason. A startup silently getting nothing every night shows up
+  there and nowhere else. These rows are the most valuable ones in the table.
+
+--- 7. DAILY-DIGEST -------------------------------------------------------
+- Import daily-digest.json. Check the recipient and the schedule. It queries
+  Supabase and formats with a Code node - no AI, no tokens.
+
+RULES THROUGHOUT
+- Read each workflow before editing it. Use its real node names.
+- Add nodes; do not restructure working workflows.
+- A Supabase write failing must not break the workflow it is attached to.
+  Set the HTTP nodes to continue on error, and log the failure.
+- Test each one with a single real record before leaving it active. Show me the
+  row it created in Supabase.
+
+AT THE END
+Show me, from Supabase:
+  select count(*) from shares where sent_at::date = current_date;
+  select count(*) from ai_log where ran_at::date = current_date;
+Then tell me which of the seven are live and which are not.

@@ -1,0 +1,78 @@
+{
+  "name": "DAILY-DIGEST",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [{ "triggerAtHour": 9, "triggerAtMinute": 0 }] }
+      },
+      "id": "cron",
+      "name": "Every day at 9am",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/v_today?select=*",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "today",
+      "name": "Get today's numbers",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 220]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/ai_log?ok=eq.false&order=ran_at.desc&limit=10&select=workflow,entity_name,error_msg,ran_at",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "errors",
+      "name": "Get errors",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 380]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build the digest with code. No AI, no tokens.\nconst today = $('Get today\\'s numbers').all()[0]?.json ?? {};\nconst t = Array.isArray(today) ? (today[0] ?? {}) : today;\nconst errs = $('Get errors').all().map(i => i.json).flat().filter(Boolean);\n\nconst d = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kolkata' });\nconst n = (v) => (v === null || v === undefined ? 0 : v);\n\nconst lines = [\n  `Sidana AI - ${d}`,\n  '',\n  `Deals sent:       ${n(t.deals_sent)}`,\n  `Meetings booked:  ${n(t.meetings_booked)}  (${n(t.second_meetings)} second)`,\n  `Replies:          ${n(t.replies_in)}  (${n(t.replies_interested)} interested, ${n(t.replies_pass)} pass)`,\n  `Docs received:    ${n(t.docs_in)}`,\n  `Investors added:  ${n(t.investors_added)}`,\n  `Cost:             $${Number(n(t.cost_usd_today)).toFixed(2)}`,\n  ''\n];\n\nif (errs.length) {\n  lines.push(`ERRORS (${errs.length}):`);\n  errs.forEach(e => lines.push(`  - ${e.workflow}${e.entity_name ? ' on ' + e.entity_name : ''}: ${e.error_msg || 'no message'}`));\n} else {\n  lines.push('No errors.');\n}\n\nreturn [{ json: { subject: `Sidana AI - ${d}${errs.length ? ' - ' + errs.length + ' errors' : ''}`, body: lines.join('\\n') } }];"
+      },
+      "id": "format",
+      "name": "Format the digest",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "sendTo": "investors@sidanaventures.com",
+        "subject": "={{ $json.subject }}",
+        "emailType": "text",
+        "message": "={{ $json.body }}",
+        "options": {}
+      },
+      "id": "send",
+      "name": "Email it",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [900, 300]
+    }
+  ],
+  "connections": {
+    "Every day at 9am": {
+      "main": [[
+        { "node": "Get today's numbers", "type": "main", "index": 0 },
+        { "node": "Get errors", "type": "main", "index": 0 }
+      ]]
+    },
+    "Get today's numbers": { "main": [[{ "node": "Format the digest", "type": "main", "index": 0 }]] },
+    "Get errors": { "main": [[{ "node": "Format the digest", "type": "main", "index": 0 }]] },
+    "Format the digest": { "main": [[{ "node": "Email it", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "pinData": {}
+}

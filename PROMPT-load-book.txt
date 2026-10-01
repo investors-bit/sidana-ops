@@ -1,0 +1,56 @@
+Load the current Sidana Ventures book into Supabase.
+
+WHERE THINGS ARE
+- Project folder: C:\Users\Aditya\Downloads\sidana-ops  (you are in it)
+- Database schema: sidana-schema.sql in this folder. It is already applied to
+  Supabase. READ IT FIRST to learn the exact table and column names.
+  DO NOT change the schema. DO NOT create tables.
+- Supabase project URL: https://elwaquzawoscotlojtnv.supabase.co
+- IGNORE seed.sql in this folder. It holds an old September snapshot and must
+  not be run.
+
+WHAT I WILL GIVE YOU WHEN YOU ASK
+1. Google Sheet link(s) for the current startups and the current investors.
+2. A Supabase credential, one of:
+   - Connection string: Supabase dashboard -> Connect (top of the page) ->
+     "Direct connection" or "Session pooler" -> copy the URI, or
+   - The service_role / secret key: Project Settings -> API Keys
+   Ask me for whichever you prefer. Do not proceed without it.
+
+SECURITY
+- Put the credential in an environment variable for the run only.
+- NEVER write it into any file in this folder, and never into .env.local.
+  .env.local is shipped to the browser and must keep only the publishable key.
+- Do not print the credential back to me.
+
+WHAT TO DO
+1. Read sidana-schema.sql. Note the columns on `startups` and `investors`.
+2. Ask me for the sheet link(s) and the credential.
+3. Read the live sheets.
+4. Show me your proposed column mapping BEFORE writing anything. Sheet column
+   -> table column, for both tables. Wait for me to approve it.
+5. Then upsert:
+   - `startups` on the unique column `name`
+   - `investors` on the unique column `name`
+   Re-running must not create duplicates.
+6. Only fill these two tables. Leave shares, meetings, matches, replies, docs,
+   ai_log and app_users alone.
+
+RULES
+- Never guess. A blank cell becomes NULL, not a default and not an inferred
+  value.
+- If a sector or stage string will not parse into a text[], leave the column
+  NULL and log that row. A half-filled investor record is worse than an empty
+  one, because the view `investors_usable` correctly excludes incomplete ones.
+- Duplicate names in the source: keep the first, log the rest. Do not let two
+  rows with the same name reach one INSERT statement - Postgres rejects
+  "ON CONFLICT DO UPDATE cannot affect row a second time".
+
+AT THE END
+Print: rows read, inserted, updated, skipped with the reason for each skip.
+Then run and show me:
+  select count(*) from startups;
+  select count(*) from investors;
+
+I expect roughly 68 startups and 303 investors. If the counts differ by more
+than a few, STOP and tell me before writing anything further.

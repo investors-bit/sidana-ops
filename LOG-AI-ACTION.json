@@ -1,0 +1,71 @@
+{
+  "name": "LOG-AI-ACTION",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            { "name": "workflow" },
+            { "name": "action" },
+            { "name": "entity_type" },
+            { "name": "entity_name" },
+            { "name": "entity_id" },
+            { "name": "decision" },
+            { "name": "reasoning" },
+            { "name": "model" },
+            { "name": "input_tokens" },
+            { "name": "output_tokens" },
+            { "name": "cost_usd" },
+            { "name": "ok" },
+            { "name": "error_msg" }
+          ]
+        }
+      },
+      "id": "trigger",
+      "name": "When called by another workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Shape whatever the caller passed into an ai_log row.\n// Missing fields become null rather than guesses.\nconst n = (v) => (v === undefined || v === '' ? null : v);\nconst num = (v) => (v === undefined || v === '' || v === null ? null : Number(v));\n\nreturn items.map((item) => {\n  const d = item.json;\n  return {\n    json: {\n      workflow: n(d.workflow) ?? 'UNKNOWN',\n      action: n(d.action) ?? 'matched',\n      entity_type: n(d.entity_type),\n      entity_id: num(d.entity_id),\n      entity_name: n(d.entity_name),\n      decision: n(d.decision),\n      reasoning: n(d.reasoning),\n      model: n(d.model),\n      input_tokens: num(d.input_tokens),\n      output_tokens: num(d.output_tokens),\n      cost_usd: num(d.cost_usd),\n      ok: d.ok === false ? false : true,\n      error_msg: n(d.error_msg),\n      ran_at: new Date().toISOString()\n    }\n  };\n});"
+      },
+      "id": "shape",
+      "name": "Shape the row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/ai_log",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "return=minimal" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": { "response": { "response": { "neverError": true } } }
+      },
+      "id": "insert",
+      "name": "Insert into ai_log",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, 300]
+    }
+  ],
+  "connections": {
+    "When called by another workflow": { "main": [[{ "node": "Shape the row", "type": "main", "index": 0 }]] },
+    "Shape the row": { "main": [[{ "node": "Insert into ai_log", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "pinData": {}
+}
