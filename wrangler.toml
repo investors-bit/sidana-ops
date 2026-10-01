@@ -8,8 +8,20 @@ pages_build_output_dir = ".vercel/output/static"
 # runtime use Node built-ins, which only exist on Workers with this flag.
 compatibility_flags = ["nodejs_compat"]
 
-# Environment variables are NOT set here. They live in the Cloudflare dashboard
-# under Settings > Environment variables, so the repo never carries a key.
-# Needed in production:
-#   NEXT_PUBLIC_SUPABASE_URL
-#   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY   (publishable only, never the secret)
+# Runtime variables for the Worker.
+#
+# These MUST live here, not in the dashboard. Because this project has a
+# wrangler.toml, Cloudflare treats it as the source of truth for plain
+# variables and the dashboard will only accept encrypted secrets.
+#
+# Setting them as build variables alone is not enough: middleware and the edge
+# routes read process.env at REQUEST time inside the Worker, so without these
+# the Supabase client is constructed with undefined and every route returns a
+# 500, including the static /login page, because middleware runs first.
+#
+# Both values are public by design. They are shipped to every browser that
+# opens the site, which is exactly what the publishable key is for. The
+# service_role / secret key must NEVER appear here; it stays in n8n.
+[vars]
+NEXT_PUBLIC_SUPABASE_URL = "https://elwaquzawoscotlojtnv.supabase.co"
+NEXT_PUBLIC_SUPABASE_ANON_KEY = "sb_publishable_0Uoh7ZQjv_yq9swBZO8eLQ_zi6I7-Q7"
