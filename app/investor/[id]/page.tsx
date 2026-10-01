@@ -37,7 +37,7 @@ export default async function InvestorPage({ params }: { params: { id: string } 
       .limit(2000),
     supabase
       .from('meetings')
-      .select('scheduled_at,is_second,held,startups(id,name)')
+      .select('scheduled_at,is_second,held,startup_name,startups(id,name)')
       .eq('investor_id', id)
       .order('scheduled_at', { ascending: false })
       .limit(20),
@@ -275,7 +275,12 @@ export default async function InvestorPage({ params }: { params: { id: string } 
                   return (
                     <tr key={i}>
                       <td className="num">{date(m.scheduled_at)}</td>
-                      <td>{st ? <Link href={`/startup/${st.id}`}>{st.name}</Link> : '—'}</td>
+                      <td>
+                        {st ? <Link href={`/startup/${st.id}`}>{st.name}</Link>
+                          : m.startup_name
+                            ? <span title="not in the startup book">{m.startup_name}</span>
+                            : 'Thesis call'}
+                      </td>
                       <td>{m.is_second ? 'Yes' : '—'}</td>
                       <td>{m.held === null ? '—' : m.held ? 'Yes' : 'No'}</td>
                     </tr>

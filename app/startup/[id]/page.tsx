@@ -37,7 +37,7 @@ export default async function StartupPage({ params }: { params: { id: string } }
       .limit(1000),
     supabase
       .from('meetings')
-      .select('scheduled_at,is_second,held,meet_link,from_matcher,investors(id,name)')
+      .select('scheduled_at,is_second,held,meet_link,from_matcher,investor_name,in_book,investors(id,name)')
       .eq('startup_id', id)
       .order('scheduled_at', { ascending: false })
       .limit(50),
@@ -202,7 +202,12 @@ export default async function StartupPage({ params }: { params: { id: string } }
                   return (
                     <tr key={i}>
                       <td className="num">{date(m.scheduled_at)}</td>
-                      <td>{inv ? <Link href={`/investor/${inv.id}`}>{inv.name}</Link> : '—'}</td>
+                      <td>
+                        {inv ? <Link href={`/investor/${inv.id}`}>{inv.name}</Link>
+                          : m.investor_name
+                            ? <span title="not in the investor book">{m.investor_name}</span>
+                            : '—'}
+                      </td>
                       <td>{m.is_second ? 'Yes' : '—'}</td>
                       <td>{m.meet_link ? <a href={m.meet_link}>join</a> : '—'}</td>
                     </tr>
@@ -319,7 +324,12 @@ export default async function StartupPage({ params }: { params: { id: string } }
                   return (
                     <tr key={i}>
                       <td className="num">{date(m.scheduled_at)}</td>
-                      <td>{inv ? <Link href={`/investor/${inv.id}`}>{inv.name}</Link> : '—'}</td>
+                      <td>
+                        {inv ? <Link href={`/investor/${inv.id}`}>{inv.name}</Link>
+                          : m.investor_name
+                            ? <span title="not in the investor book">{m.investor_name}</span>
+                            : '—'}
+                      </td>
                       <td>{m.is_second ? 'Yes' : '—'}</td>
                       <td>{m.held === null ? '—' : m.held ? 'Yes' : 'No'}</td>
                       <td>{m.from_matcher === null ? '—' : m.from_matcher ? 'Yes' : 'Warm'}</td>

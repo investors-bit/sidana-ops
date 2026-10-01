@@ -132,10 +132,14 @@ export default async function Today() {
                   <tr key={m.id}>
                     <td className="num">{date(m.scheduled_at)} {time(m.scheduled_at)}</td>
                     <td>
-                      <Link href={`/startup/${m.startup_id}`}>{m.startup}</Link>
+                      {m.startup_id
+                        ? <Link href={`/startup/${m.startup_id}`}>{m.startup}</Link>
+                        : <span title="not in the startup book">{m.startup ?? 'Thesis call'}</span>}
                       {m.bucket === 'HOT10' ? <span className="pill acc" style={{ marginLeft: 6 }}>Hot</span> : null}
                     </td>
-                    <td>{m.investor_id ? <Link href={`/investor/${m.investor_id}`}>{m.investor}</Link> : '—'}</td>
+                    <td>{m.investor_id
+                      ? <Link href={`/investor/${m.investor_id}`}>{m.investor}</Link>
+                      : <span title="not in the investor book">{m.investor ?? '—'}</span>}</td>
                     <td>{m.owner_name ?? '—'}</td>
                     <td>{m.is_second ? 'Yes' : '—'}</td>
                     <td>{m.meet_link ? <a href={m.meet_link}>join</a> : '—'}</td>
