@@ -204,7 +204,7 @@ a { color: var(--accent); }
 .fact .fv { font-family: var(--font-num); font-size: 15px; font-weight: 500; margin-top: 3px; font-variant-numeric: tabular-nums; }
 .fact .fv.txt { font-family: var(--font-ui); font-size: 14px; }
 
-.funnel { display: grid; grid-template-columns: repeat(5, 1fr); overflow: hidden; }
+.funnel { display: grid; grid-template-columns: repeat(6, 1fr); overflow: hidden; }
 .fn { padding: 12px 10px; text-align: center; border-left: 1px solid var(--border); }
 .fn:first-child { border-left: 0; }
 .fn .fnv { font-family: var(--font-num); font-size: 21px; font-weight: 600; font-variant-numeric: tabular-nums; }

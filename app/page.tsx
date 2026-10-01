@@ -53,7 +53,10 @@ export default async function Today() {
   const hot: Row[] = hotRes.data ?? [];
 
   const tiles = [
-    { lab: 'Deals sent', val: t.deals_sent ?? 0, sub: 'today' },
+    // A first touch and a chase are different events. Added together they
+    // overstate reach, so they never share a tile.
+    { lab: 'New deals shared', val: t.deals_new ?? 0, sub: `${num(t.startups_new ?? 0)} startups · ${num(t.investors_new ?? 0)} investors` },
+    { lab: 'Follow-ups', val: t.deals_followup ?? 0, sub: 'chases today' },
     { lab: 'Meetings today', val: t.meetings_today ?? 0, sub: `${upcoming.length} upcoming` },
     {
       lab: 'Replies',
@@ -162,7 +165,7 @@ export default async function Today() {
           ) : (
             <table>
               <thead>
-                <tr><th>Startup</th><th>Owner</th><th>Ask</th><th>Sent</th><th>Replied</th><th>Meetings</th><th>2nd</th><th>Last send</th></tr>
+                <tr><th>Startup</th><th>Owner</th><th>Ask</th><th>New</th><th>Follow-ups</th><th>Investors</th><th>Replied</th><th>Meetings</th><th>2nd</th><th>Last send</th></tr>
               </thead>
               <tbody>
                 {hot.map((s) => (
@@ -175,7 +178,9 @@ export default async function Today() {
                         ? <span className="dim"> · {s.allocation_left_as_written} left</span>
                         : null}
                     </td>
-                    <td className="num">{num(s.sent)}</td>
+                    <td className="num">{num(s.sent_new)}</td>
+                    <td className="num"><span className="dim">{num(s.sent_followup)}</span></td>
+                    <td className="num">{num(s.investors_reached)}</td>
                     <td className="num">{num(s.replied)}</td>
                     <td className="num">{num(s.meetings)}</td>
                     <td className="num">{num(s.second_meetings)}</td>

@@ -9,7 +9,7 @@ export const runtime = 'edge';
 
 type Row = Record<string, any>;
 
-const FUNNEL = ['Deals sent', 'Emails sent', 'Replied', 'Meetings', '2nd mtgs'];
+const FUNNEL = ['Startups shown', 'New deals', 'Follow-ups', 'Replied', 'Meetings', '2nd mtgs'];
 
 /** A row only renders if there is something in it. Keeps the thesis block
  *  honest: a blank field is a gap in the book, not a line saying "—". */
@@ -118,7 +118,8 @@ export default async function InvestorPage({
 
   const funnel = [
     deals.length,
-    shares.length,
+    shares.filter((s) => !s.is_followup).length,
+    shares.filter((s) => s.is_followup).length,
     shares.filter((s) => s.replied_at).length,
     meetings.length,
     meetings.filter((m) => m.is_second).length,

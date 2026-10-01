@@ -124,7 +124,7 @@ export default async function Ask({ searchParams }: { searchParams?: { q?: strin
           ) : (
             <table>
               <thead>
-                <tr><th>Startup</th><th>Owner</th><th>Raising</th><th>Sent</th><th>Replied</th><th>Meetings</th><th>Owed</th><th>Last send</th></tr>
+                <tr><th>Startup</th><th>Owner</th><th>Raising</th><th>New</th><th>Follow-ups</th><th>Replied</th><th>Meetings</th><th>Owed</th><th>Last send</th></tr>
               </thead>
               <tbody>
                 {rows.slice(0, 200).map((s) => (
@@ -135,7 +135,8 @@ export default async function Ask({ searchParams }: { searchParams?: { q?: strin
                     </td>
                     <td>{s.owner_name ?? '—'}</td>
                     <td className="num">{s.ask_as_written ?? '—'}</td>
-                    <td className="num">{num(s.sent)}</td>
+                    <td className="num">{num(s.sent_new)}</td>
+                    <td className="num"><span className="dim">{num(s.sent_followup)}</span></td>
                     <td className="num">{num(s.replied)}</td>
                     <td className="num">{num(s.meetings)}</td>
                     <td className="num">{Number(s.owed_replies) > 0 ? <b>{s.owed_replies}</b> : '—'}</td>

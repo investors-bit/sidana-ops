@@ -9,7 +9,7 @@ export const runtime = 'edge';
 
 type Row = Record<string, any>;
 
-const FUNNEL = ['Investors sent to', 'Emails sent', 'Replied', 'Meetings', '2nd mtgs'];
+const FUNNEL = ['Investors reached', 'New deals', 'Follow-ups', 'Replied', 'Meetings', '2nd mtgs'];
 
 function fact(l: string, value: unknown): [string, string] | null {
   if (value === null || value === undefined) return null;
@@ -111,16 +111,17 @@ export default async function StartupPage({
   const investorReplies = mailIn.filter((m) => m.investor_id);
 
   // Sent history collapsed to one line per investor rather than per email.
-  type Sent = { id: number; name: string; type: string; n: number; first: string; last: string; maxFu: number; mailbox: string };
+  type Sent = { id: number; name: string; type: string; n: number; firsts: number; fups: number; first: string; last: string; maxFu: number; mailbox: string };
   const sentBy = new Map<number, Sent>();
   for (const sh of wShares) {
     const inv = sh.investors as Row | null;
     if (!inv) continue;
     const d = sentBy.get(inv.id) ?? {
       id: inv.id, name: inv.name, type: inv.type,
-      n: 0, first: sh.sent_at, last: sh.sent_at, maxFu: 0, mailbox: sh.mailbox,
+      n: 0, firsts: 0, fups: 0, first: sh.sent_at, last: sh.sent_at, maxFu: 0, mailbox: sh.mailbox,
     };
     d.n += 1;
+    if (sh.is_followup) { d.fups += 1; } else { d.firsts += 1; }
     if (sh.sent_at < d.first) d.first = sh.sent_at;
     if (sh.sent_at > d.last) d.last = sh.sent_at;
     if (sh.followup_no && sh.followup_no > d.maxFu) d.maxFu = sh.followup_no;
@@ -141,7 +142,8 @@ export default async function StartupPage({
 
   const funnel = [
     sent.length,
-    wShares.length,
+    wShares.filter((x) => !x.is_followup).length,
+    wShares.filter((x) => x.is_followup).length,
     wShares.filter((x) => x.replied_at).length || wReplies.length,
     wMeetings.length,
     wMeetings.filter((m) => m.is_second).length,
@@ -392,7 +394,8 @@ export default async function StartupPage({
         <div className="sechead">
           <h2>Already sent to</h2>
           <div className="note">
-            {sent.length} investors, {wShares.length} emails · {win.label.toLowerCase()}
+            {sent.length} investors · {wShares.filter((x) => !x.is_followup).length} new,{' '}
+            {wShares.filter((x) => x.is_followup).length} follow-ups · {win.label.toLowerCase()}
           </div>
         </div>
         <div className="card tscroll">
@@ -405,14 +408,15 @@ export default async function StartupPage({
           ) : (
             <table>
               <thead>
-                <tr><th>Investor</th><th>Type</th><th>Emails</th><th>Chased to</th><th>First</th><th>Last</th><th>Mailbox</th></tr>
+                <tr><th>Investor</th><th>Type</th><th>New</th><th>Follow-ups</th><th>Chased to</th><th>First</th><th>Last</th><th>Mailbox</th></tr>
               </thead>
               <tbody>
                 {sent.map((d) => (
                   <tr key={d.id}>
                     <td><Link href={`/investor/${d.id}`}>{d.name}</Link></td>
                     <td>{label(d.type)}</td>
-                    <td className="num">{d.n}</td>
+                    <td className="num">{d.firsts}</td>
+                    <td className="num"><span className="dim">{d.fups}</span></td>
                     <td>{d.maxFu ? `follow-up ${d.maxFu}` : 'initial only'}</td>
                     <td className="num">{date(d.first)}</td>
                     <td className="num">{date(d.last)}</td>
