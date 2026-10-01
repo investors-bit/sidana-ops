@@ -6,6 +6,29 @@ import { NextResponse, type NextRequest } from 'next/server';
  * Anything other than /login requires a session. There is no signup route.
  */
 export async function middleware(request: NextRequest) {
+  try {
+    return await run(request);
+  } catch (e: any) {
+    // TEMPORARY: the Worker was returning a blank 500 on every route with no
+    // way to see why. Remove once the cause is fixed.
+    return new Response(
+      JSON.stringify(
+        {
+          where: 'middleware',
+          error: `${e?.name}: ${e?.message}`,
+          stack: String(e?.stack ?? '').split(String.fromCharCode(10)).slice(0, 8),
+          urlSeen: process.env.NEXT_PUBLIC_SUPABASE_URL ?? null,
+          keyLen: (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '').length,
+        },
+        null,
+        2
+      ),
+      { status: 500, headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } }
+    );
+  }
+}
+
+async function run(request: NextRequest) {
   let response = NextResponse.next({ request: { headers: request.headers } });
 
   const supabase = createServerClient(
@@ -47,5 +70,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|diag).*)'],
 };
