@@ -19,7 +19,7 @@ export default async function Today() {
       supabase.from('v_silent_startups').select('*').limit(6),
       supabase
         .from('startups')
-        .select('id,name,bucket,ask_current_cr')
+        .select('id,name,bucket,ask_current_cr,ask_as_written')
         .in('bucket', ['A', 'B'])
         .is('ask_reset_cr', null)
         .limit(6),
@@ -89,7 +89,7 @@ export default async function Today() {
     ...noReset.map((s) => ({
       sev: 'w',
       title: `${s.name} — reset ask not recorded`,
-      detail: `Bucket ${s.bucket}, still asking ₹${s.ask_current_cr} Cr. The matcher uses the current ask until the reset is written.`,
+      detail: `Bucket ${s.bucket}, still asking ${s.ask_as_written ?? `₹${s.ask_current_cr} Cr`}. The matcher uses the current ask until the reset is written.`,
       when: 'open',
     })),
   ].slice(0, 10);
@@ -169,7 +169,9 @@ export default async function Today() {
                   <tr key={s.id}>
                     <td><Link href={`/startup/${s.id}`}>{s.name}</Link></td>
                     <td>{s.owner_name ?? '—'}</td>
-                    <td className="num">{s.ask_current_cr === null ? '—' : cr(s.ask_current_cr)}</td>
+                    <td className="num">
+                      {s.ask_as_written ?? (s.ask_current_cr === null ? '—' : cr(s.ask_current_cr))}
+                    </td>
                     <td className="num">{num(s.sent)}</td>
                     <td className="num">{num(s.replied)}</td>
                     <td className="num">{num(s.meetings)}</td>

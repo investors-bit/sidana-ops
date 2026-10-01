@@ -39,7 +39,7 @@ export default async function InvestorPage({
     // The real deal history. `matches` is empty; `shares` is what actually went out.
     supabase
       .from('shares')
-      .select('sent_at,is_followup,followup_no,mailbox,type,opened_at,replied_at,subject,source,startups(id,name,bucket,sector,stage,status,ask_current_cr)')
+      .select('sent_at,is_followup,followup_no,mailbox,type,opened_at,replied_at,subject,source,startups(id,name,bucket,sector,stage,status,ask_current_cr,ask_as_written)')
       .eq('investor_id', id)
       .is('superseded_by', null)
       .order('sent_at', { ascending: false })
@@ -96,7 +96,7 @@ export default async function InvestorPage({
   // when it last went out, and how deep the follow-up chain ran.
   type Deal = {
     id: number; name: string; bucket: string; sector: string; stage: string;
-    ask: number | null; sends: number; first: string; last: string; maxFu: number;
+    ask: number | null; askText: string | null; sends: number; first: string; last: string; maxFu: number;
   };
   const byStartup = new Map<number, Deal>();
   for (const s of shares) {
@@ -104,7 +104,7 @@ export default async function InvestorPage({
     if (!st) continue;
     const d = byStartup.get(st.id) ?? {
       id: st.id, name: st.name, bucket: st.bucket, sector: st.sector,
-      stage: st.stage, ask: st.ask_current_cr, sends: 0,
+      stage: st.stage, ask: st.ask_current_cr, askText: st.ask_as_written ?? null, sends: 0,
       first: s.sent_at, last: s.sent_at, maxFu: 0,
     };
     d.sends += 1;
@@ -279,7 +279,7 @@ export default async function InvestorPage({
                     <td>{d.sector ?? '—'}</td>
                     <td>{d.stage ?? '—'}</td>
                     <td>{d.bucket ?? '—'}</td>
-                    <td className="num">{d.ask === null ? '—' : cr(d.ask)}</td>
+                    <td className="num">{d.askText ?? (d.ask === null ? '—' : cr(d.ask))}</td>
                     <td className="num">{d.sends}</td>
                     <td>{d.maxFu ? `follow-up ${d.maxFu}` : 'initial only'}</td>
                     <td className="num">{date(d.first)}</td>

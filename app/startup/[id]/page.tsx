@@ -144,8 +144,12 @@ export default async function StartupPage({
             : s.bucket;
 
   const round = [
-    fact('Ask (current)', s.ask_current_cr === null ? null : cr(s.ask_current_cr)),
+    // The raise as the founder stated it, in the currency they stated it in.
+    // A dollar round is never shown converted to rupees.
+    fact('Raising', s.ask_as_written ?? (s.ask_current_cr === null ? null : cr(s.ask_current_cr))),
     fact('Ask (reset)', s.ask_reset_cr === null ? null : cr(s.ask_reset_cr)),
+    fact('Raise last confirmed', s.ask_updated_on ? date(s.ask_updated_on) : null),
+    fact('Raise source', s.ask_source),
     fact('Revenue', s.revenue_note),
     fact('Burn', s.burn_inr_l === null ? null : `₹${s.burn_inr_l} L/mo`),
     fact('Runway', s.runway_months === null ? null : `${s.runway_months} months`),
@@ -186,7 +190,7 @@ export default async function StartupPage({
         <div className="sec"><div className="card">
           <div style={{ padding: '11px 13px', fontSize: 13 }}>
             <b>Reset ask not recorded.</b> Bucket {s.bucket}, still matching on the current ask
-            of {cr(s.ask_current_cr)}. Until the agreed reset is written here, the matcher keeps
+            of {s.ask_as_written ?? cr(s.ask_current_cr)}. Until the agreed reset is written here, the matcher keeps
             using the old number.
           </div>
         </div></div>
