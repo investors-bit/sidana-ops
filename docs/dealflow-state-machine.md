@@ -9,6 +9,35 @@
 
 ## What is different in the cloud
 
+## How to reach the database
+
+There is no Supabase tool here and no database credential in this
+environment, by design: the service key bypasses every access rule in the
+schema and stays in n8n. Do not look for one, and never use the website's
+public key from `wrangler.toml` as a substitute — it is not issued for you.
+
+Instead POST to the read-only endpoint, which runs the query for you:
+
+    curl -s -m 60 -X POST https://sidanaventures.app.n8n.cloud/webhook/sidana-db-read-6f2a9e       -H 'Content-Type: application/json'       -d '{"secret":"sv-dbread-2026-10-05-R4nK","query":"<name>", ...options}'
+
+It answers `{"query":..., "count":N, "rows":[...]}`. Seven queries, nothing
+else; it cannot write and cannot be asked for an arbitrary table.
+
+| query | options | returns |
+| --- | --- | --- |
+| `owed_replies` | `limit` (≤200) | threads where the investor spoke last and nobody answered, worst first |
+| `recent_inbound` | `hours` (≤168), `limit` (≤400) | inbound investor mail, newest first, with `reply_gist` and `reply_kind` |
+| `startup_mail` | `startup_id`, `limit` (≤400) | every message both ways on one startup |
+| `meetings` | `days_back` (≤30), `days_fwd` (≤90), `limit` | meetings in a window, with startup and investor |
+| `startups` | — | id, name, sector, stage, bucket, owner, status, raise |
+| `investors` | — | id, name, contact, email, status, sectors, stage, cheque |
+| `heartbeat` | `task` | this task's `last_run_at` |
+
+Writing the heartbeat is NOT yet possible through this endpoint — it is
+read-only. Until a write path exists, treat every run as a gap run: sweep for
+anything whose moment passed and fire it late rather than not at all. Say in
+the report that the heartbeat could not be written.
+
 **1. Reading mail. Do NOT try to open four mailboxes.**
 Only `investors@sidanaventures.com` is connected here. All six Sidana mailboxes
 are already mirrored into Supabase every hour by MAIL-HISTORY, resolved to
