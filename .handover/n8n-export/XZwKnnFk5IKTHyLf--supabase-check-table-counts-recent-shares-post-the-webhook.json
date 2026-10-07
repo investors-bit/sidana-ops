@@ -1,0 +1,676 @@
+{
+  "id": "XZwKnnFk5IKTHyLf",
+  "name": "SUPABASE-CHECK — table counts + recent shares (POST the webhook)",
+  "description": null,
+  "active": true,
+  "activeVersionId": "d25065df-cfdb-4dc5-b9bc-67240452da47",
+  "createdAt": "2026-09-30T17:35:35.410Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "d25065df-cfdb-4dc5-b9bc-67240452da47",
+  "versionCounter": 4,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "e8558389-2efe-4989-8fd4-4df22d2ef7cf",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-cred-check-1f8e",
+        "responseMode": "lastNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "gt",
+      "name": "Probe",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "url": "https://elwaquzawoscotlojtnv.supabase.co/rest/v1/startups?select=id&limit=1",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "fullResponse": true
+            }
+          }
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "count=exact"
+            },
+            {
+              "name": "Range",
+              "value": "0-0"
+            }
+          ]
+        }
+      },
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "ntQxeHO20ZUMASMg",
+          "name": "Supabase service"
+        }
+      }
+    },
+    {
+      "id": "ot",
+      "name": "Verdict",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const n = function (node) {\n  const h = $(node).first().json.headers || {};\n  const cr = h['content-range'] || h['Content-Range'] || '';\n  const m = /\\/(\\d+)$/.exec(String(cr));\n  return m ? parseInt(m[1], 10) : null;\n};\nconst rows = ($('List shares').first().json.body) || [];\nreturn [{ json: {\n  startups: n('Probe'),\n  investors: n('Count investors'),\n  investors_usable: n('Count usable'),\n  shares: n('Count shares'),\n  share_rows: rows.map(function (r) { return {\n    startup: (r.startups || {}).name, investor: (r.investors || {}).name,\n    sent_at: r.sent_at, mailbox: r.mailbox, type: r.type,\n    followup: r.is_followup ? ('FU' + r.followup_no) : 'initial' }; })\n} }];"
+      }
+    },
+    {
+      "id": "p2",
+      "name": "Count investors",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        160
+      ],
+      "parameters": {
+        "url": "https://elwaquzawoscotlojtnv.supabase.co/rest/v1/investors?select=id&limit=1",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "count=exact"
+            },
+            {
+              "name": "Range",
+              "value": "0-0"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "ntQxeHO20ZUMASMg",
+          "name": "Supabase service"
+        }
+      }
+    },
+    {
+      "id": "p3",
+      "name": "Count usable",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        160
+      ],
+      "parameters": {
+        "url": "https://elwaquzawoscotlojtnv.supabase.co/rest/v1/investors_usable?select=id&limit=1",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "count=exact"
+            },
+            {
+              "name": "Range",
+              "value": "0-0"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "ntQxeHO20ZUMASMg",
+          "name": "Supabase service"
+        }
+      }
+    },
+    {
+      "id": "p4",
+      "name": "Count shares",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        160
+      ],
+      "parameters": {
+        "url": "https://elwaquzawoscotlojtnv.supabase.co/rest/v1/shares?select=id&limit=1",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "count=exact"
+            },
+            {
+              "name": "Range",
+              "value": "0-0"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "ntQxeHO20ZUMASMg",
+          "name": "Supabase service"
+        }
+      }
+    },
+    {
+      "id": "p5",
+      "name": "List shares",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        160
+      ],
+      "parameters": {
+        "url": "https://elwaquzawoscotlojtnv.supabase.co/rest/v1/shares?select=sent_at,mailbox,type,is_followup,followup_no,startups(name),investors(name)&order=sent_at.desc&limit=10",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "ntQxeHO20ZUMASMg",
+          "name": "Supabase service"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Probe",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Probe": {
+      "main": [
+        [
+          {
+            "node": "Count investors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Count investors": {
+      "main": [
+        [
+          {
+            "node": "Count usable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Count usable": {
+      "main": [
+        [
+          {
+            "node": "Count shares",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Count shares": {
+      "main": [
+        [
+          {
+            "node": "List shares",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List shares": {
+      "main": [
+        [
+          {
+            "node": "Verdict",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "XZwKnnFk5IKTHyLf",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-30T17:35:35.412Z",
+      "updatedAt": "2026-09-30T17:35:35.412Z"
+    }
+  ],
+  "activeVersion": {
+    "versionId": "d25065df-cfdb-4dc5-b9bc-67240452da47",
+    "workflowId": "XZwKnnFk5IKTHyLf",
+    "nodes": [
+      {
+        "id": "wh",
+        "name": "Webhook",
+        "webhookId": "e8558389-2efe-4989-8fd4-4df22d2ef7cf",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          0
+        ],
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "sidana-cred-check-1f8e",
+          "responseMode": "lastNode",
+          "options": {}
+        }
+      },
+      {
+        "id": "gt",
+        "name": "Probe",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          220,
+          0
+        ],
+        "parameters": {
+          "url": "https://elwaquzawoscotlojtnv.supabase.co/rest/v1/startups?select=id&limit=1",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpCustomAuth",
+          "options": {
+            "response": {
+              "response": {
+                "neverError": true,
+                "fullResponse": true
+              }
+            }
+          },
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Prefer",
+                "value": "count=exact"
+              },
+              {
+                "name": "Range",
+                "value": "0-0"
+              }
+            ]
+          }
+        },
+        "credentials": {
+          "httpCustomAuth": {
+            "id": "ntQxeHO20ZUMASMg",
+            "name": "Supabase service"
+          }
+        }
+      },
+      {
+        "id": "ot",
+        "name": "Verdict",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          440,
+          0
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const n = function (node) {\n  const h = $(node).first().json.headers || {};\n  const cr = h['content-range'] || h['Content-Range'] || '';\n  const m = /\\/(\\d+)$/.exec(String(cr));\n  return m ? parseInt(m[1], 10) : null;\n};\nconst rows = ($('List shares').first().json.body) || [];\nreturn [{ json: {\n  startups: n('Probe'),\n  investors: n('Count investors'),\n  investors_usable: n('Count usable'),\n  shares: n('Count shares'),\n  share_rows: rows.map(function (r) { return {\n    startup: (r.startups || {}).name, investor: (r.investors || {}).name,\n    sent_at: r.sent_at, mailbox: r.mailbox, type: r.type,\n    followup: r.is_followup ? ('FU' + r.followup_no) : 'initial' }; })\n} }];"
+        }
+      },
+      {
+        "id": "p2",
+        "name": "Count investors",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          440,
+          160
+        ],
+        "parameters": {
+          "url": "https://elwaquzawoscotlojtnv.supabase.co/rest/v1/investors?select=id&limit=1",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpCustomAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Prefer",
+                "value": "count=exact"
+              },
+              {
+                "name": "Range",
+                "value": "0-0"
+              }
+            ]
+          },
+          "options": {
+            "response": {
+              "response": {
+                "neverError": true,
+                "fullResponse": true
+              }
+            }
+          }
+        },
+        "credentials": {
+          "httpCustomAuth": {
+            "id": "ntQxeHO20ZUMASMg",
+            "name": "Supabase service"
+          }
+        }
+      },
+      {
+        "id": "p3",
+        "name": "Count usable",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          660,
+          160
+        ],
+        "parameters": {
+          "url": "https://elwaquzawoscotlojtnv.supabase.co/rest/v1/investors_usable?select=id&limit=1",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpCustomAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Prefer",
+                "value": "count=exact"
+              },
+              {
+                "name": "Range",
+                "value": "0-0"
+              }
+            ]
+          },
+          "options": {
+            "response": {
+              "response": {
+                "neverError": true,
+                "fullResponse": true
+              }
+            }
+          }
+        },
+        "credentials": {
+          "httpCustomAuth": {
+            "id": "ntQxeHO20ZUMASMg",
+            "name": "Supabase service"
+          }
+        }
+      },
+      {
+        "id": "p4",
+        "name": "Count shares",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          880,
+          160
+        ],
+        "parameters": {
+          "url": "https://elwaquzawoscotlojtnv.supabase.co/rest/v1/shares?select=id&limit=1",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpCustomAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Prefer",
+                "value": "count=exact"
+              },
+              {
+                "name": "Range",
+                "value": "0-0"
+              }
+            ]
+          },
+          "options": {
+            "response": {
+              "response": {
+                "neverError": true,
+                "fullResponse": true
+              }
+            }
+          }
+        },
+        "credentials": {
+          "httpCustomAuth": {
+            "id": "ntQxeHO20ZUMASMg",
+            "name": "Supabase service"
+          }
+        }
+      },
+      {
+        "id": "p5",
+        "name": "List shares",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1100,
+          160
+        ],
+        "parameters": {
+          "url": "https://elwaquzawoscotlojtnv.supabase.co/rest/v1/shares?select=sent_at,mailbox,type,is_followup,followup_no,startups(name),investors(name)&order=sent_at.desc&limit=10",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpCustomAuth",
+          "options": {
+            "response": {
+              "response": {
+                "neverError": true,
+                "fullResponse": true
+              }
+            }
+          }
+        },
+        "credentials": {
+          "httpCustomAuth": {
+            "id": "ntQxeHO20ZUMASMg",
+            "name": "Supabase service"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Probe",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Probe": {
+        "main": [
+          [
+            {
+              "node": "Count investors",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Count investors": {
+        "main": [
+          [
+            {
+              "node": "Count usable",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Count usable": {
+        "main": [
+          [
+            {
+              "node": "Count shares",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Count shares": {
+        "main": [
+          [
+            {
+              "node": "List shares",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "List shares": {
+        "main": [
+          [
+            {
+              "node": "Verdict",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "Sidana Ventures",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "createdAt": "2026-10-01T02:38:12.250Z",
+    "updatedAt": "2026-10-01T02:38:12.250Z",
+    "workflowPublishHistory": [
+      {
+        "id": 9920,
+        "workflowId": "XZwKnnFk5IKTHyLf",
+        "versionId": "d25065df-cfdb-4dc5-b9bc-67240452da47",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-10-01T02:38:12.354Z"
+      },
+      {
+        "id": 9921,
+        "workflowId": "XZwKnnFk5IKTHyLf",
+        "versionId": "d25065df-cfdb-4dc5-b9bc-67240452da47",
+        "event": "deactivated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-10-01T02:38:48.218Z"
+      },
+      {
+        "id": 9922,
+        "workflowId": "XZwKnnFk5IKTHyLf",
+        "versionId": "d25065df-cfdb-4dc5-b9bc-67240452da47",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-10-01T02:38:48.219Z"
+      }
+    ]
+  }
+}

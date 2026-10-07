@@ -1,0 +1,174 @@
+{
+  "id": "LsvRxa0JnOVeaYvc",
+  "name": "THESIS-ASK-MON — 3 investment-focus emails from Shradhaa (fires once Mon 21 Sep 10:00 IST)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-19T08:11:51.472Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "b53129c3-04b1-4e35-8cd3-14fb29ad4bcb",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t",
+      "name": "Schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 10 21 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "c",
+      "name": "Emails",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const R=[{\"to\":\"ssanyal@nourishventures.com\",\"raw\":\"RnJvbTogU2hyYWRoYWEgU2lkYW5hIDxzaHJhZGhhYUBzaWRhbmF2ZW50dXJlcy5jb20-DQpUbzogc3NhbnlhbEBub3VyaXNodmVudHVyZXMuY29tDQpTdWJqZWN0OiBTaWRhbmEgVmVudHVyZXMgfCBZb3VyIGN1cnJlbnQgaW52ZXN0bWVudCBmb2N1cw0KTUlNRS1WZXJzaW9uOiAxLjANCkNvbnRlbnQtVHlwZTogdGV4dC9odG1sOyBjaGFyc2V0PSJVVEYtOCINCkNvbnRlbnQtVHJhbnNmZXItRW5jb2Rpbmc6IGJhc2U2NA0KDQpQR1JwZGlCemRIbHNaVDBpWm05dWRDMW1ZVzFwYkhrNlFYSnBZV3dzU0dWc2RtVjBhV05oTEhOaGJuTXRjMlZ5YVdZN1ptOXVkQzF6DQphWHBsT2pFMGNIZzdiR2x1WlMxb1pXbG5hSFE2TVM0Mk8yTnZiRzl5T2lNeU1qSXlNakk3SWo0OGNENUlhU0JUYjJoaGJTdzhMM0ErDQpQSEErU0c5d1pTQjViM1VnWVhKbElHUnZhVzVuSUhkbGJHd3VJRlJvWVc1cklIbHZkU0JoWjJGcGJpQm1iM0lnZEdobElIUnBiV1VnDQphVzRnUVhCeWFXd2dZVzVrSUdadmNpQjViM1Z5SUc1dmRHVWdiMjRnZEdobElHOXdjRzl5ZEhWdWFYUnBaWE1nZDJVZ2MyaGhjbVZrDQpMaUJKZENCM1lYTWdhR1ZzY0daMWJDQjBieUJvWldGeUlIUm9ZWFFnZVc5MWNpQm1iMk4xY3lCcGN5QnZiaUJtYjI5a0lHMWhiblZtDQpZV04wZFhKcGJtY2djbUYwYUdWeUlIUm9ZVzRnWkdsemRISnBZblYwYVc5dUlHOXlJSE4xY0hCc2VTMWphR0ZwYmlCaWRYTnBibVZ6DQpjMlZ6TGp3dmNENDhjRDVVYnlCdFlXdGxJSE4xY21VZ2QyVWdiMjVzZVNCaWNtbHVaeUI1YjNVZ1kyOXRjR0Z1YVdWeklIUm9ZWFFnDQpabWwwSUhsdmRYSWdiV0Z1WkdGMFpTd2dZMjkxYkdRZ2VXOTFJSE5vWVhKbElHRWdiR2wwZEd4bElHMXZjbVVnYjI0Z2VXOTFjaUJqDQpkWEp5Wlc1MElHWnZZM1Z6UHp3dmNENDhiMncrUEd4cFBsUm9aU0JtYjI5a0lHMWhiblZtWVdOMGRYSnBibWNnWVhKbFlYTWdlVzkxDQpJR0Z5WlNCdGIzTjBJR2x1ZEdWeVpYTjBaV1FnYVc0Z0tHWnZjaUJsZUdGdGNHeGxJR2x1WjNKbFpHbGxiblJ6TENCd1lXTnJZV2RsDQpaQ0JtYjI5a2N5d2dZbVYyWlhKaFoyVnpMQ0J2Y2lCbWIyOWtJSFJsWTJodWIyeHZaM2tnZDJsMGFDQndZWFJsYm5SbFpDQkpVQ2s4DQpMMnhwUGp4c2FUNVRkR0ZuWlhNZ2VXOTFJR2x1ZG1WemRDQmhkQ3dnWVc1a0lIbHZkWElnZEhsd2FXTmhiQ0JqYUdWeGRXVWdjMmw2DQpaVHd2YkdrK1BHeHBQa0Z1ZVNCeVpYWmxiblZsTENCMGNtRmpkR2x2YmlCdmNpQm5aVzluY21Gd2FIa2djbVZ4ZFdseVpXMWxiblJ6DQpQQzlzYVQ0OGJHaytRVzU1ZEdocGJtY2dlVzkxSUhCeVpXWmxjaUIwYnlCaGRtOXBaRHd2YkdrK1BDOXZiRDQ4Y0Q1QklITm9iM0owDQpJSEpsY0d4NUlHbHpJSEJsY21abFkzUnNlU0JtYVc1bExpQlhaU0IzYVd4c0lHRnNhV2R1SUc5MWNpQmtaV0ZzSUdac2IzY2dkRzhnDQphWFF1UEM5d1BqeHdQbEpsWjJGeVpITXNQR0p5UGp4aVBsTm9jbUZrYUdGaFBDOWlQanhpY2o1SmJuWmxjM1J2Y2lCU1pXeGhkR2x2DQpibk04WW5JK1BHSStWRWhGSUZOSlJFRk9RU0JIVWs5VlVEd3ZZajQ4WW5JK1UwbEVRVTVCSUZaRlRsUlZVa1ZUSUV4TVVEeGljajVUDQpTVVJCVGtFZ1NVNU9UMVpCVkVsUFRsTWdURUZDSUZCV1ZDQk1WRVE4WW5JK05ESTBRU0JVYjNkbGNpQkNNeXdnVTNCaGVtVWdhWFJsDQpZMmdnY0dGeWF5dzhZbkkrVTJWamRHOXlJRFE1TENCVGIyaHVZU0JTYjJGa1BHSnlQa2QxY21kaGIyNHNJRWhoY25saGJtRWdNVEl5DQpNREl5UEdKeVBpczVNU0EzT1RneU1URXdORGsxUEdKeVBqeGhJR2h5WldZOUltaDBkSEJ6T2k4dmQzZDNMbk5wWkdGdVlYWmxiblIxDQpjbVZ6TG1OdmJTSSthSFIwY0hNNkx5OTNkM2N1YzJsa1lXNWhkbVZ1ZEhWeVpYTXVZMjl0UEM5aFBqd3ZjRDQ4TDJScGRqND0\"},{\"to\":\"boostup@multiplyventures.com\",\"raw\":\"RnJvbTogU2hyYWRoYWEgU2lkYW5hIDxzaHJhZGhhYUBzaWRhbmF2ZW50dXJlcy5jb20-DQpUbzogYm9vc3R1cEBtdWx0aXBseXZlbnR1cmVzLmNvbQ0KU3ViamVjdDogU2lkYW5hIFZlbnR1cmVzIHwgWW91ciBjdXJyZW50IGludmVzdG1lbnQgZm9jdXMNCk1JTUUtVmVyc2lvbjogMS4wDQpDb250ZW50LVR5cGU6IHRleHQvaHRtbDsgY2hhcnNldD0iVVRGLTgiDQpDb250ZW50LVRyYW5zZmVyLUVuY29kaW5nOiBiYXNlNjQNCg0KUEdScGRpQnpkSGxzWlQwaVptOXVkQzFtWVcxcGJIazZRWEpwWVd3c1NHVnNkbVYwYVdOaExITmhibk10YzJWeWFXWTdabTl1ZEMxeg0KYVhwbE9qRTBjSGc3YkdsdVpTMW9aV2xuYUhRNk1TNDJPMk52Ykc5eU9pTXlNakl5TWpJN0lqNDhjRDVJYVNCQlpHbDBhQ3c4TDNBKw0KUEhBK1NHOXdaU0I1YjNVZ1lYSmxJR1J2YVc1bklIZGxiR3d1SUVWaGNteHBaWElnZEdocGN5QjVaV0Z5SUhkbElITm9ZWEpsWkNCaA0KSUdabGR5QmpiMjV6ZFcxbGNpQnZjSEJ2Y25SMWJtbDBhV1Z6SUhkcGRHZ2dlVzkxTENCcGJtTnNkV1JwYm1jZ1EyRm1abVZ1WVNCRA0KYjJabVpXVXNJRk4xWjJGeUozTWdSR0ZrWkhrc0lFUnZabVpoYVhJZ1lXNWtJRTFsWlhRZ1RYa2dRMjloWTJndUlFRnpJSGRsSUdoaA0KZG1WdUozUWdhR0ZrSUhSb1pTQmphR0Z1WTJVZ2RHOGdhR1ZoY2lCNWIzVnlJSFpwWlhjZ2IyNGdkR2hsYlN3Z2QyVWdkMjkxYkdRZw0KYkdsclpTQjBieUJ0WVd0bElITjFjbVVnZEdoaGRDQjNhR0YwSUhkbElITmxibVFnZVc5MUlHZHZhVzVuSUdadmNuZGhjbVFnYVhNZw0KWVNCemRISnZibWNnWm1sMExqd3ZjRDQ4Y0Q1RGIzVnNaQ0I1YjNVZ2MyaGhjbVVnWVNCeGRXbGpheUJ1YjNSbElHOXVJSGx2ZFhJZw0KWTNWeWNtVnVkQ0JwYm5abGMzUnRaVzUwSUdadlkzVnpQend2Y0Q0OGIydytQR3hwUGxObFkzUnZjbk1nZVc5MUlHbHVkbVZ6ZENCcA0KYmlBb1lXNWtJR0Z1ZVNCNWIzVWdZWFp2YVdRcFBDOXNhVDQ4YkdrK1UzUmhaMlZ6SUNobWIzSWdaWGhoYlhCc1pTQlFjbVV0YzJWbA0KWkN3Z1UyVmxaQ3dnVTJWeWFXVnpJRUVwUEM5c2FUNDhiR2srVkhsd2FXTmhiQ0JqYUdWeGRXVWdjMmw2WlR3dmJHaytQR3hwUGtGdQ0KZVNCdmRHaGxjaUJ0ZFhOMExXaGhkbVZ6TENCemRXTm9JR0Z6SUcxcGJtbHRkVzBnY21WMlpXNTFaU3dnWjJWdlozSmhjR2g1SUc5eQ0KSUdKMWMybHVaWE56SUcxdlpHVnNQQzlzYVQ0OEwyOXNQanh3UGtFZ2MyaHZjblFnY21Wd2JIa2dhWE1nY0dWeVptVmpkR3g1SUdacA0KYm1VdVBDOXdQanh3UGxKbFoyRnlaSE1zUEdKeVBqeGlQbE5vY21Ga2FHRmhQQzlpUGp4aWNqNUpiblpsYzNSdmNpQlNaV3hoZEdsdg0KYm5NOFluSStQR0krVkVoRklGTkpSRUZPUVNCSFVrOVZVRHd2WWo0OFluSStVMGxFUVU1QklGWkZUbFJWVWtWVElFeE1VRHhpY2o1VA0KU1VSQlRrRWdTVTVPVDFaQlZFbFBUbE1nVEVGQ0lGQldWQ0JNVkVROFluSStOREkwUVNCVWIzZGxjaUJDTXl3Z1UzQmhlbVVnYVhSbA0KWTJnZ2NHRnlheXc4WW5JK1UyVmpkRzl5SURRNUxDQlRiMmh1WVNCU2IyRmtQR0p5UGtkMWNtZGhiMjRzSUVoaGNubGhibUVnTVRJeQ0KTURJeVBHSnlQaXM1TVNBM09UZ3lNVEV3TkRrMVBHSnlQanhoSUdoeVpXWTlJbWgwZEhCek9pOHZkM2QzTG5OcFpHRnVZWFpsYm5SMQ0KY21WekxtTnZiU0krYUhSMGNITTZMeTkzZDNjdWMybGtZVzVoZG1WdWRIVnlaWE11WTI5dFBDOWhQand2Y0Q0OEwyUnBkajQ9\"},{\"to\":\"gopalakrishnan.rajaraman@lmco.com\",\"raw\":\"RnJvbTogU2hyYWRoYWEgU2lkYW5hIDxzaHJhZGhhYUBzaWRhbmF2ZW50dXJlcy5jb20-DQpUbzogZ29wYWxha3Jpc2huYW4ucmFqYXJhbWFuQGxtY28uY29tDQpTdWJqZWN0OiBTaWRhbmEgVmVudHVyZXMgfCBZb3VyIGN1cnJlbnQgaW52ZXN0bWVudCBmb2N1cw0KTUlNRS1WZXJzaW9uOiAxLjANCkNvbnRlbnQtVHlwZTogdGV4dC9odG1sOyBjaGFyc2V0PSJVVEYtOCINCkNvbnRlbnQtVHJhbnNmZXItRW5jb2Rpbmc6IGJhc2U2NA0KDQpQR1JwZGlCemRIbHNaVDBpWm05dWRDMW1ZVzFwYkhrNlFYSnBZV3dzU0dWc2RtVjBhV05oTEhOaGJuTXRjMlZ5YVdZN1ptOXVkQzF6DQphWHBsT2pFMGNIZzdiR2x1WlMxb1pXbG5hSFE2TVM0Mk8yTnZiRzl5T2lNeU1qSXlNakk3SWo0OGNENUlhU0JIYjNCaGJDdzhMM0ErDQpQSEErU0c5d1pTQjViM1VnWVhKbElHUnZhVzVuSUhkbGJHd3VJRlJvWVc1cklIbHZkU0JtYjNJZ1kyOXVibVZqZEdsdVp5QjNhWFJvDQpJSFZ6SUdWaGNteHBaWElnZEdocGN5QjVaV0Z5TGlCWFpTQnphR0Z5WldRZ1EyOXpiV2xqY0c5eWRDd2dZU0J6YldGc2JDMXpZWFJsDQpiR3hwZEdVZ2JHRjFibU5vSUdOdmJYQmhibmtzSUdGMElIUm9aU0IwYVcxbExDQmhibVFnZDJVZ1kyOXVkR2x1ZFdVZ2RHOGdjMlZsDQpJSE4wY205dVp5QmtaV1psYm1ObExDQmhaWEp2YzNCaFkyVWdZVzVrSUhOd1lXTmxMWFJsWTJnZ1kyOXRjR0Z1YVdWeklHbHVJRWx1DQpaR2xoTGp3dmNENDhjRDVVYnlCdFlXdGxJSE4xY21VZ2QyVWdiMjVzZVNCaWNtbHVaeUI1YjNVZ2IzQndiM0owZFc1cGRHbGxjeUIwDQphR0YwSUdGeVpTQnlaV3hsZG1GdWRDQjBieUJNYjJOcmFHVmxaQ0JOWVhKMGFXNGdWbVZ1ZEhWeVpYTXNJR052ZFd4a0lIbHZkU0J6DQphR0Z5WlNCaElIRjFhV05ySUc1dmRHVWdiMjRnZVc5MWNpQmpkWEp5Wlc1MElHWnZZM1Z6UHp3dmNENDhiMncrUEd4cFBsQnlhVzl5DQphWFI1SUhSbFkyaHViMnh2WjNrZ1lYSmxZWE1nZDJsMGFHbHVJR1JsWm1WdVkyVXNJR0YyYVdGMGFXOXVJR0Z1WkNCemNHRmpaVHd2DQpiR2srUEd4cFBsTjBZV2RsY3lCNWIzVWdhVzUyWlhOMElHRjBMQ0JoYm1RZ2VXOTFjaUIwZVhCcFkyRnNJR05vWlhGMVpTQnphWHBsDQpQQzlzYVQ0OGJHaytWMmhsZEdobGNpQjViM1VnYVc1MlpYTjBJR2x1SUVsdVpHbGhMV2hsWVdSeGRXRnlkR1Z5WldRZ1kyOXRjR0Z1DQphV1Z6TENCdmNpQnlaWEYxYVhKbElHRWdWVk1nY0hKbGMyVnVZMlU4TDJ4cFBqeHNhVDVCYm5rZ2IzUm9aWElnYlhWemRDMW9ZWFpsDQpjeXdnYzNWamFDQmhjeUJ6ZEhKaGRHVm5hV01nWm1sMElIZHBkR2dnVEc5amEyaGxaV1FnVFdGeWRHbHVJSEJ5YjJkeVlXMXRaWE1zDQpJSEpsZG1WdWRXVWdjM1JoWjJVZ2IzSWdjMlZqZFhKcGRIa2djbVZ4ZFdseVpXMWxiblJ6UEM5c2FUNDhMMjlzUGp4d1BrRWdjMmh2DQpjblFnY21Wd2JIa2dhWE1nY0dWeVptVmpkR3g1SUdacGJtVXVQQzl3UGp4d1BsSmxaMkZ5WkhNc1BHSnlQanhpUGxOb2NtRmthR0ZoDQpQQzlpUGp4aWNqNUpiblpsYzNSdmNpQlNaV3hoZEdsdmJuTThZbkkrUEdJK1ZFaEZJRk5KUkVGT1FTQkhVazlWVUR3dllqNDhZbkkrDQpVMGxFUVU1QklGWkZUbFJWVWtWVElFeE1VRHhpY2o1VFNVUkJUa0VnU1U1T1QxWkJWRWxQVGxNZ1RFRkNJRkJXVkNCTVZFUThZbkkrDQpOREkwUVNCVWIzZGxjaUJDTXl3Z1UzQmhlbVVnYVhSbFkyZ2djR0Z5YXl3OFluSStVMlZqZEc5eUlEUTVMQ0JUYjJodVlTQlNiMkZrDQpQR0p5UGtkMWNtZGhiMjRzSUVoaGNubGhibUVnTVRJeU1ESXlQR0p5UGlzNU1TQTNPVGd5TVRFd05EazFQR0p5UGp4aElHaHlaV1k5DQpJbWgwZEhCek9pOHZkM2QzTG5OcFpHRnVZWFpsYm5SMWNtVnpMbU52YlNJK2FIUjBjSE02THk5M2QzY3VjMmxrWVc1aGRtVnVkSFZ5DQpaWE11WTI5dFBDOWhQand2Y0Q0OEwyUnBkajQ9\"}];\nconst d=new Date(Date.now()+330*60000).toISOString().slice(0,10);\nif(d!==\"2026-09-21\"){return [];}\nreturn R.map(r=>({json:r}));"
+      }
+    },
+    {
+      "id": "s",
+      "name": "Send",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "continueOnFail": true,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://gmail.googleapis.com/gmail/v1/users/me/messages/send",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ raw: $json.raw }) }}",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 5000
+            }
+          }
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "R5K61omYbU9oT5J8",
+          "name": "Gmail account 5"
+        }
+      }
+    },
+    {
+      "id": "o",
+      "name": "Out",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const e=$(\"Emails\").all().map(i=>i.json.to);return [{json:{sent:$input.all().map((i,k)=>e[k]+\" -> \"+(i.json.id||(\"FAILED \"+JSON.stringify(i.json.error||i.json).slice(0,200))))}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Schedule": {
+      "main": [
+        [
+          {
+            "node": "Emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Emails": {
+      "main": [
+        [
+          {
+            "node": "Send",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send": {
+      "main": [
+        [
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataSuccessExecution": "all",
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Schedule": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "LsvRxa0JnOVeaYvc",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-19T08:11:51.473Z",
+      "updatedAt": "2026-09-19T08:11:51.473Z"
+    }
+  ],
+  "activeVersion": null
+}

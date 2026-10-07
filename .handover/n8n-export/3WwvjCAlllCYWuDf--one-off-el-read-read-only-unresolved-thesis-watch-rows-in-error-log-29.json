@@ -1,0 +1,128 @@
+{
+  "id": "3WwvjCAlllCYWuDf",
+  "name": "One-off EL-READ (read-only) — unresolved THESIS-WATCH rows in ERROR LOG (29 Sep 17:30 run)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-29T12:12:35.168Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "49456998-1ac4-4bc9-9405-3cd4dcc1ee00",
+  "versionCounter": 4,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "e1r2e3a4-0929-4a1b-8c7d-el0929000001",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-el-read-0929-4f7b",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "g",
+      "name": "Get",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=ERROR%20LOG!A1:N4000&ranges=INVESTORS!A1:J1000&ranges=INVESTOR_CRITERIA!A1:AC400",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "s",
+      "name": "Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b=$('Webhook').first().json.body||{};if(b.secret!=='sv-mail-2026-09-17-Kq7'){throw new Error('bad secret');}\nconst vr=$input.first().json.valueRanges;const s=x=>String(x==null?'':x).trim();\nconst V=vr[0].values||[];const h=(V[0]||[]).map(s);const X={};h.forEach((k,i)=>X[k.toLowerCase()]=i);\nconst wi=X['workflow'],ri=X['resolved'],ci=X['error_type'],di=X['details'],ti=X['timestamp'],ii=X['investor'],si=X['startup'];\nconst open=[],byCode={},allOpen={};\nfor(let i=1;i<V.length;i++){const r=V[i]||[];if(!r.length)continue;const wf=s(r[wi]),res=s(r[ri]);if(res)continue;\n if(wf)allOpen[wf]=(allOpen[wf]||0)+1;\n if(wf.toUpperCase().indexOf('THESIS-WATCH')<0)continue;\n const code=s(r[ci]);byCode[code]=(byCode[code]||0)+1;\n open.push({row:i+1,ts:s(r[ti]).slice(0,19),type:code,investor:s(r[ii]),startup:s(r[si]),details:s(r[di]).slice(0,900)});}\nconst want=(b.names||[]).map(x=>String(x).toLowerCase());\nconst I=vr[1].values||[];const ih=(I[0]||[]).map(s);const invHit=[];\nfor(let i=1;i<I.length;i++){const r=I[i]||[];const nm=s(r[0]);if(!nm)continue;const lo=nm.toLowerCase();if(!want.some(w=>lo.indexOf(w)>=0))continue;\n const o={row:i+1,name:nm};ih.forEach((k,j)=>{if(j>0)o[k||('col'+j)]=s(r[j]).slice(0,220);});invHit.push(o);}\nconst C=vr[2].values||[];const ch=(C[0]||[]).map(s);const critHit=[];\nfor(let i=1;i<C.length;i++){const r=C[i]||[];const nm=s(r[ch.indexOf('investor')]);if(!nm)continue;const lo=nm.toLowerCase();if(!want.some(w=>lo.indexOf(w)>=0))continue;\n const o={row:i+1};ch.forEach((k,j)=>{const v=s(r[j]);if(v)o[k||('col'+j)]=v.slice(0,200);});critHit.push(o);}\nreturn [{json:{total_rows:V.length-1,thesis_watch_unresolved:open.length,rows:b.skip_rows?[]:open.slice(0,40),inv_headers:ih.join(','),investors:invHit,criteria:critHit}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get": {
+      "main": [
+        [
+          {
+            "node": "Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "3WwvjCAlllCYWuDf",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-29T12:12:35.170Z",
+      "updatedAt": "2026-09-29T12:12:35.170Z"
+    }
+  ],
+  "activeVersion": null
+}

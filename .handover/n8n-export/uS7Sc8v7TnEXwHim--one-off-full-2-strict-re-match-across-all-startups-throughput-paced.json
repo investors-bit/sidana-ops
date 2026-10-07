@@ -1,0 +1,335 @@
+{
+  "id": "uS7Sc8v7TnEXwHim",
+  "name": "One-off FULL-2 — strict re-match across all startups, throughput-paced",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-10T06:11:07.845Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "db50a8ca-5ae1-47c6-b6f6-69542c8531b1",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once 11:46 IST 10 Sep",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "46 11 10 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "r0",
+      "name": "Read Deal Tracker",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        220,
+        -200
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1WzrrPelm2HsJNXOUNIEOuRajp70CUY-RrzBOs9LENjs/edit"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1WzrrPelm2HsJNXOUNIEOuRajp70CUY-RrzBOs9LENjs/edit#gid=189973839"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "r1",
+      "name": "Read INVESTORS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        440,
+        -140
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "INVESTORS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "r2",
+      "name": "Read STARTUPS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        660,
+        -80
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "STARTUPS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "r3",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        880,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "c1",
+      "name": "Strict match + pace",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nfunction nz(x) { return s(x).toLowerCase().replace(/[^a-z0-9]/g, ''); }\n\nconst trk = $('Read Deal Tracker').all().map(function (i) { return i.json; });\nconst invRaw = $('Read INVESTORS').all().map(function (i) { return i.json; });\nconst stRaw = $('Read STARTUPS').all().map(function (i) { return i.json; });\nconst pipe = $input.all().map(function (i) { return i.json; });\nif (pipe.length < 500) { throw new Error('ABORT: PIPELINE only ' + pipe.length); }\nif (trk.length < 200) { throw new Error('ABORT: tracker only ' + trk.length + ' rows - truncated'); }\n\nconst TAGS = [\n  ['health', /health|medtech|bio|clinic|pharma|life science|wellness|fitness|diagnost|hospital|patient|doctor/],\n  ['fintech', /fintech|lending|insur|payment|banking|wealth|credit|financial|neobank/],\n  ['saas', /saas|b2b|enterprise|software|platform|api|devtool|cloud|workflow|automation/],\n  ['consumer', /consumer|d2c|b2c|retail|fmcg|food|beverage|fashion|beauty|apparel|coffee|restaurant|cafe|grocer|kitchen|snack|personal care/],\n  ['deeptech', /deeptech|deep tech|\\bai\\b|artificial intelligence|\\bml\\b|robot|iot|semiconductor|space|drone|quantum|computer vision|hardware/],\n  ['climate', /climate|clean|energy|solar|ev\\b|electric vehicle|sustain|green|water|waste|carbon|recycl/],\n  ['edtech', /edtech|education|learning|skill|training|exam|student|course/],\n  ['logistics', /logistic|supply chain|mobility|delivery|freight|shipping|transport|warehous/],\n  ['agritech', /agri|farm|agtech|crop/],\n  ['hrtech', /hrtech|\\bhr\\b|recruit|talent|hiring|staffing|workforce/],\n  ['proptech', /proptech|real estate|construction|coworking|interior|windoor|building/],\n  ['media', /media|gaming|content|entertainment|creator|social|dating|travel|music|video/]\n];\nfunction tagsOf(txt) {\n  const t = s(txt).toLowerCase();\n  const out = {};\n  for (const p of TAGS) { if (p[1].test(t)) { out[p[0]] = 1; } }\n  return Object.keys(out);\n}\nfunction startupStage(txt) {\n  const t = s(txt).toLowerCase();\n  if (/series b|growth|series c/.test(t)) { return 4; }\n  if (/series a/.test(t)) { return 3; }\n  if (/pilot|traction|early revenue|revenue|mvp|launched/.test(t)) { return 2; }\n  if (/\\bseed\\b/.test(t) && !/pre-?seed/.test(t)) { return 1; }\n  if (/pre-?seed|ideation|concept|idea|prototype/.test(t)) { return 0; }\n  return 1;\n}\nfunction investorBand(txt) {\n  const t = s(txt).toLowerCase();\n  const h = [];\n  if (/pre-?seed|preseed/.test(t)) { h.push(0); }\n  if (/\\bseed\\b/.test(t)) { h.push(1); }\n  if (/pilot|traction|early|pre-?series a|pre series a/.test(t)) { h.push(2); }\n  if (/series a/.test(t)) { h.push(3); }\n  if (/series b|series c|growth|late|pre-?ipo/.test(t)) { h.push(4); }\n  if (!h.length) { return null; }\n  return [Math.min.apply(null, h), Math.max.apply(null, h)];\n}\nfunction toCr(txt) {\n  const t = s(txt).replace(/,/g, '');\n  if (!t) { return null; }\n  let m = t.match(/(?:US\\$|\\$)\\s*([\\d.]+)\\s*M/i);\n  if (m) { return parseFloat(m[1]) * 8.5; }\n  m = t.match(/(?:US\\$|\\$)\\s*([\\d.]+)\\s*K/i);\n  if (m) { return parseFloat(m[1]) * 0.0085; }\n  m = t.match(/([\\d.]+)\\s*(?:-|to|–)\\s*[\\d.]+\\s*Cr/i);\n  if (m) { return parseFloat(m[1]); }\n  m = t.match(/([\\d.]+)\\s*Cr/i);\n  if (m) { return parseFloat(m[1]); }\n  m = t.match(/([\\d.]+)\\s*Lakh/i);\n  if (m) { return parseFloat(m[1]) / 100; }\n  return null;\n}\nconst FLOOR_FIX = { a2dventures: 0.85, mintvc: 0.5, pipersireca: 1.0 };\n\nconst book = [];\nconst seenInv = {};\nfor (const r of invRaw) {\n  const n = s(r.investor);\n  if (!n) { continue; }\n  if (s(r.do_not_contact).toLowerCase() === 'yes') { continue; }\n  const k = nz(n);\n  if (seenInv[k]) { continue; }\n  seenInv[k] = 1;\n  const sec = s(r.sector);\n  let floor = toCr(r.cheque_inr_cr);\n  if (FLOOR_FIX[k] !== undefined) { floor = FLOOR_FIX[k]; }\n  book.push({ key: k, name: n, email: s(r.email), agnostic: /agno/i.test(sec),\n    tags: tagsOf(sec), band: investorBand(r.stage), floor: floor });\n}\n\nconst cols = Object.keys(trk[0] || {});\nlet cInv = null; const cDeals = [];\nfor (const c of cols) {\n  const l = c.toLowerCase();\n  if (!cInv && (l.indexOf('investor') >= 0 || l.indexOf('vc name') >= 0)) { cInv = c; }\n  if (l.indexOf('deals shared') >= 0 || l.indexOf('latest deal') >= 0 || l.indexOf('picked') >= 0) { cDeals.push(c); }\n}\nconst trkText = [];\nfor (const r of trk) {\n  const iv = nz(r[cInv]);\n  if (!iv) { continue; }\n  let blob = '';\n  for (const c of cDeals) { blob += ' ' + s(r[c]); }\n  trkText.push({ inv: iv, blob: nz(blob) });\n}\nconst pairedBy = {};\nfor (const p of pipe) {\n  const k = nz(p.startup);\n  if (!k) { continue; }\n  if (!pairedBy[k]) { pairedBy[k] = {}; }\n  pairedBy[k][nz(p.investor)] = 1;\n}\n\nfunction parseDate(v) {\n  const t = s(v);\n  if (!t) { return null; }\n  let m = t.match(/^(\\d{4})-(\\d{2})-(\\d{2})/);\n  if (m) { return new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])); }\n  m = t.match(/^(\\d{1,2})[\\/-](\\d{1,2})[\\/-](\\d{4})/);\n  if (m) { return new Date(Date.UTC(+m[3], +m[2] - 1, +m[1])); }\n  const dd = new Date(t);\n  return isNaN(dd.getTime()) ? null : dd;\n}\nconst TODAY = new Date(Date.UTC(2026, 8, 10));\n\n// real throughput: what actually went out over the last 30 days, per weekday\nlet sent30 = 0;\nfor (const p of pipe) {\n  if (s(p.deal_shared).toLowerCase() !== 'yes') { continue; }\n  const dd = parseDate(p.date_shared);\n  if (dd && (TODAY - dd) / 86400000 <= 30 && dd <= TODAY) { sent30++; }\n}\nlet cap = Math.round(sent30 / 22);\nif (cap < 10) { cap = 10; }\nif (cap > 30) { cap = 30; }\n\n// days already spoken for by deals queued and not yet sent\nconst load = {};\nfor (const p of pipe) {\n  if (s(p.deal_shared).toLowerCase() === 'yes') { continue; }\n  if (s(p.pause).toLowerCase() === 'yes') { continue; }\n  const dd = parseDate(p.next_due);\n  if (!dd) { continue; }\n  const key = dd.toISOString().slice(0, 10);\n  load[key] = (load[key] || 0) + 1;\n}\n\nconst hits = [];\nconst perStartup = {};\nfor (const r of stRaw) {\n  const name = s(r.startup);\n  if (!name || s(r.active).toLowerCase() !== 'yes') { continue; }\n  const k = nz(name);\n  const paired = Object.assign({}, pairedBy[k] || {});\n  for (const t of trkText) { if (k.length > 3 && t.blob.indexOf(k) >= 0) { paired[t.inv] = 1; } }\n\n  const sTags = tagsOf(s(r.sector));\n  const si = startupStage(r.stage);\n  const raise = toCr(r.raise_inr_cr);\n  const owner = s(r.owner);\n\n  for (const b of book) {\n    if (paired[b.key]) { continue; }\n    // SECTOR strict\n    let overlap = false;\n    for (const t of b.tags) { if (sTags.indexOf(t) >= 0) { overlap = true; break; } }\n    const secOK = b.agnostic || overlap;\n    if (!secOK) { continue; }\n    // STAGE strict - stated band only, no stretch\n    if (b.band !== null && !(si >= b.band[0] && si <= b.band[1])) { continue; }\n    // CHEQUE lenient - floor only, they can co-invest a slice of any larger round\n    let chqPts;\n    if (b.floor === null) { chqPts = 20; }\n    else if (raise !== null && raise >= b.floor) { chqPts = 30; }\n    else { continue; }\n    const score = (overlap ? 40 : 28) + 30 + chqPts;\n    hits.push({ startup: name, owner: owner, investor: b.name, email: b.email, score: score });\n    perStartup[name] = (perStartup[name] || 0) + 1;\n  }\n}\nif (hits.length === 0) { throw new Error('ABORT: no matches produced'); }\nif (hits.length > 1100) { throw new Error('ABORT: ' + hits.length + ' rows exceeds guard of 1100'); }\n\n// best deals first, and rotate startups so no single one hogs the early dates\nhits.sort(function (a, b) { return b.score - a.score || a.startup.localeCompare(b.startup); });\nconst buckets = {};\nfor (const h of hits) { if (!buckets[h.startup]) { buckets[h.startup] = []; } buckets[h.startup].push(h); }\nconst names = Object.keys(buckets).sort();\nconst ordered = [];\nlet more = true;\nwhile (more) {\n  more = false;\n  for (const nm of names) {\n    const arr = buckets[nm];\n    if (arr.length) { ordered.push(arr.shift()); more = true; }\n  }\n}\n\nlet maxN = 0;\nfor (const p of pipe) {\n  const id = s(p.deal_id);\n  if (id.charAt(0) === 'D') { const v = parseInt(id.slice(1), 10); if (!isNaN(v) && v > maxN) { maxN = v; } }\n}\n\n// walk forward from tomorrow, only filling weekdays that are under the cap\nconst cursor = new Date(TODAY.getTime());\ncursor.setUTCDate(cursor.getUTCDate() + 1);\nfunction nextSlot() {\n  for (let guard = 0; guard < 2000; guard++) {\n    const w = cursor.getUTCDay();\n    if (w !== 0 && w !== 6) {\n      const key = cursor.toISOString().slice(0, 10);\n      if ((load[key] || 0) < cap) { load[key] = (load[key] || 0) + 1; return key; }\n    }\n    cursor.setUTCDate(cursor.getUTCDate() + 1);\n  }\n  throw new Error('ABORT: could not place a row within 2000 days');\n}\n\nlet n = maxN;\nconst out = ordered.map(function (h) {\n  n++;\n  let pad = String(n);\n  while (pad.length < 5) { pad = '0' + pad; }\n  return { json: { deal_id: 'D' + pad, startup: h.startup, owner: h.owner, investor: h.investor,\n    email: h.email, cc: '', priority: h.score, deal_shared: 'No', next_action: 'Initial',\n    next_due: nextSlot(),\n    notes: (h.score >= 85 ? 'Very High' : 'High') + ' match (' + h.score + ') - strict sector+stage re-match 2026-09-10' } };\n});\nconst first = out[0].json.next_due, last = out[out.length - 1].json.next_due;\nconsole.log('rows ' + out.length + ' cap/weekday ' + cap + ' sent30 ' + sent30 +\n  ' spanning ' + first + ' to ' + last + ' :: ' + JSON.stringify(perStartup));\nreturn out;"
+      }
+    },
+    {
+      "id": "ap1",
+      "name": "Append PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "position": [
+        1320,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Run once 11:46 IST 10 Sep": {
+      "main": [
+        [
+          {
+            "node": "Read Deal Tracker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Deal Tracker": {
+      "main": [
+        [
+          {
+            "node": "Read INVESTORS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read INVESTORS": {
+      "main": [
+        [
+          {
+            "node": "Read STARTUPS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read STARTUPS": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Strict match + pace",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Strict match + pace": {
+      "main": [
+        [
+          {
+            "node": "Append PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once 11:46 IST 10 Sep": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "uS7Sc8v7TnEXwHim",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-10T06:11:07.849Z",
+      "updatedAt": "2026-09-10T06:11:07.849Z"
+    }
+  ],
+  "activeVersion": null
+}

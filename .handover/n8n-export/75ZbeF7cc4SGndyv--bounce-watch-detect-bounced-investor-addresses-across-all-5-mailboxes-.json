@@ -1,0 +1,869 @@
+{
+  "id": "75ZbeF7cc4SGndyv",
+  "name": "BOUNCE-WATCH — detect bounced investor addresses across all 5 mailboxes (daily 20:00 IST)",
+  "description": null,
+  "active": true,
+  "activeVersionId": "9ee4084e-a67a-45ad-86db-8724083d57cb",
+  "createdAt": "2026-09-29T07:54:48.580Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "9ee4084e-a67a-45ad-86db-8724083d57cb",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 2,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run hook",
+      "webhookId": "f2d94b90-a938-49d2-8f32-7d5621e659ea",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        120
+      ],
+      "parameters": {
+        "path": "bounce-watch-run-9c3a",
+        "httpMethod": "POST",
+        "responseMode": "lastNode"
+      }
+    },
+    {
+      "id": "t2",
+      "name": "Daily 20:00 IST",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        320
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 30 14 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "m5",
+      "name": "MB5",
+      "webhookId": "38c7423f-9e64-4061-89e5-1f763de8aea1",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        220,
+        220
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 40,
+        "simple": false,
+        "filters": {
+          "q": "newer_than:45d (from:mailer-daemon OR from:postmaster OR subject:\"Delivery Status Notification\" OR subject:Undeliverable OR subject:\"Address not found\")"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "R5K61omYbU9oT5J8",
+          "name": "Gmail account 5"
+        }
+      }
+    },
+    {
+      "id": "m4",
+      "name": "MB4",
+      "webhookId": "2cd893f1-f590-4f7e-8487-9b839ea5fb14",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        400,
+        220
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 40,
+        "simple": false,
+        "filters": {
+          "q": "newer_than:45d (from:mailer-daemon OR from:postmaster OR subject:\"Delivery Status Notification\" OR subject:Undeliverable OR subject:\"Address not found\")"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "9IWD8mWqdARPXloL",
+          "name": "Gmail account 4"
+        }
+      }
+    },
+    {
+      "id": "m3",
+      "name": "MB3",
+      "webhookId": "5e4ed533-fb9e-4c5a-a081-1e57e97c5030",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        580,
+        220
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 40,
+        "simple": false,
+        "filters": {
+          "q": "newer_than:45d (from:mailer-daemon OR from:postmaster OR subject:\"Delivery Status Notification\" OR subject:Undeliverable OR subject:\"Address not found\")"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mymSHTFVWtsI3Mh7",
+          "name": "Gmail account 3"
+        }
+      }
+    },
+    {
+      "id": "m2",
+      "name": "MB2",
+      "webhookId": "af445203-0137-462c-b38c-ce658162a5cb",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        760,
+        220
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 40,
+        "simple": false,
+        "filters": {
+          "q": "newer_than:45d (from:mailer-daemon OR from:postmaster OR subject:\"Delivery Status Notification\" OR subject:Undeliverable OR subject:\"Address not found\")"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "hwEqMRn6IxzoYs1R",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "id": "m6",
+      "name": "MB6",
+      "webhookId": "3a71c967-e049-48f8-9efc-ad01b93c6b29",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        940,
+        220
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 40,
+        "simple": false,
+        "filters": {
+          "q": "newer_than:45d (from:mailer-daemon OR from:postmaster OR subject:\"Delivery Status Notification\" OR subject:Undeliverable OR subject:\"Address not found\")"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "s4YYut2fC7u8aQWl",
+          "name": "Gmail account 6"
+        }
+      }
+    },
+    {
+      "id": "rd",
+      "name": "Read sheets",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1120,
+        220
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGetByDataFilter",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"dataFilters\":[{\"a1Range\":\"INVESTORS!A1:N320\"},{\"a1Range\":\"ONBOARDING!A1:AM520\"},{\"a1Range\":\"BOUNCES!A1:N2000\"}],\"valueRenderOption\":\"FORMATTED_VALUE\"}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "pa",
+      "name": "Parse bounces",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1340,
+        220
+      ],
+      "parameters": {
+        "jsCode": "const vr=$json.valueRanges||[];\nconst g=v=>(v&&(v.valueRange||v).values)||[];\nlet inv=null,onb=null,bnc=null;\nfor(const v of vr){const rs=g(v);const h=(rs[0]||[]).map(x=>String(x||'').toLowerCase());\n if(h.includes('contact_person'))inv=rs; else if(h.includes('bounced_address'))bnc=rs; else if(h.includes('status')&&h.includes('firm'))onb=rs;}\nif(!inv||!onb)return[{json:{abort:true,reason:'ranges not identified'}}];\nbnc=bnc||[['detected_at']];\nconst A=n=>{let s='';while(n>=0){s=String.fromCharCode(65+(n%26))+s;n=Math.floor(n/26)-1;}return s;};\nconst nowIso=new Date().toISOString().slice(0,19).replace('T',' ');\n\n// ---- collect bounce messages from all five mailboxes\nconst boxes={MB5:'Shradhaa',MB4:'Akansha',MB3:'investors@',MB2:'dealflow@',MB6:'admin@'};\nconst HARD=/550|5\\.1\\.1|5\\.1\\.10|address not found|couldn.t be found|does not exist|no such user|user unknown|recipient not found/i;\nconst SOFT=/blocked|4\\.\\d\\.\\d|quota|temporarily|try again|deferred|rejected|policy/i;\nconst found=[];\nfor(const [node,label] of Object.entries(boxes)){\n let items=[]; try{ items=$(node).all(); }catch(e){ continue; }\n for(const it of items){ const j=it.json||{};\n  const from=String(j.from&&j.from.text?j.from.text:(j.from||''));\n  const subj=String(j.subject||'');\n  const body=String(j.text||'');\n  if(!/mailer-daemon|postmaster|delivery status|undeliverable|address not found/i.test(from+' '+subj)) continue;\n  const all=(body.match(/[\\w.+-]+@[\\w-]+\\.[\\w.-]+/g)||[]).map(x=>x.toLowerCase());\n  const cand=all.filter(a=>!/sidanaventures\\.com|googlemail|google\\.com|gmail\\.com$/.test(a)\n    && !/^(mailer-daemon|postmaster|no-?reply|noreply)@/.test(a));\n  if(!cand.length) continue;\n  const addr=cand[0];\n  const hard=HARD.test(body); const soft=!hard&&SOFT.test(body);\n  const m=body.match(/(?:The response (?:was|from the remote server was)|Reason|status code)\\s*:?\\s*([^\\n]{0,140})/i);\n  found.push({addr, dom:addr.split('@')[1]||'', hard:hard?'HARD':(soft?'SOFT':'UNKNOWN'),\n    reason:(m?m[1]:subj).replace(/\\s+/g,' ').trim().slice(0,140),\n    date:String(j.date||'').slice(0,25), mailbox:label});\n }\n}\n// dedupe on address + day\nconst seen=new Set(); const uniq=[];\nfor(const b of found){ const k=b.addr+'|'+String(b.date).slice(0,16); if(seen.has(k))continue; seen.add(k); uniq.push(b); }\n\n// already logged?\nconst bh=(bnc[0]||[]).map(x=>String(x||'').trim().toLowerCase());\nconst bAddr=bh.indexOf('bounced_address'), bDate=bh.indexOf('bounce_date');\nconst logged=new Set();\nfor(let i=1;i<bnc.length;i++){ const r=bnc[i]||[];\n if(String(r[bAddr]||'').trim()) logged.add(String(r[bAddr]).trim().toLowerCase()+'|'+String(r[bDate]||'').slice(0,16)); }\nlet lastB=0; for(let i=1;i<bnc.length;i++){ if(String((bnc[i]||[])[bAddr]||'').trim()) lastB=i; }\nlet nextB=lastB+2;\n\n// ---- match against the book and the campaign\nconst ih=inv[0].map(x=>String(x||'').trim().toLowerCase());\nconst iN=ih.indexOf('investor'),iE=ih.indexOf('email'),iC=ih.indexOf('cc');\nconst invBy={};\nfor(let i=1;i<inv.length;i++){ for(const c of [iE,iC]){\n for(const part of String((inv[i]||[])[c]||'').split(/[,;\\s]+/)){ const e=part.trim().toLowerCase();\n  if(e.includes('@')&&!invBy[e]) invBy[e]={row:i+1,name:String(inv[i][iN]||'')}; } } }\nconst oh=onb[0].map(x=>String(x||'').trim().toLowerCase());\nconst oE=oh.indexOf('email'),oCS=oh.indexOf('contact_status'),oS=oh.indexOf('status'),oRN=oh.indexOf('review_note'),oF=oh.indexOf('firm');\nconst onbBy={};\nfor(let i=1;i<onb.length;i++){ const e=String((onb[i]||[])[oE]||'').trim().toLowerCase();\n if(e&&!onbBy[e]) onbBy[e]={row:i+1,firm:String(onb[i][oF]||''),cs:String(onb[i][oCS]||''),st:String(onb[i][oS]||'')}; }\n\nconst newRows=[]; const onbUpdates=[]; const report=[];\nfor(const b of uniq){\n if(logged.has(b.addr+'|'+String(b.date).slice(0,16))) continue;\n const iv=invBy[b.addr]||null; const ob=onbBy[b.addr]||null;\n let action='logged only';\n if(b.hard==='HARD' && ob){\n  onbUpdates.push({range:'ONBOARDING!'+A(oCS)+ob.row,values:[['BOUNCED']]});\n  if(/^(QUEUED)$/i.test(ob.st)) onbUpdates.push({range:'ONBOARDING!'+A(oS)+ob.row,values:[['HOLD']]});\n  if(oRN>=0) onbUpdates.push({range:'ONBOARDING!'+A(oRN)+ob.row,values:[['HARD BOUNCE '+String(b.date).slice(0,16)+' - '+b.reason]]});\n  action='ONBOARDING row '+ob.row+' set BOUNCED'+(/^(QUEUED)$/i.test(ob.st)?' + HOLD':'');\n }\n newRows.push([nowIso,b.addr,b.dom,b.hard,b.reason,b.date,b.mailbox,\n   iv?'YES':'no', iv?iv.row:'', iv?iv.name:'', ob?'YES':'no', ob?ob.row:'', action,\n   iv?'INVESTORS row needs a replacement contact - not auto-changed':'']);\n report.push({addr:b.addr,type:b.hard,mailbox:b.mailbox,date:b.date,inBook:iv?iv.name:null,onbRow:ob?ob.row:null,action});\n}\nconst data=[...onbUpdates];\nif(newRows.length) data.push({range:'BOUNCES!A'+nextB+':N'+(nextB+newRows.length-1),values:newRows});\nreturn [{json:{abort:data.length===0, scanned:uniq.length, newBounces:newRows.length,\n  hardBouncesInBook:report.filter(r=>r.type==='HARD'&&r.inBook).length,\n  report, body:{valueInputOption:'RAW',data}}}];"
+      }
+    },
+    {
+      "id": "ifg",
+      "name": "Anything new?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1560,
+        220
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              },
+              "leftValue": "={{ $json.abort }}",
+              "rightValue": ""
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "wr",
+      "name": "Write",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1780,
+        140
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Run hook": {
+      "main": [
+        [
+          {
+            "node": "MB5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily 20:00 IST": {
+      "main": [
+        [
+          {
+            "node": "MB5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MB5": {
+      "main": [
+        [
+          {
+            "node": "MB4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MB4": {
+      "main": [
+        [
+          {
+            "node": "MB3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MB3": {
+      "main": [
+        [
+          {
+            "node": "MB2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MB2": {
+      "main": [
+        [
+          {
+            "node": "MB6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MB6": {
+      "main": [
+        [
+          {
+            "node": "Read sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read sheets": {
+      "main": [
+        [
+          {
+            "node": "Parse bounces",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse bounces": {
+      "main": [
+        [
+          {
+            "node": "Anything new?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anything new?": {
+      "main": [
+        [
+          {
+            "node": "Write",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Daily 20:00 IST": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "75ZbeF7cc4SGndyv",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-29T07:54:48.582Z",
+      "updatedAt": "2026-09-29T07:54:48.582Z"
+    }
+  ],
+  "activeVersion": {
+    "versionId": "9ee4084e-a67a-45ad-86db-8724083d57cb",
+    "workflowId": "75ZbeF7cc4SGndyv",
+    "nodes": [
+      {
+        "id": "t1",
+        "name": "Run hook",
+        "webhookId": "f2d94b90-a938-49d2-8f32-7d5621e659ea",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          120
+        ],
+        "parameters": {
+          "path": "bounce-watch-run-9c3a",
+          "httpMethod": "POST",
+          "responseMode": "lastNode"
+        }
+      },
+      {
+        "id": "t2",
+        "name": "Daily 20:00 IST",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          0,
+          320
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "0 30 14 * * *"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "m5",
+        "name": "MB5",
+        "type": "n8n-nodes-base.gmail",
+        "typeVersion": 2.1,
+        "executeOnce": true,
+        "alwaysOutputData": true,
+        "onError": "continueRegularOutput",
+        "position": [
+          220,
+          220
+        ],
+        "parameters": {
+          "resource": "message",
+          "operation": "getAll",
+          "returnAll": false,
+          "limit": 40,
+          "simple": false,
+          "filters": {
+            "q": "newer_than:45d (from:mailer-daemon OR from:postmaster OR subject:\"Delivery Status Notification\" OR subject:Undeliverable OR subject:\"Address not found\")"
+          }
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "R5K61omYbU9oT5J8",
+            "name": "Gmail account 5"
+          }
+        },
+        "webhookId": "38c7423f-9e64-4061-89e5-1f763de8aea1"
+      },
+      {
+        "id": "m4",
+        "name": "MB4",
+        "type": "n8n-nodes-base.gmail",
+        "typeVersion": 2.1,
+        "executeOnce": true,
+        "alwaysOutputData": true,
+        "onError": "continueRegularOutput",
+        "position": [
+          400,
+          220
+        ],
+        "parameters": {
+          "resource": "message",
+          "operation": "getAll",
+          "returnAll": false,
+          "limit": 40,
+          "simple": false,
+          "filters": {
+            "q": "newer_than:45d (from:mailer-daemon OR from:postmaster OR subject:\"Delivery Status Notification\" OR subject:Undeliverable OR subject:\"Address not found\")"
+          }
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "9IWD8mWqdARPXloL",
+            "name": "Gmail account 4"
+          }
+        },
+        "webhookId": "2cd893f1-f590-4f7e-8487-9b839ea5fb14"
+      },
+      {
+        "id": "m3",
+        "name": "MB3",
+        "type": "n8n-nodes-base.gmail",
+        "typeVersion": 2.1,
+        "executeOnce": true,
+        "alwaysOutputData": true,
+        "onError": "continueRegularOutput",
+        "position": [
+          580,
+          220
+        ],
+        "parameters": {
+          "resource": "message",
+          "operation": "getAll",
+          "returnAll": false,
+          "limit": 40,
+          "simple": false,
+          "filters": {
+            "q": "newer_than:45d (from:mailer-daemon OR from:postmaster OR subject:\"Delivery Status Notification\" OR subject:Undeliverable OR subject:\"Address not found\")"
+          }
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "mymSHTFVWtsI3Mh7",
+            "name": "Gmail account 3"
+          }
+        },
+        "webhookId": "5e4ed533-fb9e-4c5a-a081-1e57e97c5030"
+      },
+      {
+        "id": "m2",
+        "name": "MB2",
+        "type": "n8n-nodes-base.gmail",
+        "typeVersion": 2.1,
+        "executeOnce": true,
+        "alwaysOutputData": true,
+        "onError": "continueRegularOutput",
+        "position": [
+          760,
+          220
+        ],
+        "parameters": {
+          "resource": "message",
+          "operation": "getAll",
+          "returnAll": false,
+          "limit": 40,
+          "simple": false,
+          "filters": {
+            "q": "newer_than:45d (from:mailer-daemon OR from:postmaster OR subject:\"Delivery Status Notification\" OR subject:Undeliverable OR subject:\"Address not found\")"
+          }
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "hwEqMRn6IxzoYs1R",
+            "name": "Gmail account 2"
+          }
+        },
+        "webhookId": "af445203-0137-462c-b38c-ce658162a5cb"
+      },
+      {
+        "id": "m6",
+        "name": "MB6",
+        "type": "n8n-nodes-base.gmail",
+        "typeVersion": 2.1,
+        "executeOnce": true,
+        "alwaysOutputData": true,
+        "onError": "continueRegularOutput",
+        "position": [
+          940,
+          220
+        ],
+        "parameters": {
+          "resource": "message",
+          "operation": "getAll",
+          "returnAll": false,
+          "limit": 40,
+          "simple": false,
+          "filters": {
+            "q": "newer_than:45d (from:mailer-daemon OR from:postmaster OR subject:\"Delivery Status Notification\" OR subject:Undeliverable OR subject:\"Address not found\")"
+          }
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "s4YYut2fC7u8aQWl",
+            "name": "Gmail account 6"
+          }
+        },
+        "webhookId": "3a71c967-e049-48f8-9efc-ad01b93c6b29"
+      },
+      {
+        "id": "rd",
+        "name": "Read sheets",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1120,
+          220
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGetByDataFilter",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleSheetsOAuth2Api",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\"dataFilters\":[{\"a1Range\":\"INVESTORS!A1:N320\"},{\"a1Range\":\"ONBOARDING!A1:AM520\"},{\"a1Range\":\"BOUNCES!A1:N2000\"}],\"valueRenderOption\":\"FORMATTED_VALUE\"}",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "pa",
+        "name": "Parse bounces",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1340,
+          220
+        ],
+        "parameters": {
+          "jsCode": "const vr=$json.valueRanges||[];\nconst g=v=>(v&&(v.valueRange||v).values)||[];\nlet inv=null,onb=null,bnc=null;\nfor(const v of vr){const rs=g(v);const h=(rs[0]||[]).map(x=>String(x||'').toLowerCase());\n if(h.includes('contact_person'))inv=rs; else if(h.includes('bounced_address'))bnc=rs; else if(h.includes('status')&&h.includes('firm'))onb=rs;}\nif(!inv||!onb)return[{json:{abort:true,reason:'ranges not identified'}}];\nbnc=bnc||[['detected_at']];\nconst A=n=>{let s='';while(n>=0){s=String.fromCharCode(65+(n%26))+s;n=Math.floor(n/26)-1;}return s;};\nconst nowIso=new Date().toISOString().slice(0,19).replace('T',' ');\n\n// ---- collect bounce messages from all five mailboxes\nconst boxes={MB5:'Shradhaa',MB4:'Akansha',MB3:'investors@',MB2:'dealflow@',MB6:'admin@'};\nconst HARD=/550|5\\.1\\.1|5\\.1\\.10|address not found|couldn.t be found|does not exist|no such user|user unknown|recipient not found/i;\nconst SOFT=/blocked|4\\.\\d\\.\\d|quota|temporarily|try again|deferred|rejected|policy/i;\nconst found=[];\nfor(const [node,label] of Object.entries(boxes)){\n let items=[]; try{ items=$(node).all(); }catch(e){ continue; }\n for(const it of items){ const j=it.json||{};\n  const from=String(j.from&&j.from.text?j.from.text:(j.from||''));\n  const subj=String(j.subject||'');\n  const body=String(j.text||'');\n  if(!/mailer-daemon|postmaster|delivery status|undeliverable|address not found/i.test(from+' '+subj)) continue;\n  const all=(body.match(/[\\w.+-]+@[\\w-]+\\.[\\w.-]+/g)||[]).map(x=>x.toLowerCase());\n  const cand=all.filter(a=>!/sidanaventures\\.com|googlemail|google\\.com|gmail\\.com$/.test(a)\n    && !/^(mailer-daemon|postmaster|no-?reply|noreply)@/.test(a));\n  if(!cand.length) continue;\n  const addr=cand[0];\n  const hard=HARD.test(body); const soft=!hard&&SOFT.test(body);\n  const m=body.match(/(?:The response (?:was|from the remote server was)|Reason|status code)\\s*:?\\s*([^\\n]{0,140})/i);\n  found.push({addr, dom:addr.split('@')[1]||'', hard:hard?'HARD':(soft?'SOFT':'UNKNOWN'),\n    reason:(m?m[1]:subj).replace(/\\s+/g,' ').trim().slice(0,140),\n    date:String(j.date||'').slice(0,25), mailbox:label});\n }\n}\n// dedupe on address + day\nconst seen=new Set(); const uniq=[];\nfor(const b of found){ const k=b.addr+'|'+String(b.date).slice(0,16); if(seen.has(k))continue; seen.add(k); uniq.push(b); }\n\n// already logged?\nconst bh=(bnc[0]||[]).map(x=>String(x||'').trim().toLowerCase());\nconst bAddr=bh.indexOf('bounced_address'), bDate=bh.indexOf('bounce_date');\nconst logged=new Set();\nfor(let i=1;i<bnc.length;i++){ const r=bnc[i]||[];\n if(String(r[bAddr]||'').trim()) logged.add(String(r[bAddr]).trim().toLowerCase()+'|'+String(r[bDate]||'').slice(0,16)); }\nlet lastB=0; for(let i=1;i<bnc.length;i++){ if(String((bnc[i]||[])[bAddr]||'').trim()) lastB=i; }\nlet nextB=lastB+2;\n\n// ---- match against the book and the campaign\nconst ih=inv[0].map(x=>String(x||'').trim().toLowerCase());\nconst iN=ih.indexOf('investor'),iE=ih.indexOf('email'),iC=ih.indexOf('cc');\nconst invBy={};\nfor(let i=1;i<inv.length;i++){ for(const c of [iE,iC]){\n for(const part of String((inv[i]||[])[c]||'').split(/[,;\\s]+/)){ const e=part.trim().toLowerCase();\n  if(e.includes('@')&&!invBy[e]) invBy[e]={row:i+1,name:String(inv[i][iN]||'')}; } } }\nconst oh=onb[0].map(x=>String(x||'').trim().toLowerCase());\nconst oE=oh.indexOf('email'),oCS=oh.indexOf('contact_status'),oS=oh.indexOf('status'),oRN=oh.indexOf('review_note'),oF=oh.indexOf('firm');\nconst onbBy={};\nfor(let i=1;i<onb.length;i++){ const e=String((onb[i]||[])[oE]||'').trim().toLowerCase();\n if(e&&!onbBy[e]) onbBy[e]={row:i+1,firm:String(onb[i][oF]||''),cs:String(onb[i][oCS]||''),st:String(onb[i][oS]||'')}; }\n\nconst newRows=[]; const onbUpdates=[]; const report=[];\nfor(const b of uniq){\n if(logged.has(b.addr+'|'+String(b.date).slice(0,16))) continue;\n const iv=invBy[b.addr]||null; const ob=onbBy[b.addr]||null;\n let action='logged only';\n if(b.hard==='HARD' && ob){\n  onbUpdates.push({range:'ONBOARDING!'+A(oCS)+ob.row,values:[['BOUNCED']]});\n  if(/^(QUEUED)$/i.test(ob.st)) onbUpdates.push({range:'ONBOARDING!'+A(oS)+ob.row,values:[['HOLD']]});\n  if(oRN>=0) onbUpdates.push({range:'ONBOARDING!'+A(oRN)+ob.row,values:[['HARD BOUNCE '+String(b.date).slice(0,16)+' - '+b.reason]]});\n  action='ONBOARDING row '+ob.row+' set BOUNCED'+(/^(QUEUED)$/i.test(ob.st)?' + HOLD':'');\n }\n newRows.push([nowIso,b.addr,b.dom,b.hard,b.reason,b.date,b.mailbox,\n   iv?'YES':'no', iv?iv.row:'', iv?iv.name:'', ob?'YES':'no', ob?ob.row:'', action,\n   iv?'INVESTORS row needs a replacement contact - not auto-changed':'']);\n report.push({addr:b.addr,type:b.hard,mailbox:b.mailbox,date:b.date,inBook:iv?iv.name:null,onbRow:ob?ob.row:null,action});\n}\nconst data=[...onbUpdates];\nif(newRows.length) data.push({range:'BOUNCES!A'+nextB+':N'+(nextB+newRows.length-1),values:newRows});\nreturn [{json:{abort:data.length===0, scanned:uniq.length, newBounces:newRows.length,\n  hardBouncesInBook:report.filter(r=>r.type==='HARD'&&r.inBook).length,\n  report, body:{valueInputOption:'RAW',data}}}];"
+        }
+      },
+      {
+        "id": "ifg",
+        "name": "Anything new?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          1560,
+          220
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "version": 2
+            },
+            "combinator": "and",
+            "conditions": [
+              {
+                "operator": {
+                  "type": "boolean",
+                  "operation": "false",
+                  "singleValue": true
+                },
+                "leftValue": "={{ $json.abort }}",
+                "rightValue": ""
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "wr",
+        "name": "Write",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1780,
+          140
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdate",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleSheetsOAuth2Api",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json.body) }}",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Run hook": {
+        "main": [
+          [
+            {
+              "node": "MB5",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Daily 20:00 IST": {
+        "main": [
+          [
+            {
+              "node": "MB5",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "MB5": {
+        "main": [
+          [
+            {
+              "node": "MB4",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "MB4": {
+        "main": [
+          [
+            {
+              "node": "MB3",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "MB3": {
+        "main": [
+          [
+            {
+              "node": "MB2",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "MB2": {
+        "main": [
+          [
+            {
+              "node": "MB6",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "MB6": {
+        "main": [
+          [
+            {
+              "node": "Read sheets",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Read sheets": {
+        "main": [
+          [
+            {
+              "node": "Parse bounces",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse bounces": {
+        "main": [
+          [
+            {
+              "node": "Anything new?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Anything new?": {
+        "main": [
+          [
+            {
+              "node": "Write",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          []
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "Sidana Ventures",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "createdAt": "2026-09-29T07:54:48.583Z",
+    "updatedAt": "2026-09-29T07:54:48.583Z",
+    "workflowPublishHistory": [
+      {
+        "id": 8252,
+        "workflowId": "75ZbeF7cc4SGndyv",
+        "versionId": "9ee4084e-a67a-45ad-86db-8724083d57cb",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-09-29T07:54:57.819Z"
+      }
+    ]
+  }
+}

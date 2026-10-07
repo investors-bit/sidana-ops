@@ -1,0 +1,152 @@
+{
+  "id": "UGh6miDL0QrbW1P3",
+  "name": "ONB-FU-READ — ONBOARDING + INVESTORS + BOUNCES + STARTUPS for onboarding-followups (webhook, read-only)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-10-01T09:51:55.538Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "b54018d6-5c07-4e44-8c1b-a7eeb020efb8",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "cf536277-3978-4ba1-943e-cf20510d9769",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "onb-fu-read-9b4e2a",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "pr",
+      "name": "Prep",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b=$input.first().json.body||{};if(b.secret!=='onb-fu-2026-09-30-Rz4'){throw new Error('bad secret');}\nreturn [{json:{mode:String(b.mode||'headers')}}];"
+      }
+    },
+    {
+      "id": "rd",
+      "name": "Read",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?majorDimension=ROWS&valueRenderOption=UNFORMATTED_VALUE&dateTimeRenderOption=FORMATTED_STRING&ranges=ONBOARDING!A1:AP900&ranges=INVESTORS!A1:AZ800&ranges=BOUNCES!A1:Z600&ranges=STARTUPS!A1:Z200",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "o",
+      "name": "Out",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const mode=$('Prep').first().json.mode;\nconst vr=($input.first().json.valueRanges||[]);\nconst pick=n=>{const m=vr.find(x=>String(x.range||'').replace(/'/g,'').toUpperCase().startsWith(n+'!'));return (m&&m.values)?m.values:[];};\nconst ONB=pick('ONBOARDING'),INV=pick('INVESTORS'),BNC=pick('BOUNCES'),STA=pick('STARTUPS');\nconst s=v=>String(v==null?'':v).trim();\nif(mode==='headers'){\n  return [{json:{onb_rows:ONB.length,inv_rows:INV.length,bnc_rows:BNC.length,sta_rows:STA.length,\n    onb_header:(ONB[0]||[]).map((h,i)=>i+':'+s(h)),\n    inv_header:(INV[0]||[]).map((h,i)=>i+':'+s(h)),\n    bnc_header:(BNC[0]||[]).map((h,i)=>i+':'+s(h)),\n    sta_header:(STA[0]||[]).map((h,i)=>i+':'+s(h)),\n    onb_sample:(ONB[1]||[]).map((h,i)=>i+':'+s(h)).filter(x=>!/^\\d+:$/.test(x))}}];\n}\nif(mode==='onb'){\n  const out=[];\n  for(let i=1;i<ONB.length;i++){const r=ONB[i]||[];if(!s(r[5])&&!s(r[8])){continue;}\n    out.push({row:i+1,status:s(r[4]),firm:s(r[5]),contact:s(r[6]),email:s(r[8]),sector:s(r[19]),subject:s(r[24]),sent_date:s(r[27]),thread_id:s(r[28]),reply:s(r[29]),outcome:s(r[36]),fu1:s(r[38]),fu1d:s(r[39]),fu2:s(r[40]),fu2d:s(r[41])});}\n  return [{json:{count:out.length,rows:out}}];\n}\nif(mode==='ref'){\n  const ih=(INV[0]||[]).map(h=>s(h).toLowerCase());\n  const iName=ih.findIndex(h=>/^(firm|investor|investor_name|firm_name|name)$/.test(h));\n  const iDnc=ih.findIndex(h=>/do_not_contact|dnc/.test(h));\n  const dnc=[];\n  if(iName>=0&&iDnc>=0){for(let i=1;i<INV.length;i++){const r=INV[i]||[];const v=s(r[iDnc]).toLowerCase();if(v&&v!=='false'&&v!=='no'&&v!=='0'){dnc.push({firm:s(r[iName]),flag:s(r[iDnc])});}}}\n  const bh=(BNC[0]||[]).map(h=>s(h).toLowerCase());\n  const bEmail=bh.findIndex(h=>/email|address/.test(h));\n  const bHard=bh.findIndex(h=>/hard_or_soft|hard/.test(h));\n  const bFirm=bh.findIndex(h=>/firm|investor/.test(h));\n  const hard=[];\n  for(let i=1;i<BNC.length;i++){const r=BNC[i]||[];if(bHard>=0&&/^hard$/i.test(s(r[bHard]))){hard.push({email:bEmail>=0?s(r[bEmail]).toLowerCase():'',firm:bFirm>=0?s(r[bFirm]):''});}}\n  return [{json:{inv_name_col:iName,inv_dnc_col:iDnc,dnc_count:dnc.length,dnc:dnc,bnc_email_col:bEmail,bnc_hard_col:bHard,hard_count:hard.length,hard:hard}}];\n}\nif(mode==='startups'){\n  const h=(STA[0]||[]).map((x,i)=>i+':'+s(x));\n  const out=[];\n  for(let i=1;i<STA.length;i++){const r=STA[i]||[];if(!s(r[0])&&!s(r[1])){continue;}out.push({row:i+1,cells:r.map(c=>s(c))});}\n  return [{json:{header:h,count:out.length,rows:out}}];\n}\nthrow new Error('unknown mode '+mode);"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Prep",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep": {
+      "main": [
+        [
+          {
+            "node": "Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read": {
+      "main": [
+        [
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataSuccessExecution": "none",
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "UGh6miDL0QrbW1P3",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-10-01T09:51:55.541Z",
+      "updatedAt": "2026-10-01T09:51:55.541Z"
+    }
+  ],
+  "activeVersion": null
+}

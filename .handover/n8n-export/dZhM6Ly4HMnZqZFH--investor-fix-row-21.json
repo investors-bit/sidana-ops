@@ -1,0 +1,158 @@
+{
+  "id": "dZhM6Ly4HMnZqZFH",
+  "name": "Investor Fix Row 21",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-08-29T15:13:53.772Z",
+  "updatedAt": "2026-08-29T16:38:38.000Z",
+  "isArchived": true,
+  "versionId": "b43f79bf-3d0b-4d4b-acd8-987c6e51c6c0",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 0,
+  "nodes": [
+    {
+      "id": "423e5b80-2913-4d12-936b-9cdd51b01040",
+      "name": "Run Fix",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "2ddced5a-c77c-4b97-a35d-78bb93dfc612",
+      "name": "Build Row 21",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "parameters": {
+        "jsCode": "// Restore the \"ankit\" local-part lost during cell cleanup (stray backslash in original).\nreturn [{ json: {\n  row_number: 21,\n  \"Investors Email\": \"ankit_ait@msn.com, raashi@capital-a.vc\",\n} }];"
+      }
+    },
+    {
+      "id": "fdf8e468-4f7a-4918-8b5a-58a3343dd9ea",
+      "name": "Update Row 21",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        448,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1wBWCcPkxw_RiSs0tUnFFV4aDyxEY2tu-DT73pzIq8b8",
+          "mode": "list",
+          "cachedResultName": "Copy of updated Investor_list_237",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1wBWCcPkxw_RiSs0tUnFFV4aDyxEY2tu-DT73pzIq8b8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 579173326,
+          "mode": "list",
+          "cachedResultName": "INVESTOR MASTER",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1wBWCcPkxw_RiSs0tUnFFV4aDyxEY2tu-DT73pzIq8b8/edit#gid=579173326"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "row_number"
+          ],
+          "value": {
+            "row_number": "={{ $json.row_number }}",
+            "Investors Email": "={{ $json[\"Investors Email\"] }}"
+          },
+          "schema": [
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Investors Email",
+              "displayName": "Investors Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Run Fix": {
+      "main": [
+        [
+          {
+            "node": "Build Row 21",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Row 21": {
+      "main": [
+        [
+          {
+            "node": "Update Row 21",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "pinData": {},
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "dZhM6Ly4HMnZqZFH",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-08-29T15:13:53.774Z",
+      "updatedAt": "2026-08-29T15:13:53.774Z"
+    }
+  ],
+  "activeVersion": null
+}

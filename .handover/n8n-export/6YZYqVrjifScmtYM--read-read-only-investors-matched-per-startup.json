@@ -1,0 +1,144 @@
+{
+  "id": "6YZYqVrjifScmtYM",
+  "name": "READ (read-only) — investors matched per startup",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-09T06:55:13.249Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "f5a95242-78a4-48f1-80e8-95ff5f03ec91",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "trg1",
+      "name": "Run once 12:38 IST 9 Sep",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "38 12 9 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "rd1",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cd1",
+      "name": "Count per startup",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nconst rows = $input.all().map(function (i) { return i.json; });\nif (rows.length < 500) { throw new Error('ABORT: PIPELINE returned only ' + rows.length + ' rows'); }\n\nconst m = {};\nfor (const r of rows) {\n  const st = s(r.startup);\n  const inv = s(r.investor);\n  if (!st || !inv) { continue; }\n  if (!m[st]) { m[st] = { startup: st, owner: s(r.owner), total: 0, pending: 0, sent: 0, paused: 0, replied: 0, investors: {} }; }\n  const e = m[st];\n  if (e.investors[inv]) { continue; }   // distinct investors only\n  e.investors[inv] = true;\n  e.total++;\n  if (s(r.pause) !== '') { e.paused++; }\n  else if (s(r.deal_shared).toLowerCase() === 'yes') { e.sent++; }\n  else { e.pending++; }\n  if (s(r.investor_response) !== '') { e.replied++; }\n}\n\nconst list = Object.keys(m).map(function (k) {\n  const e = m[k];\n  return { startup: e.startup, owner: e.owner, investors_matched: e.total,\n           pending: e.pending, sent: e.sent, paused: e.paused, replied: e.replied };\n});\nlist.sort(function (a, b) { return b.investors_matched - a.investors_matched; });\n\nlet tot = 0;\nfor (const x of list) { tot += x.investors_matched; }\nreturn [{ json: {\n  pipeline_rows: rows.length,\n  distinct_startups: list.length,\n  total_pairs: tot,\n  avg_investors_per_startup: Math.round(tot / list.length * 10) / 10,\n  per_startup: list\n}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once 12:38 IST 9 Sep": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Count per startup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once 12:38 IST 9 Sep": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "6YZYqVrjifScmtYM",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-09T06:55:13.251Z",
+      "updatedAt": "2026-09-09T06:55:13.251Z"
+    }
+  ],
+  "activeVersion": null
+}

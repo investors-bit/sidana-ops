@@ -1,0 +1,294 @@
+{
+  "id": "Y6Gf3UGge28Wt1Rv",
+  "name": "One-off — DELETE Cosmicport from PIPELINE + STARTUPS",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-04T05:08:02.880Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "3ff536c7-6028-4ad7-82e8-25f738cb5dc1",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run (press Execute)",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "n1",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        224,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "n2",
+      "name": "Read STARTUPS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        448,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "STARTUPS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "n3",
+      "name": "Get sheet metadata",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        672,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "fields",
+              "value": "sheets.properties(sheetId,title)"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "n4",
+      "name": "Build delete requests",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const meta = $input.first().json;\nconst gid = {};\nfor (const s of (meta.sheets || [])) { gid[String(s.properties.title).trim()] = s.properties.sheetId; }\nif (gid['PIPELINE'] === undefined) { throw new Error('PIPELINE tab not found'); }\nif (gid['STARTUPS'] === undefined) { throw new Error('STARTUPS tab not found'); }\n\nconst hit = (s) => /cosmic\\s*port/i.test(String(s || ''));\n\nconst pipeRows = [];\nfor (const p of $('Read PIPELINE').all()) { if (hit(p.json.startup)) { pipeRows.push(Number(p.json.row_number)); } }\nconst stRows = [];\nfor (const s of $('Read STARTUPS').all()) { if (hit(s.json.startup)) { stRows.push(Number(s.json.row_number)); } }\n\nif (pipeRows.length === 0 && stRows.length === 0) { throw new Error('No Cosmicport rows found - aborting'); }\nif (pipeRows.length > 30) { throw new Error('Sanity check: refusing to delete ' + pipeRows.length + ' PIPELINE rows'); }\nif (stRows.length > 3) { throw new Error('Sanity check: refusing to delete ' + stRows.length + ' STARTUPS rows'); }\nfor (const r of pipeRows.concat(stRows)) { if (!(r > 1)) { throw new Error('Bad row number ' + r + ' - aborting'); } }\n\npipeRows.sort((a, b) => b - a);\nstRows.sort((a, b) => b - a);\n\nconst reqs = [];\nfor (const r of pipeRows) { reqs.push({ deleteDimension: { range: { sheetId: gid['PIPELINE'], dimension: 'ROWS', startIndex: r - 1, endIndex: r } } }); }\nfor (const r of stRows) { reqs.push({ deleteDimension: { range: { sheetId: gid['STARTUPS'], dimension: 'ROWS', startIndex: r - 1, endIndex: r } } }); }\n\nreturn [{ json: { pipeline_rows_to_delete: pipeRows.length, startups_rows_to_delete: stRows.length, pipeline_rows: pipeRows, startups_rows: stRows, body: { requests: reqs } } }];"
+      }
+    },
+    {
+      "id": "n5",
+      "name": "Apply deletion",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1120,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "6cfe6a80-4e94-4f88-b9fc-a9cfa739bde3",
+      "name": "Delete at 10:58 IST",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        200
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "58 10 4 9 *"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Run (press Execute)": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Read STARTUPS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read STARTUPS": {
+      "main": [
+        [
+          {
+            "node": "Get sheet metadata",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get sheet metadata": {
+      "main": [
+        [
+          {
+            "node": "Build delete requests",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build delete requests": {
+      "main": [
+        [
+          {
+            "node": "Apply deletion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apply deletion": {
+      "main": [
+        []
+      ]
+    },
+    "Delete at 10:58 IST": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Delete at 10:58 IST": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "Y6Gf3UGge28Wt1Rv",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-04T05:08:02.882Z",
+      "updatedAt": "2026-09-04T05:08:02.882Z"
+    }
+  ],
+  "activeVersion": null
+}

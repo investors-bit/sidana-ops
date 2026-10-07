@@ -1,0 +1,192 @@
+{
+  "id": "Zdz2UBenSg85W1MK",
+  "name": "One-off DTF-1 — correct Deal Tracker row 108 (Atomic): EosNox passed 14 Sep, remove from Picked/Interested",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-25T12:42:35.489Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "9ad71c7e-9f2b-475f-8f9b-cab134a203c7",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "b94c612b-5eca-4a81-8259-f3c0c91b5c55",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-dtf-atomic-9a3e61",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "g",
+      "name": "Read",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1WzrrPelm2HsJNXOUNIEOuRajp70CUY-RrzBOs9LENjs/values:batchGet?ranges=Deal%20Tracker%21A100%3AT115",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "v",
+      "name": "Compute",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const R = $json.valueRanges || [];\nconst vals = (R[0] || {}).values || [];\nconst START = 100;\nconst g = (row,i) => (row && row[i] != null) ? String(row[i]) : '';\n\n// locate the Atomic Capital row by column B, never by remembered position\nlet target = -1, r = null;\nfor (let i = 0; i < vals.length; i++) {\n  if (g(vals[i],1).trim().toLowerCase() === 'atomic capital') { if (target >= 0) throw new Error('two Atomic Capital rows in range'); target = START + i; r = vals[i]; }\n}\nif (target < 0) throw new Error('Atomic Capital row not found in Deal Tracker A100:T115');\n\nconst picked = g(r,5);\nif (picked.toLowerCase().indexOf('eosnox') < 0) throw new Error('row ' + target + ' Picked/Interested no longer lists Eosnox - already corrected? value: ' + picked);\nif (g(r,4).toLowerCase().indexOf('eosnox') < 0) throw new Error('row ' + target + ' All Deals Shared does not list EOSNOX - wrong row');\n\n// remove only the EosNox entry, keep every other name exactly as written\nconst kept = picked.split(',').map(s => s.trim()).filter(s => s !== '' && s.toLowerCase().indexOf('eosnox') < 0);\nif (kept.length !== 3) throw new Error('expected 3 remaining picked deals, got ' + kept.length + ': ' + kept.join(' / '));\nconst newPicked = kept.join(', ');\n\nconst PASSREASON = 'EosNox - taken to Atomic Capital’s investment committee and declined, 14 Sep 2026.';\n\nconst feedbackOld = g(r,15);\nconst ADD = 'EosNox, Apoorv Gautam, 14 Sep 2026 10:39 IST: \"Thanks, we discussed it with our IC and they decided to go ahead with other opportunities on the table for now.\" EosNox was removed from Picked / Interested on 25 Sep 2026, having been left there for 11 days after the pass; the pass had not been recorded anywhere, in this sheet or in PIPELINE. It is now PIPELINE row 6588 (D07235). Bon-Cuisine, by contrast, is still live: shared 20 Jun 2026, three meetings (7 Jul, 14 Jul, and 31 Aug in person at IndiQube Penta Bengaluru) and financial diligence running founder-direct as of 25 Sep 2026; PIPELINE row 6587 (D07234).';\nconst newFeedback = feedbackOld.trim() ? (feedbackOld.trim() + ' | ' + ADD) : ADD;\n\nconst data = [\n  { range: 'Deal Tracker!F' + target, values: [[newPicked]] },\n  { range: 'Deal Tracker!O' + target, values: [[PASSREASON]] },\n  { range: 'Deal Tracker!P' + target, values: [[newFeedback]] }\n];\nreturn [{ json: { body: { valueInputOption: 'RAW', data: data }, target_row: target, picked_before: picked, picked_after: newPicked, feedback_had_text: feedbackOld.trim().length > 0 } }];"
+      }
+    },
+    {
+      "id": "w",
+      "name": "Write",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1WzrrPelm2HsJNXOUNIEOuRajp70CUY-RrzBOs9LENjs/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "o",
+      "name": "Out",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const c = $('Compute').first().json; const w = $json;\nreturn [{ json: { updatedCells: w.totalUpdatedCells != null ? w.totalUpdatedCells : null, target_row: c.target_row, picked_before: c.picked_before, picked_after: c.picked_after, feedback_appended: c.feedback_had_text } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read": {
+      "main": [
+        [
+          {
+            "node": "Compute",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute": {
+      "main": [
+        [
+          {
+            "node": "Write",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write": {
+      "main": [
+        [
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "Zdz2UBenSg85W1MK",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-25T12:42:35.491Z",
+      "updatedAt": "2026-09-25T12:42:35.491Z"
+    }
+  ],
+  "activeVersion": null
+}

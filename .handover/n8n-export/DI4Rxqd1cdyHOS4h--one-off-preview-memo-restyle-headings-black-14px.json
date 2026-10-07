@@ -1,0 +1,126 @@
+{
+  "id": "DI4Rxqd1cdyHOS4h",
+  "name": "One-off — Preview memo restyle (headings black + 14px)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-02T06:34:54.439Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "5a4b71bb-68b7-4c5a-a7e8-54314e69714d",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 0,
+  "nodes": [
+    {
+      "id": "78c848e5-0dc6-4f5f-86e5-608b9013e8b0",
+      "name": "Run",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "3a5f304b-ce3d-4742-b6e7-9fe45b6ff58e",
+      "name": "Read STARTUPS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "STARTUPS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      },
+      "executeOnce": true
+    },
+    {
+      "id": "e0c3d3e1-be9b-4ed7-998d-ab3889e8d058",
+      "name": "Preview restyle",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const rows = $input.all().map(i => i.json);\n\n// Restyle rules applied to memo_html only:\n//  headings colour -> black; all body font sizes -> 14px (uniform)\nfunction restyle(html) {\n  let out = String(html == null ? '' : html);\n  out = out.split('color:#0b2e59').join('color:#000000');   // navy headings + inline labels\n  out = out.split('color:#5a6472').join('color:#000000');   // grey subtitle\n  out = out.split('font-size:20px').join('font-size:14px');  // company name\n  out = out.split('font-size:15px').join('font-size:14px');  // section headings\n  out = out.split('font-size:13px').join('font-size:14px');  // subtitle\n  return out;\n}\n\nlet changed = 0, unchanged = 0;\nconst colorLeft = [];   // any memo still carrying a non-black heading colour\nconst sizeLeft = [];    // any memo still carrying a non-14px size\nfor (const r of rows) {\n  const name = String(r.startup || r.startup_name || '(unknown)');\n  const before = String(r.memo_html || '');\n  if (!before) { unchanged++; continue; }\n  const after = restyle(before);\n  if (after !== before) changed++; else unchanged++;\n  if (/color:#0b2e59|color:#5a6472/.test(after)) colorLeft.push(name);\n  if (/font-size:(20|15|13)px/.test(after)) sizeLeft.push(name);\n}\n\n// Sample the first changed memo for eyeballing\nlet sample = null;\nfor (const r of rows) {\n  const before = String(r.memo_html || '');\n  if (!before) continue;\n  const after = restyle(before);\n  if (after !== before) { sample = { startup: r.startup || r.startup_name, before_head: before.slice(0, 700), after_head: after.slice(0, 700) }; break; }\n}\n\nreturn [{ json: {\n  total: rows.length,\n  will_change: changed,\n  unchanged_or_empty: unchanged,\n  color_residue_after: colorLeft,   // should be []\n  size_residue_after: sizeLeft,     // should be []\n  sample,\n} }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run": {
+      "main": [
+        [
+          {
+            "node": "Read STARTUPS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read STARTUPS": {
+      "main": [
+        [
+          {
+            "node": "Preview restyle",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": {},
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "DI4Rxqd1cdyHOS4h",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-02T06:34:54.441Z",
+      "updatedAt": "2026-09-02T06:34:54.441Z"
+    }
+  ],
+  "activeVersion": null
+}

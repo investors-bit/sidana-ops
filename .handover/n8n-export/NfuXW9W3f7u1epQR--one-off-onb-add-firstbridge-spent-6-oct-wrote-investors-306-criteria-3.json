@@ -1,0 +1,257 @@
+{
+  "id": "NfuXW9W3f7u1epQR",
+  "name": "One-off ONB-ADD-FIRSTBRIDGE [SPENT 6 Oct, wrote INVESTORS 306 + CRITERIA 307, do NOT re-run]",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-10-06T17:55:25.321Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "5d36418f-4875-41df-af4d-3791aa242477",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "d87450a8-2e35-4385-af10-d90c140c3ab4",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-add-firstbridge-7d4e2b",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "g",
+      "name": "Read",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=INVESTOR_CRITERIA%21A1%3AAF330&ranges=INVESTORS%21A1%3AL330",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "v",
+      "name": "Compute",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const DRY = $('Webhook').first().json.body && $('Webhook').first().json.body.dry === true;\nconst R = $json.valueRanges || [];\nconst pick = (n) => (R.find(x => String(x.range||'').indexOf(n) === 0) || {}).values || [];\nconst crit = pick('INVESTOR_CRITERIA');\nconst inv  = pick('INVESTORS!');\nconst g = (row,i) => (row && row[i] != null) ? String(row[i]).trim() : '';\nif (!crit.length || !inv.length) throw new Error('a tab came back empty');\nconst critH = (crit[0]||[]).map(h => String(h||'').trim());\nconst invH  = (inv[0]||[]).map(h => String(h||'').trim());\nif (critH[0] !== 'sheet_row' || critH[1] !== 'investor') throw new Error('INVESTOR_CRITERIA header unexpected: ' + critH.slice(0,3).join('|'));\nif (invH[0] !== 'investor') throw new Error('INVESTORS header unexpected: ' + invH.slice(0,3).join('|'));\nconst KEY = 'first bridge';\nfor (let i=1;i<inv.length;i++){ if (g(inv[i],0).toLowerCase().indexOf(KEY) >= 0) throw new Error('INVESTORS already holds a First Bridge row at ' + (i+1)); }\nfor (let i=1;i<crit.length;i++){ if (g(crit[i],1).toLowerCase().indexOf(KEY) >= 0) throw new Error('INVESTOR_CRITERIA already holds a First Bridge row at ' + (i+1)); }\nconst last = (rows) => { let L=0; for (let i=1;i<rows.length;i++){ const r=rows[i]; if (r && r.some(c => String(c||'').trim() !== '')) L=i; } return L; };\nconst invNew  = last(inv) + 2;\nconst critNew = last(crit) + 2;\nif (inv[invNew-1] && inv[invNew-1].some(c => String(c||'').trim() !== '')) throw new Error('INVESTORS target row ' + invNew + ' is not empty');\nif (crit[critNew-1] && crit[critNew-1].some(c => String(c||'').trim() !== '')) throw new Error('INVESTOR_CRITERIA target row ' + critNew + ' is not empty');\nconst colL = (i) => { let s=''; i++; while (i>0){ const m=(i-1)%26; s=String.fromCharCode(65+m)+s; i=Math.floor((i-1)/26); } return s; };\nconst THESIS = 'Thesis in Priyank Jain own words to Shradhaa on LinkedIn, 29 Sep 2026: \"we are sector agnostic ... looking to invest USD 8-10 million, growth stage companies\". First Bridge is a SEBI Category II Alternative Investment Fund, a growth focused private equity fund for the Indian market. The firm describes itself as providing inflection capital to high growth companies and preferring to back first generation entrepreneurs. Ten portfolio companies are listed, among them Leap, Mahaveer Finance, Lavie, Innefu, Zuppa, Tea Post, Berar Finance and Hyuga Life. Institutional backers named on the site include SIDBI, LIC, PNB, NABARD and GIC Re.';\nconst RULES = 'Created 6 Oct 2026 by the onboarding engine from the thesis captured on LI_OUTREACH row 10, which had never reached either database tab. HIS OWN WORDS: sector agnostic, growth stage, USD 8 to 10 million. OUR MAPPING, not his words: cheque_min_cr 68 and cheque_max_cr 85 from USD 8 to 10 million at INR 85 per US dollar; stage_min SERIES_B and stage_max SERIES_C_PLUS mapped from growth stage, he named no series; revenue_required Y mapped from growth stage, he did not state it. sector_mode AGNOSTIC is taken straight from his words. DISCREPANCY TO WATCH: he says sector agnostic, but firstbridgefund.com states four focus sectors, consumer facing businesses, financial services, niche manufacturing and business services. Until he confirms, treat the website list as the likelier real filter and check sector by eye. The cheque ceiling is filled here because he stated an upper bound himself; almost every other row leaves it blank and so fails open.';\nconst UNCHK = 'Website names four focus sectors against his own sector agnostic claim. Growth stage is not defined by series. On the book as at 6 Oct 2026 only one round reaches his cheque band, so very few matches are expected by design, and that is correct rather than a fault.';\nconst EVID = 'LinkedIn reply to Shradhaa 29 Sep 2026 17:51, recorded on LI_OUTREACH row 10. Email given by him, priyank.jain@firstbridgefund.com. firstbridgefund.com fetched and verified live on 6 Oct 2026: substantive site with portfolio, strategy and named institutional backers, not a parked lander.';\nconst SRC = 'LI_OUTREACH row 10; firstbridgefund.com; investor stated 29 Sep 2026';\nconst invVals = { investor: 'First Bridge Private Equity Fund', contact_person: 'Priyank Jain', email: 'priyank.jain@firstbridgefund.com', sector: 'Sector agnostic as stated by him; site lists consumer facing, financial services, niche manufacturing, business services', stage: 'Growth', cheque_inr_cr: 'US$8 to 10 million (INR 68 to 85 Cr)', last_contacted_any: '2026-09-29', contacted_by: 'Shradhaa' };\nconst critVals = { sheet_row: String(invNew), investor: 'First Bridge Private Equity Fund', investor_type: 'Private equity fund (SEBI Category II AIF)', status: 'ACTIVE', confirmed: 'USER', sector_mode: 'AGNOSTIC', models_in: 'ANY', stage_min: 'SERIES_B', stage_max: 'SERIES_C_PLUS', cheque_min_cr: '68', cheque_max_cr: '85', arr_min_strict: 'N', revenue_required: 'Y', women_only: 'N', excludes_jain_sensitive: 'N', geography_scope: 'INDIA', unchecked_requirements: UNCHK, thesis_summary: THESIS, evidence: EVID, confidence: 'HIGH', rule_notes: RULES, sources: SRC };\nconst BAD = /[–—]|&mdash;|&ndash;/;\nconst data = []; const skipped = []; const wrote = [];\nconst push = (tab, header, vals, rowNo) => { for (const k of Object.keys(vals)) { const ci = header.indexOf(k); if (ci < 0) { skipped.push(tab + '.' + k); continue; } const val = vals[k]; if (BAD.test(val)) throw new Error('dash character in ' + tab + '.' + k); data.push({ range: tab + '!' + colL(ci) + rowNo, values: [[val]] }); wrote.push(tab + '.' + k + '=' + colL(ci) + rowNo); } };\npush('INVESTORS', invH, invVals, invNew);\npush('INVESTOR_CRITERIA', critH, critVals, critNew);\nif (skipped.length) throw new Error('header has no column for: ' + skipped.join(', '));\nreturn [{ json: { dry: DRY, body: { valueInputOption: 'RAW', data: data }, investors_row: invNew, criteria_row: critNew, cells: data.length, wrote: wrote, crit_header_len: critH.length, inv_header_len: invH.length } }];"
+      }
+    },
+    {
+      "id": "iff",
+      "name": "IsDry",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.dry }}",
+              "rightValue": "={{ true }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "dout",
+      "name": "DryOut",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        -140
+      ],
+      "parameters": {
+        "jsCode": "const c = $json;\nreturn [{ json: { verdict: 'DRY OK, nothing written', investors_row: c.investors_row, criteria_row: c.criteria_row, cells: c.cells, wrote: c.wrote, plan: c.body.data.map(d => ({ range: d.range, value: String(d.values[0][0]).slice(0,120) })) } }];"
+      }
+    },
+    {
+      "id": "w",
+      "name": "Write",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        800,
+        140
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "o",
+      "name": "Out",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        140
+      ],
+      "parameters": {
+        "jsCode": "const c = $('Compute').first().json; const w = $json;\nreturn [{ json: { verdict: 'WRITTEN', reported_updated_cells: w.totalUpdatedCells != null ? w.totalUpdatedCells : null, planned_cells: c.cells, investors_row: c.investors_row, criteria_row: c.criteria_row, note: 'reported counts are not proof, read back with CRIT-READ' } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read": {
+      "main": [
+        [
+          {
+            "node": "Compute",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute": {
+      "main": [
+        [
+          {
+            "node": "IsDry",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IsDry": {
+      "main": [
+        [
+          {
+            "node": "DryOut",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Write",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write": {
+      "main": [
+        [
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "NfuXW9W3f7u1epQR",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-10-06T17:55:25.324Z",
+      "updatedAt": "2026-10-06T17:55:25.324Z"
+    }
+  ],
+  "activeVersion": null
+}

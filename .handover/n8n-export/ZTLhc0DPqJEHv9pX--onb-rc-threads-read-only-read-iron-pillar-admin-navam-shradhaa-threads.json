@@ -1,0 +1,173 @@
+{
+  "id": "ZTLhc0DPqJEHv9pX",
+  "name": "ONB-RC-THREADS (read-only) — read Iron Pillar (admin@) + Navam (shradhaa@) threads for prior-reply check (30 Sep)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-30T11:30:03.111Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "ee2f0531-c13e-43dd-b2dc-8f502d3619d7",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "97edd26a-71b2-4ecd-b66f-1cb18526cff9",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "onb-rc-threads-30sep",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "t6",
+      "name": "IronPillar thread",
+      "webhookId": "961853fa-77c3-428a-9d2e-d73038835236",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        220,
+        -120
+      ],
+      "parameters": {
+        "resource": "thread",
+        "operation": "get",
+        "threadId": "1a0f0fdf8ef5f3bf",
+        "options": {
+          "returnOnlyMessages": true
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "s4YYut2fC7u8aQWl",
+          "name": "Gmail account 6"
+        }
+      }
+    },
+    {
+      "id": "t5",
+      "name": "Navam thread",
+      "webhookId": "0bdd21bf-340e-4da7-af92-72e34d5258ac",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        220,
+        120
+      ],
+      "parameters": {
+        "resource": "thread",
+        "operation": "get",
+        "threadId": "1a0c25d1796c5ffc",
+        "options": {
+          "returnOnlyMessages": true
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "R5K61omYbU9oT5J8",
+          "name": "Gmail account 5"
+        }
+      }
+    },
+    {
+      "id": "o",
+      "name": "Out",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function hstr(v){if(!v)return '';if(typeof v==='string')return v;if(v.text)return String(v.text);if(v.value&&v.value[0])return '<'+v.value[0].address+'>';return String(v);}\nfunction grab(n,lbl){var out=[];var it=[];try{it=$(n).all();}catch(e){return out;}\n for(var i=0;i<it.length;i++){var j=it[i].json||{};if(!j.id&&!j.messages)continue;\n  var msgs=j.messages?j.messages:[j];\n  for(var k=0;k<msgs.length;k++){var m=msgs[k]||{};if(!m.id)continue;\n   var body=m.text||m.textPlain||'';if(!body&&m.html)body=String(m.html).replace(/<style[\\s\\S]*?<\\/style>/gi,' ').replace(/<[^>]+>/g,' ').replace(/&nbsp;/g,' ').replace(/&amp;/g,'&');\n   if(!body)body=String(m.snippet||'');\n   body=String(body).replace(/\\r/g,'');while(body.indexOf('\\n\\n\\n')>-1)body=body.split('\\n\\n\\n').join('\\n\\n');\n   out.push({box:lbl,id:m.id,thread:m.threadId||'',from:hstr(m.from),to:hstr(m.to),date:String(m.date||''),subject:String(m.subject||''),labels:(m.labelIds||[]).join(','),hasCalendly:body.toLowerCase().indexOf('calendly')>-1,body:body.slice(0,3000)});}}\n return out;}\nvar ip=grab('IronPillar thread','admin@');var nv=grab('Navam thread','shradhaa@');\nreturn [{json:{ironPillar:{count:ip.length,anyCalendly:ip.some(function(x){return x.hasCalendly;}),messages:ip},navam:{count:nv.length,anyCalendly:nv.some(function(x){return x.hasCalendly;}),messages:nv}}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "IronPillar thread",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IronPillar thread": {
+      "main": [
+        [
+          {
+            "node": "Navam thread",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Navam thread": {
+      "main": [
+        [
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "ZTLhc0DPqJEHv9pX",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-30T11:30:03.114Z",
+      "updatedAt": "2026-09-30T11:30:03.114Z"
+    }
+  ],
+  "activeVersion": null
+}

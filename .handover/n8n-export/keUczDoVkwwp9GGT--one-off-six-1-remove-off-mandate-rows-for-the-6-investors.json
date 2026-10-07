@@ -1,0 +1,270 @@
+{
+  "id": "keUczDoVkwwp9GGT",
+  "name": "One-off SIX-1 — remove off-mandate rows for the 6 investors",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-09T05:39:04.788Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "4a804f7e-1a3b-4110-8d08-b4c40de9e352",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "trg1",
+      "name": "Run once 11:18 IST 9 Sep",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "18 11 9 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "rd1",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cdD",
+      "name": "Off-mandate pending",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        -90
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const K = {\"Riceberg Ventures\":[\"AI Signal Labs\",\"MindWox\",\"Spintly\",\"Ulai\"],\"Siana Capital\":[\"AI Signal Labs\",\"Alt F Coworking\",\"Appli\",\"CLIKD\",\"Desi Machines\",\"Fire Armor\",\"Flyment\",\"Fydo\",\"GroCliq\",\"Koncite\",\"LearningPad\",\"Lex Protector\",\"MentorCloud\",\"MonitorExam\",\"Opulytics\",\"Road Athena\",\"Shippin\",\"SkillBytes\",\"Springbase.ai\",\"Starz AI\",\"Talent Recruit\",\"Vilva AI\",\"YUNO\"],\"247 VC Tech Fund\":[\"AI Signal Labs\",\"Formverse\",\"Glazia Windoors\",\"Spintly\",\"Ulai\"],\"CedarHill Capital\":[\"Appli\",\"CLIKD\",\"Desi Machines\",\"EkoSight\",\"Flyment\",\"Fydo\",\"Glazia Windoors\",\"GroCliq\",\"LearningPad\",\"Lex Protector\",\"MentorCloud\",\"MindWox\",\"Nexcore\",\"Opulytics\",\"Orbo AI\",\"Road Athena\",\"Shippin\",\"Starz AI\",\"SureChain\",\"Talent Recruit\",\"Ulai\",\"YUNO\",\"Koncite\",\"MonitorExam\",\"ServeAmigo\",\"SkillBytes\",\"Springbase.ai\",\"Vilva AI\"],\"Rainmatter by Zerodha\":[\"AI Signal Labs\",\"EkoSight\",\"Ela Greens\",\"EosNox\",\"Formverse\",\"Fydo\",\"Glazia Windoors\",\"Healthy Master\",\"MindWox\",\"My Soul\",\"Nexcore\",\"Orbis Lives\",\"Sahaj\",\"Spintly\",\"Sugar's Daddy\",\"SureChain\",\"Ulai\",\"VOLD Energy\",\"Fire Armor\",\"Pixelence\",\"ServeAmigo\",\"Vira Jal\"],\"Atomic Capital\":[\"Chayan Karo\",\"DACBY\",\"My Soul\",\"Orbo AI\",\"Sahaj\",\"SureChain\",\"VOLD Energy\",\"Xproguard\",\"YUNO\"]};\nfunction s(v) { return String(v == null ? '' : v).trim(); }\nconst rows = $input.all().map(function (i) { return i.json; });\nif (rows.length < 500) { throw new Error('ABORT: PIPELINE returned only ' + rows.length + ' rows'); }\nconst out = [];\nfor (const inv of Object.keys(K)) {\n  const keep = {};\n  for (const x of K[inv]) { keep[x.toLowerCase()] = true; }\n  for (const r of rows) {\n    if (s(r.investor) !== inv) { continue; }\n    if (s(r.deal_shared).toLowerCase() === 'yes') { continue; }\n    if (s(r.pause) !== '') { continue; }\n    if (keep[s(r.startup).toLowerCase()]) { continue; }\n    if (!r.row_number) { throw new Error('ABORT: missing row_number'); }\n    out.push({ json: { row_number: Number(r.row_number), deal_id: s(r.deal_id), investor: inv, startup: s(r.startup) } });\n  }\n}\nif (out.length === 0) { return []; }\nif (out.length > 130) { throw new Error('ABORT: ' + out.length + ' deletions exceeds guard of 130'); }\nout.sort(function (a, b) { return b.json.row_number - a.json.row_number; });\nreturn out;"
+      }
+    },
+    {
+      "id": "dl1",
+      "name": "Delete off-mandate",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        660,
+        -90
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "delete",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        },
+        "toDelete": "rows",
+        "startIndex": "={{ $json.row_number }}",
+        "numberToDelete": 1
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cdP",
+      "name": "Off-mandate sent",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        120
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const K = {\"Riceberg Ventures\":[\"AI Signal Labs\",\"MindWox\",\"Spintly\",\"Ulai\"],\"Siana Capital\":[\"AI Signal Labs\",\"Alt F Coworking\",\"Appli\",\"CLIKD\",\"Desi Machines\",\"Fire Armor\",\"Flyment\",\"Fydo\",\"GroCliq\",\"Koncite\",\"LearningPad\",\"Lex Protector\",\"MentorCloud\",\"MonitorExam\",\"Opulytics\",\"Road Athena\",\"Shippin\",\"SkillBytes\",\"Springbase.ai\",\"Starz AI\",\"Talent Recruit\",\"Vilva AI\",\"YUNO\"],\"247 VC Tech Fund\":[\"AI Signal Labs\",\"Formverse\",\"Glazia Windoors\",\"Spintly\",\"Ulai\"],\"CedarHill Capital\":[\"Appli\",\"CLIKD\",\"Desi Machines\",\"EkoSight\",\"Flyment\",\"Fydo\",\"Glazia Windoors\",\"GroCliq\",\"LearningPad\",\"Lex Protector\",\"MentorCloud\",\"MindWox\",\"Nexcore\",\"Opulytics\",\"Orbo AI\",\"Road Athena\",\"Shippin\",\"Starz AI\",\"SureChain\",\"Talent Recruit\",\"Ulai\",\"YUNO\",\"Koncite\",\"MonitorExam\",\"ServeAmigo\",\"SkillBytes\",\"Springbase.ai\",\"Vilva AI\"],\"Rainmatter by Zerodha\":[\"AI Signal Labs\",\"EkoSight\",\"Ela Greens\",\"EosNox\",\"Formverse\",\"Fydo\",\"Glazia Windoors\",\"Healthy Master\",\"MindWox\",\"My Soul\",\"Nexcore\",\"Orbis Lives\",\"Sahaj\",\"Spintly\",\"Sugar's Daddy\",\"SureChain\",\"Ulai\",\"VOLD Energy\",\"Fire Armor\",\"Pixelence\",\"ServeAmigo\",\"Vira Jal\"],\"Atomic Capital\":[\"Chayan Karo\",\"DACBY\",\"My Soul\",\"Orbo AI\",\"Sahaj\",\"SureChain\",\"VOLD Energy\",\"Xproguard\",\"YUNO\"]};\nfunction s(v) { return String(v == null ? '' : v).trim(); }\nconst rows = $input.all().map(function (i) { return i.json; });\nif (rows.length < 500) { throw new Error('ABORT: PIPELINE returned only ' + rows.length + ' rows'); }\nconst out = [];\nfor (const inv of Object.keys(K)) {\n  const keep = {};\n  for (const x of K[inv]) { keep[x.toLowerCase()] = true; }\n  for (const r of rows) {\n    if (s(r.investor) !== inv) { continue; }\n    if (s(r.deal_shared).toLowerCase() !== 'yes') { continue; }\n    if (s(r.investor_response) !== '') { continue; }\n    if (s(r.pause) !== '') { continue; }\n    if (keep[s(r.startup).toLowerCase()]) { continue; }\n    const prev = s(r.notes);\n    out.push({ json: { deal_id: s(r.deal_id), pause: 'Yes', next_action: 'Stopped - off updated mandate',\n      notes: (prev ? prev + ' | ' : '') + 'Follow-ups stopped 2026-09-09: ' + inv + ' mandate updated from corrections sheet' } });\n  }\n}\nif (out.length === 0) { return []; }\nif (out.length > 60) { throw new Error('ABORT: ' + out.length + ' exceeds guard of 60'); }\nreturn out;"
+      }
+    },
+    {
+      "id": "upP",
+      "name": "Pause off-mandate sent",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "position": [
+        660,
+        120
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "deal_id"
+          ],
+          "schema": [
+            {
+              "id": "deal_id",
+              "displayName": "deal_id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Run once 11:18 IST 9 Sep": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Off-mandate pending",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Off-mandate sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Off-mandate pending": {
+      "main": [
+        [
+          {
+            "node": "Delete off-mandate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Off-mandate sent": {
+      "main": [
+        [
+          {
+            "node": "Pause off-mandate sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once 11:18 IST 9 Sep": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "keUczDoVkwwp9GGT",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-09T05:39:04.791Z",
+      "updatedAt": "2026-09-09T05:39:04.791Z"
+    }
+  ],
+  "activeVersion": null
+}

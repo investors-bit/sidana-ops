@@ -1,0 +1,210 @@
+{
+  "id": "79Ify3BOaVBwwf2n",
+  "name": "SCHEDULED-CANCEL — trash specific scheduled sends in Shradha's mailbox (webhook, one-off 19 Sep)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-19T08:09:18.231Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "597ccb6f-b2e3-4204-9b70-9995aa4045b9",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "3e8a1c7d-5b24-4f69-a0d2-9c6e1b4f8a53",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-sched-cancel-6b1f4e9c28",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "ck",
+      "name": "Check",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b=$input.first().json.body||{};if(b.secret!=='sv-mail-2026-09-17-Kq7'){throw new Error('bad secret');}const ALLOWED=['1a0c23a5d5cad401','1a0c23a5d255d743','1a0c23a5cdcd178d','1a0c23a5cc82e30f','1a0c23a5c6d16068'];const ids=(b.ids||[]).filter(x=>ALLOWED.indexOf(x)>=0);if(!ids.length){throw new Error('no allowed ids');}return ids.map(id=>({json:{id:id,dry:b.dry!==false}}));"
+      }
+    },
+    {
+      "id": "gm",
+      "name": "Get msg",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "url": "={{ 'https://gmail.googleapis.com/gmail/v1/users/me/messages/' + $json.id + '?format=metadata&metadataHeaders=Subject&metadataHeaders=To' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "R5K61omYbU9oT5J8",
+          "name": "Gmail account 5"
+        }
+      }
+    },
+    {
+      "id": "vf",
+      "name": "Verify",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const ins=$('Check').all().map(i=>i.json);return $input.all().map((it,i)=>{const m=it.json;const h=n=>(((m.payload||{}).headers||[]).find(x=>x.name.toLowerCase()===n)||{}).value||'';const subj=h('subject');if(!/Your current investment focus/i.test(subj)){throw new Error(m.id+' subject is '+subj);}return {json:{id:m.id,to:h('to'),labels:(m.labelIds||[]).join(','),dry:ins[i].dry}};});"
+      }
+    },
+    {
+      "id": "tr",
+      "name": "Trash",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.dry ? 'https://gmail.googleapis.com/gmail/v1/users/me/messages/' + $json.id + '?format=minimal' : 'https://gmail.googleapis.com/gmail/v1/users/me/messages/' + $json.id + '/trash' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "R5K61omYbU9oT5J8",
+          "name": "Gmail account 5"
+        }
+      }
+    },
+    {
+      "id": "ot",
+      "name": "Out",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const v=$('Verify').all().map(i=>i.json);const r=$input.all().map(i=>i.json);return [{json:{dry:v[0].dry,items:v.map((x,i)=>({id:x.id,to:x.to,labels_before:x.labels,labels_after:(r[i].labelIds||[]).join(',')}))}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check": {
+      "main": [
+        [
+          {
+            "node": "Get msg",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get msg": {
+      "main": [
+        [
+          {
+            "node": "Verify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify": {
+      "main": [
+        [
+          {
+            "node": "Trash",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trash": {
+      "main": [
+        [
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataSuccessExecution": "none",
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "79Ify3BOaVBwwf2n",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-19T08:09:18.234Z",
+      "updatedAt": "2026-09-19T08:09:18.234Z"
+    }
+  ],
+  "activeVersion": null
+}

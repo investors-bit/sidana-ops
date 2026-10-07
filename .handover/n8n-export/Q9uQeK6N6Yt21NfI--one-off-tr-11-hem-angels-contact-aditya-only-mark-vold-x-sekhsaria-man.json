@@ -1,0 +1,319 @@
+{
+  "id": "Q9uQeK6N6Yt21NfI",
+  "name": "One-off TR-11 — Hem Angels contact = Aditya only; mark VOLD x Sekhsaria manually shared",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-15T05:17:28.075Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "45327078-a543-41c3-970a-abdf27055706",
+  "versionCounter": 7,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once (set before activating)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "23 13 15 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "g1",
+      "name": "GET INVESTORS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/INVESTORS!A1:J400",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "g2",
+      "name": "GET PIPELINE",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/PIPELINE!A1:AJ6000",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "g3",
+      "name": "GET CONFIG",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/CONFIG!A1:C60",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cp",
+      "name": "Plan",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nfunction colLetter(i) { let n = i + 1, out = ''; while (n > 0) { const m = (n - 1) % 26; out = String.fromCharCode(65 + m) + out; n = Math.floor((n - 1) / 26); } return out; }\nconst inv = $('GET INVESTORS').first().json.values || [];\nconst pipe = $('GET PIPELINE').first().json.values || [];\nif (inv.length < 200) { throw new Error('ABORT: INVESTORS only ' + inv.length); }\nif (pipe.length < 500) { throw new Error('ABORT: PIPELINE only ' + pipe.length); }\nconst TODAY = '2026-09-15';\nconst updates = [];\n\n// ---- 1. Hem Angels: drop Tanul Goyal, keep Aditya only ----\nconst ih = (inv[0] || []).map(s);\nconst iInv = ih.indexOf('investor'), iCon = ih.indexOf('contact_person'), iEm = ih.indexOf('email'), iCc = ih.indexOf('cc');\nif (iInv < 0 || iCon < 0 || iEm < 0 || iCc < 0) { throw new Error('ABORT: INVESTORS missing a needed column'); }\nlet hem = null;\nfor (let r = 1; r < inv.length; r++) { if (s((inv[r] || [])[iInv]) === 'Hem Angels') {\n  if (hem) { throw new Error('ABORT: more than one Hem Angels row'); }\n  hem = { row: r + 1, contact: s((inv[r] || [])[iCon]), email: s((inv[r] || [])[iEm]), cc: s((inv[r] || [])[iCc]) }; } }\nif (!hem) { throw new Error('ABORT: Hem Angels row not found in INVESTORS'); }\nfunction stripTanul(v) { return s(v).split(/[,;]+/).map(function (x) { return x.trim(); }).filter(function (x) { return x && !/tanul/i.test(x); }).join(', '); }\nconst hemChanges = [];\nconst newContact = 'Aditya';\nif (hem.contact !== newContact) { updates.push({ range: 'INVESTORS!' + colLetter(iCon) + hem.row, values: [[newContact]] }); hemChanges.push(['contact_person', hem.contact, newContact]); }\nconst e2 = stripTanul(hem.email), c2 = stripTanul(hem.cc);\nif (e2 !== hem.email) { updates.push({ range: 'INVESTORS!' + colLetter(iEm) + hem.row, values: [[e2]] }); hemChanges.push(['email', hem.email, e2]); }\nif (c2 !== hem.cc) { updates.push({ range: 'INVESTORS!' + colLetter(iCc) + hem.row, values: [[c2]] }); hemChanges.push(['cc', hem.cc, c2]); }\nif (!e2) { throw new Error('ABORT: stripping Tanul would leave Hem Angels with no email'); }\n\n// ---- 2. VOLD Energy x Narotam Sekhsaria: founder already shared it inside the Bon Cuisine thread ----\nconst ph = (pipe[0] || []).map(s);\nconst P = {};\n['startup','investor','email','deal_shared','date_shared','pause','next_action','next_due','last_contact','notes','deal_id','owner'].forEach(function (n) { P[n] = ph.indexOf(n); if (P[n] < 0) { throw new Error('ABORT: PIPELINE missing ' + n); } });\nconst hits = [];\nfor (let r = 1; r < pipe.length; r++) { const row = pipe[r] || [];\n  if (!/vold/i.test(s(row[P.startup]))) { continue; }\n  if (!/sekhsaria/i.test(s(row[P.investor]) + ' ' + s(row[P.email]))) { continue; }\n  hits.push({ row: r + 1, deal_id: s(row[P.deal_id]), startup: s(row[P.startup]), investor: s(row[P.investor]), owner: s(row[P.owner]),\n    email: s(row[P.email]), deal_shared: s(row[P.deal_shared]), pause: s(row[P.pause]), next_action: s(row[P.next_action]), next_due: s(row[P.next_due]), notes: s(row[P.notes]) }); }\nif (hits.length !== 1) { throw new Error('ABORT: expected exactly 1 VOLD x Sekhsaria row, found ' + hits.length + ': ' + JSON.stringify(hits)); }\nconst v = hits[0];\nconst why = 'Shared manually by the founder inside the Bon Cuisine thread on ' + TODAY + ' - do not send, do not follow up; response tracked manually';\nupdates.push({ range: 'PIPELINE!' + colLetter(P.deal_shared) + v.row, values: [['Yes']] });\nupdates.push({ range: 'PIPELINE!' + colLetter(P.date_shared) + v.row, values: [[TODAY]] });\nupdates.push({ range: 'PIPELINE!' + colLetter(P.last_contact) + v.row, values: [[TODAY]] });\nupdates.push({ range: 'PIPELINE!' + colLetter(P.pause) + v.row, values: [['Yes']] });\nupdates.push({ range: 'PIPELINE!' + colLetter(P.next_action) + v.row, values: [['Manual - shared in Bon Cuisine thread, no follow-ups']] });\nupdates.push({ range: 'PIPELINE!' + colLetter(P.next_due) + v.row, values: [['']] });\nupdates.push({ range: 'PIPELINE!' + colLetter(P.notes) + v.row, values: [[(v.notes ? v.notes + ' | ' : '') + why]] });\n\nreturn [{ json: { summary: { hem_row: hem.row, hem_changes: hemChanges.length, vold_row: v.row, vold_deal_id: v.deal_id, cell_writes: updates.length },\n  hem_before: hem, hem_changes: hemChanges, vold_before: v, updates: updates } }];"
+      }
+    },
+    {
+      "id": "wr",
+      "name": "Write updates",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "position": [
+        1000,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ valueInputOption: 'RAW', data: $('Plan').first().json.updates }) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "g4",
+      "name": "GET INVESTORS after",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "position": [
+        1200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=INVESTORS!A1:J400&ranges=PIPELINE!A1:AJ6000",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cv",
+      "name": "Verify",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1400,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nconst plan = $('Plan').first().json;\nconst vr = $input.first().json.valueRanges || [];\nconst inv = (vr[0] || {}).values || [];\nconst pipe = (vr[1] || {}).values || [];\nif (!inv.length || !pipe.length) { throw new Error('ABORT: verify read returned nothing'); }\nconst ih = (inv[0] || []).map(s);\nconst iInv = ih.indexOf('investor'), iCon = ih.indexOf('contact_person'), iEm = ih.indexOf('email'), iCc = ih.indexOf('cc');\nlet hemRow = null;\nfor (let r = 1; r < inv.length; r++) { if (s((inv[r] || [])[iInv]) === 'Hem Angels') { hemRow = inv[r]; } }\nconst hemContact = hemRow ? s(hemRow[iCon]) : '(missing)';\nconst hemEmail = hemRow ? s(hemRow[iEm]) : '';\nconst hemTanulLeft = hemRow ? /tanul/i.test(hemRow.join(' ')) : false;\n\nconst ph = (pipe[0] || []).map(s);\nconst P = {};\n['startup','investor','deal_shared','date_shared','pause','next_action','next_due'].forEach(function (n) { P[n] = ph.indexOf(n); });\nconst v = pipe[plan.summary.vold_row - 1] || [];\nconst vold = { startup: s(v[P.startup]), investor: s(v[P.investor]), deal_shared: s(v[P.deal_shared]), date_shared: s(v[P.date_shared]), pause: s(v[P.pause]), next_action: s(v[P.next_action]), next_due: s(v[P.next_due]) };\n\n// any other live VOLD row pointing at Sekhsaria?\nlet otherLive = 0;\nfor (let r = 1; r < pipe.length; r++) { const row = pipe[r] || [];\n  if (!/vold/i.test(s(row[P.startup]))) { continue; }\n  if (!/sekhsaria/i.test(s(row[P.investor]))) { continue; }\n  if (s(row[P.pause]).toLowerCase() !== 'yes') { otherLive++; } }\n\nconst wrote = $('Write updates').first().json || {};\nreturn [{ json: { cells_updated: wrote.totalUpdatedCells || 0,\n  hem_contact_now: hemContact, hem_email_now: hemEmail, hem_tanul_still_present: hemTanulLeft,\n  hem_changes_applied: plan.hem_changes,\n  vold_now: vold, vold_deal_id: plan.summary.vold_deal_id, other_live_vold_sekhsaria_rows: otherLive,\n  ok: hemContact === 'Aditya' && !hemTanulLeft && vold.deal_shared === 'Yes' && vold.pause === 'Yes' && vold.next_due === '' && otherLive === 0 } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once (set before activating)": {
+      "main": [
+        [
+          {
+            "node": "GET INVESTORS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET INVESTORS": {
+      "main": [
+        [
+          {
+            "node": "GET PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "GET CONFIG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET CONFIG": {
+      "main": [
+        [
+          {
+            "node": "Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Plan": {
+      "main": [
+        [
+          {
+            "node": "Write updates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write updates": {
+      "main": [
+        [
+          {
+            "node": "GET INVESTORS after",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET INVESTORS after": {
+      "main": [
+        [
+          {
+            "node": "Verify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once (set before activating)": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "Q9uQeK6N6Yt21NfI",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-15T05:17:28.078Z",
+      "updatedAt": "2026-09-15T05:17:28.078Z"
+    }
+  ],
+  "activeVersion": null
+}

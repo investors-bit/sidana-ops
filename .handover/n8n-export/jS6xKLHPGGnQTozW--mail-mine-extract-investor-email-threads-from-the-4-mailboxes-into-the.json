@@ -1,0 +1,1106 @@
+{
+  "id": "jS6xKLHPGGnQTozW",
+  "name": "MAIL-MINE — extract investor email threads from the 4 mailboxes into the Mail Mine sheet (webhook, activate only while mining)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-17T07:58:49.247Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "6fc71ce3-70e1-46ed-b542-7802c6f74c8b",
+  "versionCounter": 4,
+  "sourceWorkflowId": null,
+  "triggerCount": 3,
+  "nodes": [
+    {
+      "id": "wh1",
+      "name": "Webhook sync",
+      "webhookId": "b3c1a2d4-5e6f-4a7b-8c9d-0e1f2a3b4c5d",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-mailmine-sync-8d2f41c7a9",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "gp1",
+      "name": "GET pilot sync",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=INVESTORS!A1:J1000&ranges=PIPELINE!A1:AI8000",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "ps1",
+      "name": "Prep sync",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v){return String(v==null?'':v).trim();}\nconst body=$('Webhook sync').first().json.body||{};\nif(body.secret!=='sv-mail-2026-09-17-Kq7'){throw new Error('bad secret');}\nconst mode=s(body.mode);const MB={'2':0,'3':1,'4':2,'5':3};\nif(mode==='init'){return [{json:{route:4}}];}\nif(mode==='status'){return [{json:{route:5}}];}\nif(mode!=='index'||MB[s(body.mb)]===undefined){throw new Error('mode must be init|status|index with mb 2-5');}\nconst vr=$('GET pilot sync').first().json.valueRanges||[];const inv=(vr[0]||{}).values||[];\nconst GENERIC=/^(gmail|googlemail|yahoo|outlook|hotmail|icloud|live|rediffmail|protonmail|aol|me|ymail)\\./i;\nconst terms={};\nfor(let i=1;i<inv.length;i++){const r=inv[i]||[];(s(r[2])+','+s(r[3])).toLowerCase().split(/[,;\\s]+/).forEach(function(e){const m=e.match(/^[^@\\s]+@([a-z0-9.-]+\\.[a-z]{2,})$/);if(!m){return;}const d=m[1];if(/sidanaventures\\.com$/.test(d)){return;}terms[GENERIC.test(d)?e:('@'+d)]=true;});}\nconst list=Object.keys(terms).sort();const out=[];\nfor(let i=0;i<list.length;i+=20){out.push({json:{route:MB[s(body.mb)],mb:s(body.mb),q:'from:('+list.slice(i,i+20).join(' OR ')+')'}});}\nreturn out;"
+      }
+    },
+    {
+      "id": "sw1",
+      "name": "Route sync",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "mode": "expression",
+        "numberOutputs": 6,
+        "output": "={{ $json.route }}"
+      }
+    },
+    {
+      "id": "l2",
+      "name": "List mb2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "position": [
+        800,
+        -300
+      ],
+      "parameters": {
+        "url": "https://gmail.googleapis.com/gmail/v1/users/me/threads",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ $json.q }}"
+            },
+            {
+              "name": "maxResults",
+              "value": "500"
+            }
+          ]
+        },
+        "options": {
+          "pagination": {
+            "pagination": {
+              "parameters": {
+                "parameters": [
+                  {
+                    "type": "qs",
+                    "name": "pageToken",
+                    "value": "={{ $response.body.nextPageToken }}"
+                  }
+                ]
+              },
+              "paginationCompleteWhen": "other",
+              "completeExpression": "={{ !$response.body.nextPageToken }}",
+              "limitPagesFetched": true,
+              "maxRequests": 40
+            }
+          }
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "hwEqMRn6IxzoYs1R",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "id": "l3",
+      "name": "List mb3",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "position": [
+        800,
+        -150
+      ],
+      "parameters": {
+        "url": "https://gmail.googleapis.com/gmail/v1/users/me/threads",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ $json.q }}"
+            },
+            {
+              "name": "maxResults",
+              "value": "500"
+            }
+          ]
+        },
+        "options": {
+          "pagination": {
+            "pagination": {
+              "parameters": {
+                "parameters": [
+                  {
+                    "type": "qs",
+                    "name": "pageToken",
+                    "value": "={{ $response.body.nextPageToken }}"
+                  }
+                ]
+              },
+              "paginationCompleteWhen": "other",
+              "completeExpression": "={{ !$response.body.nextPageToken }}",
+              "limitPagesFetched": true,
+              "maxRequests": 40
+            }
+          }
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mymSHTFVWtsI3Mh7",
+          "name": "Gmail account 3"
+        }
+      }
+    },
+    {
+      "id": "l4",
+      "name": "List mb4",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "url": "https://gmail.googleapis.com/gmail/v1/users/me/threads",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ $json.q }}"
+            },
+            {
+              "name": "maxResults",
+              "value": "500"
+            }
+          ]
+        },
+        "options": {
+          "pagination": {
+            "pagination": {
+              "parameters": {
+                "parameters": [
+                  {
+                    "type": "qs",
+                    "name": "pageToken",
+                    "value": "={{ $response.body.nextPageToken }}"
+                  }
+                ]
+              },
+              "paginationCompleteWhen": "other",
+              "completeExpression": "={{ !$response.body.nextPageToken }}",
+              "limitPagesFetched": true,
+              "maxRequests": 40
+            }
+          }
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "9IWD8mWqdARPXloL",
+          "name": "Gmail account 4"
+        }
+      }
+    },
+    {
+      "id": "l5",
+      "name": "List mb5",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "position": [
+        800,
+        150
+      ],
+      "parameters": {
+        "url": "https://gmail.googleapis.com/gmail/v1/users/me/threads",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ $json.q }}"
+            },
+            {
+              "name": "maxResults",
+              "value": "500"
+            }
+          ]
+        },
+        "options": {
+          "pagination": {
+            "pagination": {
+              "parameters": {
+                "parameters": [
+                  {
+                    "type": "qs",
+                    "name": "pageToken",
+                    "value": "={{ $response.body.nextPageToken }}"
+                  }
+                ]
+              },
+              "paginationCompleteWhen": "other",
+              "completeExpression": "={{ !$response.body.nextPageToken }}",
+              "limitPagesFetched": true,
+              "maxRequests": 40
+            }
+          }
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "R5K61omYbU9oT5J8",
+          "name": "Gmail account 5"
+        }
+      }
+    },
+    {
+      "id": "cr1",
+      "name": "Create sheet",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "position": [
+        800,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"properties\":{\"title\":\"Sidana Mail Mine - investor email threads (17 Sep 2026)\"},\"sheets\":[{\"properties\":{\"title\":\"THREAD_INDEX\",\"gridProperties\":{\"rowCount\":20000,\"columnCount\":5}}},{\"properties\":{\"title\":\"MAIL_MINE\",\"gridProperties\":{\"rowCount\":60000,\"columnCount\":14}}}]}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "st1",
+      "name": "Status counts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "position": [
+        800,
+        450
+      ],
+      "parameters": {
+        "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/1iJqP4hkznPRrZ7df3LzbEcuZjO_mPYRtLESU__97iSw/values:batchGet?ranges=' + encodeURIComponent('THREAD_INDEX!A1:A20000') + '&ranges=' + encodeURIComponent('MAIL_MINE!A1:B60000') }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "st2",
+      "name": "Status out",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        450
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const vr=$('Status counts').first().json.valueRanges||[];const idx=((vr[0]||{}).values||[]).slice(1);const mm=((vr[1]||{}).values||[]).slice(1);\nconst im={};idx.forEach(r=>{im[r[0]]=(im[r[0]]||0)+1;});const mt={};const tset={};mm.forEach(r=>{mt[r[0]]=(mt[r[0]]||0)+1;tset[r[0]+'|'+r[1]]=1;});\nconst tm={};Object.keys(tset).forEach(k=>{const m=k.split('|')[0];tm[m]=(tm[m]||0)+1;});\nreturn [{json:{index_threads_by_mb:im,mine_messages_by_mb:mt,mine_threads_by_mb:tm}}];"
+      }
+    },
+    {
+      "id": "bi1",
+      "name": "Build index",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v){return String(v==null?'':v).trim();}\nconst body=$('Webhook sync').first().json.body||{};const mb=s(body.mb);\nconst OWNER={'2':'Chaman','3':'Aditya','4':'Akansha','5':'Shradha'};\nconst found={};let pages=0;\n$input.all().forEach(function(it){pages++;(it.json.threads||[]).forEach(function(t){found[t.id]=true;});});\nconst vr=$('GET pilot sync').first().json.valueRanges||[];const pipe=(vr[1]||{}).values||[];const h=(pipe[0]||[]).map(s);const X={};h.forEach((k,i)=>X[k]=i);\nconst pilot={};for(let i=1;i<pipe.length;i++){const r=pipe[i]||[];if(s(r[X.owner])!==OWNER[mb]){continue;}const t=s(r[X.thread_id]);if(!t){continue;}(pilot[t]=pilot[t]||[]).push(s(r[X.deal_id]));}\nconst rows=[];const all=Object.assign({},found);Object.keys(pilot).forEach(t=>all[t]=true);\nObject.keys(all).forEach(function(t){rows.push([mb,t,pilot[t]?'pilot':'history',(pilot[t]||[]).join(','),found[t]?'Y':'N']);});\nif(!rows.length){return [{json:{mb:mb,rows:0,pages:pages}}];}\nreturn [{json:{mb:mb,rows:rows.length,pages:pages,query_threads:Object.keys(found).length,pilot_threads:Object.keys(pilot).length,values:rows}}];"
+      }
+    },
+    {
+      "id": "wi1",
+      "name": "Write index",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "position": [
+        1200,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/1iJqP4hkznPRrZ7df3LzbEcuZjO_mPYRtLESU__97iSw/values/' + encodeURIComponent('THREAD_INDEX!A1') + ':append?valueInputOption=RAW&insertDataOption=INSERT_ROWS' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ values: $('Build index').first().json.values }) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "io1",
+      "name": "Index out",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1400,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b=$('Build index').first().json;return [{json:{mb:b.mb,rows_written:b.rows,pages:b.pages,query_threads:b.query_threads,pilot_threads:b.pilot_threads,sheet:$('Write index').first().json.updates}}];"
+      }
+    },
+    {
+      "id": "wh2",
+      "name": "Webhook mine",
+      "webhookId": "c4d2b3e5-6f70-4b8c-9dae-1f2a3b4c5d6e",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        800
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-mailmine-run-5e9b07a3f1",
+        "responseMode": "onReceived",
+        "options": {}
+      }
+    },
+    {
+      "id": "gm1",
+      "name": "GET index",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "position": [
+        200,
+        800
+      ],
+      "parameters": {
+        "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/1iJqP4hkznPRrZ7df3LzbEcuZjO_mPYRtLESU__97iSw/values/' + encodeURIComponent('THREAD_INDEX!A1:E20000') }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "gm2",
+      "name": "GET pilot mine",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "position": [
+        400,
+        800
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=INVESTORS!A1:J1000&ranges=PIPELINE!A1:AI8000",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "sl1",
+      "name": "Select slice",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        800
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v){return String(v==null?'':v).trim();}\nconst body=$('Webhook mine').first().json.body||{};\nif(body.secret!=='sv-mail-2026-09-17-Kq7'){throw new Error('bad secret');}\nconst mb=s(body.mb);const off=Number(body.offset)||0;const lim=Math.min(Number(body.limit)||200,400);const MB={'2':0,'3':1,'4':2,'5':3};\nif(MB[mb]===undefined){throw new Error('mb 2-5');}\nconst idx=(($('GET index').first().json.values)||[]).filter(r=>s(r[0])===mb);\nreturn idx.slice(off,off+lim).map(r=>({json:{route:MB[mb],mb:mb,thread_id:s(r[1]),kind:s(r[2]),deal_ids:s(r[3])}}));"
+      }
+    },
+    {
+      "id": "sw2",
+      "name": "Route mine",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        800,
+        800
+      ],
+      "parameters": {
+        "mode": "expression",
+        "numberOutputs": 4,
+        "output": "={{ $json.route }}"
+      }
+    },
+    {
+      "id": "t2",
+      "name": "Get mb2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "continueOnFail": true,
+      "position": [
+        1000,
+        650
+      ],
+      "parameters": {
+        "url": "={{ 'https://gmail.googleapis.com/gmail/v1/users/me/threads/' + $json.thread_id + '?format=full' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 10,
+              "batchInterval": 1000
+            }
+          }
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "hwEqMRn6IxzoYs1R",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "id": "t3",
+      "name": "Get mb3",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "continueOnFail": true,
+      "position": [
+        1000,
+        750
+      ],
+      "parameters": {
+        "url": "={{ 'https://gmail.googleapis.com/gmail/v1/users/me/threads/' + $json.thread_id + '?format=full' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 10,
+              "batchInterval": 1000
+            }
+          }
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mymSHTFVWtsI3Mh7",
+          "name": "Gmail account 3"
+        }
+      }
+    },
+    {
+      "id": "t4",
+      "name": "Get mb4",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "continueOnFail": true,
+      "position": [
+        1000,
+        850
+      ],
+      "parameters": {
+        "url": "={{ 'https://gmail.googleapis.com/gmail/v1/users/me/threads/' + $json.thread_id + '?format=full' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 10,
+              "batchInterval": 1000
+            }
+          }
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "9IWD8mWqdARPXloL",
+          "name": "Gmail account 4"
+        }
+      }
+    },
+    {
+      "id": "t5",
+      "name": "Get mb5",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "continueOnFail": true,
+      "position": [
+        1000,
+        950
+      ],
+      "parameters": {
+        "url": "={{ 'https://gmail.googleapis.com/gmail/v1/users/me/threads/' + $json.thread_id + '?format=full' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 10,
+              "batchInterval": 1000
+            }
+          }
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "R5K61omYbU9oT5J8",
+          "name": "Gmail account 5"
+        }
+      }
+    },
+    {
+      "id": "pa1",
+      "name": "Parse",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        800
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v){return String(v==null?'':v).trim();}\nconst sel=$('Select slice').all().map(i=>i.json);const selBy={};sel.forEach(x=>selBy[x.thread_id]=x);\nconst vr=$('GET pilot mine').first().json.valueRanges||[];const inv=(vr[0]||{}).values||[];const pipe=(vr[1]||{}).values||[];\nconst h=(pipe[0]||[]).map(s);const X={};h.forEach((k,i)=>X[k]=i);const dealBy={};for(let i=1;i<pipe.length;i++){const r=pipe[i]||[];const id=s(r[X.deal_id]);if(id){dealBy[id]={startup:s(r[X.startup]),investor:s(r[X.investor])};}}\nconst domInv={};for(let i=1;i<inv.length;i++){const r=inv[i]||[];(s(r[2])+','+s(r[3])).toLowerCase().split(/[,;\\s]+/).forEach(function(e){const m=e.match(/@([a-z0-9.-]+)$/);if(m&&!/gmail|yahoo|outlook|hotmail|icloud|rediff/.test(m[1])){domInv[m[1]]=domInv[m[1]]||s(r[0]);}if(/@/.test(e)){domInv[e]=domInv[e]||s(r[0]);}});}\nfunction hdr(p,n){const x=((p&&p.headers)||[]).find(y=>y.name.toLowerCase()===n);return x?x.value:'';}\nfunction b64(d){try{return Buffer.from(String(d).replace(/-/g,'+').replace(/_/g,'/'),'base64').toString('utf8');}catch(e){return '';}}\nfunction find(p,type){if(!p){return '';}if(p.mimeType===type&&p.body&&p.body.data){return b64(p.body.data);}for(const c of (p.parts||[])){const t=find(c,type);if(t){return t;}}return '';}\nfunction strip(html){return html.replace(/<style[\\s\\S]*?<\\/style>/gi,' ').replace(/<br\\s*\\/?>/gi,'\\n').replace(/<\\/(p|div|tr|li)>/gi,'\\n').replace(/<blockquote[\\s\\S]*$/i,'').replace(/<[^>]+>/g,' ').replace(/&nbsp;/g,' ').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&#39;/g,\"'\").replace(/&quot;/g,'\"');}\nfunction clean(t){t=String(t||'').replace(/\\r/g,'');const cuts=[/\\n\\s*On [^\\n]{0,250}(\\n[^\\n]{0,120})?wrote:/i,/\\n\\s*-{2,}\\s*Original Message/i,/\\n\\s*From:\\s[^\\n]*\\n\\s*(Sent|Date):/i,/\\n\\s*-{5,}\\s*Forwarded message/i,/\\n\\s*_{10,}/];let cut=t.length;cuts.forEach(function(re){const m=t.match(re);if(m&&m.index<cut&&m.index>0){cut=m.index;}});t=t.slice(0,cut);return t.split('\\n').filter(l=>!/^\\s*>/.test(l)).join('\\n').replace(/[ \\t]+/g,' ').replace(/\\n{3,}/g,'\\n\\n').trim();}\nconst rows=[];let threads=0,errors=0;\nfor(const it of $input.all()){const j=it.json;if(!j.messages){errors++;continue;}threads++;const meta=selBy[j.id]||{};const ids=s(meta.deal_ids).split(',').filter(Boolean);const d0=dealBy[ids[0]]||{};\n  let invName=d0.investor||'';\n  (j.messages||[]).forEach(function(m,k){const p=m.payload||{};const from=hdr(p,'from');const ours=/@sidanaventures\\.com/i.test(from);\n    if(!invName&&!ours){const em=(from.match(/[\\w.+-]+@([\\w-]+\\.)+[\\w-]+/)||[''])[0].toLowerCase();const dm=em.split('@')[1]||'';invName=domInv[em]||domInv[dm]||'';}\n    let txt=find(p,'text/plain');if(!txt){txt=strip(find(p,'text/html'));}txt=clean(txt);\n    rows.push([meta.mb||'',j.id,meta.kind||'',ids.join(','),d0.startup||'',invName,String(k),new Date(Number(m.internalDate||0)).toISOString().slice(0,16),from.slice(0,150),hdr(p,'to').slice(0,200),hdr(p,'subject').slice(0,200),ours?'Y':'N',ours?txt.slice(0,500):txt.slice(0,4000),(m.labelIds||[]).join(' ').slice(0,80)]);});}\nreturn [{json:{threads:threads,errors:errors,rows:rows.length,values:rows}}];"
+      }
+    },
+    {
+      "id": "wm1",
+      "name": "Write mine",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "position": [
+        1400,
+        800
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/1iJqP4hkznPRrZ7df3LzbEcuZjO_mPYRtLESU__97iSw/values/' + encodeURIComponent('MAIL_MINE!A1') + ':append?valueInputOption=RAW&insertDataOption=INSERT_ROWS' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ values: $('Parse').first().json.values }) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "wh3",
+      "name": "Webhook export",
+      "webhookId": "34334efe-de65-4b04-8501-2e8d83aa021f",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        1300
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-mailmine-export-3a7c61e0d2",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "ex1",
+      "name": "Export range",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        1300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b=$('Webhook export').first().json.body||{};if(b.secret!=='sv-mail-2026-09-17-Kq7'){throw new Error('bad secret');}\nconst st=Math.max(2,Number(b.start)||2);const en=Math.min(st+2999,Number(b.end)||st+2999);return [{json:{range:'MAIL_MINE!A'+st+':N'+en}}];"
+      }
+    },
+    {
+      "id": "ex2",
+      "name": "Export get",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        400,
+        1300
+      ],
+      "parameters": {
+        "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/1iJqP4hkznPRrZ7df3LzbEcuZjO_mPYRtLESU__97iSw/values/' + encodeURIComponent($json.range) }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook sync": {
+      "main": [
+        [
+          {
+            "node": "GET pilot sync",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET pilot sync": {
+      "main": [
+        [
+          {
+            "node": "Prep sync",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep sync": {
+      "main": [
+        [
+          {
+            "node": "Route sync",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route sync": {
+      "main": [
+        [
+          {
+            "node": "List mb2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "List mb3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "List mb4",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "List mb5",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create sheet",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Status counts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List mb2": {
+      "main": [
+        [
+          {
+            "node": "Build index",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List mb3": {
+      "main": [
+        [
+          {
+            "node": "Build index",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List mb4": {
+      "main": [
+        [
+          {
+            "node": "Build index",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List mb5": {
+      "main": [
+        [
+          {
+            "node": "Build index",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build index": {
+      "main": [
+        [
+          {
+            "node": "Write index",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write index": {
+      "main": [
+        [
+          {
+            "node": "Index out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Status counts": {
+      "main": [
+        [
+          {
+            "node": "Status out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook mine": {
+      "main": [
+        [
+          {
+            "node": "GET index",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET index": {
+      "main": [
+        [
+          {
+            "node": "GET pilot mine",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET pilot mine": {
+      "main": [
+        [
+          {
+            "node": "Select slice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select slice": {
+      "main": [
+        [
+          {
+            "node": "Route mine",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route mine": {
+      "main": [
+        [
+          {
+            "node": "Get mb2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get mb3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get mb4",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get mb5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get mb2": {
+      "main": [
+        [
+          {
+            "node": "Parse",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get mb3": {
+      "main": [
+        [
+          {
+            "node": "Parse",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get mb4": {
+      "main": [
+        [
+          {
+            "node": "Parse",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get mb5": {
+      "main": [
+        [
+          {
+            "node": "Parse",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse": {
+      "main": [
+        [
+          {
+            "node": "Write mine",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook export": {
+      "main": [
+        [
+          {
+            "node": "Export range",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Export range": {
+      "main": [
+        [
+          {
+            "node": "Export get",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "none",
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "jS6xKLHPGGnQTozW",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-17T07:58:49.249Z",
+      "updatedAt": "2026-09-17T07:58:49.249Z"
+    }
+  ],
+  "activeVersion": null
+}

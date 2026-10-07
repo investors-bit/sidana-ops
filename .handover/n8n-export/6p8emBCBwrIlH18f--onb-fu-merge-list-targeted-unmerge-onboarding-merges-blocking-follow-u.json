@@ -1,0 +1,517 @@
+{
+  "id": "6p8emBCBwrIlH18f",
+  "name": "ONB-FU-MERGE — list / targeted-unmerge ONBOARDING merges blocking follow-up writes (webhook)",
+  "description": null,
+  "active": true,
+  "activeVersionId": "c9d20373-db58-4a59-be90-cf79d4d5eb10",
+  "createdAt": "2026-10-04T16:43:23.329Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "c9d20373-db58-4a59-be90-cf79d4d5eb10",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "c887ffc7-8271-4bb3-9569-2887203c0d47",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "onb-fu-merge-4e9c21",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "pr",
+      "name": "Prep",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b=$input.first().json.body||{};\nif(b.secret!=='onb-fu-2026-09-30-Rz4'){throw new Error('bad secret');}\nconst SHEET=38341156;\nconst mode=String(b.mode||'list');\nif(mode==='list'){return [{json:{mode:'list',doUnmerge:false}}];}\nif(mode!=='unmerge'){throw new Error('mode must be list or unmerge');}\nconst rs=Array.isArray(b.ranges)?b.ranges:[];\nif(!rs.length){throw new Error('no ranges');}\nif(rs.length>300){throw new Error('too many ranges: '+rs.length);}\nconst reqs=[];\nfor(const r of rs){\n  const sr=Number(r.sr),er=Number(r.er),sc=Number(r.sc),ec=Number(r.ec);\n  if(![sr,er,sc,ec].every(Number.isInteger)){throw new Error('non-integer range '+JSON.stringify(r));}\n  if(sr<1||er<=sr||er>900){throw new Error('bad rows '+sr+'..'+er+' (row 0 is the header, never touch it)');}\n  if(sc<0||ec<=sc||ec>42){throw new Error('bad cols '+sc+'..'+ec);}\n  if((er-sr)>1){throw new Error('refusing multi-row unmerge '+sr+'..'+er);}\n  reqs.push({unmergeCells:{range:{sheetId:SHEET,startRowIndex:sr,endRowIndex:er,startColumnIndex:sc,endColumnIndex:ec}}});\n}\nreturn [{json:{mode:'unmerge',doUnmerge:true,count:reqs.length,payload:JSON.stringify({requests:reqs})}}];"
+      }
+    },
+    {
+      "id": "ifu",
+      "name": "Unmerge?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "version": 2,
+            "typeValidation": "loose"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "c1",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "leftValue": "={{ $json.doUnmerge }}",
+              "rightValue": ""
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "um",
+      "name": "Unmerge",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        620,
+        -140
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.payload }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "np",
+      "name": "Skip",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        620,
+        140
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "ck",
+      "name": "Read merges",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        860,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4?fields=sheets(properties(sheetId,title),merges)",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "o",
+      "name": "Out",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1080,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const p=$('Prep').first().json;\nlet w=null;if(p.doUnmerge){try{w=$('Unmerge').first().json||{};}catch(e){w={error:'no response'};}}\nconst m=$input.first().json||{};\nlet onb=[];(m.sheets||[]).forEach(s=>{if((s.properties||{}).title==='ONBOARDING')onb=s.merges||[];});\nconst compact=onb.map(r=>({sr:r.startRowIndex,er:r.endRowIndex,sc:r.startColumnIndex,ec:r.endColumnIndex}));\nconst out={mode:p.mode,onboarding_merges_total:compact.length,merges:compact};\nif(p.doUnmerge){out.unmerge_requested=p.count;out.unmerge_replies=(w&&w.replies)?w.replies.length:0;out.unmerge_error=(w&&w.error)?(w.error.message||JSON.stringify(w.error)).slice(0,300):null;}\nreturn [{json:out}];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Prep",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep": {
+      "main": [
+        [
+          {
+            "node": "Unmerge?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Unmerge?": {
+      "main": [
+        [
+          {
+            "node": "Unmerge",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Skip",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Unmerge": {
+      "main": [
+        [
+          {
+            "node": "Read merges",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skip": {
+      "main": [
+        [
+          {
+            "node": "Read merges",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Out": {
+      "main": [
+        []
+      ]
+    },
+    "Read merges": {
+      "main": [
+        [
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "6p8emBCBwrIlH18f",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-10-04T16:43:23.332Z",
+      "updatedAt": "2026-10-04T16:43:23.332Z"
+    }
+  ],
+  "activeVersion": {
+    "versionId": "c9d20373-db58-4a59-be90-cf79d4d5eb10",
+    "workflowId": "6p8emBCBwrIlH18f",
+    "nodes": [
+      {
+        "id": "wh",
+        "name": "Webhook",
+        "webhookId": "c887ffc7-8271-4bb3-9569-2887203c0d47",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          0
+        ],
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "onb-fu-merge-4e9c21",
+          "responseMode": "lastNode",
+          "responseData": "firstEntryJson",
+          "options": {}
+        }
+      },
+      {
+        "id": "pr",
+        "name": "Prep",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          200,
+          0
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const b=$input.first().json.body||{};\nif(b.secret!=='onb-fu-2026-09-30-Rz4'){throw new Error('bad secret');}\nconst SHEET=38341156;\nconst mode=String(b.mode||'list');\nif(mode==='list'){return [{json:{mode:'list',doUnmerge:false}}];}\nif(mode!=='unmerge'){throw new Error('mode must be list or unmerge');}\nconst rs=Array.isArray(b.ranges)?b.ranges:[];\nif(!rs.length){throw new Error('no ranges');}\nif(rs.length>300){throw new Error('too many ranges: '+rs.length);}\nconst reqs=[];\nfor(const r of rs){\n  const sr=Number(r.sr),er=Number(r.er),sc=Number(r.sc),ec=Number(r.ec);\n  if(![sr,er,sc,ec].every(Number.isInteger)){throw new Error('non-integer range '+JSON.stringify(r));}\n  if(sr<1||er<=sr||er>900){throw new Error('bad rows '+sr+'..'+er+' (row 0 is the header, never touch it)');}\n  if(sc<0||ec<=sc||ec>42){throw new Error('bad cols '+sc+'..'+ec);}\n  if((er-sr)>1){throw new Error('refusing multi-row unmerge '+sr+'..'+er);}\n  reqs.push({unmergeCells:{range:{sheetId:SHEET,startRowIndex:sr,endRowIndex:er,startColumnIndex:sc,endColumnIndex:ec}}});\n}\nreturn [{json:{mode:'unmerge',doUnmerge:true,count:reqs.length,payload:JSON.stringify({requests:reqs})}}];"
+        }
+      },
+      {
+        "id": "ifu",
+        "name": "Unmerge?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          400,
+          0
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "version": 2,
+              "typeValidation": "loose"
+            },
+            "combinator": "and",
+            "conditions": [
+              {
+                "id": "c1",
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                },
+                "leftValue": "={{ $json.doUnmerge }}",
+                "rightValue": ""
+              }
+            ]
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "um",
+        "name": "Unmerge",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "alwaysOutputData": true,
+        "onError": "continueRegularOutput",
+        "position": [
+          620,
+          -140
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4:batchUpdate",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleSheetsOAuth2Api",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ $json.payload }}",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "np",
+        "name": "Skip",
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1,
+        "position": [
+          620,
+          140
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "ck",
+        "name": "Read merges",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "alwaysOutputData": true,
+        "onError": "continueRegularOutput",
+        "position": [
+          860,
+          0
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4?fields=sheets(properties(sheetId,title),merges)",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleSheetsOAuth2Api",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "o",
+        "name": "Out",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1080,
+          0
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const p=$('Prep').first().json;\nlet w=null;if(p.doUnmerge){try{w=$('Unmerge').first().json||{};}catch(e){w={error:'no response'};}}\nconst m=$input.first().json||{};\nlet onb=[];(m.sheets||[]).forEach(s=>{if((s.properties||{}).title==='ONBOARDING')onb=s.merges||[];});\nconst compact=onb.map(r=>({sr:r.startRowIndex,er:r.endRowIndex,sc:r.startColumnIndex,ec:r.endColumnIndex}));\nconst out={mode:p.mode,onboarding_merges_total:compact.length,merges:compact};\nif(p.doUnmerge){out.unmerge_requested=p.count;out.unmerge_replies=(w&&w.replies)?w.replies.length:0;out.unmerge_error=(w&&w.error)?(w.error.message||JSON.stringify(w.error)).slice(0,300):null;}\nreturn [{json:out}];"
+        }
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Prep",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prep": {
+        "main": [
+          [
+            {
+              "node": "Unmerge?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Unmerge?": {
+        "main": [
+          [
+            {
+              "node": "Unmerge",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Skip",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Unmerge": {
+        "main": [
+          [
+            {
+              "node": "Read merges",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Skip": {
+        "main": [
+          [
+            {
+              "node": "Read merges",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Out": {
+        "main": [
+          []
+        ]
+      },
+      "Read merges": {
+        "main": [
+          [
+            {
+              "node": "Out",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "Sidana Ventures",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "createdAt": "2026-10-04T16:43:23.333Z",
+    "updatedAt": "2026-10-04T16:43:23.333Z",
+    "workflowPublishHistory": [
+      {
+        "id": 11121,
+        "workflowId": "6p8emBCBwrIlH18f",
+        "versionId": "c9d20373-db58-4a59-be90-cf79d4d5eb10",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-10-04T16:43:27.822Z"
+      }
+    ]
+  }
+}

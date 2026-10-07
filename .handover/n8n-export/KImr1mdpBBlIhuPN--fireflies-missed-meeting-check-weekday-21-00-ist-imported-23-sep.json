@@ -1,0 +1,680 @@
+{
+  "id": "KImr1mdpBBlIhuPN",
+  "name": "Fireflies missed-meeting check — weekday 21:00 IST (imported 23 Sep)",
+  "description": null,
+  "active": true,
+  "activeVersionId": "5f153e7b-139b-4ad2-baae-2f8bc31381c3",
+  "createdAt": "2026-09-23T14:31:24.122Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "5f153e7b-139b-4ad2-baae-2f8bc31381c3",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "trigger",
+      "name": "Every weekday 9pm",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -400,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 21 * * 1-5"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "window",
+      "name": "Today's window",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -180,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// IST day boundaries (the n8n server clock is UTC, so build them explicitly).\nconst IST = 5.5 * 3600000;\nconst nowIst = new Date(Date.now() + IST);\nconst y = nowIst.getUTCFullYear(), m = nowIst.getUTCMonth(), d = nowIst.getUTCDate();\nconst startMs = Date.UTC(y, m, d, 0, 0, 0) - IST;\nconst endMs = Date.UTC(y, m, d, 23, 59, 59) - IST;\nconst label = new Date(startMs + IST).toISOString().slice(0, 10);\nreturn [{ json: { startISO: new Date(startMs).toISOString(), endISO: new Date(endMs).toISOString(), startMs, endMs, dateLabel: label } }];"
+      }
+    },
+    {
+      "id": "calendar",
+      "name": "Get today's calendar events",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "alwaysOutputData": true,
+      "position": [
+        60,
+        200
+      ],
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "primary",
+          "mode": "list"
+        },
+        "returnAll": true,
+        "timeMin": "={{ $json.startISO }}",
+        "timeMax": "={{ $json.endISO }}",
+        "options": {
+          "timeMin": "={{ $json.startISO }}",
+          "timeMax": "={{ $json.endISO }}",
+          "singleEvents": true,
+          "orderBy": "startTime"
+        }
+      },
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "FMaJN0wYxb8FWUZs",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "id": "fireflies",
+      "name": "Get today's Fireflies transcripts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        60,
+        420
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.fireflies.ai/graphql",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ query: 'query Transcripts($fromDate: DateTime, $toDate: DateTime, $limit: Int) { transcripts(fromDate: $fromDate, toDate: $toDate, limit: $limit) { id title date } }', variables: { fromDate: $('Today\\'s window').first().json.startISO, toDate: $('Today\\'s window').first().json.endISO, limit: 50 } }) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "SoEEYEKCE2qu0hbJ",
+          "name": "Fireflies Key (paste key only)"
+        }
+      }
+    },
+    {
+      "id": "merge",
+      "name": "Merge",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        320,
+        300
+      ],
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      }
+    },
+    {
+      "id": "compare",
+      "name": "Compare",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        540,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Calendar meetings that had a video link, matched against today's Fireflies transcripts.\nconst win = $('Today\\'s window').first().json;\nconst events = $('Get today\\'s calendar events').all().map(i => i.json).filter(e => e && e.id);\nconst raw = $('Get today\\'s Fireflies transcripts').first().json;\nif (raw && raw.errors) { throw new Error('Fireflies GraphQL error: ' + JSON.stringify(raw.errors).slice(0, 300)); }\nconst transcripts = (raw && raw.data && raw.data.transcripts) || [];\nconst norm = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');\nconst ffTitles = transcripts.map(t => norm(t.title)).filter(Boolean);\nconst hasLink = e => Boolean(e.hangoutLink || e.conferenceData || /zoom\\.us|meet\\.google|teams\\.microsoft|whereby|webex/i.test([e.location, e.description].filter(Boolean).join(' ')));\n// belt and braces: the Google Calendar node has been seen to ignore timeMin/timeMax, so enforce the IST day here too\nconst inWindow = e => { if (!e.start || !e.start.dateTime) return false; const t = new Date(e.start.dateTime).getTime(); return t >= win.startMs && t <= win.endMs; };\nconst isRealMeeting = e => { if (!e.start || !e.start.dateTime || !e.end || !e.end.dateTime) return false; const mins = (new Date(e.end.dateTime) - new Date(e.start.dateTime)) / 60000; return mins >= 10; };\nconst considered = events.filter(e => inWindow(e) && isRealMeeting(e) && hasLink(e));\nconst missed = considered.filter(e => { const t = norm(e.summary); if (!t) return true; return !ffTitles.some(f => f.includes(t) || t.includes(f)); }).map(e => ({ title: e.summary || '(no title)', time: e.start.dateTime, organiser: (e.organizer && e.organizer.email) || '', attendees: (e.attendees || []).map(a => a.email).join(', ') }));\nreturn [{ json: { dateLabel: win.dateLabel, calendarMeetings: considered.length, transcriptsFound: transcripts.length, missedCount: missed.length, missed } }];"
+      }
+    },
+    {
+      "id": "if",
+      "name": "Any missed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        760,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.missedCount }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "alert",
+      "name": "Send alert",
+      "webhookId": "f3f5afc3-f26f-478d-84eb-dc3bb30753ce",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        980,
+        220
+      ],
+      "parameters": {
+        "sendTo": "investors@sidanaventures.com",
+        "subject": "={{ $json.missedCount }} meeting(s) not recorded by Fireflies - {{ $json.dateLabel }}",
+        "emailType": "text",
+        "message": "={{ $json.missedCount }} of {{ $json.calendarMeetings }} meetings today have no Fireflies transcript.\n\n{{ $json.missed.map(m => `- ${m.title}\\n  ${new Date(m.time).toLocaleString('en-IN')}\\n  Organiser: ${m.organiser}\\n  Attendees: ${m.attendees}`).join('\\n\\n') }}\n\nWrite notes for these manually tonight: investor, startup, objection, next step agreed, date.",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mymSHTFVWtsI3Mh7",
+          "name": "Gmail account 3"
+        }
+      }
+    },
+    {
+      "id": "noop",
+      "name": "All recorded",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        980,
+        400
+      ],
+      "parameters": {}
+    }
+  ],
+  "connections": {
+    "Every weekday 9pm": {
+      "main": [
+        [
+          {
+            "node": "Today's window",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Today's window": {
+      "main": [
+        [
+          {
+            "node": "Get today's calendar events",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get today's Fireflies transcripts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get today's calendar events": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get today's Fireflies transcripts": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Compare",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compare": {
+      "main": [
+        [
+          {
+            "node": "Any missed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Any missed?": {
+      "main": [
+        [
+          {
+            "node": "Send alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "All recorded",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Every weekday 9pm": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "KImr1mdpBBlIhuPN",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-23T14:31:24.124Z",
+      "updatedAt": "2026-09-23T14:31:24.124Z"
+    }
+  ],
+  "activeVersion": {
+    "versionId": "5f153e7b-139b-4ad2-baae-2f8bc31381c3",
+    "workflowId": "KImr1mdpBBlIhuPN",
+    "nodes": [
+      {
+        "id": "trigger",
+        "name": "Every weekday 9pm",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          -400,
+          300
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "0 21 * * 1-5"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "window",
+        "name": "Today's window",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -180,
+          300
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "// IST day boundaries (the n8n server clock is UTC, so build them explicitly).\nconst IST = 5.5 * 3600000;\nconst nowIst = new Date(Date.now() + IST);\nconst y = nowIst.getUTCFullYear(), m = nowIst.getUTCMonth(), d = nowIst.getUTCDate();\nconst startMs = Date.UTC(y, m, d, 0, 0, 0) - IST;\nconst endMs = Date.UTC(y, m, d, 23, 59, 59) - IST;\nconst label = new Date(startMs + IST).toISOString().slice(0, 10);\nreturn [{ json: { startISO: new Date(startMs).toISOString(), endISO: new Date(endMs).toISOString(), startMs, endMs, dateLabel: label } }];"
+        }
+      },
+      {
+        "id": "calendar",
+        "name": "Get today's calendar events",
+        "type": "n8n-nodes-base.googleCalendar",
+        "typeVersion": 1.3,
+        "alwaysOutputData": true,
+        "position": [
+          60,
+          200
+        ],
+        "parameters": {
+          "operation": "getAll",
+          "calendar": {
+            "__rl": true,
+            "value": "primary",
+            "mode": "list"
+          },
+          "returnAll": true,
+          "timeMin": "={{ $json.startISO }}",
+          "timeMax": "={{ $json.endISO }}",
+          "options": {
+            "timeMin": "={{ $json.startISO }}",
+            "timeMax": "={{ $json.endISO }}",
+            "singleEvents": true,
+            "orderBy": "startTime"
+          }
+        },
+        "credentials": {
+          "googleCalendarOAuth2Api": {
+            "id": "FMaJN0wYxb8FWUZs",
+            "name": "Google Calendar account"
+          }
+        }
+      },
+      {
+        "id": "fireflies",
+        "name": "Get today's Fireflies transcripts",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          60,
+          420
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.fireflies.ai/graphql",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpBearerAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ query: 'query Transcripts($fromDate: DateTime, $toDate: DateTime, $limit: Int) { transcripts(fromDate: $fromDate, toDate: $toDate, limit: $limit) { id title date } }', variables: { fromDate: $('Today\\'s window').first().json.startISO, toDate: $('Today\\'s window').first().json.endISO, limit: 50 } }) }}",
+          "options": {
+            "timeout": 60000
+          }
+        },
+        "credentials": {
+          "httpBearerAuth": {
+            "id": "SoEEYEKCE2qu0hbJ",
+            "name": "Fireflies Key (paste key only)"
+          }
+        }
+      },
+      {
+        "id": "merge",
+        "name": "Merge",
+        "type": "n8n-nodes-base.merge",
+        "typeVersion": 3,
+        "position": [
+          320,
+          300
+        ],
+        "parameters": {
+          "mode": "combine",
+          "combineBy": "combineAll",
+          "options": {}
+        }
+      },
+      {
+        "id": "compare",
+        "name": "Compare",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          540,
+          300
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "// Calendar meetings that had a video link, matched against today's Fireflies transcripts.\nconst win = $('Today\\'s window').first().json;\nconst events = $('Get today\\'s calendar events').all().map(i => i.json).filter(e => e && e.id);\nconst raw = $('Get today\\'s Fireflies transcripts').first().json;\nif (raw && raw.errors) { throw new Error('Fireflies GraphQL error: ' + JSON.stringify(raw.errors).slice(0, 300)); }\nconst transcripts = (raw && raw.data && raw.data.transcripts) || [];\nconst norm = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');\nconst ffTitles = transcripts.map(t => norm(t.title)).filter(Boolean);\nconst hasLink = e => Boolean(e.hangoutLink || e.conferenceData || /zoom\\.us|meet\\.google|teams\\.microsoft|whereby|webex/i.test([e.location, e.description].filter(Boolean).join(' ')));\n// belt and braces: the Google Calendar node has been seen to ignore timeMin/timeMax, so enforce the IST day here too\nconst inWindow = e => { if (!e.start || !e.start.dateTime) return false; const t = new Date(e.start.dateTime).getTime(); return t >= win.startMs && t <= win.endMs; };\nconst isRealMeeting = e => { if (!e.start || !e.start.dateTime || !e.end || !e.end.dateTime) return false; const mins = (new Date(e.end.dateTime) - new Date(e.start.dateTime)) / 60000; return mins >= 10; };\nconst considered = events.filter(e => inWindow(e) && isRealMeeting(e) && hasLink(e));\nconst missed = considered.filter(e => { const t = norm(e.summary); if (!t) return true; return !ffTitles.some(f => f.includes(t) || t.includes(f)); }).map(e => ({ title: e.summary || '(no title)', time: e.start.dateTime, organiser: (e.organizer && e.organizer.email) || '', attendees: (e.attendees || []).map(a => a.email).join(', ') }));\nreturn [{ json: { dateLabel: win.dateLabel, calendarMeetings: considered.length, transcriptsFound: transcripts.length, missedCount: missed.length, missed } }];"
+        }
+      },
+      {
+        "id": "if",
+        "name": "Any missed?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          760,
+          300
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "c1",
+                "leftValue": "={{ $json.missedCount }}",
+                "rightValue": 0,
+                "operator": {
+                  "type": "number",
+                  "operation": "gt"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "alert",
+        "name": "Send alert",
+        "webhookId": "f3f5afc3-f26f-478d-84eb-dc3bb30753ce",
+        "type": "n8n-nodes-base.gmail",
+        "typeVersion": 2.1,
+        "position": [
+          980,
+          220
+        ],
+        "parameters": {
+          "sendTo": "investors@sidanaventures.com",
+          "subject": "={{ $json.missedCount }} meeting(s) not recorded by Fireflies - {{ $json.dateLabel }}",
+          "emailType": "text",
+          "message": "={{ $json.missedCount }} of {{ $json.calendarMeetings }} meetings today have no Fireflies transcript.\n\n{{ $json.missed.map(m => `- ${m.title}\\n  ${new Date(m.time).toLocaleString('en-IN')}\\n  Organiser: ${m.organiser}\\n  Attendees: ${m.attendees}`).join('\\n\\n') }}\n\nWrite notes for these manually tonight: investor, startup, objection, next step agreed, date.",
+          "options": {
+            "appendAttribution": false
+          }
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "mymSHTFVWtsI3Mh7",
+            "name": "Gmail account 3"
+          }
+        }
+      },
+      {
+        "id": "noop",
+        "name": "All recorded",
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1,
+        "position": [
+          980,
+          400
+        ],
+        "parameters": {}
+      }
+    ],
+    "connections": {
+      "Every weekday 9pm": {
+        "main": [
+          [
+            {
+              "node": "Today's window",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Today's window": {
+        "main": [
+          [
+            {
+              "node": "Get today's calendar events",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Get today's Fireflies transcripts",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get today's calendar events": {
+        "main": [
+          [
+            {
+              "node": "Merge",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get today's Fireflies transcripts": {
+        "main": [
+          [
+            {
+              "node": "Merge",
+              "type": "main",
+              "index": 1
+            }
+          ]
+        ]
+      },
+      "Merge": {
+        "main": [
+          [
+            {
+              "node": "Compare",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Compare": {
+        "main": [
+          [
+            {
+              "node": "Any missed?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Any missed?": {
+        "main": [
+          [
+            {
+              "node": "Send alert",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "All recorded",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "Sidana Ventures",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "createdAt": "2026-09-23T14:34:00.447Z",
+    "updatedAt": "2026-09-23T14:34:00.447Z",
+    "workflowPublishHistory": [
+      {
+        "id": 3288,
+        "workflowId": "KImr1mdpBBlIhuPN",
+        "versionId": "5f153e7b-139b-4ad2-baae-2f8bc31381c3",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-09-23T14:36:59.285Z"
+      },
+      {
+        "id": 11814,
+        "workflowId": "KImr1mdpBBlIhuPN",
+        "versionId": "5f153e7b-139b-4ad2-baae-2f8bc31381c3",
+        "event": "deactivated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-10-05T10:09:19.152Z"
+      },
+      {
+        "id": 11815,
+        "workflowId": "KImr1mdpBBlIhuPN",
+        "versionId": "5f153e7b-139b-4ad2-baae-2f8bc31381c3",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-10-05T10:09:19.153Z"
+      },
+      {
+        "id": 11816,
+        "workflowId": "KImr1mdpBBlIhuPN",
+        "versionId": "5f153e7b-139b-4ad2-baae-2f8bc31381c3",
+        "event": "deactivated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-10-05T10:09:19.575Z"
+      },
+      {
+        "id": 11868,
+        "workflowId": "KImr1mdpBBlIhuPN",
+        "versionId": "5f153e7b-139b-4ad2-baae-2f8bc31381c3",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-10-05T10:47:34.508Z"
+      }
+    ]
+  }
+}

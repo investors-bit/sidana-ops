@@ -1,0 +1,228 @@
+{
+  "id": "y6NHL8RjZXjIi4SN",
+  "name": "READ (read-only) — unpaired investor headroom for the 19 short-runway startups",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-09T09:26:18.526Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "8138a5b4-1970-4b98-8a6f-4e052020a84e",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "trg1",
+      "name": "Run once 15:04 IST 9 Sep",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "4 15 9 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "rd0",
+      "name": "Read Deal Tracker",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        220,
+        -160
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1WzrrPelm2HsJNXOUNIEOuRajp70CUY-RrzBOs9LENjs/edit"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1WzrrPelm2HsJNXOUNIEOuRajp70CUY-RrzBOs9LENjs/edit#gid=189973839"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "rd2",
+      "name": "Read INVESTORS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        440,
+        -100
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "INVESTORS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "rd1",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cd1",
+      "name": "Headroom",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const SHORT = ['Ela Greens','Body & Beyond',\"Sugar's Daddy\",'Shippin','DACBY','Luxova','Orbis Lives','bezgoFresh','CLIKD','Caffena Coffee','Road Athena','Washtro','Desi Machines','Koncite','RECEX','Doffair','Alt F Coworking','Indie Stori','Starz AI','My Soul'];\nfunction s(v) { return String(v == null ? '' : v).trim(); }\nfunction nz(x) { return s(x).toLowerCase().replace(/[^a-z0-9]/g, ''); }\n\nconst trk = $('Read Deal Tracker').all().map(function (i) { return i.json; });\nconst inv = $('Read INVESTORS').all().map(function (i) { return i.json; });\nconst pipe = $input.all().map(function (i) { return i.json; });\nif (pipe.length < 500) { throw new Error('ABORT: PIPELINE only ' + pipe.length + ' rows'); }\nif (trk.length < 200) { throw new Error('ABORT: tracker only ' + trk.length + ' rows - truncated'); }\n\n// live, contactable investors\nconst live = inv.filter(function (r) { return s(r.investor) && s(r.do_not_contact).toLowerCase() !== 'yes'; });\n\nconst cols = Object.keys(trk[0] || {});\nlet cInv = null; const cDeals = [];\nfor (const c of cols) {\n  const l = c.toLowerCase();\n  if (!cInv && (l.indexOf('investor') >= 0 || l.indexOf('vc name') >= 0)) { cInv = c; }\n  if (l.indexOf('deals shared') >= 0 || l.indexOf('latest deal') >= 0 || l.indexOf('picked') >= 0) { cDeals.push(c); }\n}\n\n// pairs already used: pipeline + tracker\nconst used = {};\nfor (const p of pipe) { used[nz(p.startup) + '|' + nz(p.investor)] = true; }\nfor (const r of trk) {\n  const ik = nz(r[cInv]);\n  if (!ik) { continue; }\n  for (const c of cDeals) {\n    for (const d of s(r[c]).split(/[,;\\n]/)) { const t = nz(d); if (t.length > 2) { used[t + '|' + ik] = true; } }\n  }\n}\n\nconst out = [];\nfor (const st of SHORT) {\n  const sk = nz(st);\n  let free = 0; const sample = [];\n  for (const iv of live) {\n    const ik = nz(iv.investor);\n    let taken = used[sk + '|' + ik];\n    if (!taken) {\n      for (const k of Object.keys(used)) {\n        if (k.indexOf('|' + ik) > 0) { const a = k.split('|')[0]; if (a.length > 3 && sk.length > 3 && (a.indexOf(sk) >= 0 || sk.indexOf(a) >= 0)) { taken = true; break; } }\n      }\n    }\n    if (!taken) { free++; if (sample.length < 5) { sample.push(s(iv.investor)); } }\n  }\n  out.push({ startup: st, unpaired_investors: free, sample: sample });\n}\nout.sort(function (a, b) { return a.unpaired_investors - b.unpaired_investors; });\nreturn [{ json: { live_investors: live.length, tracker_rows: trk.length, headroom: out } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once 15:04 IST 9 Sep": {
+      "main": [
+        [
+          {
+            "node": "Read Deal Tracker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Deal Tracker": {
+      "main": [
+        [
+          {
+            "node": "Read INVESTORS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read INVESTORS": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Headroom",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once 15:04 IST 9 Sep": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "y6NHL8RjZXjIi4SN",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-09T09:26:18.529Z",
+      "updatedAt": "2026-09-09T09:26:18.529Z"
+    }
+  ],
+  "activeVersion": null
+}

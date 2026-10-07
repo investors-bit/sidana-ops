@@ -1,0 +1,194 @@
+{
+  "id": "BVdsiGJ5x0NVRb1E",
+  "name": "One-off BOUNCE-APPEND — guarded append to BOUNCES keyed by header (webhook, 5 Oct)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-10-05T11:15:31.123Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "d086dc51-04d1-47dd-b239-02599a729fd0",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "707837c0-3c7a-47dc-adaf-2019c91895d1",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "bounce-append-6a18",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "rh",
+      "name": "Read BOUNCES",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/BOUNCES!A1:Z600?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "bd",
+      "name": "Build",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "var b=$('Webhook').first().json.body||{};\nif(b.secret!=='sv-mail-2026-09-17-Kq7'){throw new Error('bad secret');}\nfunction s(v){return String(v==null?'':v).trim();}\nvar rows=($('Read BOUNCES').first().json||{}).values||[];\nvar hdr=(rows[0]||[]).map(s);\nvar lc=hdr.map(function(x){return x.toLowerCase();});\nvar existing=[];\nfor(var i=1;i<rows.length;i++){var r=rows[i]||[];var any=false;for(var j=0;j<r.length;j++){if(s(r[j])){any=true;break;}}if(any)existing.push(r.map(s).join(' | ').toLowerCase());}\nvar recs=b.rows||[];\nvar bad=/[–—]|&mdash;|&ndash;/;\nvar outRows=[],skipped=[];\nfor(var k=0;k<recs.length;k++){\n  var rec=recs[k];\n  var key=s(rec.email||rec.address||'').toLowerCase();\n  var dup=false;\n  if(key){for(var m=0;m<existing.length;m++){if(existing[m].indexOf(key)>=0){dup=true;break;}}}\n  if(dup){skipped.push({email:key,reason:'already in BOUNCES'});continue;}\n  var arr=[];\n  for(var c=0;c<hdr.length;c++){\n    var v='';\n    var want=lc[c];\n    var ks=Object.keys(rec);\n    for(var q=0;q<ks.length;q++){if(ks[q].toLowerCase()===want){v=s(rec[ks[q]]);break;}}\n    if(bad.test(v)){throw new Error('DASH FOUND in '+want+', refusing to write');}\n    arr.push(v);\n  }\n  outRows.push(arr);\n}\nif(b.dry){return [{json:{dry:true,header:hdr,existing_rows:existing.length,would_append:outRows,skipped:skipped}}];}\nif(!outRows.length){return [{json:{header:hdr,appended:0,skipped:skipped,note:'nothing to append'}}];}\nreturn [{json:{header:hdr,skipped:skipped,body:{values:outRows}}}];"
+      }
+    },
+    {
+      "id": "ap",
+      "name": "Append",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/BOUNCES!A1:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body || {values:[]}) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "out",
+      "name": "Out",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "var pre=$('Build').first().json;\nif(pre.dry){return [{json:pre}];}\nvar ap=$input.first().json||{};\nreturn [{json:{header:pre.header,skipped:pre.skipped,sent_rows:((pre.body||{}).values||[]).length,append_result:ap.updates||ap,raw:ap.error?ap:undefined}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Read BOUNCES",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read BOUNCES": {
+      "main": [
+        [
+          {
+            "node": "Build",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build": {
+      "main": [
+        [
+          {
+            "node": "Append",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append": {
+      "main": [
+        [
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionTimeout": 300,
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "BVdsiGJ5x0NVRb1E",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-10-05T11:15:31.125Z",
+      "updatedAt": "2026-10-05T11:15:31.125Z"
+    }
+  ],
+  "activeVersion": null
+}

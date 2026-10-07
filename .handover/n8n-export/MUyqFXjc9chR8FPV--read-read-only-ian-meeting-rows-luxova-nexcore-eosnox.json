@@ -1,0 +1,144 @@
+{
+  "id": "MUyqFXjc9chR8FPV",
+  "name": "READ (read-only) — IAN meeting rows: Luxova, Nexcore, EosNox",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-07T10:10:23.605Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "9dba4806-ea24-4f95-923b-08f24e647b20",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "trg1",
+      "name": "Run once 16:00 IST 7 Sep",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 16 7 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "rd1",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cd1",
+      "name": "Find IAN meeting rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nfunction isIAN(x) { return s(x).toLowerCase().indexOf('ian group') === 0; }\nconst WANT = ['Luxova', 'Nexcore', 'EosNox'];\n\nconst rows = $input.all().map(function (i) { return i.json; });\nif (rows.length < 500) { throw new Error('ABORT: PIPELINE returned only ' + rows.length + ' rows'); }\n\nconst ianRows = rows.filter(function (r) { return isIAN(r.investor); });\nconst names = {};\nfor (const r of ianRows) { names[s(r.investor)] = (names[s(r.investor)] || 0) + 1; }\n\nconst found = [];\nfor (const w of WANT) {\n  const hits = ianRows.filter(function (r) { return s(r.startup).toLowerCase() === w.toLowerCase(); });\n  if (hits.length === 0) { found.push({ startup: w, status: 'NO ROW - would need creating' }); continue; }\n  for (const h of hits) {\n    found.push({ startup: w, status: 'found', deal_id: s(h.deal_id), investor: s(h.investor),\n      owner: s(h.owner), deal_shared: s(h.deal_shared), date_shared: s(h.date_shared),\n      next_action: s(h.next_action), next_due: s(h.next_due), pause: s(h.pause),\n      investor_response: s(h.investor_response), meeting_scheduled: s(h.meeting_scheduled),\n      meeting_date: s(h.meeting_date), deal_status: s(h.deal_status) });\n  }\n}\n\nreturn [{ json: {\n  total_ian_rows: ianRows.length,\n  ian_names_present: names,\n  targets: found\n}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once 16:00 IST 7 Sep": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Find IAN meeting rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once 16:00 IST 7 Sep": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "MUyqFXjc9chR8FPV",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-07T10:10:23.607Z",
+      "updatedAt": "2026-09-07T10:10:23.607Z"
+    }
+  ],
+  "activeVersion": null
+}

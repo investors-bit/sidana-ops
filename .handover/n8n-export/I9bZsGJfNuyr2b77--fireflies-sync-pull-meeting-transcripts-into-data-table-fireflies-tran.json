@@ -1,0 +1,628 @@
+{
+  "id": "I9bZsGJfNuyr2b77",
+  "name": "FIREFLIES-SYNC — pull meeting transcripts into data table fireflies_transcripts (daily 17:30 IST + backfill webhook)",
+  "description": null,
+  "active": true,
+  "activeVersionId": "832656fc-f2fd-4565-b912-cf3aeb22a120",
+  "createdAt": "2026-09-21T05:18:19.474Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "832656fc-f2fd-4565-b912-cf3aeb22a120",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 2,
+  "nodes": [
+    {
+      "id": "sch",
+      "name": "Schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "30 17 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "wh",
+      "name": "Backfill hook",
+      "webhookId": "5e1c7a3f-9b24-4d6e-8f10-2c7b9a4e6d31",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        200
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-fireflies-sync-7c2e9a41b8",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "win",
+      "name": "Window",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        100
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Daily run: last 3 days. Webhook run: body {secret, fromDate, toDate, pages} for backfill (50 transcripts per page).\nlet b = {}; let viaHook = false;\ntry { viaHook = $('Backfill hook').all().length > 0; } catch (e) { viaHook = false; }\nif (viaHook) { b = $('Backfill hook').first().json.body || {}; if (b.secret !== 'sv-mail-2026-09-17-Kq7') { throw new Error('bad secret'); } }\nconst now = new Date();\nconst fromDate = b.fromDate || new Date(now.getTime() - 3 * 864e5).toISOString();\nconst toDate = b.toDate || now.toISOString();\nconst pages = Math.min(Number(b.pages) || 1, 20);\nconst out = [];\nfor (let p = 0; p < pages; p++) { out.push({ json: { fromDate, toDate, skip: p * 50 } }); }\nreturn out;"
+      }
+    },
+    {
+      "id": "ff",
+      "name": "Fetch transcripts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "position": [
+        440,
+        100
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.fireflies.ai/graphql",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ query: 'query T($fromDate: DateTime, $toDate: DateTime, $limit: Int, $skip: Int) { transcripts(fromDate: $fromDate, toDate: $toDate, limit: $limit, skip: $skip) { id title date duration organizer_email participants transcript_url meeting_attendees { displayName email } summary { overview action_items keywords } sentences { speaker_name text } } }', variables: { fromDate: $json.fromDate, toDate: $json.toDate, limit: 50, skip: $json.skip } }) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "SoEEYEKCE2qu0hbJ",
+          "name": "Fireflies Key (paste key only)"
+        }
+      }
+    },
+    {
+      "id": "sh",
+      "name": "Shape rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        100
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const rows = []; const seen = {}; const errors = [];\nfor (const it of $input.all()) {\n  const j = it.json || {};\n  if (j.errors) { errors.push(JSON.stringify(j.errors).slice(0, 300)); continue; }\n  for (const t of ((j.data || {}).transcripts || [])) {\n    if (!t || !t.id || seen[t.id]) { continue; } seen[t.id] = 1;\n    const title = String(t.title || '');\n    // titles follow the calendar pattern 'Startup <> Investor and Sidana Ventures'\n    const clean = title.replace(/\\s+(and|\\|)\\s+(Sidana Ventures( LLP)?|Rakesh Sidana|Aditya SV|Ragini Sabharwal|Naman Bhardwaj)\\b.*$/i, '');\n    const parts = clean.split(/\\s*<\\s*>\\s*/);\n    const lines = (t.sentences || []).map(s => (s.speaker_name || 'Speaker') + ': ' + (s.text || '')).join('\\n');\n    const sm = t.summary || {};\n    const list = v => Array.isArray(v) ? v.join('; ') : String(v || '');\n    rows.push({ json: {\n      ff_id: t.id, title,\n      meeting_date: t.date ? new Date(Number(t.date)).toISOString() : null,\n      duration_min: t.duration ? Math.round(Number(t.duration)) : null,\n      organizer: t.organizer_email || '',\n      attendees: (t.meeting_attendees || []).map(a => (a.displayName ? a.displayName + ' ' : '') + '<' + (a.email || '') + '>').join(', ') || list(t.participants),\n      startup_guess: parts.length > 1 ? parts[0].trim() : '',\n      investor_guess: parts.length > 1 ? parts.slice(1).join(' <> ').trim() : '',\n      overview: list(sm.overview).slice(0, 5000),\n      action_items: list(sm.action_items).slice(0, 5000),\n      keywords: list(sm.keywords).slice(0, 500),\n      transcript: lines, transcript_chars: lines.length,\n      ff_url: t.transcript_url || '', synced_at: new Date().toISOString() } });\n  }\n}\nif (errors.length && !rows.length) { throw new Error('Fireflies API error: ' + errors[0]); }\nif (!rows.length) { return [{ json: { none: true } }]; }\nreturn rows;"
+      }
+    },
+    {
+      "id": "has",
+      "name": "Has rows",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        880,
+        100
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.none }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "up",
+      "name": "Upsert transcript",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1100,
+        40
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "fvpArliLTLLXfxm0"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "ff_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.ff_id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "sum",
+      "name": "Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        100
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "let n = 0; try { n = $('Shape rows').all().filter(i => !i.json.none).length; } catch (e) { n = 0; }\nreturn [{ json: { synced: n, titles: (n ? $('Shape rows').all().map(i => i.json.title).slice(0, 20) : []) } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Schedule": {
+      "main": [
+        [
+          {
+            "node": "Window",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Backfill hook": {
+      "main": [
+        [
+          {
+            "node": "Window",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Window": {
+      "main": [
+        [
+          {
+            "node": "Fetch transcripts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch transcripts": {
+      "main": [
+        [
+          {
+            "node": "Shape rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Shape rows": {
+      "main": [
+        [
+          {
+            "node": "Has rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has rows": {
+      "main": [
+        [
+          {
+            "node": "Upsert transcript",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert transcript": {
+      "main": [
+        [
+          {
+            "node": "Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Schedule": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "I9bZsGJfNuyr2b77",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-21T05:18:19.476Z",
+      "updatedAt": "2026-09-21T05:18:19.476Z"
+    }
+  ],
+  "activeVersion": {
+    "versionId": "832656fc-f2fd-4565-b912-cf3aeb22a120",
+    "workflowId": "I9bZsGJfNuyr2b77",
+    "nodes": [
+      {
+        "id": "sch",
+        "name": "Schedule",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          0,
+          0
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "30 17 * * *"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "wh",
+        "name": "Backfill hook",
+        "webhookId": "5e1c7a3f-9b24-4d6e-8f10-2c7b9a4e6d31",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          200
+        ],
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "sidana-fireflies-sync-7c2e9a41b8",
+          "responseMode": "lastNode",
+          "responseData": "firstEntryJson",
+          "options": {}
+        }
+      },
+      {
+        "id": "win",
+        "name": "Window",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          220,
+          100
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "// Daily run: last 3 days. Webhook run: body {secret, fromDate, toDate, pages} for backfill (50 transcripts per page).\nlet b = {}; let viaHook = false;\ntry { viaHook = $('Backfill hook').all().length > 0; } catch (e) { viaHook = false; }\nif (viaHook) { b = $('Backfill hook').first().json.body || {}; if (b.secret !== 'sv-mail-2026-09-17-Kq7') { throw new Error('bad secret'); } }\nconst now = new Date();\nconst fromDate = b.fromDate || new Date(now.getTime() - 3 * 864e5).toISOString();\nconst toDate = b.toDate || now.toISOString();\nconst pages = Math.min(Number(b.pages) || 1, 20);\nconst out = [];\nfor (let p = 0; p < pages; p++) { out.push({ json: { fromDate, toDate, skip: p * 50 } }); }\nreturn out;"
+        }
+      },
+      {
+        "id": "ff",
+        "name": "Fetch transcripts",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 5000,
+        "position": [
+          440,
+          100
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.fireflies.ai/graphql",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpBearerAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ query: 'query T($fromDate: DateTime, $toDate: DateTime, $limit: Int, $skip: Int) { transcripts(fromDate: $fromDate, toDate: $toDate, limit: $limit, skip: $skip) { id title date duration organizer_email participants transcript_url meeting_attendees { displayName email } summary { overview action_items keywords } sentences { speaker_name text } } }', variables: { fromDate: $json.fromDate, toDate: $json.toDate, limit: 50, skip: $json.skip } }) }}",
+          "options": {
+            "timeout": 120000
+          }
+        },
+        "credentials": {
+          "httpBearerAuth": {
+            "id": "SoEEYEKCE2qu0hbJ",
+            "name": "Fireflies Key (paste key only)"
+          }
+        }
+      },
+      {
+        "id": "sh",
+        "name": "Shape rows",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          660,
+          100
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const rows = []; const seen = {}; const errors = [];\nfor (const it of $input.all()) {\n  const j = it.json || {};\n  if (j.errors) { errors.push(JSON.stringify(j.errors).slice(0, 300)); continue; }\n  for (const t of ((j.data || {}).transcripts || [])) {\n    if (!t || !t.id || seen[t.id]) { continue; } seen[t.id] = 1;\n    const title = String(t.title || '');\n    // titles follow the calendar pattern 'Startup <> Investor and Sidana Ventures'\n    const clean = title.replace(/\\s+(and|\\|)\\s+(Sidana Ventures( LLP)?|Rakesh Sidana|Aditya SV|Ragini Sabharwal|Naman Bhardwaj)\\b.*$/i, '');\n    const parts = clean.split(/\\s*<\\s*>\\s*/);\n    const lines = (t.sentences || []).map(s => (s.speaker_name || 'Speaker') + ': ' + (s.text || '')).join('\\n');\n    const sm = t.summary || {};\n    const list = v => Array.isArray(v) ? v.join('; ') : String(v || '');\n    rows.push({ json: {\n      ff_id: t.id, title,\n      meeting_date: t.date ? new Date(Number(t.date)).toISOString() : null,\n      duration_min: t.duration ? Math.round(Number(t.duration)) : null,\n      organizer: t.organizer_email || '',\n      attendees: (t.meeting_attendees || []).map(a => (a.displayName ? a.displayName + ' ' : '') + '<' + (a.email || '') + '>').join(', ') || list(t.participants),\n      startup_guess: parts.length > 1 ? parts[0].trim() : '',\n      investor_guess: parts.length > 1 ? parts.slice(1).join(' <> ').trim() : '',\n      overview: list(sm.overview).slice(0, 5000),\n      action_items: list(sm.action_items).slice(0, 5000),\n      keywords: list(sm.keywords).slice(0, 500),\n      transcript: lines, transcript_chars: lines.length,\n      ff_url: t.transcript_url || '', synced_at: new Date().toISOString() } });\n  }\n}\nif (errors.length && !rows.length) { throw new Error('Fireflies API error: ' + errors[0]); }\nif (!rows.length) { return [{ json: { none: true } }]; }\nreturn rows;"
+        }
+      },
+      {
+        "id": "has",
+        "name": "Has rows",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          880,
+          100
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose"
+            },
+            "conditions": [
+              {
+                "id": "c1",
+                "leftValue": "={{ $json.none }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "notEquals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "up",
+        "name": "Upsert transcript",
+        "type": "n8n-nodes-base.dataTable",
+        "typeVersion": 1.1,
+        "position": [
+          1100,
+          40
+        ],
+        "parameters": {
+          "resource": "row",
+          "operation": "upsert",
+          "dataTableId": {
+            "__rl": true,
+            "mode": "id",
+            "value": "fvpArliLTLLXfxm0"
+          },
+          "filters": {
+            "conditions": [
+              {
+                "keyName": "ff_id",
+                "condition": "eq",
+                "keyValue": "={{ $json.ff_id }}"
+              }
+            ]
+          },
+          "columns": {
+            "mappingMode": "autoMapInputData",
+            "value": {},
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": false
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "sum",
+        "name": "Summary",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1320,
+          100
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "let n = 0; try { n = $('Shape rows').all().filter(i => !i.json.none).length; } catch (e) { n = 0; }\nreturn [{ json: { synced: n, titles: (n ? $('Shape rows').all().map(i => i.json.title).slice(0, 20) : []) } }];"
+        }
+      }
+    ],
+    "connections": {
+      "Schedule": {
+        "main": [
+          [
+            {
+              "node": "Window",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Backfill hook": {
+        "main": [
+          [
+            {
+              "node": "Window",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Window": {
+        "main": [
+          [
+            {
+              "node": "Fetch transcripts",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch transcripts": {
+        "main": [
+          [
+            {
+              "node": "Shape rows",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Shape rows": {
+        "main": [
+          [
+            {
+              "node": "Has rows",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Has rows": {
+        "main": [
+          [
+            {
+              "node": "Upsert transcript",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Summary",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Upsert transcript": {
+        "main": [
+          [
+            {
+              "node": "Summary",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "Sidana Ventures",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "createdAt": "2026-09-21T05:43:33.447Z",
+    "updatedAt": "2026-09-21T05:43:33.447Z",
+    "workflowPublishHistory": [
+      {
+        "id": 1826,
+        "workflowId": "I9bZsGJfNuyr2b77",
+        "versionId": "832656fc-f2fd-4565-b912-cf3aeb22a120",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-09-21T05:43:33.535Z"
+      },
+      {
+        "id": 1827,
+        "workflowId": "I9bZsGJfNuyr2b77",
+        "versionId": "832656fc-f2fd-4565-b912-cf3aeb22a120",
+        "event": "deactivated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-09-21T05:43:33.985Z"
+      },
+      {
+        "id": 1828,
+        "workflowId": "I9bZsGJfNuyr2b77",
+        "versionId": "832656fc-f2fd-4565-b912-cf3aeb22a120",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-09-21T05:46:29.722Z"
+      }
+    ]
+  }
+}

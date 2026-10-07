@@ -1,0 +1,308 @@
+{
+  "id": "06HDdyVsRmaOZJvB",
+  "name": "One-off — DELETE Climate Angels from PIPELINE + INVESTORS",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-04T10:45:24.605Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "bffd32fa-efd3-4aa7-9ca1-b84e7900dc1a",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run (press Execute)",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "t2",
+      "name": "Delete at 16:52 IST",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        200
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "52 16 4 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "n1",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        224,
+        100
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "n2",
+      "name": "Read INVESTORS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        448,
+        100
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "INVESTORS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "n3",
+      "name": "Get sheet metadata",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        672,
+        100
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "fields",
+              "value": "sheets.properties(sheetId,title)"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "n4",
+      "name": "Build delete requests",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        100
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const meta = $input.first().json;\nconst gid = {};\nfor (const s of (meta.sheets || [])) { gid[String(s.properties.title).trim()] = s.properties.sheetId; }\nif (gid['PIPELINE'] === undefined) { throw new Error('PIPELINE tab not found'); }\nif (gid['INVESTORS'] === undefined) { throw new Error('INVESTORS tab not found'); }\n\nconst hit = (s) => /climate\\s*angels/i.test(String(s || ''));\n\nconst pipeRows = [];\nfor (const p of $('Read PIPELINE').all()) { if (hit(p.json.investor)) { pipeRows.push(Number(p.json.row_number)); } }\nconst invRows = [];\nfor (const v of $('Read INVESTORS').all()) { if (hit(v.json.investor)) { invRows.push(Number(v.json.row_number)); } }\n\nif (pipeRows.length === 0 && invRows.length === 0) { throw new Error('No Climate Angels rows found - aborting'); }\nif (pipeRows.length > 20) { throw new Error('Sanity check: refusing to delete ' + pipeRows.length + ' PIPELINE rows'); }\nif (invRows.length > 3) { throw new Error('Sanity check: refusing to delete ' + invRows.length + ' INVESTORS rows'); }\nfor (const r of pipeRows.concat(invRows)) { if (!(r > 1)) { throw new Error('Bad row number ' + r + ' - aborting'); } }\n\npipeRows.sort((a, b) => b - a);\ninvRows.sort((a, b) => b - a);\n\nconst reqs = [];\nfor (const r of pipeRows) { reqs.push({ deleteDimension: { range: { sheetId: gid['PIPELINE'], dimension: 'ROWS', startIndex: r - 1, endIndex: r } } }); }\nfor (const r of invRows) { reqs.push({ deleteDimension: { range: { sheetId: gid['INVESTORS'], dimension: 'ROWS', startIndex: r - 1, endIndex: r } } }); }\n\nreturn [{ json: { pipeline_deleted: pipeRows.length, investors_deleted: invRows.length, pipeline_rows: pipeRows, investors_rows: invRows, body: { requests: reqs } } }];"
+      }
+    },
+    {
+      "id": "n5",
+      "name": "Apply deletion",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        1120,
+        100
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Run (press Execute)": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete at 16:52 IST": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Read INVESTORS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read INVESTORS": {
+      "main": [
+        [
+          {
+            "node": "Get sheet metadata",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get sheet metadata": {
+      "main": [
+        [
+          {
+            "node": "Build delete requests",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build delete requests": {
+      "main": [
+        [
+          {
+            "node": "Apply deletion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apply deletion": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Delete at 16:34 IST": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    },
+    "node:Delete at 16:52 IST": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "06HDdyVsRmaOZJvB",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-04T10:45:24.606Z",
+      "updatedAt": "2026-09-04T10:45:24.606Z"
+    }
+  ],
+  "activeVersion": null
+}

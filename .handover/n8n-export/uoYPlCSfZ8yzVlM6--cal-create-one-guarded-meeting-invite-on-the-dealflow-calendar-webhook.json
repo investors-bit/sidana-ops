@@ -1,0 +1,169 @@
+{
+  "id": "uoYPlCSfZ8yzVlM6",
+  "name": "CAL-CREATE — one guarded meeting invite on the dealflow@ calendar (webhook, one-off; 21 Sep Orbis Lives <> Colossa)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-21T09:56:35.904Z",
+  "updatedAt": "2026-10-07T09:28:04.818Z",
+  "isArchived": false,
+  "versionId": "787228b5-ff70-452f-bccb-8a85607d85be",
+  "versionCounter": 31,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "5c2a9e71-3b8d-4f06-a1e4-7d9b2c6f8e13",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-cal-create-8d1f4a6c29",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "ck",
+      "name": "Check",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b=$input.first().json.body||{};if(b.secret!=='sv-mail-2026-09-17-Kq7'){throw new Error('bad secret');}\nif(!b.summary||!b.start||!b.end||!Array.isArray(b.attendees)||!b.attendees.length){throw new Error('missing fields');}\n// house rules (user 21 Sep): every meeting has the founder, the investor, Aditya, Shradha and the startup's owner\nconst OWNER={aditya:'investors@sidanaventures.com',chaman:'dealflow@sidanaventures.com',akansha:'akansha@sidanaventures.com',shradha:'shradhaa@sidanaventures.com'};\nconst ow=OWNER[String(b.owner||'').trim().toLowerCase()];if(!ow){throw new Error('owner must be one of Aditya, Chaman, Akansha, Shradha');}\nconst ext=b.attendees.map(e=>String(e).trim().toLowerCase()).filter(e=>!/@sidanaventures\\.com$/.test(e));\nif(b.internal_only!==true&&ext.length<(b.internal===true?1:2)){throw new Error(b.internal===true?'internal meeting needs the founder':'need both the founder and the investor as attendees');}\n// 28 Sep 2026 (Aditya): \"in all the meeting booked chaman, aditya and shradhaa, founder and investor should be there - its a compulsion in all deal flow meeting.\"\n// CHAMAN IS NOW FIXED, NOT CONDITIONAL ON OWNING THE DEAL. Before this the node added Aditya, Shradhaa and 'the owner', so on every\n// Akansha- or Shradhaa-owned deal Chaman was silently absent - which is the gap being closed. Do not make this depend on the caller.\nconst FIXED=['investors@sidanaventures.com','shradhaa@sidanaventures.com','dealflow@sidanaventures.com'];\nconst att=[...new Set(b.attendees.concat(FIXED).concat([ow]).map(e=>String(e).trim().toLowerCase()))];\n// hard pre-send check: an invite that does not carry all five does not go out\nconst missing=FIXED.filter(e=>att.indexOf(e)<0);\nif(missing.length){throw new Error('REFUSED: invite is missing '+missing.join(', ')+' - Aditya 28 Sep: all five (Aditya, Shradhaa, Chaman, founder, investor) are compulsory on every dealflow meeting');}\nconst ev={summary:b.summary,description:b.description||'',start:{dateTime:b.start,timeZone:'Asia/Kolkata'},end:{dateTime:b.end,timeZone:'Asia/Kolkata'},attendees:att.map(e=>({email:e})),conferenceData:{createRequest:{requestId:'sv-'+Date.now(),conferenceSolutionKey:{type:'hangoutsMeet'}}}};\nif(b.dry!==false){throw new Error('DRY OK | '+JSON.stringify(ev));}\nreturn [{json:{ev}}];"
+      }
+    },
+    {
+      "id": "cr",
+      "name": "Create",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleCalendarOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "conferenceDataVersion",
+              "value": "1"
+            },
+            {
+              "name": "sendUpdates",
+              "value": "all"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.ev) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "NdbYgV97aSL2PRCB",
+          "name": "Google Calendar account 4"
+        }
+      }
+    },
+    {
+      "id": "ot",
+      "name": "Out",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const j=$input.first().json;return [{json:{id:j.id,summary:j.summary,start:j.start,organizer:j.organizer&&j.organizer.email,meet:j.hangoutLink||'',attendees:(j.attendees||[]).map(a=>a.email),link:j.htmlLink}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check": {
+      "main": [
+        [
+          {
+            "node": "Create",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create": {
+      "main": [
+        [
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "none",
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "uoYPlCSfZ8yzVlM6",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-21T09:56:35.907Z",
+      "updatedAt": "2026-09-21T09:56:35.907Z"
+    }
+  ],
+  "activeVersion": null
+}

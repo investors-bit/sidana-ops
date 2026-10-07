@@ -1,0 +1,252 @@
+{
+  "id": "IZWrpdYGlWlfRWsh",
+  "name": "One-off FI-6 — fix Orbis Lives founder email (bounce) in Founders Info",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-19T06:38:42.997Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "1323dc4a-c195-47ab-a892-1fc27e10d929",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "fi2-wh",
+      "name": "Webhook",
+      "webhookId": "f4a5b6c7-2222-4d3e-8f90-fi2pixelence1",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "fi2-pixelence-email-7b1d",
+        "responseMode": "lastNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "fi2-read",
+      "name": "Read Founders Info",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Founders Info"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "fi2-find",
+      "name": "Find Pixelence row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const NEW = 'anton.kunnel@gmail.com';\nconst BAD = 'ceo@orbislives.com';\nconst REMARK = 'Do not use ' + BAD + ' - hard bounce (Delivery Status Notification Failure, 24 Sep 2026; delays from 25 Aug). Correct founder address: ' + NEW;\nconst norm = (x) => String(x == null ? '' : x).toLowerCase().replace(/[^a-z0-9]/g, '');\nconst rows = $input.all().map((i) => i.json);\nconst hits = rows.filter((r) => norm(r['Startup']) === 'orbislives');\nif (hits.length !== 1) throw new Error('Expected exactly one Orbis Lives row, found ' + hits.length);\nconst h = hits[0];\nif (norm(h['Startup']).indexOf('roadathena') >= 0) throw new Error('refusing: matched Road Athena');\nconst cols = Object.keys(rows[0]).filter((k) => k !== 'row_number');\nconst iE = cols.indexOf('Emails');\nconst iR = cols.findIndex((c) => String(c).toLowerCase().trim() === 'call remark');\nif (iE < 0) throw new Error('Emails column not found: ' + JSON.stringify(cols));\nconst old = String(h['Emails'] || '').trim();\nconst L = (i) => String.fromCharCode(65 + i);\nconst data = [{ range: \"'Founders Info'!\" + L(iE) + h.row_number, values: [[NEW]] }];\nif (iR >= 0) data.push({ range: \"'Founders Info'!\" + L(iR) + h.row_number, values: [[REMARK]] });\nreturn [{ json: { action: old.toLowerCase() === NEW ? 'noop' : 'update', row_number: h.row_number, startup: h['Startup'], founder: h['Founder Name'], old_email: old, new_email: NEW, remark_written: iR >= 0, body: { valueInputOption: 'RAW', data } } }];"
+      }
+    },
+    {
+      "id": "fi2-if",
+      "name": "Update needed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "u",
+              "leftValue": "={{ $json.action }}",
+              "rightValue": "update",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "fi2-put",
+      "name": "Write new email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "position": [
+        880,
+        -80
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "fi2-result",
+      "name": "Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const f = $('Find Pixelence row').first().json;\nreturn [{ json: { startup: f.startup, founder: f.founder, row: f.row_number, old_email: f.old_email, new_email: f.new_email, remark_written: f.remark_written, written: $input.first().json } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Read Founders Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Founders Info": {
+      "main": [
+        [
+          {
+            "node": "Find Pixelence row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Pixelence row": {
+      "main": [
+        [
+          {
+            "node": "Update needed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update needed?": {
+      "main": [
+        [
+          {
+            "node": "Write new email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write new email": {
+      "main": [
+        [
+          {
+            "node": "Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "IZWrpdYGlWlfRWsh",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-19T06:38:43.004Z",
+      "updatedAt": "2026-09-19T06:38:43.004Z"
+    }
+  ],
+  "activeVersion": null
+}

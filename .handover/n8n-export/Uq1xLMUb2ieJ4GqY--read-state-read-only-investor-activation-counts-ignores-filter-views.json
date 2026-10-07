@@ -1,0 +1,129 @@
+{
+  "id": "Uq1xLMUb2ieJ4GqY",
+  "name": "READ-STATE (read-only) — investor activation counts, ignores filter views",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-24T18:35:43.558Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "9db421d7-4596-409c-b450-23afdb9262a2",
+  "versionCounter": 6,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "d223ad68-801d-415a-891e-768d39690595",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-read-state-4a1c88",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "g",
+      "name": "Read",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=INVESTOR_CRITERIA%21A1%3AAC330&ranges=INVESTORS%21A1%3AJ330",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "v",
+      "name": "Compute",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const R = $json.valueRanges || [];\nconst pick = (n) => (R.find(x => String(x.range||'').indexOf(n) === 0) || {}).values || [];\nconst crit = pick('INVESTOR_CRITERIA');\nconst inv  = pick('INVESTORS!');\nconst g = (row,i) => (row && row[i] != null) ? String(row[i]).trim() : '';\nconst cm = {};\nfor (let i = 1; i < crit.length; i++) { const k = g(crit[i],0); if (k) cm[k] = crit[i]; }\nconst out = [108,142,221].map(n => { const r = inv[n-1]; const c = cm[String(n)];\n  return { row: n, investor: g(r,0), contact: g(r,1), email: g(r,2), sector: g(r,4).slice(0,60), stage: g(r,5), cheque: g(r,6), last_contacted: g(r,7), by: g(r,8), dnc: g(r,9) || '-',\n    crit_status: c ? g(c,3) : 'NO CRIT ROW', crit_confirmed: c ? g(c,4) : '-', review_reason: c ? g(c,5).slice(0,140) : '', stage_min: c ? g(c,11) : '', stage_max: c ? g(c,12) : '', geo: c ? g(c,19) : '' }; });\nreturn [{ json: { rows: out } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read": {
+      "main": [
+        [
+          {
+            "node": "Compute",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "Uq1xLMUb2ieJ4GqY",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-24T18:35:43.561Z",
+      "updatedAt": "2026-09-24T18:35:43.561Z"
+    }
+  ],
+  "activeVersion": null
+}

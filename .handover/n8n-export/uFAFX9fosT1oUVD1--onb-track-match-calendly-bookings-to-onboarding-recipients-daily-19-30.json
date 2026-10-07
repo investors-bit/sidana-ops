@@ -1,0 +1,1071 @@
+{
+  "id": "uFAFX9fosT1oUVD1",
+  "name": "ONB-TRACK — match Calendly bookings to onboarding recipients (daily 19:30 IST)",
+  "description": null,
+  "active": true,
+  "activeVersionId": "2593963f-de5c-4e2b-8eea-31471c5456d2",
+  "createdAt": "2026-09-29T05:24:27.128Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "2593963f-de5c-4e2b-8eea-31471c5456d2",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 2,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run (press Execute)",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        200
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "t2",
+      "name": "Daily 19:30 IST",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        380
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 0 14 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "w",
+      "name": "Window",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        290
+      ],
+      "parameters": {
+        "jsCode": "const now=new Date();\nconst iso=d=>new Date(d).toISOString().replace(/\\.\\d{3}Z$/,'Z');\n// look back far enough to catch bookings made before today, and forward for future slots\nreturn [{json:{timeMin:iso(now.getTime()-75*86400000), timeMax:iso(now.getTime()+120*86400000)}}];"
+      }
+    },
+    {
+      "id": "c1",
+      "name": "Cal A",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        440,
+        290
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleCalendarOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "timeMin",
+              "value": "={{ $('Window').first().json.timeMin }}"
+            },
+            {
+              "name": "timeMax",
+              "value": "={{ $('Window').first().json.timeMax }}"
+            },
+            {
+              "name": "singleEvents",
+              "value": "true"
+            },
+            {
+              "name": "orderBy",
+              "value": "startTime"
+            },
+            {
+              "name": "maxResults",
+              "value": "2500"
+            },
+            {
+              "name": "fields",
+              "value": "summary,items(id,status,summary,start,end,organizer(email),creator(email),attendees(email,responseStatus))"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "FMaJN0wYxb8FWUZs",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "id": "c2",
+      "name": "Cal B",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        640,
+        290
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleCalendarOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "timeMin",
+              "value": "={{ $('Window').first().json.timeMin }}"
+            },
+            {
+              "name": "timeMax",
+              "value": "={{ $('Window').first().json.timeMax }}"
+            },
+            {
+              "name": "singleEvents",
+              "value": "true"
+            },
+            {
+              "name": "orderBy",
+              "value": "startTime"
+            },
+            {
+              "name": "maxResults",
+              "value": "2500"
+            },
+            {
+              "name": "fields",
+              "value": "summary,items(id,status,summary,start,end,organizer(email),creator(email),attendees(email,responseStatus))"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "SUalv0ssD9ruGnuS",
+          "name": "Google Calendar account 2"
+        }
+      }
+    },
+    {
+      "id": "c3",
+      "name": "Cal C",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        840,
+        290
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleCalendarOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "timeMin",
+              "value": "={{ $('Window').first().json.timeMin }}"
+            },
+            {
+              "name": "timeMax",
+              "value": "={{ $('Window').first().json.timeMax }}"
+            },
+            {
+              "name": "singleEvents",
+              "value": "true"
+            },
+            {
+              "name": "orderBy",
+              "value": "startTime"
+            },
+            {
+              "name": "maxResults",
+              "value": "2500"
+            },
+            {
+              "name": "fields",
+              "value": "summary,items(id,status,summary,start,end,organizer(email),creator(email),attendees(email,responseStatus))"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "XHTquOpYpODOTLYR",
+          "name": "Google Calendar account 3"
+        }
+      }
+    },
+    {
+      "id": "c4",
+      "name": "Cal D",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        1040,
+        290
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleCalendarOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "timeMin",
+              "value": "={{ $('Window').first().json.timeMin }}"
+            },
+            {
+              "name": "timeMax",
+              "value": "={{ $('Window').first().json.timeMax }}"
+            },
+            {
+              "name": "singleEvents",
+              "value": "true"
+            },
+            {
+              "name": "orderBy",
+              "value": "startTime"
+            },
+            {
+              "name": "maxResults",
+              "value": "2500"
+            },
+            {
+              "name": "fields",
+              "value": "summary,items(id,status,summary,start,end,organizer(email),creator(email),attendees(email,responseStatus))"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "NdbYgV97aSL2PRCB",
+          "name": "Google Calendar account 4"
+        }
+      }
+    },
+    {
+      "id": "rd",
+      "name": "Read ONBOARDING",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1240,
+        290
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGetByDataFilter",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"dataFilters\":[{\"a1Range\":\"ONBOARDING!A1:AM520\"}],\"valueRenderOption\":\"UNFORMATTED_VALUE\"}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "mt",
+      "name": "Match bookings",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1460,
+        290
+      ],
+      "parameters": {
+        "jsCode": "// Matches calendar events to onboarding recipients by ATTENDEE EMAIL ADDRESS.\n// Never by title text - a Calendly booking carries no firm name in its summary.\nconst vr=$json.valueRanges||[];\nconst rows=((vr[0]&&(vr[0].valueRange||vr[0]).values)||[]);\nif(!rows.length) return [{json:{abort:true,reason:'ONBOARDING empty'}}];\nconst H=rows[0].map(x=>String(x||'').trim());\nconst L=H.map(x=>x.toLowerCase());\nconst C=n=>L.indexOf(n);\nconst cE=C('email'),cF=C('firm'),cS=C('status'),cSent=C('sent_date'),cMB=C('meeting_booked'),cNotes=C('notes');\nif(cE<0||cMB<0) return [{json:{abort:true,reason:'columns not found',H}}];\nconst colLetter=n=>{let s='';while(n>=0){s=String.fromCharCode(65+(n%26))+s;n=Math.floor(n/26)-1;}return s;};\nconst MBCOL=colLetter(cMB);\n\n// gather every event from the four calendars\nconst events=[];\nfor(const n of ['Cal A','Cal B','Cal C','Cal D']){\n  let j=null; try{ j=$(n).first().json; }catch(e){ continue; }\n  const items=(j&&j.items)||[];\n  for(const ev of items){\n    if(String(ev.status||'')==='cancelled') continue;\n    const start=(ev.start&&(ev.start.dateTime||ev.start.date))||'';\n    const who=new Set();\n    for(const a of (ev.attendees||[])){ const e=String(a.email||'').toLowerCase().trim(); if(e) who.add(e); }\n    const org=String((ev.organizer&&ev.organizer.email)||'').toLowerCase().trim(); if(org) who.add(org);\n    const cre=String((ev.creator&&ev.creator.email)||'').toLowerCase().trim(); if(cre) who.add(cre);\n    events.push({id:ev.id,summary:String(ev.summary||''),start,who:[...who]});\n  }\n}\n// index: attendee address -> earliest event\nconst byAddr=new Map();\nfor(const ev of events){ for(const e of ev.who){\n  if(e.endsWith('@sidanaventures.com')) continue;   // our own people are on every event\n  const prev=byAddr.get(e);\n  if(!prev || String(ev.start) < String(prev.start)) byAddr.set(e,ev);\n}}\n\nconst data=[]; const matched=[]; const alreadyFlagged=[];\nlet sentRows=0;\nfor(let i=1;i<rows.length;i++){\n  const r=rows[i]||[];\n  const st=String(r[cS]||'').trim().toUpperCase();\n  if(st!=='SENT'&&st!=='ONBOARDED') continue;\n  sentRows++;\n  const em=String(r[cE]||'').trim().toLowerCase();\n  if(!em) continue;\n  const ev=byAddr.get(em);\n  if(!ev) continue;\n  const cur=String(r[cMB]==null?'':r[cMB]).trim();\n  if(cur){ alreadyFlagged.push({firm:String(r[cF]||''),email:em,existing:cur}); continue; }\n  const day=String(ev.start).slice(0,10);\n  data.push({range:'ONBOARDING!'+MBCOL+(i+1),values:[[day+' | '+ev.summary.slice(0,60)]]});\n  matched.push({row:i+1,firm:String(r[cF]||''),email:em,meetingOn:day,event:ev.summary.slice(0,70)});\n}\nreturn [{json:{abort:data.length===0, sentRowsChecked:sentRows, calendarEvents:events.length,\n  externalAttendees:byAddr.size, newlyMatched:matched.length, alreadyFlagged:alreadyFlagged.length,\n  matched, body:{valueInputOption:'RAW',data}}}];"
+      }
+    },
+    {
+      "id": "ifg",
+      "name": "Any new?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        290
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              },
+              "leftValue": "={{ $json.abort }}",
+              "rightValue": ""
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "wr",
+      "name": "Write meeting_booked",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1900,
+        220
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "a6c3cba9-46cf-483c-af1c-eb4d1f9ab3b8",
+      "name": "Test hook",
+      "webhookId": "2d19ac08-e78e-412c-86ed-3d75376d7995",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        60
+      ],
+      "parameters": {
+        "path": "onb-track-run-4f1c",
+        "httpMethod": "POST",
+        "responseMode": "lastNode"
+      }
+    }
+  ],
+  "connections": {
+    "Run (press Execute)": {
+      "main": [
+        [
+          {
+            "node": "Window",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily 19:30 IST": {
+      "main": [
+        [
+          {
+            "node": "Window",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Window": {
+      "main": [
+        [
+          {
+            "node": "Cal A",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cal A": {
+      "main": [
+        [
+          {
+            "node": "Cal B",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cal B": {
+      "main": [
+        [
+          {
+            "node": "Cal C",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cal C": {
+      "main": [
+        [
+          {
+            "node": "Cal D",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cal D": {
+      "main": [
+        [
+          {
+            "node": "Read ONBOARDING",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read ONBOARDING": {
+      "main": [
+        [
+          {
+            "node": "Match bookings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Match bookings": {
+      "main": [
+        [
+          {
+            "node": "Any new?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Any new?": {
+      "main": [
+        [
+          {
+            "node": "Write meeting_booked",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Test hook": {
+      "main": [
+        [
+          {
+            "node": "Window",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Daily 19:30 IST": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "uFAFX9fosT1oUVD1",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-29T05:24:27.130Z",
+      "updatedAt": "2026-09-29T05:24:27.130Z"
+    }
+  ],
+  "activeVersion": {
+    "versionId": "2593963f-de5c-4e2b-8eea-31471c5456d2",
+    "workflowId": "uFAFX9fosT1oUVD1",
+    "nodes": [
+      {
+        "id": "t1",
+        "name": "Run (press Execute)",
+        "type": "n8n-nodes-base.manualTrigger",
+        "typeVersion": 1,
+        "position": [
+          0,
+          200
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "t2",
+        "name": "Daily 19:30 IST",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          0,
+          380
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "0 0 14 * * *"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "w",
+        "name": "Window",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          220,
+          290
+        ],
+        "parameters": {
+          "jsCode": "const now=new Date();\nconst iso=d=>new Date(d).toISOString().replace(/\\.\\d{3}Z$/,'Z');\n// look back far enough to catch bookings made before today, and forward for future slots\nreturn [{json:{timeMin:iso(now.getTime()-75*86400000), timeMax:iso(now.getTime()+120*86400000)}}];"
+        }
+      },
+      {
+        "id": "c1",
+        "name": "Cal A",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "executeOnce": true,
+        "onError": "continueRegularOutput",
+        "position": [
+          440,
+          290
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleCalendarOAuth2Api",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "timeMin",
+                "value": "={{ $('Window').first().json.timeMin }}"
+              },
+              {
+                "name": "timeMax",
+                "value": "={{ $('Window').first().json.timeMax }}"
+              },
+              {
+                "name": "singleEvents",
+                "value": "true"
+              },
+              {
+                "name": "orderBy",
+                "value": "startTime"
+              },
+              {
+                "name": "maxResults",
+                "value": "2500"
+              },
+              {
+                "name": "fields",
+                "value": "summary,items(id,status,summary,start,end,organizer(email),creator(email),attendees(email,responseStatus))"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "credentials": {
+          "googleCalendarOAuth2Api": {
+            "id": "FMaJN0wYxb8FWUZs",
+            "name": "Google Calendar account"
+          }
+        }
+      },
+      {
+        "id": "c2",
+        "name": "Cal B",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "executeOnce": true,
+        "onError": "continueRegularOutput",
+        "position": [
+          640,
+          290
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleCalendarOAuth2Api",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "timeMin",
+                "value": "={{ $('Window').first().json.timeMin }}"
+              },
+              {
+                "name": "timeMax",
+                "value": "={{ $('Window').first().json.timeMax }}"
+              },
+              {
+                "name": "singleEvents",
+                "value": "true"
+              },
+              {
+                "name": "orderBy",
+                "value": "startTime"
+              },
+              {
+                "name": "maxResults",
+                "value": "2500"
+              },
+              {
+                "name": "fields",
+                "value": "summary,items(id,status,summary,start,end,organizer(email),creator(email),attendees(email,responseStatus))"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "credentials": {
+          "googleCalendarOAuth2Api": {
+            "id": "SUalv0ssD9ruGnuS",
+            "name": "Google Calendar account 2"
+          }
+        }
+      },
+      {
+        "id": "c3",
+        "name": "Cal C",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "executeOnce": true,
+        "onError": "continueRegularOutput",
+        "position": [
+          840,
+          290
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleCalendarOAuth2Api",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "timeMin",
+                "value": "={{ $('Window').first().json.timeMin }}"
+              },
+              {
+                "name": "timeMax",
+                "value": "={{ $('Window').first().json.timeMax }}"
+              },
+              {
+                "name": "singleEvents",
+                "value": "true"
+              },
+              {
+                "name": "orderBy",
+                "value": "startTime"
+              },
+              {
+                "name": "maxResults",
+                "value": "2500"
+              },
+              {
+                "name": "fields",
+                "value": "summary,items(id,status,summary,start,end,organizer(email),creator(email),attendees(email,responseStatus))"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "credentials": {
+          "googleCalendarOAuth2Api": {
+            "id": "XHTquOpYpODOTLYR",
+            "name": "Google Calendar account 3"
+          }
+        }
+      },
+      {
+        "id": "c4",
+        "name": "Cal D",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "executeOnce": true,
+        "onError": "continueRegularOutput",
+        "position": [
+          1040,
+          290
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleCalendarOAuth2Api",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "timeMin",
+                "value": "={{ $('Window').first().json.timeMin }}"
+              },
+              {
+                "name": "timeMax",
+                "value": "={{ $('Window').first().json.timeMax }}"
+              },
+              {
+                "name": "singleEvents",
+                "value": "true"
+              },
+              {
+                "name": "orderBy",
+                "value": "startTime"
+              },
+              {
+                "name": "maxResults",
+                "value": "2500"
+              },
+              {
+                "name": "fields",
+                "value": "summary,items(id,status,summary,start,end,organizer(email),creator(email),attendees(email,responseStatus))"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "credentials": {
+          "googleCalendarOAuth2Api": {
+            "id": "NdbYgV97aSL2PRCB",
+            "name": "Google Calendar account 4"
+          }
+        }
+      },
+      {
+        "id": "rd",
+        "name": "Read ONBOARDING",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1240,
+          290
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGetByDataFilter",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleSheetsOAuth2Api",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\"dataFilters\":[{\"a1Range\":\"ONBOARDING!A1:AM520\"}],\"valueRenderOption\":\"UNFORMATTED_VALUE\"}",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "mt",
+        "name": "Match bookings",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1460,
+          290
+        ],
+        "parameters": {
+          "jsCode": "// Matches calendar events to onboarding recipients by ATTENDEE EMAIL ADDRESS.\n// Never by title text - a Calendly booking carries no firm name in its summary.\nconst vr=$json.valueRanges||[];\nconst rows=((vr[0]&&(vr[0].valueRange||vr[0]).values)||[]);\nif(!rows.length) return [{json:{abort:true,reason:'ONBOARDING empty'}}];\nconst H=rows[0].map(x=>String(x||'').trim());\nconst L=H.map(x=>x.toLowerCase());\nconst C=n=>L.indexOf(n);\nconst cE=C('email'),cF=C('firm'),cS=C('status'),cSent=C('sent_date'),cMB=C('meeting_booked'),cNotes=C('notes');\nif(cE<0||cMB<0) return [{json:{abort:true,reason:'columns not found',H}}];\nconst colLetter=n=>{let s='';while(n>=0){s=String.fromCharCode(65+(n%26))+s;n=Math.floor(n/26)-1;}return s;};\nconst MBCOL=colLetter(cMB);\n\n// gather every event from the four calendars\nconst events=[];\nfor(const n of ['Cal A','Cal B','Cal C','Cal D']){\n  let j=null; try{ j=$(n).first().json; }catch(e){ continue; }\n  const items=(j&&j.items)||[];\n  for(const ev of items){\n    if(String(ev.status||'')==='cancelled') continue;\n    const start=(ev.start&&(ev.start.dateTime||ev.start.date))||'';\n    const who=new Set();\n    for(const a of (ev.attendees||[])){ const e=String(a.email||'').toLowerCase().trim(); if(e) who.add(e); }\n    const org=String((ev.organizer&&ev.organizer.email)||'').toLowerCase().trim(); if(org) who.add(org);\n    const cre=String((ev.creator&&ev.creator.email)||'').toLowerCase().trim(); if(cre) who.add(cre);\n    events.push({id:ev.id,summary:String(ev.summary||''),start,who:[...who]});\n  }\n}\n// index: attendee address -> earliest event\nconst byAddr=new Map();\nfor(const ev of events){ for(const e of ev.who){\n  if(e.endsWith('@sidanaventures.com')) continue;   // our own people are on every event\n  const prev=byAddr.get(e);\n  if(!prev || String(ev.start) < String(prev.start)) byAddr.set(e,ev);\n}}\n\nconst data=[]; const matched=[]; const alreadyFlagged=[];\nlet sentRows=0;\nfor(let i=1;i<rows.length;i++){\n  const r=rows[i]||[];\n  const st=String(r[cS]||'').trim().toUpperCase();\n  if(st!=='SENT'&&st!=='ONBOARDED') continue;\n  sentRows++;\n  const em=String(r[cE]||'').trim().toLowerCase();\n  if(!em) continue;\n  const ev=byAddr.get(em);\n  if(!ev) continue;\n  const cur=String(r[cMB]==null?'':r[cMB]).trim();\n  if(cur){ alreadyFlagged.push({firm:String(r[cF]||''),email:em,existing:cur}); continue; }\n  const day=String(ev.start).slice(0,10);\n  data.push({range:'ONBOARDING!'+MBCOL+(i+1),values:[[day+' | '+ev.summary.slice(0,60)]]});\n  matched.push({row:i+1,firm:String(r[cF]||''),email:em,meetingOn:day,event:ev.summary.slice(0,70)});\n}\nreturn [{json:{abort:data.length===0, sentRowsChecked:sentRows, calendarEvents:events.length,\n  externalAttendees:byAddr.size, newlyMatched:matched.length, alreadyFlagged:alreadyFlagged.length,\n  matched, body:{valueInputOption:'RAW',data}}}];"
+        }
+      },
+      {
+        "id": "ifg",
+        "name": "Any new?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          1680,
+          290
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "version": 2
+            },
+            "combinator": "and",
+            "conditions": [
+              {
+                "operator": {
+                  "type": "boolean",
+                  "operation": "false",
+                  "singleValue": true
+                },
+                "leftValue": "={{ $json.abort }}",
+                "rightValue": ""
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "wr",
+        "name": "Write meeting_booked",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1900,
+          220
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdate",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleSheetsOAuth2Api",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json.body) }}",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "a6c3cba9-46cf-483c-af1c-eb4d1f9ab3b8",
+        "name": "Test hook",
+        "webhookId": "2d19ac08-e78e-412c-86ed-3d75376d7995",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          60
+        ],
+        "parameters": {
+          "path": "onb-track-run-4f1c",
+          "httpMethod": "POST",
+          "responseMode": "lastNode"
+        }
+      }
+    ],
+    "connections": {
+      "Run (press Execute)": {
+        "main": [
+          [
+            {
+              "node": "Window",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Daily 19:30 IST": {
+        "main": [
+          [
+            {
+              "node": "Window",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Window": {
+        "main": [
+          [
+            {
+              "node": "Cal A",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Cal A": {
+        "main": [
+          [
+            {
+              "node": "Cal B",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Cal B": {
+        "main": [
+          [
+            {
+              "node": "Cal C",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Cal C": {
+        "main": [
+          [
+            {
+              "node": "Cal D",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Cal D": {
+        "main": [
+          [
+            {
+              "node": "Read ONBOARDING",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Read ONBOARDING": {
+        "main": [
+          [
+            {
+              "node": "Match bookings",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Match bookings": {
+        "main": [
+          [
+            {
+              "node": "Any new?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Any new?": {
+        "main": [
+          [
+            {
+              "node": "Write meeting_booked",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          []
+        ]
+      },
+      "Test hook": {
+        "main": [
+          [
+            {
+              "node": "Window",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "Sidana Ventures",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "createdAt": "2026-09-29T05:24:40.149Z",
+    "updatedAt": "2026-09-29T05:24:40.149Z",
+    "workflowPublishHistory": [
+      {
+        "id": 7931,
+        "workflowId": "uFAFX9fosT1oUVD1",
+        "versionId": "2593963f-de5c-4e2b-8eea-31471c5456d2",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-09-29T05:24:40.701Z"
+      }
+    ]
+  }
+}

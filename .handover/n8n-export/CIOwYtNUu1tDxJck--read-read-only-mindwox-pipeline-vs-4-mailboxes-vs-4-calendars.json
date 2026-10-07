@@ -1,0 +1,469 @@
+{
+  "id": "CIOwYtNUu1tDxJck",
+  "name": "READ (read-only) — MindWox: PIPELINE vs 4 mailboxes vs 4 calendars",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-30T08:20:48.824Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "7fd5422a-524f-4b02-bc02-f65f732d6bd9",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "mw-wh",
+      "name": "Webhook",
+      "webhookId": "e5f6a7b8-7777-4e8f-9012-mindwoxcheck1",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "mindwox-crosscheck-4c8m",
+        "responseMode": "lastNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "mw-pipe",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "mw-g3",
+      "name": "Gmail Aditya",
+      "webhookId": "e5f6a7b8-7777-4e8f-9012-mwgmail003",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "onError": "continueRegularOutput",
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 100,
+        "simple": false,
+        "filters": {
+          "q": "mindwox OR madrasmindworks"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mymSHTFVWtsI3Mh7",
+          "name": "Gmail account 3"
+        }
+      }
+    },
+    {
+      "id": "mw-g2",
+      "name": "Gmail Chaman",
+      "webhookId": "e5f6a7b8-7777-4e8f-9012-mwgmail002",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "onError": "continueRegularOutput",
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 100,
+        "simple": false,
+        "filters": {
+          "q": "mindwox OR madrasmindworks"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "hwEqMRn6IxzoYs1R",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "id": "mw-g4",
+      "name": "Gmail Akansha",
+      "webhookId": "e5f6a7b8-7777-4e8f-9012-mwgmail004",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "onError": "continueRegularOutput",
+      "position": [
+        880,
+        0
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 100,
+        "simple": false,
+        "filters": {
+          "q": "mindwox OR madrasmindworks"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "9IWD8mWqdARPXloL",
+          "name": "Gmail account 4"
+        }
+      }
+    },
+    {
+      "id": "mw-g5",
+      "name": "Gmail Shradhaa",
+      "webhookId": "e5f6a7b8-7777-4e8f-9012-mwgmail005",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "onError": "continueRegularOutput",
+      "position": [
+        1100,
+        0
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 100,
+        "simple": false,
+        "filters": {
+          "q": "mindwox OR madrasmindworks"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "R5K61omYbU9oT5J8",
+          "name": "Gmail account 5"
+        }
+      }
+    },
+    {
+      "id": "mw-c1",
+      "name": "Cal 1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "onError": "continueRegularOutput",
+      "position": [
+        1320,
+        0
+      ],
+      "parameters": {
+        "url": "https://www.googleapis.com/calendar/v3/calendars/primary/events?q=mindwox&timeMin=2026-05-01T00:00:00Z&timeMax=2026-11-30T00:00:00Z&singleEvents=true&orderBy=startTime&maxResults=50",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleCalendarOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "FMaJN0wYxb8FWUZs",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "id": "mw-c2",
+      "name": "Cal 2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "onError": "continueRegularOutput",
+      "position": [
+        1540,
+        0
+      ],
+      "parameters": {
+        "url": "https://www.googleapis.com/calendar/v3/calendars/primary/events?q=mindwox&timeMin=2026-05-01T00:00:00Z&timeMax=2026-11-30T00:00:00Z&singleEvents=true&orderBy=startTime&maxResults=50",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleCalendarOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "SUalv0ssD9ruGnuS",
+          "name": "Google Calendar account 2"
+        }
+      }
+    },
+    {
+      "id": "mw-c3",
+      "name": "Cal 3",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "onError": "continueRegularOutput",
+      "position": [
+        1760,
+        0
+      ],
+      "parameters": {
+        "url": "https://www.googleapis.com/calendar/v3/calendars/primary/events?q=mindwox&timeMin=2026-05-01T00:00:00Z&timeMax=2026-11-30T00:00:00Z&singleEvents=true&orderBy=startTime&maxResults=50",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleCalendarOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "XHTquOpYpODOTLYR",
+          "name": "Google Calendar account 3"
+        }
+      }
+    },
+    {
+      "id": "mw-c4",
+      "name": "Cal 4",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "onError": "continueRegularOutput",
+      "position": [
+        1980,
+        0
+      ],
+      "parameters": {
+        "url": "https://www.googleapis.com/calendar/v3/calendars/primary/events?q=mindwox&timeMin=2026-05-01T00:00:00Z&timeMax=2026-11-30T00:00:00Z&singleEvents=true&orderBy=startTime&maxResults=50",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleCalendarOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "NdbYgV97aSL2PRCB",
+          "name": "Google Calendar account 4"
+        }
+      }
+    },
+    {
+      "id": "mw-out",
+      "name": "Cross-check",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2200,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const s = (v) => String(v == null ? '' : v).trim();\nconst low = (v) => s(v).toLowerCase();\nconst WIN_FROM = '2026-09-21', WIN_TO = '2026-09-25';\nconst inWin = (d) => { d = s(d); return /^\\d{4}-\\d{2}-\\d{2}$/.test(d) && d >= WIN_FROM && d <= WIN_TO; };\nconst isYes = (x) => low(x) === 'yes';\n\n// ---- PIPELINE ----\nconst rows = $('Read PIPELINE').all().map((i) => i.json).filter((r) => low(r.startup) === 'mindwox');\nconst sharedAll = [], weekShared = [], weekFu = [], passes = [], meetingRows = [], responses = [];\nfor (const r of rows) {\n  const inv = s(r.investor);\n  if (isYes(r.deal_shared)) sharedAll.push({ investor: inv, date: s(r.date_shared) });\n  if (inWin(r.date_shared)) weekShared.push({ investor: inv, date: s(r.date_shared) });\n  const fus = ['fu1_date', 'fu2_date', 'fu3_date'].filter((c) => inWin(r[c]));\n  if (fus.length) weekFu.push({ investor: inv, count: fus.length });\n  const resp = low(r.investor_response), ds = low(r.deal_status);\n  if (['pass', 'passed', 'not relevant'].indexOf(resp) >= 0 || ['passed', 'not relevant'].indexOf(ds) >= 0) passes.push({ investor: inv, response: s(r.investor_response), pass_reason: s(r.pass_reason), last_contact: s(r.last_contact) });\n  else if (s(r.investor_response)) responses.push({ investor: inv, response: s(r.investor_response), status: s(r.deal_status), last_contact: s(r.last_contact) });\n  if (s(r.meeting_date) || isYes(r.meeting_scheduled) || ds.indexOf('meeting') >= 0 || s(r.last_meeting_date) || s(r.meetings_held)) meetingRows.push({ investor: inv, meeting_scheduled: s(r.meeting_scheduled), meeting_date: s(r.meeting_date), meetings_held: s(r.meetings_held), last_meeting_date: s(r.last_meeting_date), status: s(r.deal_status) });\n}\nconst uniq = (a) => Array.from(new Set(a));\n\n// ---- MAILBOXES ----\nconst boxes = [['Aditya investors@', 'Gmail Aditya'], ['Chaman dealflow@', 'Gmail Chaman'], ['Akansha', 'Gmail Akansha'], ['Shradhaa', 'Gmail Shradhaa']];\nconst mailStats = {}; const inbound = []; const outboundTo = {};\nfor (const [label, node] of boxes) {\n  let items = [];\n  try { items = $(node).all(); } catch (e) { continue; }\n  let n = 0;\n  for (const it of items) {\n    const m = it.json || {};\n    if (m.error || !m.id) continue;\n    n++;\n    const h = {};\n    for (const k in (m.headers || {})) h[low(k)] = m.headers[k];\n    const fromH = s(h.from), toH = s(h.to) + ' ' + s(h.cc), subj = s(h.subject), date = s(h.date);\n    const fromSidana = /sidanaventures\\.com/i.test(fromH);\n    if (!fromSidana && !/mailer-daemon|calendly|fireflies|google\\.com/i.test(fromH)) inbound.push({ mailbox: label, date, from: fromH.slice(0, 70), subject: subj.slice(0, 80) });\n    if (fromSidana) { for (const a of (toH.match(/[A-Za-z0-9._%+\\-]+@[A-Za-z0-9.\\-]+\\.[A-Za-z]{2,}/g) || [])) { const x = low(a); if (!/sidanaventures\\.com|madrasmindworks/.test(x)) outboundTo[x] = (outboundTo[x] || 0) + 1; } }\n  }\n  mailStats[label] = n;\n}\ninbound.sort((a, b) => new Date(b.date) - new Date(a.date));\n\n// ---- CALENDARS ----\nconst calNodes = ['Cal 1', 'Cal 2', 'Cal 3', 'Cal 4'];\nconst events = []; const calErrors = [];\nfor (const node of calNodes) {\n  let items = [];\n  try { items = $(node).all(); } catch (e) { calErrors.push(node + ': ' + e.message); continue; }\n  for (const it of items) {\n    const j = it.json || {};\n    if (j.error) { calErrors.push(node + ': ' + JSON.stringify(j.error).slice(0, 120)); continue; }\n    for (const ev of (j.items || [])) {\n      events.push({ calendar: node, summary: s(ev.summary).slice(0, 90), start: s((ev.start || {}).dateTime || (ev.start || {}).date), attendees: (ev.attendees || []).map((a) => low(a.email)).filter((a) => !/sidanaventures\\.com/.test(a)).slice(0, 6), status: s(ev.status) });\n    }\n  }\n}\nconst evKey = {};\nconst calEvents = events.filter((e) => { const k = e.summary + '|' + e.start; if (evKey[k]) return false; evKey[k] = 1; return true; }).sort((a, b) => String(a.start).localeCompare(String(b.start)));\n\nreturn [{ json: {\n  startup: 'MindWox',\n  week: WIN_FROM + ' .. ' + WIN_TO,\n  pipeline: {\n    rows: rows.length,\n    total_investors_reached_till_date: uniq(sharedAll.map((x) => low(x.investor))).length,\n    week_new_investors: weekShared.length, week_new_list: weekShared,\n    week_followups: weekFu.reduce((a, b) => a + b.count, 0), week_followup_list: weekFu,\n    passes_all_time: passes.length, passes,\n    other_responses: responses,\n    meeting_rows: meetingRows,\n    first_share: sharedAll.map((x) => x.date).filter(Boolean).sort()[0] || '',\n    last_share: sharedAll.map((x) => x.date).filter(Boolean).sort().pop() || ''\n  },\n  mailboxes: { messages_matching_mindwox: mailStats, inbound_from_outside: inbound.slice(0, 25), distinct_external_recipients_mailed: Object.keys(outboundTo).length, top_recipients: Object.entries(outboundTo).sort((a, b) => b[1] - a[1]).slice(0, 25) },\n  calendars: { errors: calErrors, events_matching_mindwox: calEvents }\n} }];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Gmail Aditya",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Aditya": {
+      "main": [
+        [
+          {
+            "node": "Gmail Chaman",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Chaman": {
+      "main": [
+        [
+          {
+            "node": "Gmail Akansha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Akansha": {
+      "main": [
+        [
+          {
+            "node": "Gmail Shradhaa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Shradhaa": {
+      "main": [
+        [
+          {
+            "node": "Cal 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cal 1": {
+      "main": [
+        [
+          {
+            "node": "Cal 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cal 2": {
+      "main": [
+        [
+          {
+            "node": "Cal 3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cal 3": {
+      "main": [
+        [
+          {
+            "node": "Cal 4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cal 4": {
+      "main": [
+        [
+          {
+            "node": "Cross-check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "CIOwYtNUu1tDxJck",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-30T08:20:48.826Z",
+      "updatedAt": "2026-09-30T08:20:48.826Z"
+    }
+  ],
+  "activeVersion": null
+}

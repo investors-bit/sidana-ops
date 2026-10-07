@@ -1,0 +1,228 @@
+{
+  "id": "0WQEGITDy4byufoz",
+  "name": "READ6 (read-only) — tracker + pipeline state for the 6 remaining investors",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-09T05:26:41.696Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "4d36013a-346e-4aef-ad5e-07e334a2ceed",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "trg1",
+      "name": "Run once 11:04 IST 9 Sep",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "4 11 9 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "rd0",
+      "name": "Read Deal Tracker",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        220,
+        -120
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1WzrrPelm2HsJNXOUNIEOuRajp70CUY-RrzBOs9LENjs/edit"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1WzrrPelm2HsJNXOUNIEOuRajp70CUY-RrzBOs9LENjs/edit#gid=189973839"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "rd2",
+      "name": "Read INVESTORS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        440,
+        -60
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "INVESTORS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "rd1",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cd1",
+      "name": "Gather",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const SIX = ['Riceberg Ventures','Siana Capital','247 VC Tech Fund','CedarHill Capital','Rainmatter by Zerodha','Atomic Capital'];\nfunction s(v) { return String(v == null ? '' : v).trim(); }\nfunction norm(x) { return s(x).toLowerCase().replace(/[^a-z0-9]/g, ''); }\n\nconst trk = $('Read Deal Tracker').all().map(function (i) { return i.json; });\nconst inv = $('Read INVESTORS').all().map(function (i) { return i.json; });\nconst pipe = $input.all().map(function (i) { return i.json; });\nif (pipe.length < 500) { throw new Error('ABORT: PIPELINE returned only ' + pipe.length + ' rows'); }\nif (trk.length < 200) { throw new Error('ABORT: tracker returned only ' + trk.length + ' rows - looks truncated'); }\n\nconst cols = Object.keys(trk[0] || {});\nlet cInv = null; const cDeals = [];\nfor (const c of cols) {\n  const l = c.toLowerCase();\n  if (!cInv && (l.indexOf('investor') >= 0 || l.indexOf('vc name') >= 0)) { cInv = c; }\n  if (l.indexOf('deals shared') >= 0 || l.indexOf('latest deal') >= 0 || l.indexOf('picked') >= 0) { cDeals.push(c); }\n}\n\nconst out = {};\nfor (const name of SIX) {\n  const k = norm(name);\n  const rec = inv.filter(function (r) { return norm(r.investor) === k; })[0] || null;\n  const tr = [];\n  for (const r of trk) {\n    if (norm(r[cInv]) !== k) { continue; }\n    for (const c of cDeals) {\n      for (const d of s(r[c]).split(/[,;\\n]/)) { if (s(d).length > 2) { tr.push(s(d)); } }\n    }\n  }\n  const mine = pipe.filter(function (r) { return s(r.investor) === name; });\n  out[name] = {\n    record: rec ? { sector: s(rec.sector), stage: s(rec.stage), cheque: s(rec.cheque_inr_cr), email: s(rec.email), dnc: s(rec.do_not_contact) } : 'NOT FOUND',\n    tracker_already_shared: tr,\n    pipeline_total: mine.length,\n    pipeline_pending: mine.filter(function (r) { return s(r.deal_shared).toLowerCase() !== 'yes' && s(r.pause) === ''; }).map(function (r) { return s(r.startup); }),\n    pipeline_sent: mine.filter(function (r) { return s(r.deal_shared).toLowerCase() === 'yes'; }).map(function (r) { return s(r.startup) + (s(r.investor_response) ? ' [REPLIED]' : ''); })\n  };\n}\nreturn [{ json: { tracker_rows: trk.length, pipeline_rows: pipe.length, six: out } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once 11:04 IST 9 Sep": {
+      "main": [
+        [
+          {
+            "node": "Read Deal Tracker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Deal Tracker": {
+      "main": [
+        [
+          {
+            "node": "Read INVESTORS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read INVESTORS": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Gather",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once 11:04 IST 9 Sep": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "0WQEGITDy4byufoz",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-09T05:26:41.699Z",
+      "updatedAt": "2026-09-09T05:26:41.699Z"
+    }
+  ],
+  "activeVersion": null
+}

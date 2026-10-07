@@ -1,0 +1,236 @@
+{
+  "id": "7AHibjZoWQ1u8wPd",
+  "name": "PIPE-BATCH-FIX — guarded multi-row PIPELINE update (webhook, one-off)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-18T05:47:17.397Z",
+  "updatedAt": "2026-10-07T10:45:08.381Z",
+  "isArchived": false,
+  "versionId": "b2848c65-21c4-4b5d-9746-a2d8d798f4a9",
+  "versionCounter": 5,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "4b9e2d7a-1c63-4f58-a0e9-6d2b8c5f1e37",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-pipe-batch-fix-9c4e7b2a61",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "g",
+      "name": "Get",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/PIPELINE!A1:AI8000",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "v",
+      "name": "Validate",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b=$('Webhook').first().json.body||{};if(b.secret!=='sv-mail-2026-09-17-Kq7'){throw new Error('bad secret');}\nconst v=$input.first().json.values||[];const h=v[0].map(x=>String(x).trim());\nconst L=i=>{let n=i+1,t='';while(n>0){const m=(n-1)%26;t=String.fromCharCode(65+m)+t;n=Math.floor((n-1)/26);}return t;};\nconst data=[];const errs=[];\nfor(const u of (b.rows||[])){const r=v[u.row-1]||[];const g=k=>String(r[h.indexOf(k)]||'').trim();\n if(g('deal_id')!==u.deal_id){errs.push(u.row+' is '+g('deal_id'));continue;}\n if(/^yes$/i.test(g('deal_shared'))&&!b.allow_sent){errs.push(u.row+' already sent');continue;}\n if(u.expect_next_action!==undefined&&g('next_action')!==u.expect_next_action){errs.push(u.row+' next_action '+g('next_action'));continue;}\n for(const k of Object.keys(u.set||{})){const i=h.indexOf(k);if(i<0){throw new Error('no column '+k);}let val=u.set[k];if(k==='notes'&&u.append_notes){val=(g('notes')?g('notes')+' | ':'')+val;}data.push({range:'PIPELINE!'+L(i)+u.row,values:[[val]]});}}\nlet maxId=0;v.forEach(r=>{const m=String(r[0]||'').match(/^D(\\d+)$/);if(m){maxId=Math.max(maxId,+m[1]);}});\nlet next=v.length+1;const added=[];const appendRows=[];\nfor(const a of (b.appends||[])){const dup=v.some(r=>String(r[h.indexOf('startup')]||'').trim().toLowerCase()===String(a.startup).toLowerCase()&&String(r[h.indexOf('email')]||'').toLowerCase().indexOf(String(a.email).toLowerCase())>=0);if(dup){errs.push('dup '+a.startup);continue;}\n maxId++;const row=h.map(()=> '');row[h.indexOf('deal_id')]='D'+String(maxId).padStart(5,'0');for(const k of Object.keys(a)){const i=h.indexOf(k);if(i<0){throw new Error('no column '+k);}row[i]=a[k];}\n appendRows.push(row);added.push(row[0]+' '+a.startup);next++;}\nerrs.push.apply(errs,[]);$getWorkflowStaticData('global').added=added;\nif(errs.length&&!b.skip_errors){throw new Error('guard failed: '+errs.slice(0,20).join('; '));}\nreturn [{json:{errs:errs,added:added,appendRows:appendRows,anchor:v.length,body:{valueInputOption:'RAW',data:data}}}];"
+      }
+    },
+    {
+      "id": "w",
+      "name": "Write",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "o",
+      "name": "Out",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const j=$('Write').first().json;const a=$input.first().json;return [{json:{appended:(a.updates||{}).updatedRange||'',cells:j.totalUpdatedCells,ranges:(j.responses||[]).length,errs:$('Validate').first().json.errs,added:$('Validate').first().json.added}}];"
+      }
+    },
+    {
+      "id": "ap",
+      "name": "Append",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        700,
+        200
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/' + encodeURIComponent('PIPELINE!A' + $('Validate').first().json.anchor + ':AI' + $('Validate').first().json.anchor) + ':append?valueInputOption=RAW&insertDataOption=INSERT_ROWS' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ values: $('Validate').first().json.appendRows }) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get": {
+      "main": [
+        [
+          {
+            "node": "Validate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate": {
+      "main": [
+        [
+          {
+            "node": "Write",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write": {
+      "main": [
+        [
+          {
+            "node": "Append",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append": {
+      "main": [
+        [
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataSuccessExecution": "none",
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "global": {
+      "added": []
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "7AHibjZoWQ1u8wPd",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-18T05:47:17.400Z",
+      "updatedAt": "2026-09-18T05:47:17.400Z"
+    }
+  ],
+  "activeVersion": null
+}

@@ -1,0 +1,181 @@
+{
+  "id": "bIf7voSVSMgdg0BQ",
+  "name": "Pilot Helper — Set PLT-002 next_due",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-08-28T20:40:29.820Z",
+  "updatedAt": "2026-08-28T20:49:20.000Z",
+  "isArchived": true,
+  "versionId": "4510ab92-cae3-401e-ab3d-5aa2cf0524aa",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 0,
+  "nodes": [
+    {
+      "id": "d60b5058-0085-4271-81a4-96b7b72ed9c5",
+      "name": "Run helper",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "d9bc8637-ac81-48f1-952d-375e7b1ee579",
+      "name": "Set PLT-002 next_due",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "deal_id"
+          ],
+          "value": {
+            "deal_id": "PLT-002",
+            "next_due": "2026-08-24"
+          },
+          "schema": [
+            {
+              "id": "deal_id",
+              "displayName": "deal_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "next_due",
+              "displayName": "next_due",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        },
+        "options": {
+          "cellFormat": "RAW"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "xpNvaNKBLfvjLbte",
+          "name": "Google Sheets account 3"
+        }
+      }
+    },
+    {
+      "id": "b501d5ca-9a2f-47f8-8f8b-14bc7b4ec499",
+      "name": "Read PLT-002 back",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        448,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "deal_id",
+              "lookupValue": "PLT-002"
+            }
+          ]
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "xpNvaNKBLfvjLbte",
+          "name": "Google Sheets account 3"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Run helper": {
+      "main": [
+        [
+          {
+            "node": "Set PLT-002 next_due",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set PLT-002 next_due": {
+      "main": [
+        [
+          {
+            "node": "Read PLT-002 back",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "pinData": {},
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "bIf7voSVSMgdg0BQ",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-08-28T20:40:29.822Z",
+      "updatedAt": "2026-08-28T20:40:29.822Z"
+    }
+  ],
+  "activeVersion": null
+}

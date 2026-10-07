@@ -1,0 +1,463 @@
+{
+  "id": "RH4bdJLq5LT3dQMb",
+  "name": "One-off TW-1 — apply 11 Sep thesis corrections, drop 29 keyword-only deals, hold Equentis, resolve flags",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-11T17:52:07.128Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "aaf62839-42d3-4751-b14f-e0b49fe3122f",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once (set before activating)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "32 23 11 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "hi",
+      "name": "GET INV header",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/INVESTORS!1:1",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "hp",
+      "name": "GET PIPE header",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/PIPELINE!1:1",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "he",
+      "name": "GET ELOG header",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/{{ encodeURIComponent(\"'ERROR LOG'!1:1\") }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "r1",
+      "name": "Read INVESTORS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "INVESTORS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "r4",
+      "name": "Read ERROR LOG",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        1000,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "ERROR LOG"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "r3",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        1200,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cp",
+      "name": "Plan",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1400,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nfunction nz(x) { return s(x).toLowerCase().replace(/[^a-z0-9]/g, ''); }\nfunction colLetter(i) { let n = i + 1, out = ''; while (n > 0) { const m = (n - 1) % 26; out = String.fromCharCode(65 + m) + out; n = Math.floor((n - 1) / 26); } return out; }\nconst yes = function (x) { return s(x).toLowerCase() === 'yes'; };\nfunction cols(node, names, label) { const h = (($(node).first().json.values || [[]])[0] || []).map(s); const C = {}; for (const n of names) { const i = h.indexOf(n); if (i < 0) { throw new Error('ABORT: ' + label + ' column missing ' + n); } C[n] = colLetter(i); } return C; }\nconst IC = cols('GET INV header', ['contact_person', 'sector', 'stage', 'cheque_inr_cr'], 'INVESTORS');\nconst PC = cols('GET PIPE header', ['pause', 'next_action', 'match_type', 'notes'], 'PIPELINE');\nconst EC = cols('GET ELOG header', ['resolved'], 'ERROR LOG');\nconst inv = $('Read INVESTORS').all().map(function (i) { return i.json; });\nconst elog = $('Read ERROR LOG').all().map(function (i) { return i.json; });\nconst pipe = $input.all().map(function (i) { return i.json; });\nif (inv.length < 200) { throw new Error('ABORT: INVESTORS only ' + inv.length); }\nif (pipe.length < 5100) { throw new Error('ABORT: PIPELINE only ' + pipe.length); }\nif (elog.length < 2000) { throw new Error('ABORT: ERROR LOG only ' + elog.length); }\n// 1. thesis corrections from the Thesis tab (correction sheet wins); values chosen so the detector reads them as equal\nconst EDIT = {\n  blincinvest: { contact_person: 'Harsh Mehta', sector: 'Education (including HRTech), Financial Services, Healthcare & Wellness', stage: 'Pre-Series A, Series A, Series B', cheque_inr_cr: 'Cheque size min 10 Cr' },\n  sianacapital: { sector: 'B2B deep-tech business models; Deeptech startups more IP Led Innovations. Heathtech, Battery Tech, Biotech Medtech' },\n  dexterventures: { sector: 'Sector Agnostic' },\n  araliventures: { sector: 'AI, B2B, HRTech, SaaS (no B2B marketplaces - Arali stopped that space, 11 Sep)' }\n};\nconst idata = [], edits = [];\nfor (const k of Object.keys(EDIT)) { const rs = inv.filter(function (r) { return nz(r.investor) === k; });\n  if (rs.length !== 1) { throw new Error('ABORT: ' + k + ' resolves to ' + rs.length + ' INVESTORS rows'); }\n  for (const f of Object.keys(EDIT[k])) { if (s(rs[0][f]) === EDIT[k][f]) { continue; }\n    idata.push({ range: 'INVESTORS!' + IC[f] + rs[0].row_number, values: [[EDIT[k][f]]] }); edits.push([s(rs[0].investor), f, s(rs[0][f]).slice(0, 60), EDIT[k][f]]); } }\n// 2. drop AA-7 deals that fail the real-business check (keyword-only matches)\nconst DROPS = {\n  bdevventures: { why: 'BDev backs SaaS / AI / B2B tools; this business is not one (keyword match only)', st: ['boncuisine', 'firearmor'] },\n  onesixoneventures: { why: 'OneSixOne backs cloud & AI infrastructure / dual-use tech; this is an application or service business', st: ['boncuisine', 'ekosight', 'fuskiai', 'fydo', 'koncite', 'learningpad', 'mindwox', 'nexcore', 'opulytics', 'outlanders', 'pixelence', 'surechain', 'tronixai'] },\n  jonathansolamon: { why: 'Jonathan backs emerging tech (EV/autonomy, digital health devices, robotics & AI, space, IoT); this is outside those areas', st: ['firearmor', 'fuskiai', 'learningpad', 'mentorcloud', 'monitorexam', 'orbitai', 'skillbytes', 'healthymaster', 'mysoul', 'nexcore', 'opulytics', 'orbislives', 'outlanders', 'sahaj'] }\n};\nconst pdata = [], dropped = [], notFound = [];\nfunction drop(p, why) { const rn = p.row_number; const n = s(p.notes);\n  pdata.push({ range: 'PIPELINE!' + PC.pause + rn, values: [['Yes']] }, { range: 'PIPELINE!' + PC.next_action + rn, values: [['DROPPED - not per strategy']] },\n    { range: 'PIPELINE!' + PC.match_type + rn, values: [['Not per strategy: ' + why]] }, { range: 'PIPELINE!' + PC.notes + rn, values: [[(n ? n + ' | ' : '') + 'DROPPED 2026-09-11 - ' + why]] });\n  dropped.push([rn, s(p.deal_id), s(p.startup), s(p.investor)]); }\nfor (const ik of Object.keys(DROPS)) { for (const sk of DROPS[ik].st) {\n  const rs = pipe.filter(function (p) { return nz(p.investor) === ik && nz(p.startup) === sk && !yes(p.deal_shared) && !yes(p.pause); });\n  if (!rs.length) { notFound.push(ik + ' / ' + sk); continue; }\n  if (rs.length > 1) { throw new Error('ABORT: ' + ik + ' / ' + sk + ' has ' + rs.length + ' active rows'); }\n  drop(rs[0], 'real-business check - ' + DROPS[ik].why + ' (review 11 Sep)'); } }\n// Chennai Angels passed on Body & Beyond; Arali stopped B2B marketplaces\nfor (const p of pipe) { if (yes(p.deal_shared) || yes(p.pause)) { continue; } const ik = nz(p.investor), sk = nz(p.startup);\n  if (ik === 'chennaiangels' && sk === 'bodybeyond') { drop(p, 'Chennai Angels passed on Body & Beyond (too early for TCA)'); }\n  if (ik === 'araliventures' && (sk === 'surechain' || sk === 'desimachines')) { drop(p, 'Arali has stopped investing in B2B marketplaces'); } }\n// 3. hold Equentis until the user confirms how to apply its 8-10 Cr booked revenue / ARR bar\nconst held = [];\nfor (const p of pipe) { if (nz(p.investor) !== 'equentis' || yes(p.deal_shared) || yes(p.pause)) { continue; } const rn = p.row_number; const n = s(p.notes);\n  pdata.push({ range: 'PIPELINE!' + PC.pause + rn, values: [['Yes']] }, { range: 'PIPELINE!' + PC.next_action + rn, values: [['HOLD - Equentis wants 8-10 Cr booked revenue / ARR (confirm with user)']] },\n    { range: 'PIPELINE!' + PC.notes + rn, values: [[(n ? n + ' | ' : '') + 'ON HOLD 2026-09-11 - Equentis revenue bar 8-10 Cr (Thesis tab)']] });\n  held.push([rn, s(p.deal_id), s(p.startup)]); }\n// 4. resolve today's THESIS-WATCH flags that are handled (Equentis stays open)\nconst RES = ['riceberg ventures', 'blinc invest', 'siana capital', 'dexter ventures', 'thechennaiangels', 'arali ventures'];\nconst edata = [], resolved = [];\nfor (const e of elog) { if (s(e.workflow) !== 'THESIS-WATCH' || s(e.resolved) !== '') { continue; } if (RES.indexOf(s(e.investor).toLowerCase()) < 0) { continue; }\n  edata.push({ range: \"'ERROR LOG'!\" + EC.resolved + e.row_number, values: [['Yes']] }); resolved.push([e.row_number, s(e.investor), s(e.error_type)]); }\nif (dropped.length > 35) { throw new Error('ABORT: ' + dropped.length + ' drops exceeds guard'); }\nif (held.length > 20) { throw new Error('ABORT: ' + held.length + ' Equentis holds exceeds guard'); }\nconst all = idata.concat(pdata).concat(edata);\nif (!all.length) { all.push({ range: 'PIPELINE!' + PC.pause + '1', values: [['pause']] }); }\nreturn [{ json: { pipeline_rows: pipe.length, edits: edits, dropped: dropped, not_found: notFound, equentis_held: held, resolved: resolved, data: all } }];"
+      }
+    },
+    {
+      "id": "wa",
+      "name": "Write all",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "position": [
+        1600,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ valueInputOption: 'RAW', data: $('Plan').first().json.data }) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "ra",
+      "name": "Read PIPELINE after",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        1800,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cv",
+      "name": "Verify",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nfunction nz(x) { return s(x).toLowerCase().replace(/[^a-z0-9]/g, ''); }\nconst yes = function (x) { return s(x).toLowerCase() === 'yes'; };\nconst plan = $('Plan').first().json;\nconst pipe = $input.all().map(function (i) { return i.json; });\nconst ids = plan.dropped.map(function (d) { return d[1]; }).concat(plan.equentis_held.map(function (d) { return d[1]; }));\nconst notPaused = pipe.filter(function (p) { return ids.indexOf(s(p.deal_id)) >= 0 && !yes(p.pause); }).map(function (p) { return s(p.deal_id); });\nconst eqActive = pipe.filter(function (p) { return nz(p.investor) === 'equentis' && !yes(p.deal_shared) && !yes(p.pause); }).length;\nreturn [{ json: { pipeline_after: pipe.length, same_rows: pipe.length === plan.pipeline_rows, edits: plan.edits, dropped: plan.dropped.length, not_found: plan.not_found, equentis_held: plan.equentis_held.length, equentis_still_active: eqActive, resolved: plan.resolved, not_paused: notPaused,\n  active_queue: pipe.filter(function (p) { return !yes(p.deal_shared) && !yes(p.pause); }).length, ok: notPaused.length === 0 && eqActive === 0 && pipe.length === plan.pipeline_rows } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once (set before activating)": {
+      "main": [
+        [
+          {
+            "node": "GET INV header",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET INV header": {
+      "main": [
+        [
+          {
+            "node": "GET PIPE header",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET PIPE header": {
+      "main": [
+        [
+          {
+            "node": "GET ELOG header",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET ELOG header": {
+      "main": [
+        [
+          {
+            "node": "Read INVESTORS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read INVESTORS": {
+      "main": [
+        [
+          {
+            "node": "Read ERROR LOG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read ERROR LOG": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Plan": {
+      "main": [
+        [
+          {
+            "node": "Write all",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write all": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE after",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE after": {
+      "main": [
+        [
+          {
+            "node": "Verify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once (set before activating)": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "RH4bdJLq5LT3dQMb",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-11T17:52:07.130Z",
+      "updatedAt": "2026-09-11T17:52:07.130Z"
+    }
+  ],
+  "activeVersion": null
+}

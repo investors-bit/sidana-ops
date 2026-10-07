@@ -1,0 +1,211 @@
+{
+  "id": "MzlapX61OosgQFJQ",
+  "name": "CRIT-PATCH — apply field patches to INVESTOR_CRITERIA rows from a local POST (activate only while patching)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-17T10:11:22.573Z",
+  "updatedAt": "2026-10-07T09:49:10.929Z",
+  "isArchived": false,
+  "versionId": "e843fc47-c7c5-4ac7-b8ab-0767cbe2dca8",
+  "versionCounter": 6,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh1",
+      "name": "Webhook",
+      "webhookId": "e6f4d5a7-8192-4dae-9fc0-3b4c5d6e7f80",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-crit-patch-4b8e2f19c6",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "g1",
+      "name": "GET criteria",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/INVESTOR_CRITERIA!A1:AF400",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "c1",
+      "name": "Plan",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v){return String(v==null?'':v).trim();}\nfunction colL(i){let n=i+1,t='';while(n>0){const m=(n-1)%26;t=String.fromCharCode(65+m)+t;n=Math.floor((n-1)/26);}return t;}\nconst body=$('Webhook').first().json.body||{};\nif(body.secret!=='sv-crit-2026-09-17-q8Lz'){throw new Error('bad secret');}\nconst dry=body.dry!==false;const patches=body.patches||[];\nif(!Array.isArray(patches)||patches.length>150){throw new Error('bad patch list');}\nconst rows=$('GET criteria').first().json.values||[];if(rows.length<200){throw new Error('ABORT short criteria read '+rows.length);}\nconst h=rows[0].map(s);const X={};h.forEach((k,i)=>X[k]=i);\nconst CODES=new Set('D2C_BEAUTY_PERSONAL_CARE,D2C_HEALTH_WELLNESS,D2C_FASHION_JEWELLERY,D2C_HOME_LIFESTYLE,FNB_PACKAGED_FOOD,FNB_BEVERAGE,ALCOHOL,FNB_FOODSERVICE,MEAT_SEAFOOD,CONSUMER_TECH_APP,CONSUMER_SERVICES,QUICK_HYPERLOCAL_COMMERCE,RETAIL_TECH,TRAVEL_HOSPITALITY,PET,MEDIA_GAMING_CREATOR,AI_FOUNDATIONAL,AI_APPLIED_ENTERPRISE,SAAS_ENTERPRISE,MARTECH_ADTECH,HRTECH,CYBERSECURITY,DATA_INFRA_DEVTOOLS,IOT_SMART_HARDWARE,SEMICONDUCTOR_ELECTRONICS,SPACETECH,DEFENCE_AEROSPACE,XR_IMMERSIVE,FINTECH_CONSUMER,FINTECH_SME_LENDING,FINTECH_INFRA,INSURTECH,HEALTHTECH_DIGITAL,HEALTHCARE_DELIVERY,MEDTECH_DEVICES,BIOTECH_PHARMA,EDTECH_K12_TESTPREP,EDTECH_HIGHER_ED_ADMISSIONS,EDTECH_UPSKILLING_ENTERPRISE,CLIMATE_ENERGY,EV_CLEAN_MOBILITY,WATER_TECH,AGRITECH,SUSTAINABLE_MATERIALS_CIRCULAR,LOGISTICS_SUPPLY_CHAIN,MANUFACTURING_INDUSTRIAL,CONSTRUCTION_INFRA_TECH,REAL_ESTATE_COWORKING_PROPTECH,LEGAL_GOV_TECH,SAFETY_FIRE_TECH,D2C_BRAND,B2C_APP_PLATFORM,B2C_MARKETPLACE,B2B_SAAS,B2B_MARKETPLACE,B2B_SERVICES_OPERATOR,B2B2C,HARDWARE_DEVICE,INFRA_API_PLATFORM,DEEP_IP_RND,ANY'.split(','));\nconst STAGES=['PRE_SEED','SEED','TRACTION','PRE_SERIES_A','SERIES_A','SERIES_B','SERIES_C_PLUS'];\nconst LISTF=['sectors_in','sectors_excluded','models_in','models_excluded'];const UNION=['sectors_excluded','models_excluded'];\nconst ALLOWED=['sector_mode','sectors_in','sectors_excluded','models_in','models_excluded','stage_min','stage_max','cheque_min_cr','cheque_max_cr','lead_max_cr','round_max_cr','arr_min_cr','revenue_required','geography_scope','status'];\nconst splitL=v=>s(v).split(/[,;|]/).map(x=>x.trim()).filter(Boolean);\nconst data=[];const report=[];const errors=[];\nfor(const p of patches){const sr=s(p.sheet_row);let ri=-1;for(let i=1;i<rows.length;i++){if(s((rows[i]||[])[X.sheet_row])===sr){ri=i;break;}}\n  if(ri<0){errors.push(sr+' '+p.firm+': sheet_row not found');continue;}\n  const row=rows[ri]||[];const rn=ri+1;const done=[];\n  for(const [f,v0] of Object.entries(p.changes||{})){\n    if(ALLOWED.indexOf(f)<0||X[f]===undefined){errors.push(sr+' '+f+': field not allowed');continue;}\n    let v=v0;\n    if(LISTF.indexOf(f)>=0){let items=splitL(v);const bad=items.filter(c=>!CODES.has(c));if(bad.length){errors.push(sr+' '+f+' dropped unknown '+bad.join('/'));}items=items.filter(c=>CODES.has(c));\n      if(UNION.indexOf(f)>=0){const cur=splitL(row[X[f]]);items=cur.concat(items.filter(c=>cur.indexOf(c)<0));}\n      v=items.join(', ');}\n    if((f==='stage_min'||f==='stage_max')&&STAGES.indexOf(s(v))<0){errors.push(sr+' '+f+' bad stage '+v);continue;}\n    if(f==='status'&&['ACTIVE','HOLD','STOP','DNC'].indexOf(s(v))<0){errors.push(sr+' bad status');continue;}\n    if(f==='sector_mode'&&['AGNOSTIC','LIST'].indexOf(s(v))<0){errors.push(sr+' bad sector_mode');continue;}\n    if((f==='cheque_min_cr'||f==='cheque_max_cr'||f==='lead_max_cr'||f==='round_max_cr'||f==='arr_min_cr')&&s(v)!==''&&!isFinite(Number(v))){errors.push(sr+' '+f+' not a number');continue;}\n    // A ceiling is enforced by ENGINE-DAILY and fails OPEN when blank: only 1 of 303\n    // investors has one on file, so a wrong value mutes real matches while a missing\n    // one costs nothing. Refuse a negative or absurd figure rather than write it.\n    if((f==='cheque_max_cr'||f==='lead_max_cr'||f==='round_max_cr')&&s(v)!==''&&(Number(v)<=0||Number(v)>10000)){errors.push(sr+' '+f+' out of range '+v);continue;}\n    if(f==='revenue_required'){v=/^y/i.test(s(v))?'Y':'N';}\n    const before=s(row[X[f]]);if(before===s(v)){continue;}\n    data.push({range:'INVESTOR_CRITERIA!'+colL(X[f])+rn,values:[[String(v)]]});done.push(f+': '+before.slice(0,60)+' -> '+String(v).slice(0,80));}\n  if(done.length){const notes=s(row[X.rule_notes]);data.push({range:'INVESTOR_CRITERIA!'+colL(X.rule_notes)+rn,values:[[(notes?notes+' | ':'')+s(p.note).slice(0,300)]]});report.push(sr+' '+s(row[X.investor])+' :: '+done.join(' ; '));}\n}\nreturn [{json:{dry:dry,cells:data.length,rows_changed:report.length,errors:errors,report:report,data:dry?[]:data}}];"
+      }
+    },
+    {
+      "id": "i1",
+      "name": "Write?",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        -100
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const j=$('Plan').first().json; if(j.dry||!j.data.length){return [];} return [{json:{cells:j.data.length}}];"
+      }
+    },
+    {
+      "id": "w1",
+      "name": "Write",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        800,
+        -100
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ valueInputOption: 'RAW', data: $('Plan').first().json.data }) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "o1",
+      "name": "Out",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const j=$('Plan').first().json;return [{json:{dry:j.dry,cells:j.cells,rows_changed:j.rows_changed,errors:j.errors,report:j.report}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "GET criteria",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET criteria": {
+      "main": [
+        [
+          {
+            "node": "Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Plan": {
+      "main": [
+        [
+          {
+            "node": "Write?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write?": {
+      "main": [
+        [
+          {
+            "node": "Write",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataSuccessExecution": "all",
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "MzlapX61OosgQFJQ",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-17T10:11:22.577Z",
+      "updatedAt": "2026-09-17T10:11:22.577Z"
+    }
+  ],
+  "activeVersion": null
+}

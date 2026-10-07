@@ -1,0 +1,237 @@
+{
+  "id": "FAwtJYmFsYV5MlYB",
+  "name": "One-off FQ-2 — simulate investor cap (5/week, 5/day) → deals per startup per week (read only)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-10T14:40:36.350Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "f0cb9bca-35b8-4ad5-b833-2d5e8f2b2b87",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once 20:12 IST 10 Sep",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "12 20 10 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "rc",
+      "name": "Read CONFIG",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        220,
+        -120
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "CONFIG"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "rs",
+      "name": "Read STARTUPS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        440,
+        -60
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "STARTUPS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "r3",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "c1",
+      "name": "Simulate caps",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nfunction nz(x) { return s(x).toLowerCase().replace(/[^a-z0-9@.]/g, ''); }\nconst pipe = $input.all().map(function (i) { return i.json; });\nconst cfg = $('Read CONFIG').all().map(function (i) { return i.json; });\nconst stRaw = $('Read STARTUPS').all().map(function (i) { return i.json; });\nif (pipe.length < 500) { throw new Error('ABORT: PIPELINE only ' + pipe.length); }\n\nfunction parseDate(v) {\n  const t = s(v); if (!t) { return null; }\n  let m = t.match(/^(\\d{4})-(\\d{2})-(\\d{2})/); if (m) { return m[1] + '-' + m[2] + '-' + m[3]; }\n  m = t.match(/^(\\d{1,2})[\\/-](\\d{1,2})[\\/-](\\d{2,4})/);\n  if (m) { let y = +m[3]; if (y < 100) { y += 2000; } return y + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[1]).slice(-2); }\n  const d = new Date(t); return isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);\n}\nfunction who(p) { const e = s(p.email).split(/[,;\\s]+/)[0].toLowerCase(); return e ? e : 'name:' + nz(p.investor); }\nconst TODAY = '2026-09-10';\n\n// config lines that mention caps, for reference\nconst capLines = [];\nfor (const r of cfg) { const line = Object.keys(r).filter(function (k) { return k !== 'row_number'; }).map(function (k) { return s(r[k]); }).filter(Boolean).join(' | ');\n  if (/cap|limit|max|lock|per.?day/i.test(line)) { capLines.push(line); } }\n\n// mailbox capacity = the most each owner has actually sent in one day\nconst ownerDay = {}; const actualWeek = {};\nfor (const p of pipe) {\n  if (s(p.deal_shared).toLowerCase() !== 'yes') { continue; }\n  const d = parseDate(p.date_shared); if (!d) { continue; }\n  const k = s(p.owner) + '|' + d; ownerDay[k] = (ownerDay[k] || 0) + 1;\n  if (d >= '2026-09-04' && d <= TODAY) { const sn = s(p.startup); actualWeek[sn] = (actualWeek[sn] || 0) + 1; }\n}\nconst ownerCap = {};\nfor (const k of Object.keys(ownerDay)) { const o = k.split('|')[0]; if (!ownerCap[o] || ownerDay[k] > ownerCap[o]) { ownerCap[o] = ownerDay[k]; } }\n\n// the queue as it stands\nconst active = {};\nfor (const r of stRaw) { if (s(r.startup) && s(r.active).toLowerCase() === 'yes') { active[s(r.startup)] = s(r.owner); } }\nconst rows = [];\nfor (const p of pipe) {\n  if (s(p.deal_shared).toLowerCase() === 'yes' || s(p.pause).toLowerCase() === 'yes') { continue; }\n  const sn = s(p.startup); if (!active[sn]) { continue; }\n  let d = parseDate(p.next_due); if (!d || d <= TODAY) { d = '2026-09-11'; }   // overdue goes out on the next run\n  rows.push({ st: sn, owner: s(p.owner), inv: who(p), due: d, pri: parseFloat(s(p.priority)) || 0 });\n}\nrows.sort(function (a, b) { return a.due < b.due ? -1 : (a.due > b.due ? 1 : b.pri - a.pri); });\n\n// weekdays from tomorrow, grouped into 5-weekday weeks\nconst days = []; { const d = new Date(Date.UTC(2026, 8, 11)); while (days.length < 400) { const w = d.getUTCDay(); if (w !== 0 && w !== 6) { days.push(d.toISOString().slice(0, 10)); } d.setUTCDate(d.getUTCDate() + 1); } }\n\nfunction simulate(invCap, perDay) {\n  let remaining = rows.slice(); const byStartup = {}; const weekTotals = []; let deferredEver = 0; const drain = {};\n  let invWeek = {};\n  for (let di = 0; di < days.length && remaining.length; di++) {\n    const day = days[di]; const wk = Math.floor(di / 5);\n    if (di % 5 === 0) { invWeek = {}; }\n    const ownerToday = {}; const invToday = {};\n    const next = [];\n    for (const r of remaining) {\n      if (r.due > day) { next.push(r); continue; }\n      const oc = ownerCap[r.owner] || 40;\n      if ((ownerToday[r.owner] || 0) >= oc) { next.push(r); continue; }\n      const used = perDay ? (invToday[r.inv] || 0) : (invWeek[r.inv] || 0);\n      if (invCap && used >= invCap) { if (!r.bumped) { r.bumped = true; deferredEver++; } next.push(r); continue; }\n      ownerToday[r.owner] = (ownerToday[r.owner] || 0) + 1;\n      invToday[r.inv] = (invToday[r.inv] || 0) + 1; invWeek[r.inv] = (invWeek[r.inv] || 0) + 1;\n      if (!byStartup[r.st]) { byStartup[r.st] = []; }\n      byStartup[r.st][wk] = (byStartup[r.st][wk] || 0) + 1;\n      weekTotals[wk] = (weekTotals[wk] || 0) + 1;\n      drain[r.st] = wk + 1;\n    }\n    remaining = next;\n    for (const r of remaining) { delete r.bumped; }\n  }\n  return { byStartup: byStartup, weekTotals: weekTotals, deferred: deferredEver, drain: drain, leftover: remaining.length };\n}\n// each scenario gets fresh copies (simulate mutates only the bumped flag, which it clears)\nconst base = simulate(0, false);\nconst wk5 = simulate(5, false);\nconst day5 = simulate(5, true);\n\nfunction w(arr, i) { return (arr && arr[i]) || 0; }\nfunction avg4(arr) { let t = 0; for (let i = 0; i < 4; i++) { t += w(arr, i); } return Math.round(t / 4 * 10) / 10; }\nconst per = [];\nfor (const sn of Object.keys(active)) {\n  const q = rows.filter(function (r) { return r.st === sn; }).length;\n  per.push({ startup: sn, owner: active[sn], queued: q, actual_last_week: actualWeek[sn] || 0,\n    nocap_w1_4: [w(base.byStartup[sn], 0), w(base.byStartup[sn], 1), w(base.byStartup[sn], 2), w(base.byStartup[sn], 3)],\n    nocap_avg: avg4(base.byStartup[sn]), nocap_weeks_to_empty: base.drain[sn] || 0,\n    cap5wk_w1_4: [w(wk5.byStartup[sn], 0), w(wk5.byStartup[sn], 1), w(wk5.byStartup[sn], 2), w(wk5.byStartup[sn], 3)],\n    cap5wk_avg: avg4(wk5.byStartup[sn]), cap5wk_weeks_to_empty: wk5.drain[sn] || 0,\n    cap5day_avg: avg4(day5.byStartup[sn]) });\n}\nper.sort(function (a, b) { return b.cap5wk_avg - a.cap5wk_avg || a.startup.localeCompare(b.startup); });\nfunction totals(sim) { const t = []; for (let i = 0; i < 8; i++) { t.push(w(sim.weekTotals, i)); } return t; }\nreturn [{ json: {\n  queued_rows: rows.length, active_startups: Object.keys(active).length,\n  mailbox_daily_capacity_used: ownerCap, config_cap_lines: capLines,\n  weekly_totals_first8: { nocap: totals(base), cap5_per_week: totals(wk5), cap5_per_day: totals(day5) },\n  deals_pushed_to_later_week_by_cap: { cap5_per_week: wk5.deferred, cap5_per_day: day5.deferred },\n  weeks_to_send_whole_queue: { nocap: base.weekTotals.length, cap5_per_week: wk5.weekTotals.length, cap5_per_day: day5.weekTotals.length },\n  per_startup: per } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once 20:12 IST 10 Sep": {
+      "main": [
+        [
+          {
+            "node": "Read CONFIG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read CONFIG": {
+      "main": [
+        [
+          {
+            "node": "Read STARTUPS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read STARTUPS": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Simulate caps",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once 20:12 IST 10 Sep": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "FAwtJYmFsYV5MlYB",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-10T14:40:36.352Z",
+      "updatedAt": "2026-09-10T14:40:36.352Z"
+    }
+  ],
+  "activeVersion": null
+}

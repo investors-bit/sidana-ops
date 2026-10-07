@@ -1,0 +1,217 @@
+{
+  "id": "bn71hxk8JXFH9HXj",
+  "name": "SHEET-WRITE-TABS — clear and rewrite named tabs on an existing Google Sheet (webhook, one-off)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-24T08:41:37.383Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "6a1dbadc-eb3f-46bd-9cda-da32a5a92eb5",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "f5150898-95bf-4214-9535-ace864f07625",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-sheet-write-tabs-4a8c2e71b6",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "p1",
+      "name": "Prep clear",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b=$input.first().json.body||{};if(b.secret!=='sv-mail-2026-09-17-Kq7'){throw new Error('bad secret');}\nif(!b.spreadsheetId||!Array.isArray(b.sheets)||!b.sheets.length){throw new Error('need spreadsheetId + sheets[]');}\nconst q=s=>\"'\"+String(s).replace(/'/g,\"''\")+\"'\";\nreturn [{json:{spreadsheetId:b.spreadsheetId,body:{ranges:b.sheets.map(s=>q(s.name)+'!A1:Z2000')}}}];"
+      }
+    },
+    {
+      "id": "clr",
+      "name": "Clear tabs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $json.spreadsheetId }}/values:batchClear",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "p2",
+      "name": "Prep write",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b=$('Webhook').first().json.body;const q=s=>\"'\"+String(s).replace(/'/g,\"''\")+\"'\";\nconst data=b.sheets.map(s=>({range:q(s.name)+'!A1',values:s.values}));\nreturn [{json:{spreadsheetId:b.spreadsheetId,body:{valueInputOption:'RAW',data:data}}}];"
+      }
+    },
+    {
+      "id": "wr",
+      "name": "Write tabs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $json.spreadsheetId }}/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "out",
+      "name": "Out",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const j=$input.first().json;return [{json:{spreadsheetId:j.spreadsheetId,updated:(j.responses||[]).map(r=>r.updatedRange),totalUpdatedCells:j.totalUpdatedCells}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Prep clear",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep clear": {
+      "main": [
+        [
+          {
+            "node": "Clear tabs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clear tabs": {
+      "main": [
+        [
+          {
+            "node": "Prep write",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep write": {
+      "main": [
+        [
+          {
+            "node": "Write tabs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write tabs": {
+      "main": [
+        [
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataSuccessExecution": "none",
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "bn71hxk8JXFH9HXj",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-24T08:41:37.385Z",
+      "updatedAt": "2026-09-24T08:41:37.385Z"
+    }
+  ],
+  "activeVersion": null
+}

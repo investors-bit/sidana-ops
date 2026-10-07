@@ -1,0 +1,213 @@
+{
+  "id": "gX5nwT2QQJEtLWtn",
+  "name": "REPLY-SEND-MB4-ATT — guarded in-thread reply WITH attachment from Akansha's mailbox (webhook)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-29T10:40:41.726Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "f114b9df-92f8-4bd4-9285-2eb61df4ed73",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "4581185d-914f-4e73-bde3-07cac2667c2e",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-reply-send-mb4-att-2c7f9e4b16",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "ck",
+      "name": "Check",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b=$input.first().json.body||{};if(b.secret!=='sv-mail-2026-09-17-Kq7'){throw new Error('bad secret');}if(!/^[0-9a-f]{16}$/.test(b.thread_id||'')){throw new Error('bad thread id');}if(!b.html||!b.expect_last_from){throw new Error('missing html / expect_last_from');}if(!b.pdf_b64||!b.filename){throw new Error('missing pdf_b64 / filename');}return [{json:b}];"
+      }
+    },
+    {
+      "id": "gt",
+      "name": "Get thread",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "url": "={{ 'https://gmail.googleapis.com/gmail/v1/users/me/threads/' + $json.thread_id + '?format=metadata&metadataHeaders=From&metadataHeaders=To&metadataHeaders=Cc&metadataHeaders=Subject&metadataHeaders=Message-ID&metadataHeaders=References' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "9IWD8mWqdARPXloL",
+          "name": "Gmail account 4"
+        }
+      }
+    },
+    {
+      "id": "bd",
+      "name": "Build",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const p=$('Check').first().json;const m=$input.first().json;\nfunction hdr(x,n){const h=((x.payload||{}).headers||[]).find(y=>String(y.name).toLowerCase()===n);return h?String(h.value):'';}\nconst addrs=v=>(String(v).match(/[A-Za-z0-9._%+'-]+@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)+/g)||[]).map(x=>x.toLowerCase());\nconst OURS=/@sidanaventures\\.com$/;\nconst msgs=m.messages||[];if(m.id!==p.thread_id||!msgs.length){throw new Error('thread not found in mailbox 4');}\nconst first=msgs[0],last=msgs[msgs.length-1];\nif(!p.allow_external_start&&!/@sidanaventures\\.com/i.test(hdr(first,'from'))){throw new Error('thread not started by us');}\nconst lf=addrs(hdr(last,'from'))[0]||'';if(lf!==p.expect_last_from.toLowerCase()){throw new Error('latest message is from '+lf+', expected '+p.expect_last_from+' - someone replied since; not sending');}\nconst onThread=new Set();msgs.forEach(x=>['from','to','cc'].forEach(k=>addrs(hdr(x,k)).forEach(a=>onThread.add(a))));\nlet to=[];\nif(Array.isArray(p.to_only)&&p.to_only.length){to=p.to_only.map(a=>String(a).trim().toLowerCase());const bad=to.filter(a=>!onThread.has(a));if(bad.length){throw new Error('not on thread: '+bad.join(', '));}}\nelse{to=[...onThread].filter(a=>!OURS.test(a)&&!/calendar|calendly|noreply|no-reply|otter|fireflies/.test(a));}\nif(!to.length){throw new Error('no recipients');}\nconst subj='Re: '+hdr(first,'subject').replace(/^\\s*(re|fwd?|fw)\\s*:\\s*/i,'');\nconst msgId=hdr(last,'message-id');const refs=(hdr(last,'references')+' '+msgId).trim();\nconst wrap=s=>String(s).replace(/(.{76})/g,'$1\\r\\n');\nconst bodyB64=wrap(Buffer.from(p.html,'utf8').toString('base64'));\nconst pdfB64=wrap(String(p.pdf_b64).replace(/\\s+/g,''));\nconst pdfBytes=Buffer.from(String(p.pdf_b64).replace(/\\s+/g,''),'base64').length;\nconst B='sv_'+Date.now().toString(36)+'_bnd';\nconst mime=['From: Akansha SV <akansha@sidanaventures.com>','To: '+to.join(', '),(p.cc?'Cc: '+p.cc:'X-Sidana: 1'),'Subject: =?UTF-8?B?'+Buffer.from(subj,'utf8').toString('base64')+'?=','In-Reply-To: '+msgId,'References: '+refs,'MIME-Version: 1.0','Content-Type: multipart/mixed; boundary=\"'+B+'\"','','--'+B,'Content-Type: text/html; charset=\"UTF-8\"','Content-Transfer-Encoding: base64','',bodyB64,'--'+B,'Content-Type: application/pdf; name=\"'+p.filename+'\"','Content-Disposition: attachment; filename=\"'+p.filename+'\"','Content-Transfer-Encoding: base64','',pdfB64,'--'+B+'--',''].join('\\r\\n');\nconst raw=Buffer.from(mime,'utf8').toString('base64').replace(/\\+/g,'-').replace(/\\//g,'_').replace(/=+$/,'');\nif(p.dry!==false){throw new Error('DRY OK | to='+to.join(', ')+' | subject='+subj+' | pdf='+(pdfBytes/1048576).toFixed(2)+'MB | raw='+(raw.length/1048576).toFixed(2)+'MB | msgs='+msgs.length);}\nreturn [{json:{to:to.join(', '),subject:subj,raw:raw,threadId:p.thread_id,pdf_mb:+(pdfBytes/1048576).toFixed(2)}}];"
+      }
+    },
+    {
+      "id": "sd",
+      "name": "Send",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://gmail.googleapis.com/gmail/v1/users/me/messages/send",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ raw: $json.raw, threadId: $json.threadId }) }}",
+        "options": {
+          "timeout": 180000
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "9IWD8mWqdARPXloL",
+          "name": "Gmail account 4"
+        }
+      }
+    },
+    {
+      "id": "ot",
+      "name": "Out",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b=$('Build').first().json;const r=$input.first().json;return [{json:{to:b.to,subject:b.subject,pdf_mb:b.pdf_mb,sent_id:r.id||'',thread:r.threadId||''}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check": {
+      "main": [
+        [
+          {
+            "node": "Get thread",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get thread": {
+      "main": [
+        [
+          {
+            "node": "Build",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build": {
+      "main": [
+        [
+          {
+            "node": "Send",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send": {
+      "main": [
+        [
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "gX5nwT2QQJEtLWtn",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-29T10:40:41.728Z",
+      "updatedAt": "2026-09-29T10:40:41.728Z"
+    }
+  ],
+  "activeVersion": null
+}

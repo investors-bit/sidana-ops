@@ -1,0 +1,180 @@
+{
+  "id": "k0XYTgU4qZYDrCpJ",
+  "name": "One-off CS-AUDIT (read-only) — are Mail + Thesis corrections fully carried through? (17 Sep)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-17T04:41:48.072Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "c12b749b-d769-41a4-a537-de9956677636",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once (set before activating)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "18 10 17 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "gc",
+      "name": "GET corrections",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1WOErvuYawblG-HkrK5In5YWtEiKKt_DeoVpmL5na6GU/values:batchGet?ranges=%27Mail%20correction%27!A1:Z300&ranges=%27Thesis%20correction%27!A1:Z300",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "gp",
+      "name": "GET pilot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=INVESTORS!A1:Z400&ranges=PIPELINE!A1:AJ6000&ranges=%27ERROR%20LOG%27!A1:J5000",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "an",
+      "name": "Audit",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nfunction nz(x) { return s(x).toLowerCase().replace(/[^a-z0-9]/g, ''); }\nfunction emails(x) { return s(x).toLowerCase().match(/[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,}/g) || []; }\nfunction idx(h) { const o = {}; (h || []).forEach(function (k, i) { o[nz(k)] = i; }); return o; }\nconst cr = $('GET corrections').first().json.valueRanges || [];\nconst mail = (cr[0] || {}).values || []; const thesis = (cr[1] || {}).values || [];\nconst pv = $('GET pilot').first().json.valueRanges || [];\nconst inv = (pv[0] || {}).values || []; const pipe = (pv[1] || {}).values || []; const elog = (pv[2] || {}).values || [];\nif (inv.length < 100 || pipe.length < 500 || mail.length < 2 || thesis.length < 3) { throw new Error('ABORT short read inv ' + inv.length + ' pipe ' + pipe.length + ' mail ' + mail.length + ' thesis ' + thesis.length); }\nconst IH = idx(inv[0]); const PH = idx(pipe[0]); const EH = idx(elog[0]);\nconst invRows = inv.slice(1).map(function (r, i) { return { row: i + 2, name: s(r[IH.investor]), email: s(r[IH.email]), contact: s(r[IH.contactperson]), sector: s(r[IH.sector]), stage: s(r[IH.stage]), cheque: s(r[IH.chequeinrcr]), dnc: s(r[IH.donotcontact]) }; }).filter(function (x) { return x.name; });\nfunction resolveInv(firm, hint) { const f = nz(firm); let m = f ? invRows.filter(function (x) { return nz(x.name) === f; }) : [];\n  if (!m.length && f.length >= 4) { m = invRows.filter(function (x) { const n = nz(x.name); return n.length >= 4 && (n.indexOf(f) >= 0 || f.indexOf(n) >= 0); }); }\n  if (!m.length && hint.length) { m = invRows.filter(function (x) { return emails(x.email).some(function (e) { return hint.indexOf(e) >= 0; }); }); }\n  if (!m.length && hint.length) { const dom = hint.map(function (e) { return e.split('@')[1]; }); m = invRows.filter(function (x) { return emails(x.email).some(function (e) { return dom.indexOf(e.split('@')[1]) >= 0; }); }); }\n  return m; }\nconst P = pipe.slice(1).map(function (r, i) { return { row: i + 2, id: s(r[PH.dealid]), startup: s(r[PH.startup]), investor: s(r[PH.investor]), email: s(r[PH.email]), sent: /^yes$/i.test(s(r[PH.dealshared])), date_shared: s(r[PH.dateshared]).slice(0, 10), paused: /^yes$/i.test(s(r[PH.pause])), na: s(r[PH.nextaction]), due: s(r[PH.nextdue]).slice(0, 10), resp: s(r[PH.investorresponse]), notes: s(r[PH.notes]) }; }).filter(function (x) { return x.id || x.startup; });\n// ---------- MAIL CORRECTIONS ----------\nconst MH = idx(mail[0]);\nconst mailOut = [];\nfor (let r = 1; r < mail.length; r++) { const row = mail[r] || []; const firm = s(row[MH.firmname]); if (!firm) { continue; }\n  const wrong = emails(row[MH.wrongmails]); const correct = emails(row[MH.correctmails]); const contact = s(row[MH.updatedcontactname]);\n  const invs = resolveInv(firm, wrong.concat(correct)); const names = invs.map(function (x) { return nz(x.name); });\n  const invState = invs.map(function (x) { const e = emails(x.email); return x.name + ' <' + x.email + '>' + (e.some(function (z) { return wrong.indexOf(z) >= 0; }) ? ' [STILL HAS WRONG]' : '') + (correct.length && !e.some(function (z) { return correct.indexOf(z) >= 0; }) ? ' [MISSING CORRECT]' : '') + (x.dnc ? ' dnc=' + x.dnc : ''); });\n  const toWrong = P.filter(function (p) { return emails(p.email).some(function (z) { return wrong.indexOf(z) >= 0; }); });\n  const liveQueuedWrong = toWrong.filter(function (p) { return !p.sent && !p.paused; });\n  const sentWrong = toWrong.filter(function (p) { return p.sent; });\n  const sentWrongFollowLive = sentWrong.filter(function (p) { return !p.paused && !p.resp && /follow/i.test(p.na); });\n  const sentWrongNoReshare = correct.length ? sentWrong.filter(function (p) { return !P.some(function (q) { return q.row !== p.row && nz(q.startup) === nz(p.startup) && emails(q.email).some(function (z) { return correct.indexOf(z) >= 0; }); }); }) : [];\n  // queued rows for the firm whose PIPELINE email differs from the INVESTORS email (not re-pointed)\n  const firmQueued = P.filter(function (p) { return !p.sent && !p.paused && names.indexOf(nz(p.investor)) >= 0; });\n  const notRepointed = firmQueued.filter(function (p) { const iv = invs.find(function (x) { return nz(x.name) === nz(p.investor); }); const ie = iv ? emails(iv.email) : []; const pe = emails(p.email); return !pe.length || (ie.length && !pe.some(function (z) { return ie.indexOf(z) >= 0; })); });\n  mailOut.push({ sheet_row: r + 1, firm: firm, wrong: wrong.join(', '), correct: correct.length ? correct.join(', ') : s(row[MH.correctmails]), contact: contact, sheet_status: s(row[MH.updatedonpilotsheet]),\n    investors_rows: invState.length ? invState : ['NOT RESOLVED IN INVESTORS'],\n    queued_live_to_wrong: liveQueuedWrong.map(function (p) { return p.id + ' ' + p.startup + ' due ' + p.due; }),\n    sent_to_wrong: sentWrong.length, sent_to_wrong_followup_still_live: sentWrongFollowLive.map(function (p) { return p.id + ' ' + p.startup + ' ' + p.na + ' ' + p.due; }),\n    sent_to_wrong_not_reshared: sentWrongNoReshare.map(function (p) { return p.id + ' ' + p.startup + ' sent ' + p.date_shared + (p.paused ? ' (paused)' : ' (NOT paused)'); }),\n    firm_queued_live: firmQueued.length, firm_queued_email_mismatch: notRepointed.map(function (p) { return p.id + ' ' + p.investor + ' <' + p.email + '>'; }) }); }\n// ---------- THESIS CORRECTIONS ----------\nlet hr = -1; for (let r = 0; r < Math.min(5, thesis.length); r++) { if ((thesis[r] || []).some(function (c) { return /^sector$/i.test(s(c)); })) { hr = r; break; } }\nconst top = thesis[0] || []; const sub = hr >= 0 ? thesis[hr] : [];\nfunction col(re, arr) { for (let i = 0; i < arr.length; i++) { if (re.test(s(arr[i]))) { return i; } } return -1; }\nconst TC = { firm: col(/firm/i, top), contact: col(/contact/i, top), email: col(/^e-?mail/i, top), sector: col(/^sector/i, sub), stage: col(/^stage/i, sub), cheque: col(/che/i, sub), geo: col(/geo/i, sub), arr: col(/arr/i, sub) };\nconst STG = [['preseed', /pre[\\s-]?seed/i], ['seed', /(^|[^-\\w])seed/i], ['preseriesa', /pre[\\s-]?series[\\s-]?a/i], ['seriesa', /(^|[^-\\w])series[\\s-]?a/i], ['seriesb', /series[\\s-]?b/i], ['seriesc', /series[\\s-]?c/i], ['growth', /growth|late/i]];\nfunction stageSet(x) { const o = []; STG.forEach(function (p) { if (p[1].test(x)) { o.push(p[0]); } }); return o; }\nfunction nums(x) { return (s(x).match(/\\d+(?:\\.\\d+)?/g) || []).map(Number); }\nconst thesisOut = [];\nfor (let r = hr + 1; r < thesis.length; r++) { const row = thesis[r] || []; const firm = s(row[TC.firm]); if (!firm) { continue; }\n  const c = { email: s(row[TC.email]), sector: s(row[TC.sector]), stage: s(row[TC.stage]), cheque: s(row[TC.cheque]), geo: s(row[TC.geo]), arr: s(row[TC.arr]) };\n  const invs = resolveInv(firm, emails(c.email));\n  const flags = [];\n  if (!invs.length) { flags.push('NOT RESOLVED'); }\n  invs.forEach(function (iv) {\n    const cs = stageSet(c.stage), is = stageSet(iv.stage);\n    if (cs.length && !/same|previous/i.test(c.stage) && cs.some(function (x) { return is.indexOf(x) < 0; })) { flags.push('STAGE ' + iv.name + ': corr [' + c.stage + '] vs inv [' + iv.stage + ']'); }\n    const cn = nums(c.cheque), inn = nums(iv.cheque);\n    if (cn.length && !/same|previous/i.test(c.cheque) && cn.some(function (x) { return inn.indexOf(x) < 0; })) { flags.push('CHEQUE ' + iv.name + ': corr [' + c.cheque + '] vs inv [' + iv.cheque + ']'); }\n    if (c.sector && !/same|previous/i.test(c.sector)) { const toks = c.sector.toLowerCase().split(/[,/&|;\\n]+|\\band\\b/).map(function (t) { return t.trim(); }).filter(function (t) { return t.length > 2; }); const miss = toks.filter(function (t) { return iv.sector.toLowerCase().indexOf(t.split(/\\s+/)[0]) < 0; }); if (miss.length) { flags.push('SECTOR ' + iv.name + ': missing [' + miss.join('; ').slice(0, 120) + '] inv [' + iv.sector.slice(0, 120) + ']'); } }\n  });\n  thesisOut.push({ sheet_row: r + 1, firm: firm, resolved_to: invs.map(function (x) { return x.name; }), corr: (c.stage + ' | ' + c.cheque + ' | ' + c.sector).slice(0, 180), inv: invs.map(function (x) { return (x.stage + ' | ' + x.cheque + ' | ' + x.sector).slice(0, 180); }), flags: flags }); }\n// ---------- ERROR LOG THESIS-WATCH ----------\nconst tw = []; const unresolvedByType = {};\nfor (let r = 1; r < elog.length; r++) { const row = elog[r] || []; const res = s(row[EH.resolved]); const wf = s(row[EH.workflow]); const et = s(row[EH.errortype]);\n  if (!res) { const k = wf + ':' + et; unresolvedByType[k] = (unresolvedByType[k] || 0) + 1; }\n  if (/thesis/i.test(wf)) { tw.push([r + 1, s(row[EH.timestamp]), s(row[EH.investor]), et, res || 'UNRESOLVED', s(row[EH.details]).slice(0, 140)]); } }\nreturn [{ json: { read: { investors: invRows.length, pipeline: P.length, mail_rows: mail.length - 1, thesis_rows: thesis.length - hr - 1, error_log: elog.length - 1, thesis_header_row: hr + 1, thesis_cols: TC },\n  mail: mailOut, thesis: thesisOut, thesis_watch: tw.filter(function (x) { return x[4] === 'UNRESOLVED'; }), thesis_watch_resolved_count: tw.filter(function (x) { return x[4] !== 'UNRESOLVED'; }).length, unresolved_error_log_by_type: unresolvedByType } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once (set before activating)": {
+      "main": [
+        [
+          {
+            "node": "GET corrections",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET corrections": {
+      "main": [
+        [
+          {
+            "node": "GET pilot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET pilot": {
+      "main": [
+        [
+          {
+            "node": "Audit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once (set before activating)": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "k0XYTgU4qZYDrCpJ",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-17T04:41:48.075Z",
+      "updatedAt": "2026-09-17T04:41:48.075Z"
+    }
+  ],
+  "activeVersion": null
+}

@@ -1,0 +1,131 @@
+{
+  "id": "2N8upCa4hfw1bEsY",
+  "name": "One-off TEST — PeerCapital onboarding email to rakesh@ (16 Sep)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-16T11:31:51.818Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "6d416bf4-0e4b-4548-8253-f3e099b9901f",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "b2000001-0000-4000-8000-000000000001",
+      "name": "Webhook",
+      "webhookId": "e4f5a6b7-c8d9-4e0f-a1b2-c3d4e5f6a7b8",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "onb-test-peercapital-7f3a91",
+        "responseMode": "lastNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "b2000001-0000-4000-8000-000000000002",
+      "name": "Test payload (exact PeerCapital email)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Exact subject and HTML body from the ONBOARDING row for PeerCapital (send order 29).\n// Test recipient only: rakesh@sidanaventures.com.\nreturn [{ json: {\n  to: 'rakesh@sidanaventures.com',\n  subject: \"Introducing Sidana Ventures - co-investment and curated Indian dealflow for PeerCapital\",\n  html: \"<p>Hi Ekta,</p><p>I am Shradhaa from <b>Sidana Ventures</b>. I am writing to introduce us, and to see whether PeerCapital would be open to co-investing with us and receiving deal flow matched to your thesis.</p><p><b>A little about us</b></p><p>Sidana Ventures is a family-run investment and consulting firm with a global footprint. Our network spans LPs, HNIs and family offices worldwide, and we work closely with Indian AIFs, VCFs and global VC funds to connect high-potential startups with strategic capital.</p><p>We are launching a <b>$20M fund</b> in 2027 to invest in innovation, and would welcome the chance to co-invest alongside you.</p><p>Through our investment banking arm we currently support <b>160+ startups</b> raising from early stage to Series A, across SpaceTech, Aerospace, Automotive, AI, Renewable Energy, Consumer Tech, D2C, B2B SaaS and more. That arm is sector-agnostic. We work closely with founders through their first round, and invest ourselves in the second.</p><ul><li>50 to 60 investor meetings a month</li><li>3 to 5 rounds closed a month</li></ul><p>Our investor network includes <b>Peak XV Partners, Accel, Insight Partners, Premji Invest, WestBridge Capital, Bessemer Venture Partners, Elevation Capital, Nexus Venture Partners, Z47 (formerly Matrix Partners India), A91 Partners, British International Investment, Jungle Ventures, Flipkart Ventures, Blume Ventures and Info Edge Ventures</b>, and we share curated, thesis-matched deals with the funds in it.</p><p>Sidana Ventures was founded by <b>Rakesh Sidana</b> (<a href=\\\"https://www.linkedin.com/in/rakeshsidana/\\\">LinkedIn</a>), an entrepreneur and investor with over three decades of experience. Rakesh has been recognised by IIM Ahmedabad and works actively with NASSCOM, BITS BioCyTiH Foundation and leading educational and research institutions. He is copied here.</p><p><b>Why PeerCapital</b></p><p>We went through your work before writing. You describe yourselves as Early Stage Venture Capital, for Peers, by Peers. The portfolio bears that out - Aloha, Bidso, Fabriclore, Flashco, Furrl. Most recently Redacto, seed round, Rs 12 crore (led), October 30 2025.</p><p><b>Four things, and then we are set up</b></p><ol><li>Which sectors are you actively looking at today?</li><li>At what point do you typically enter - pre-product, pre-revenue, or first revenue?</li><li>Is <b>up to INR 15 Cr</b> still your working range?</li><li>Anything you explicitly do not look at?</li></ol><p>Once that is on record we match our book against it and send only what fits. If your thesis shifts, one line to us and we re-match everything.</p><p>Fifteen minutes if you would rather talk it through: <a href=\\\"https://calendly.com/investors-sidanaventures/30min\\\">calendly.com/investors-sidanaventures/30min</a></p><p>Best,<br>Shradhaa<br>Sidana Ventures | <a href=\\\"https://sidanaventures.com\\\">sidanaventures.com</a> | <a href=\\\"https://rakeshsidana.org\\\">rakeshsidana.org</a></p>\"\n} }];"
+      }
+    },
+    {
+      "id": "b2000001-0000-4000-8000-000000000003",
+      "name": "Gmail: Send test (Shradhaa)",
+      "webhookId": "f5a6b7c8-d9e0-4f1a-b2c3-d4e5f6a7b8c9",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        480,
+        300
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "={{ $json.to }}",
+        "subject": "={{ $json.subject }}",
+        "emailType": "html",
+        "message": "={{ $json.html }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "Shradhaa"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "R5K61omYbU9oT5J8",
+          "name": "Gmail account 5"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Test payload (exact PeerCapital email)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Test payload (exact PeerCapital email)": {
+      "main": [
+        [
+          {
+            "node": "Gmail: Send test (Shradhaa)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "2N8upCa4hfw1bEsY",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-16T11:31:51.821Z",
+      "updatedAt": "2026-09-16T11:31:51.821Z"
+    }
+  ],
+  "activeVersion": null
+}

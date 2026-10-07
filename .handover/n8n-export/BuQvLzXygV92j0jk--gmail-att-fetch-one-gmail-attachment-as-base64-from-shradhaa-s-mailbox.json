@@ -1,0 +1,345 @@
+{
+  "id": "BuQvLzXygV92j0jk",
+  "name": "GMAIL-ATT — fetch one Gmail attachment as base64 from Shradhaa's mailbox (webhook, one-off)",
+  "description": null,
+  "active": true,
+  "activeVersionId": "3d0c7740-8bde-463f-bc98-43f25ba58eb9",
+  "createdAt": "2026-09-23T07:09:09.235Z",
+  "updatedAt": "2026-10-07T10:25:14.689Z",
+  "isArchived": false,
+  "versionId": "3d0c7740-8bde-463f-bc98-43f25ba58eb9",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "6f2c8a41-9d35-4e77-b1c6-3a8e5d0f2b94",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-gmail-att-7e3d1b9c45",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "ck",
+      "name": "Check",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b=$input.first().json.body||{};if(b.secret!=='sv-mail-2026-09-17-Kq7'){throw new Error('bad secret');}if(!b.msg||!b.att){throw new Error('need msg + att');}return [{json:b}];"
+      }
+    },
+    {
+      "id": "gt",
+      "name": "Get attachment",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "url": "={{ 'https://gmail.googleapis.com/gmail/v1/users/me/messages/' + $json.msg + '/attachments/' + $json.att }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "R5K61omYbU9oT5J8",
+          "name": "Gmail account 5"
+        }
+      }
+    },
+    {
+      "id": "ot",
+      "name": "Out",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const j=$input.first().json;return [{json:{size:j.size,data:j.data}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check": {
+      "main": [
+        [
+          {
+            "node": "Get attachment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get attachment": {
+      "main": [
+        [
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "none",
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "BuQvLzXygV92j0jk",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-23T07:09:09.237Z",
+      "updatedAt": "2026-09-23T07:09:09.237Z"
+    }
+  ],
+  "activeVersion": {
+    "versionId": "3d0c7740-8bde-463f-bc98-43f25ba58eb9",
+    "workflowId": "BuQvLzXygV92j0jk",
+    "nodes": [
+      {
+        "id": "wh",
+        "name": "Webhook",
+        "webhookId": "6f2c8a41-9d35-4e77-b1c6-3a8e5d0f2b94",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          0
+        ],
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "sidana-gmail-att-7e3d1b9c45",
+          "responseMode": "lastNode",
+          "responseData": "firstEntryJson",
+          "options": {}
+        }
+      },
+      {
+        "id": "ck",
+        "name": "Check",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          200,
+          0
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const b=$input.first().json.body||{};if(b.secret!=='sv-mail-2026-09-17-Kq7'){throw new Error('bad secret');}if(!b.msg||!b.att){throw new Error('need msg + att');}return [{json:b}];"
+        }
+      },
+      {
+        "id": "gt",
+        "name": "Get attachment",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          400,
+          0
+        ],
+        "parameters": {
+          "url": "={{ 'https://gmail.googleapis.com/gmail/v1/users/me/messages/' + $json.msg + '/attachments/' + $json.att }}",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "gmailOAuth2",
+          "options": {
+            "timeout": 60000
+          }
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "R5K61omYbU9oT5J8",
+            "name": "Gmail account 5"
+          }
+        }
+      },
+      {
+        "id": "ot",
+        "name": "Out",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          600,
+          0
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const j=$input.first().json;return [{json:{size:j.size,data:j.data}}];"
+        }
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Check",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Check": {
+        "main": [
+          [
+            {
+              "node": "Get attachment",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get attachment": {
+        "main": [
+          [
+            {
+              "node": "Out",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "Sidana Ventures",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "createdAt": "2026-09-23T07:09:09.239Z",
+    "updatedAt": "2026-09-23T07:09:09.239Z",
+    "workflowPublishHistory": [
+      {
+        "id": 2943,
+        "workflowId": "BuQvLzXygV92j0jk",
+        "versionId": "3d0c7740-8bde-463f-bc98-43f25ba58eb9",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-09-23T07:09:13.358Z"
+      },
+      {
+        "id": 2944,
+        "workflowId": "BuQvLzXygV92j0jk",
+        "versionId": "3d0c7740-8bde-463f-bc98-43f25ba58eb9",
+        "event": "deactivated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-09-23T07:10:22.007Z"
+      },
+      {
+        "id": 2945,
+        "workflowId": "BuQvLzXygV92j0jk",
+        "versionId": "3d0c7740-8bde-463f-bc98-43f25ba58eb9",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-09-23T07:10:22.007Z"
+      },
+      {
+        "id": 2946,
+        "workflowId": "BuQvLzXygV92j0jk",
+        "versionId": "3d0c7740-8bde-463f-bc98-43f25ba58eb9",
+        "event": "deactivated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-09-23T07:10:22.496Z"
+      },
+      {
+        "id": 8581,
+        "workflowId": "BuQvLzXygV92j0jk",
+        "versionId": "3d0c7740-8bde-463f-bc98-43f25ba58eb9",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-09-29T10:36:12.437Z"
+      },
+      {
+        "id": 8582,
+        "workflowId": "BuQvLzXygV92j0jk",
+        "versionId": "3d0c7740-8bde-463f-bc98-43f25ba58eb9",
+        "event": "deactivated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-09-29T10:37:48.498Z"
+      },
+      {
+        "id": 8583,
+        "workflowId": "BuQvLzXygV92j0jk",
+        "versionId": "3d0c7740-8bde-463f-bc98-43f25ba58eb9",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-09-29T10:37:48.499Z"
+      },
+      {
+        "id": 8584,
+        "workflowId": "BuQvLzXygV92j0jk",
+        "versionId": "3d0c7740-8bde-463f-bc98-43f25ba58eb9",
+        "event": "deactivated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-09-29T10:37:49.061Z"
+      },
+      {
+        "id": 13004,
+        "workflowId": "BuQvLzXygV92j0jk",
+        "versionId": "3d0c7740-8bde-463f-bc98-43f25ba58eb9",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-10-07T10:25:15.194Z"
+      }
+    ]
+  }
+}

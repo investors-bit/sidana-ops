@@ -1,0 +1,260 @@
+{
+  "id": "zOaAei6jyMvJZfzA",
+  "name": "SHEET-CREATE-SHARE — create a Google Sheet from JSON and set anyone-with-link viewer (webhook, one-off)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-24T07:42:30.031Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "9baf9a14-effe-4c6f-ac7a-0537b83b9603",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "d7269718-5a28-4199-9d92-163a57295d1d",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-sheet-create-7d2f4b9e13",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "prep",
+      "name": "Prep create",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b=$input.first().json.body||{};if(b.secret!=='sv-mail-2026-09-17-Kq7'){throw new Error('bad secret');}\nif(!b.title||!Array.isArray(b.sheets)||!b.sheets.length){throw new Error('need title + sheets[]');}\nconst sheets=b.sheets.map((s,i)=>({properties:{title:String(s.name),index:i,gridProperties:{frozenRowCount:s.freeze===false?0:1}}}));\nreturn [{json:{body:{properties:{title:String(b.title)},sheets:sheets},_share:b.share!==false}}];"
+      }
+    },
+    {
+      "id": "create",
+      "name": "Create spreadsheet",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "prepvals",
+      "name": "Prep values",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b=$('Webhook').first().json.body;const sp=$input.first().json;\nconst data=b.sheets.map(s=>({range:\"'\"+String(s.name).replace(/'/g,\"''\")+\"'!A1\",values:s.values}));\nreturn [{json:{spreadsheetId:sp.spreadsheetId,spreadsheetUrl:sp.spreadsheetUrl,body:{valueInputOption:'RAW',data:data}}}];"
+      }
+    },
+    {
+      "id": "write",
+      "name": "Write values",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $json.spreadsheetId }}/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "perm",
+      "name": "Set anyone with link viewer",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1000,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://www.googleapis.com/drive/v3/files/{{ $('Prep values').first().json.spreadsheetId }}/permissions?supportsAllDrives=true",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({role:'reader',type:'anyone'}) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "out",
+      "name": "Out",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const pv=$('Prep values').first().json;const p=$input.first().json||{};\nreturn [{json:{spreadsheetId:pv.spreadsheetId,url:pv.spreadsheetUrl,permission:p.id?('ok: '+p.type+'/'+p.role):('NOT SET - '+JSON.stringify(p).slice(0,300))}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Prep create",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep create": {
+      "main": [
+        [
+          {
+            "node": "Create spreadsheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create spreadsheet": {
+      "main": [
+        [
+          {
+            "node": "Prep values",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep values": {
+      "main": [
+        [
+          {
+            "node": "Write values",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write values": {
+      "main": [
+        [
+          {
+            "node": "Set anyone with link viewer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set anyone with link viewer": {
+      "main": [
+        [
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataSuccessExecution": "none",
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "zOaAei6jyMvJZfzA",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-24T07:42:30.034Z",
+      "updatedAt": "2026-09-24T07:42:30.034Z"
+    }
+  ],
+  "activeVersion": null
+}

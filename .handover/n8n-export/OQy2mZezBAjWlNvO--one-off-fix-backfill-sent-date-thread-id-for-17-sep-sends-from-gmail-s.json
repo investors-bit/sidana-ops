@@ -1,0 +1,321 @@
+{
+  "id": "OQy2mZezBAjWlNvO",
+  "name": "One-off FIX — backfill sent_date + thread_id for 17 Sep sends from Gmail Sent",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-17T05:28:27.889Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "ff30e5df-f1ad-4f0e-9b1c-83fc2c08cb28",
+  "versionCounter": 4,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "a7000001-0000-4000-8000-000000000001",
+      "name": "Webhook",
+      "webhookId": "f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5c",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "onb-backfill-sent-3d9e71",
+        "responseMode": "lastNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "a7000001-0000-4000-8000-000000000002",
+      "name": "List today's sent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        300
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://gmail.googleapis.com/gmail/v1/users/me/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "in:sent subject:\"co-investment and curated dealflow\" after:2026/09/16"
+            },
+            {
+              "name": "maxResults",
+              "value": "50"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "R5K61omYbU9oT5J8",
+          "name": "Gmail account 5"
+        }
+      }
+    },
+    {
+      "id": "a7000001-0000-4000-8000-000000000003",
+      "name": "Split ids",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const msgs = $input.first().json.messages || [];\nreturn msgs.map(m => ({ json: { id: m.id, threadId: m.threadId } }));"
+      }
+    },
+    {
+      "id": "a7000001-0000-4000-8000-000000000004",
+      "name": "Get headers",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        300
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "=https://gmail.googleapis.com/gmail/v1/users/me/messages/{{ $json.id }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "format",
+              "value": "metadata"
+            },
+            {
+              "name": "metadataHeaders",
+              "value": "To"
+            },
+            {
+              "name": "metadataHeaders",
+              "value": "Cc"
+            },
+            {
+              "name": "metadataHeaders",
+              "value": "Subject"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "R5K61omYbU9oT5J8",
+          "name": "Gmail account 5"
+        }
+      }
+    },
+    {
+      "id": "a7000001-0000-4000-8000-000000000005",
+      "name": "Read Onboarding sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        880,
+        300
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "id",
+          "value": "38341156"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "a7000001-0000-4000-8000-000000000006",
+      "name": "Match to rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const sheet = $('Read Onboarding sheet').all().map(i => i.json);\nconst keys = Object.keys(sheet[0] || {}).filter(k => k !== 'row_number');\nconst col = name => { const i = keys.indexOf(name); if (i < 0) throw new Error('column not found: ' + name); return i; };\nconst C_SENT = col('sent_date'), C_THREAD = col('thread_id');\nconst msgs = $('Get headers').all().map(i => i.json);\nconst PREFIX = 'Introducing Sidana Ventures - co-investment and curated dealflow for ';\nconst data = [];\nconst rows = [];\nconst cell = (r, c, v) => ({ dataFilter: { gridRange: { sheetId: 38341156, startRowIndex: r - 1, endRowIndex: r, startColumnIndex: c, endColumnIndex: c + 1 } }, majorDimension: 'ROWS', values: [[v]] });\nfor (const m of msgs) {\n  const h = {};\n  for (const x of (m.payload && m.payload.headers) || []) h[x.name.toLowerCase()] = x.value;\n  const subj = String(h.subject || '');\n  if (!subj.startsWith(PREFIX)) continue;\n  const firm = subj.slice(PREFIX.length).trim();\n  const row = sheet.find(r => String(r.firm).trim() === firm && String(r.status).trim() === 'SENT');\n  if (!row) continue;\n  const when = new Date(Number(m.internalDate)).toLocaleString('sv-SE', { timeZone: 'Asia/Kolkata' });\n  data.push(cell(row.row_number, C_SENT, when));\n  data.push(cell(row.row_number, C_THREAD, m.threadId));\n  rows.push([row.row_number, firm, when, m.threadId].join(' | '));\n}\nreturn [{ json: { cols: { sent_date: C_SENT, thread_id: C_THREAD }, rows, body: { valueInputOption: 'RAW', data } } }];"
+      }
+    },
+    {
+      "id": "a7000001-0000-4000-8000-000000000008",
+      "name": "Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1540,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const m = $('Match to rows').first().json;\nconst w = $input.first().json;\nreturn [{ json: { cols: m.cols, planned_rows: m.rows, api_totalUpdatedCells: w.totalUpdatedCells, api_totalUpdatedRows: w.totalUpdatedRows } }];"
+      }
+    },
+    {
+      "id": "a7000001-0000-4000-8000-000000000009",
+      "name": "Write cells (Sheets API)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1320,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdateByDataFilter",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "List today's sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List today's sent": {
+      "main": [
+        [
+          {
+            "node": "Split ids",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split ids": {
+      "main": [
+        [
+          {
+            "node": "Get headers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get headers": {
+      "main": [
+        [
+          {
+            "node": "Read Onboarding sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Onboarding sheet": {
+      "main": [
+        [
+          {
+            "node": "Match to rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Match to rows": {
+      "main": [
+        [
+          {
+            "node": "Write cells (Sheets API)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write cells (Sheets API)": {
+      "main": [
+        [
+          {
+            "node": "Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "OQy2mZezBAjWlNvO",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-17T05:28:27.891Z",
+      "updatedAt": "2026-09-17T05:28:27.891Z"
+    }
+  ],
+  "activeVersion": null
+}

@@ -1,0 +1,376 @@
+{
+  "id": "ie4jsYGKXRpLWslG",
+  "name": "ONB-FU-PEEK (read-only) — raw ONBOARDING!AB + AM window (webhook)",
+  "description": null,
+  "active": true,
+  "activeVersionId": "3264492f-6ffe-48c5-a3f1-2ae659f9d970",
+  "createdAt": "2026-09-30T10:37:51.083Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "3264492f-6ffe-48c5-a3f1-2ae659f9d970",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "78f1139e-5648-4466-bc6a-ef47ab6baeb7",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "onb-fu-peek-8a2b4c",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "r1",
+      "name": "Read AB",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/ONBOARDING!AB1:AB30?valueRenderOption=UNFORMATTED_VALUE&majorDimension=COLUMNS",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "r2",
+      "name": "Read AA-AC",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/ONBOARDING!Z1:AD6?valueRenderOption=FORMULA&majorDimension=ROWS",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "r3",
+      "name": "Grid meta",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4?fields=sheets(properties(sheetId,title,gridProperties),protectedRanges,basicFilter)",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "o",
+      "name": "Out",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const ab=$('Read AB').first().json||{};\nconst za=$('Read AA-AC').first().json||{};\nconst gm=$('Grid meta').first().json||{};\nconst onbSheet=(gm.sheets||[]).filter(s=>s.properties&&s.properties.title==='ONBOARDING');\nreturn [{json:{abRange:ab.range,abColumn:(ab.values&&ab.values[0])||[],zadRange:za.range,zadRows:za.values||[],onboardingMeta:onbSheet,protectedOrFiltered:onbSheet.map(s=>({protectedRanges:s.protectedRanges||null,basicFilter:s.basicFilter||null}))}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Read AB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read AB": {
+      "main": [
+        [
+          {
+            "node": "Read AA-AC",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read AA-AC": {
+      "main": [
+        [
+          {
+            "node": "Grid meta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Grid meta": {
+      "main": [
+        [
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "ie4jsYGKXRpLWslG",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-30T10:37:51.086Z",
+      "updatedAt": "2026-09-30T10:37:51.086Z"
+    }
+  ],
+  "activeVersion": {
+    "versionId": "3264492f-6ffe-48c5-a3f1-2ae659f9d970",
+    "workflowId": "ie4jsYGKXRpLWslG",
+    "nodes": [
+      {
+        "id": "wh",
+        "name": "Webhook",
+        "webhookId": "78f1139e-5648-4466-bc6a-ef47ab6baeb7",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          0
+        ],
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "onb-fu-peek-8a2b4c",
+          "responseMode": "lastNode",
+          "responseData": "firstEntryJson",
+          "options": {}
+        }
+      },
+      {
+        "id": "r1",
+        "name": "Read AB",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "alwaysOutputData": true,
+        "onError": "continueRegularOutput",
+        "position": [
+          220,
+          0
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/ONBOARDING!AB1:AB30?valueRenderOption=UNFORMATTED_VALUE&majorDimension=COLUMNS",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleSheetsOAuth2Api",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "r2",
+        "name": "Read AA-AC",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "alwaysOutputData": true,
+        "onError": "continueRegularOutput",
+        "position": [
+          440,
+          0
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/ONBOARDING!Z1:AD6?valueRenderOption=FORMULA&majorDimension=ROWS",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleSheetsOAuth2Api",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "r3",
+        "name": "Grid meta",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "alwaysOutputData": true,
+        "onError": "continueRegularOutput",
+        "position": [
+          660,
+          0
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4?fields=sheets(properties(sheetId,title,gridProperties),protectedRanges,basicFilter)",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleSheetsOAuth2Api",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "o",
+        "name": "Out",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          880,
+          0
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const ab=$('Read AB').first().json||{};\nconst za=$('Read AA-AC').first().json||{};\nconst gm=$('Grid meta').first().json||{};\nconst onbSheet=(gm.sheets||[]).filter(s=>s.properties&&s.properties.title==='ONBOARDING');\nreturn [{json:{abRange:ab.range,abColumn:(ab.values&&ab.values[0])||[],zadRange:za.range,zadRows:za.values||[],onboardingMeta:onbSheet,protectedOrFiltered:onbSheet.map(s=>({protectedRanges:s.protectedRanges||null,basicFilter:s.basicFilter||null}))}}];"
+        }
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Read AB",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Read AB": {
+        "main": [
+          [
+            {
+              "node": "Read AA-AC",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Read AA-AC": {
+        "main": [
+          [
+            {
+              "node": "Grid meta",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Grid meta": {
+        "main": [
+          [
+            {
+              "node": "Out",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "Sidana Ventures",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "createdAt": "2026-09-30T10:37:51.087Z",
+    "updatedAt": "2026-09-30T10:37:51.087Z",
+    "workflowPublishHistory": [
+      {
+        "id": 9542,
+        "workflowId": "ie4jsYGKXRpLWslG",
+        "versionId": "3264492f-6ffe-48c5-a3f1-2ae659f9d970",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-09-30T10:38:11.467Z"
+      }
+    ]
+  }
+}

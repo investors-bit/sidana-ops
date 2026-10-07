@@ -1,0 +1,194 @@
+{
+  "id": "UTI1y9Otxi9kgL6G",
+  "name": "One-off KX-1 — purge unsent sub-70 rows for the six startups",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-09T13:02:29.147Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "46c08523-80e8-4abc-8544-5068232ea8b6",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once 18:37 IST 9 Sep",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "37 18 9 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "r3",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "c1",
+      "name": "Pick rows to purge",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nfunction nz(x) { return s(x).toLowerCase().replace(/[^a-z0-9]/g, ''); }\nconst SIX = ['nexcore', 'recex', 'washtro', 'formverse', 'pixelence', 'doffair'];\n\nconst pipe = $input.all().map(function (i) { return i.json; });\nif (pipe.length < 500) { throw new Error('ABORT: PIPELINE only ' + pipe.length); }\n\nconst kill = [];\nconst kept = { sent: 0, at70: 0, no_priority: 0 };\nfor (const p of pipe) {\n  if (SIX.indexOf(nz(p.startup)) < 0) { continue; }\n  if (s(p.deal_shared).toLowerCase() === 'yes') { kept.sent++; continue; }   // never touch anything shared\n  const raw = s(p.priority);\n  if (raw === '') { kept.no_priority++; continue; }                          // unscored -> leave alone\n  const pr = parseFloat(raw);\n  if (isNaN(pr)) { kept.no_priority++; continue; }\n  if (pr >= 70) { kept.at70++; continue; }\n  kill.push({ row_number: p.row_number, deal_id: s(p.deal_id), startup: s(p.startup),\n    investor: s(p.investor), priority: pr, pause: s(p.pause) });\n}\n\nif (kill.length === 0) { throw new Error('NOTHING TO DO: no unsent sub-70 rows for the six'); }\nif (kill.length > 250) { throw new Error('ABORT: ' + kill.length + ' rows exceeds guard of 250'); }\n\n// deletes MUST run highest row first, or every later row_number shifts under us\nkill.sort(function (a, b) { return b.row_number - a.row_number; });\n\nconst byStartup = {};\nfor (const k of kill) { byStartup[k.startup] = (byStartup[k.startup] || 0) + 1; }\nconsole.log('purging ' + kill.length + ' rows', JSON.stringify(byStartup), 'kept', JSON.stringify(kept));\nreturn kill.map(function (k) { return { json: k }; });"
+      }
+    },
+    {
+      "id": "d1",
+      "name": "Delete row",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 3000,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "delete",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        },
+        "toDelete": "rows",
+        "startIndex": "={{ $json.row_number }}",
+        "numberToDelete": 1
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Run once 18:37 IST 9 Sep": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Pick rows to purge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick rows to purge": {
+      "main": [
+        [
+          {
+            "node": "Delete row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once 18:37 IST 9 Sep": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "UTI1y9Otxi9kgL6G",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-09T13:02:29.149Z",
+      "updatedAt": "2026-09-09T13:02:29.149Z"
+    }
+  ],
+  "activeVersion": null
+}

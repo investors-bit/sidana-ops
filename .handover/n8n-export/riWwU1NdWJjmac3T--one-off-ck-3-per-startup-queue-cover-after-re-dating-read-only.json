@@ -1,0 +1,142 @@
+{
+  "id": "riWwU1NdWJjmac3T",
+  "name": "One-off CK-3 — per-startup queue cover after re-dating (read only)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-12T14:48:58.921Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "8ab5d94b-12c8-4396-805e-8db56561582b",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 0,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once (set before activating)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "58 19 12 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "r3",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cv",
+      "name": "Check",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nconst yes = function (x) { return s(x).toLowerCase() === 'yes'; };\nconst pipe = $input.all().map(function (i) { return i.json; });\nif (pipe.length < 5000) { throw new Error('ABORT: PIPELINE only ' + pipe.length); }\nconst st = {};\nfor (const p of pipe) { const k = s(p.startup); if (!k) { continue; }\n  const o = st[k] = st[k] || { startup: k, owner: s(p.owner), queued: 0, sent: 0, first: '', last: '' };\n  if (yes(p.deal_shared)) { o.sent++; continue; }\n  if (yes(p.pause)) { return_null_guard = 0; continue; }\n  o.queued++; const d = s(p.next_due).slice(0, 10); if (!d) { return; }\n  if (!o.first || d < o.first) { o.first = d; } if (!o.last || d > o.last) { o.last = d; } }\nconst TODAY = '2026-09-12';\nfunction weeksTo(d) { if (!d) { return 0; } return Math.round(((new Date(d + 'T00:00:00Z') - new Date(TODAY + 'T00:00:00Z')) / 86400000 / 7) * 10) / 10; }\nconst rows = Object.keys(st).map(function (k) { const o = st[k]; return { startup: o.startup, owner: o.owner, queued: o.queued, sent: o.sent, first: o.first, last: o.last, weeks_cover: weeksTo(o.last) }; })\n  .filter(function (o) { return o.queued > 0 || o.sent > 0; }).sort(function (a, b) { return a.weeks_cover - b.weeks_cover; });\nconst band = function (w) { return w < 4.3 ? 'under 1 month' : w < 8.7 ? '1-2 months' : w < 13 ? '2-3 months' : 'over 3 months'; };\nconst counts = {};\nfor (const r of rows) { const b = band(r.weeks_cover); counts[b] = (counts[b] || 0) + 1; }\nreturn [{ json: { startups: rows.length, counts: counts, rows: rows.map(function (r) { return [r.startup, r.owner, r.queued, r.first, r.last, r.weeks_cover, band(r.weeks_cover)]; }) } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once (set before activating)": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "riWwU1NdWJjmac3T",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-12T14:48:58.924Z",
+      "updatedAt": "2026-09-12T14:48:58.924Z"
+    }
+  ],
+  "activeVersion": null
+}

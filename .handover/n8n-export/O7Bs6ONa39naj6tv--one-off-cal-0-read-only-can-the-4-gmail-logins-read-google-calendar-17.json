@@ -1,0 +1,292 @@
+{
+  "id": "O7Bs6ONa39naj6tv",
+  "name": "One-off CAL-0 (read-only) — can the 4 Gmail logins read Google Calendar? (17 Sep)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-17T10:57:36.672Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "99918f1f-6c73-4ea9-91f4-c674992beb2d",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "30 16 17 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "c2",
+      "name": "Cal2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "continueOnFail": true,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://www.googleapis.com/calendar/v3/users/me/calendarList?maxResults=5",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "hwEqMRn6IxzoYs1R",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "id": "c3",
+      "name": "Cal3",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "continueOnFail": true,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "url": "https://www.googleapis.com/calendar/v3/users/me/calendarList?maxResults=5",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mymSHTFVWtsI3Mh7",
+          "name": "Gmail account 3"
+        }
+      }
+    },
+    {
+      "id": "c4",
+      "name": "Cal4",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "continueOnFail": true,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "url": "https://www.googleapis.com/calendar/v3/users/me/calendarList?maxResults=5",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "9IWD8mWqdARPXloL",
+          "name": "Gmail account 4"
+        }
+      }
+    },
+    {
+      "id": "c5",
+      "name": "Cal5",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "continueOnFail": true,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "url": "https://www.googleapis.com/calendar/v3/users/me/calendarList?maxResults=5",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "R5K61omYbU9oT5J8",
+          "name": "Gmail account 5"
+        }
+      }
+    },
+    {
+      "id": "q2",
+      "name": "Invites2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "continueOnFail": true,
+      "position": [
+        1000,
+        0
+      ],
+      "parameters": {
+        "url": "https://gmail.googleapis.com/gmail/v1/users/me/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "filename:ics OR subject:(Invitation OR Accepted OR \"Updated invitation\" OR Calendly OR \"New Event\") OR \"meet.google.com\" OR \"zoom.us/j\""
+            },
+            {
+              "name": "maxResults",
+              "value": "1"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "hwEqMRn6IxzoYs1R",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "id": "r1",
+      "name": "Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const o={};for(const n of ['Cal2','Cal3','Cal4','Cal5']){const j=$(n).first().json;o[n]=j.items?('OK '+j.items.map(x=>x.id).join(', ')):('NO: '+String((j.error&&(j.error.message||JSON.stringify(j.error)))||JSON.stringify(j)).slice(0,200));}\nconst iv=$('Invites2').first().json;o.invites_estimate_mb2=iv.resultSizeEstimate;return [{json:o}];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once": {
+      "main": [
+        [
+          {
+            "node": "Cal2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cal2": {
+      "main": [
+        [
+          {
+            "node": "Cal3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cal3": {
+      "main": [
+        [
+          {
+            "node": "Cal4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cal4": {
+      "main": [
+        [
+          {
+            "node": "Cal5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cal5": {
+      "main": [
+        [
+          {
+            "node": "Invites2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Invites2": {
+      "main": [
+        [
+          {
+            "node": "Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataSuccessExecution": "all",
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "O7Bs6ONa39naj6tv",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-17T10:57:36.673Z",
+      "updatedAt": "2026-09-17T10:57:36.673Z"
+    }
+  ],
+  "activeVersion": null
+}

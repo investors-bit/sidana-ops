@@ -1,0 +1,203 @@
+{
+  "id": "53zmFRLYHyZeoRk3",
+  "name": "One-off PH-1 — Physis Capital: Jatin left, Parnika thesis (agnostic + consumer ARR 15 Cr) (17 Sep)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-17T07:38:33.948Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "88dc25d2-be6b-48de-bdec-e4ec97cb0047",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "13 13 17 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "g1",
+      "name": "GET pilot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=INVESTORS!A1:J1000&ranges=INVESTOR_CRITERIA!A1:AC400&ranges=PIPELINE!A1:AI8000",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "c1",
+      "name": "Plan",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v){return String(v==null?'':v).trim();}\nfunction nz(x){return s(x).toLowerCase().replace(/[^a-z0-9]/g,'');}\nfunction colL(i){let n=i+1,t='';while(n>0){const m=(n-1)%26;t=String.fromCharCode(65+m)+t;n=Math.floor((n-1)/26);}return t;}\nconst vr=$('GET pilot').first().json.valueRanges||[];\nconst inv=(vr[0]||{}).values||[], crit=(vr[1]||{}).values||[], pipe=(vr[2]||{}).values||[];\nif(inv.length<150||crit.length<200||pipe.length<5000){throw new Error('ABORT short read');}\nif(inv.some(function(r){return /parnika@phy-sis\\.com/i.test(s(r[2]));})){throw new Error('ABORT: Parnika already on INVESTORS');}\nconst data=[];const put=(range,v)=>data.push({range:range,values:[[v]]});\nconst TODAY=new Date(Date.now()+330*60000).toISOString().slice(0,10);\nconst pIdx=[];inv.forEach(function(r,i){if(i>0&&nz(r[0]).indexOf('physis')===0){pIdx.push(i);}});\nif(pIdx.length!==1){throw new Error('ABORT: expected 1 Physis INVESTORS row, found '+pIdx.length);}\nconst pRow=pIdx[0]+1; const oldName=s(inv[pIdx[0]][0]); const oldContact=s(inv[pIdx[0]][1]); const oldEmail=s(inv[pIdx[0]][2]).toLowerCase();\nconst CONSUMER='D2C_BEAUTY_PERSONAL_CARE, D2C_HEALTH_WELLNESS, D2C_FASHION_JEWELLERY, D2C_HOME_LIFESTYLE, FNB_PACKAGED_FOOD, FNB_BEVERAGE, FNB_FOODSERVICE, ALCOHOL, MEAT_SEAFOOD, CONSUMER_TECH_APP, CONSUMER_SERVICES, QUICK_HYPERLOCAL_COMMERCE, PET, TRAVEL_HOSPITALITY';\nconst STAGE='Pre-Series A, Series A, Series B';\nput('INVESTORS!A'+pRow,'Physis Capital - Parnika');put('INVESTORS!B'+pRow,'Parnika');put('INVESTORS!C'+pRow,'parnika@phy-sis.com');put('INVESTORS!D'+pRow,'');\nput('INVESTORS!E'+pRow,'Sector agnostic incl. SaaS (no ARR criteria) - consumer handled on the Consumer row');put('INVESTORS!F'+pRow,STAGE);put('INVESTORS!G'+pRow,'INR 10 Cr (US$50M fund)');\nconst gRow=inv.length+1;\ndata.push({range:'INVESTORS!A'+gRow+':J'+gRow,values:[['Physis Capital - Parnika (Consumer)','Parnika','parnika@phy-sis.com','','Consumer (ARR at least INR 15 Cr)',STAGE,'INR 10 Cr (US$50M fund)','','','']]});\nconst ch=(crit[0]||[]).map(s);const CX={};ch.forEach((k,i)=>CX[k]=i);\nlet cr=-1;for(let i=1;i<crit.length;i++){if(nz((crit[i]||[])[CX.investor]).indexOf('physis')===0){cr=i+1;}}\nif(cr<0){throw new Error('ABORT physis criteria row missing');}\nfunction cset(col,v){put('INVESTOR_CRITERIA!'+colL(CX[col])+cr,v);}\nconst A={investor:'Physis Capital - Parnika',status:'ACTIVE',confirmed:'AUTO',review_reason:'',sector_mode:'AGNOSTIC',sectors_in:'',sectors_excluded:CONSUMER,models_in:'ANY',models_excluded:'',stage_min:'PRE_SERIES_A',stage_max:'SERIES_B',cheque_min_cr:'10',arr_min_cr:'',arr_min_strict:'N',revenue_required:'N',geography_scope:'INDIA',thesis_summary:'User 17 Sep: Jatin has left; Parnika (parnika@phy-sis.com). US$50M fund, Pre-Series A to Series B, sector agnostic, INR 10 Cr cheque. SaaS has no ARR criteria; consumer needs ARR >= INR 15 Cr (separate Consumer row, same inbox).',confidence:'HIGH',rule_notes:'user 17 Sep thesis; consumer sectors moved to the Consumer row'};\nObject.keys(A).forEach(function(k){if(CX[k]!==undefined){cset(k,A[k]);}});\nconst B=Object.assign({},A,{investor:'Physis Capital - Parnika (Consumer)',sector_mode:'LIST',sectors_in:CONSUMER,sectors_excluded:'',arr_min_cr:'15',rule_notes:'user 17 Sep: consumer startups need ARR >= INR 15 Cr'});\nconst base=(crit[cr-1]||[]).slice();while(base.length<ch.length){base.push('');}\nconst bVals=ch.map(function(k,i){if(k==='sheet_row'){return String(gRow);} return B[k]!==undefined?B[k]:s(base[i]);});\nconst cNew=crit.length+1;data.push({range:'INVESTOR_CRITERIA!A'+cNew+':'+colL(ch.length-1)+cNew,values:[bVals]});\n// PIPELINE: rows to the old contact\nconst h=(pipe[0]||[]).map(s);const X={};h.forEach((k,i)=>X[k]=i);\nlet stopped=0,dropped=0,skipped=0;const touched=[];\nfor(let i=1;i<pipe.length;i++){const r=pipe[i]||[];const rn=i+1;const g=k=>s(r[X[k]]);\n  const hit=nz(g('investor')).indexOf('physis')===0||(oldEmail&&g('email').toLowerCase().indexOf(oldEmail)>=0);\n  if(!hit){continue;} if(g('investor_response')){skipped++;continue;}\n  const sent=/^yes$/i.test(g('deal_shared'));const na=g('next_action');const notes=g('notes');const note='Jatin left Physis Capital (user '+TODAY+'); Parnika now covers it';\n  if(sent){put('PIPELINE!'+colL(X.pause)+rn,'Yes');put('PIPELINE!'+colL(X.notes)+rn,(notes?notes+' | ':'')+note+' - follow-ups stopped');stopped++;touched.push(g('deal_id')+' sent '+g('startup'));}\n  else{if(/^DROPPED - replaced by/.test(na)){skipped++;continue;} put('PIPELINE!'+colL(X.pause)+rn,'Yes');put('PIPELINE!'+colL(X.next_action)+rn,'DROPPED - contact left firm (Jatin)');put('PIPELINE!'+colL(X.notes)+rn,(notes?notes+' | ':'')+note+' - engine re-matches for Parnika');dropped++;touched.push(g('deal_id')+' queued '+g('startup')+' was '+na.slice(0,20));}\n}\nif(stopped+dropped>80){throw new Error('ABORT unexpected Physis row count '+(stopped+dropped));}\nreturn [{json:{data:data,summary:{old:{name:oldName,contact:oldContact,email:oldEmail},investors_row:pRow,new_investors_row:gRow,criteria_row:cr,new_criteria_row:cNew,followups_stopped:stopped,queued_dropped:dropped,skipped:skipped,touched:touched}}}];"
+      }
+    },
+    {
+      "id": "w1",
+      "name": "Write",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ valueInputOption: 'RAW', data: $('Plan').first().json.data }) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "s1",
+      "name": "Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return [{ json: Object.assign({ written_cells: $('Write').first().json.totalUpdatedCells }, $('Plan').first().json.summary) }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once": {
+      "main": [
+        [
+          {
+            "node": "GET pilot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET pilot": {
+      "main": [
+        [
+          {
+            "node": "Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Plan": {
+      "main": [
+        [
+          {
+            "node": "Write",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write": {
+      "main": [
+        [
+          {
+            "node": "Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataSuccessExecution": "all",
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "53zmFRLYHyZeoRk3",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-17T07:38:33.950Z",
+      "updatedAt": "2026-09-17T07:38:33.950Z"
+    }
+  ],
+  "activeVersion": null
+}

@@ -1,0 +1,195 @@
+{
+  "id": "FQwG6jeOLfYlTv6W",
+  "name": "One-off BG-3 — add 20 new BlueGreen PIPELINE rows (new mandate)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-07T05:16:09.559Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "ff6d06b9-2062-4195-8296-09ab743a5ed2",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "trg1",
+      "name": "Run once 11:08 IST 7 Sep",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "8 11 7 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "rd1",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cd1",
+      "name": "Build new rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// BlueGreen Ventures re-matched to the new mandate (checked on bluegreen.vc 2026-09-07).\n// Deal Tracker has a BlueGreen row but records ZERO deals shared, so nothing is excluded on that basis.\nconst INVESTOR = 'BlueGreen Ventures';\nconst EMAIL = 'anup@bluegreen.vc';\nconst DATA = [[\"Appli\",\"Akansha\",100,\"2026-09-08\"],[\"Body & Beyond\",\"Aditya\",100,\"2026-09-08\"],[\"CLIKD\",\"Aditya\",100,\"2026-09-09\"],[\"Caffena Coffee\",\"Aditya\",100,\"2026-09-09\"],[\"EkoSight\",\"Chaman\",100,\"2026-09-10\"],[\"Ela Greens\",\"Chaman\",100,\"2026-09-10\"],[\"HYRGPT\",\"Akansha\",100,\"2026-09-11\"],[\"LUSTR\",\"Aditya\",100,\"2026-09-11\"],[\"Luxova\",\"Aditya\",100,\"2026-09-14\"],[\"My Soul\",\"Aditya\",100,\"2026-09-14\"],[\"Nexcore\",\"Akansha\",100,\"2026-09-15\"],[\"Orbis Lives\",\"Chaman\",100,\"2026-09-15\"],[\"RECEX\",\"Akansha\",100,\"2026-09-16\"],[\"Sahaj\",\"Shradha\",100,\"2026-09-16\"],[\"Sugar's Daddy\",\"Aditya\",100,\"2026-09-17\"],[\"VOLD Energy\",\"Aditya\",100,\"2026-09-17\"],[\"YUNO\",\"Aditya\",100,\"2026-09-18\"],[\"bezgoFresh\",\"Chaman\",100,\"2026-09-18\"],[\"Doffair\",\"Chaman\",88,\"2026-09-21\"],[\"Indie Stori\",\"Aditya\",88,\"2026-09-21\"]];\n\nfunction s(v) { return String(v == null ? '' : v).trim(); }\nconst rows = $input.all().map(function (i) { return i.json; });\nif (rows.length < 500) { throw new Error('ABORT: PIPELINE returned only ' + rows.length + ' rows'); }\n\nlet maxN = 0;\nfor (const r of rows) {\n  const id = s(r.deal_id);\n  if (id.charAt(0) === 'D') { const n = parseInt(id.slice(1), 10); if (!isNaN(n) && n > maxN) { maxN = n; } }\n}\nif (maxN === 0) { throw new Error('ABORT: could not determine max deal_id'); }\n\nconst seen = {};\nfor (const r of rows) { seen[s(r.startup).toLowerCase() + '||' + s(r.investor).toLowerCase()] = true; }\n\nconst out = [];\nlet n = maxN, skipped = 0;\nfor (const d of DATA) {\n  const startup = d[0], owner = d[1], score = d[2], due = d[3];\n  if (seen[startup.toLowerCase() + '||' + INVESTOR.toLowerCase()]) { skipped++; continue; }\n  n++;\n  let pad = String(n);\n  while (pad.length < 5) { pad = '0' + pad; }\n  out.push({ json: {\n    deal_id: 'D' + pad,\n    startup: startup,\n    owner: owner,\n    investor: INVESTOR,\n    email: EMAIL,\n    cc: '',\n    priority: score,\n    deal_shared: 'No',\n    next_action: 'Initial',\n    next_due: due,\n    notes: (score >= 85 ? 'Very High' : 'High') + ' match (' + score + ') - re-matched to new BlueGreen mandate 2026-09-07'\n  }});\n}\nif (out.length === 0) { throw new Error('ABORT: 0 new rows (skipped ' + skipped + ' as existing)'); }\nif (out.length > 20) { throw new Error('ABORT: ' + out.length + ' exceeds guard of 20'); }\nreturn out;"
+      }
+    },
+    {
+      "id": "ap1",
+      "name": "Append PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Run once 11:08 IST 7 Sep": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Build new rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build new rows": {
+      "main": [
+        [
+          {
+            "node": "Append PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once 11:08 IST 7 Sep": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "FQwG6jeOLfYlTv6W",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-07T05:16:09.561Z",
+      "updatedAt": "2026-09-07T05:16:09.561Z"
+    }
+  ],
+  "activeVersion": null
+}

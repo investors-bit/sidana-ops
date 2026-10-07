@@ -1,0 +1,144 @@
+{
+  "id": "24xpf4MOVCX7toQw",
+  "name": "READ (read-only) — investor runway per startup at current pace",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-09T08:13:47.761Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "72d9847c-6663-4451-a297-1e35ea86fb08",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "trg1",
+      "name": "Run once 13:52 IST 9 Sep",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "52 13 9 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "rd1",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cd1",
+      "name": "Runway",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nconst rows = $input.all().map(function (i) { return i.json; });\nif (rows.length < 500) { throw new Error('ABORT: PIPELINE returned only ' + rows.length + ' rows'); }\n\nconst TODAY = '2026-09-09';\nconst m = {};\nlet firstSend = null, lastSend = null;\n\nfor (const r of rows) {\n  const st = s(r.startup);\n  if (!st) { continue; }\n  if (!m[st]) { m[st] = { startup: st, owner: s(r.owner), pending: 0, sent: 0, dates: {} }; }\n  const e = m[st];\n  const shared = s(r.deal_shared).toLowerCase() === 'yes';\n  const paused = s(r.pause) !== '';\n  if (shared) {\n    e.sent++;\n    const d = s(r.date_shared);\n    if (/^\\d{4}-\\d{2}-\\d{2}$/.test(d)) {\n      e.dates[d] = (e.dates[d] || 0) + 1;\n      if (!firstSend || d < firstSend) { firstSend = d; }\n      if (!lastSend || d > lastSend) { lastSend = d; }\n    }\n  } else if (!paused) { e.pending++; }\n}\n\n// how many distinct SEND DAYS the programme has actually run\nconst allDays = {};\nfor (const k of Object.keys(m)) { for (const d of Object.keys(m[k].dates)) { allDays[d] = true; } }\nconst sendDays = Object.keys(allDays).length || 1;\n\nconst list = Object.keys(m).map(function (k) {\n  const e = m[k];\n  let tot = 0;\n  for (const d of Object.keys(e.dates)) { tot += e.dates[d]; }\n  const perDay = tot / sendDays;                       // avg sends per active send-day\n  const perWeek = perDay * 5;                          // weekdays only\n  const weeks = perWeek > 0 ? e.pending / perWeek : null;\n  return { startup: e.startup, owner: e.owner, pending: e.pending, sent: e.sent,\n           sends_per_week: Math.round(perWeek * 10) / 10,\n           runway_weeks: weeks === null ? null : Math.round(weeks * 10) / 10 };\n});\n\nconst short = list.filter(function (x) { return x.runway_weeks !== null && x.runway_weeks < 4.3; });\nconst never = list.filter(function (x) { return x.runway_weeks === null; });\nshort.sort(function (a, b) { return a.runway_weeks - b.runway_weeks; });\nlist.sort(function (a, b) { return (a.runway_weeks === null ? 999 : a.runway_weeks) - (b.runway_weeks === null ? 999 : b.runway_weeks); });\n\nreturn [{ json: {\n  send_window: firstSend + ' to ' + lastSend,\n  distinct_send_days: sendDays,\n  startups: list.length,\n  UNDER_ONE_MONTH: short.length,\n  never_sent: never.map(function (x) { return x.startup + ' (' + x.pending + ' pending)'; }),\n  shortage_list: short,\n  all: list\n}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once 13:52 IST 9 Sep": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Runway",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once 13:52 IST 9 Sep": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "24xpf4MOVCX7toQw",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-09T08:13:47.763Z",
+      "updatedAt": "2026-09-09T08:13:47.763Z"
+    }
+  ],
+  "activeVersion": null
+}

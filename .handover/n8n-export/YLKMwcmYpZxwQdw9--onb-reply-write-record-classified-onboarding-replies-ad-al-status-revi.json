@@ -1,0 +1,241 @@
+{
+  "id": "YLKMwcmYpZxwQdw9",
+  "name": "ONB-REPLY-WRITE — record classified ONBOARDING replies (AD:AL + status + review_note), guarded (webhook)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-30T06:15:42.757Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "5cf85605-e35b-45e2-b723-8ead33c6594c",
+  "versionCounter": 5,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Run hook",
+      "webhookId": "875bbd3f-ee24-4c1c-91c0-a6d83dee99b3",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "path": "onb-reply-write-b4d8c1",
+        "httpMethod": "POST",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "rd",
+      "name": "Read ONBOARDING",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "alwaysOutputData": true,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/ONBOARDING!A1:AM900?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "bl",
+      "name": "Build",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "var B=$('Run hook').first().json.body||{};\nif(B.secret!=='onb-rc-2026-09-30-Wq8'){throw new Error('bad secret');}\nvar IDX={E:4,O:14,AD:29,AE:30,AF:31,AG:32,AH:33,AI:34,AJ:35,AK:36,AL:37};\nvar PLAN=Array.isArray(B.plan)?B.plan:[];\nif(!PLAN.length){throw new Error('empty plan');}\nif(PLAN.length>60){throw new Error('plan too large: '+PLAN.length);}\nfunction norm(s){return String(s||'').toLowerCase().replace(/[^a-z0-9]/g,'');}\nvar sh=$('Read ONBOARDING').first().json||{};\nvar rows=sh.values||[];\nif(!rows.length){return [{json:{fatal:'ONBOARDING read returned no values',planned:0}}];}\nvar data=[],audit=[];\nfor(var i=0;i<PLAN.length;i++){\n  var p=PLAN[i];var rn=Number(p.row);\n  if(!Number.isInteger(rn)||rn<2||rn>900){audit.push({row:p.row,firm:p.firm,result:'SKIPPED - bad row number'});continue;}\n  var r=rows[rn-1]||[];\n  if(!r.length){audit.push({row:rn,firm:p.firm,result:'SKIPPED - row not found'});continue;}\n  if(norm(String(r[5]||''))!==norm(p.firm)){audit.push({row:rn,firm:p.firm,result:'SKIPPED - firm mismatch, sheet says \"'+String(r[5]||'')+'\"'});continue;}\n  var force=Array.isArray(p.force)?p.force:[];\n  var cells=p.cells||{};var wrote=[],skipped=[];\n  for(var c in cells){\n    if(!IDX.hasOwnProperty(c)){skipped.push(c+' (column not writable)');continue;}\n    var val=String(cells[c]);\n    if(!val.length){skipped.push(c+' (empty value)');continue;}\n    var cur=String(r[IDX[c]]||'').trim();\n    var forced=force.indexOf(c)>-1;\n    if(cur&&!forced){skipped.push(c+' (already \"'+cur.slice(0,40)+'\")');continue;}\n    if(cur&&forced&&cur===val){skipped.push(c+' (already equals target)');continue;}\n    data.push({range:'ONBOARDING!'+c+rn,values:[[val]]});\n    wrote.push(c+(cur?' (overwrote \"'+cur.slice(0,30)+'\" as instructed)':''));\n  }\n  var mode=p.noteMode||'append';\n  if(mode!=='none'&&p.note){\n    var curO=String(r[IDX.O]||'').trim();var nv=null;\n    if(!curO){nv=String(p.note);}\n    else if(mode==='append'){\n      if(p.noteKey&&curO.indexOf(p.noteKey)>-1){skipped.push('O (already recorded, key '+p.noteKey+')');}\n      else{nv=curO+'  |  '+String(p.note);}\n    }\n    else{skipped.push('O (non-empty, mode=set, left intact)');}\n    if(nv!==null){data.push({range:'ONBOARDING!O'+rn,values:[[nv]]});wrote.push(curO?'O (appended)':'O');}\n  }\n  audit.push({row:rn,firm:p.firm,outcome:cells.AK||'',wrote:wrote,skipped:skipped});\n}\nreturn [{json:{planned:data.length,audit:audit,body:{valueInputOption:'RAW',data:data}}}];"
+      }
+    },
+    {
+      "id": "ifg",
+      "name": "Anything to write?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "version": 2,
+            "typeValidation": "loose"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "c1",
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              },
+              "leftValue": "={{ $json.planned }}",
+              "rightValue": 0
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "wr",
+      "name": "Write",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        -100
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "res",
+      "name": "Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "var b=$('Build').first().json||{};\nvar w=null;try{w=$('Write').first().json;}catch(e){w=null;}\nvar ranges=(((b.body||{}).data)||[]).map(function(d){return d.range;});\nreturn [{json:{planned:b.planned||0,cellsUpdated:w?(w.totalUpdatedCells||0):0,rangesSent:ranges,writeOk:!!w,audit:b.audit||[]}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Run hook": {
+      "main": [
+        [
+          {
+            "node": "Read ONBOARDING",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read ONBOARDING": {
+      "main": [
+        [
+          {
+            "node": "Build",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build": {
+      "main": [
+        [
+          {
+            "node": "Anything to write?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anything to write?": {
+      "main": [
+        [
+          {
+            "node": "Write",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write": {
+      "main": [
+        [
+          {
+            "node": "Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionTimeout": 300,
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "YLKMwcmYpZxwQdw9",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-30T06:15:42.759Z",
+      "updatedAt": "2026-09-30T06:15:42.759Z"
+    }
+  ],
+  "activeVersion": null
+}

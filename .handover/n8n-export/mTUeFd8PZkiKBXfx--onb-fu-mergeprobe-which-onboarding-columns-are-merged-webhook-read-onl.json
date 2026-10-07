@@ -1,0 +1,278 @@
+{
+  "id": "mTUeFd8PZkiKBXfx",
+  "name": "ONB-FU-MERGEPROBE — which ONBOARDING columns are merged (webhook, read-only)",
+  "description": null,
+  "active": true,
+  "activeVersionId": "4b721661-1bba-454b-943e-0422c021d8bc",
+  "createdAt": "2026-10-01T10:03:07.359Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "4b721661-1bba-454b-943e-0422c021d8bc",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "6d921ea9-fb8c-41fb-a341-a315b724aaa0",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "onb-fu-mergeprobe-8e3f1b",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "pr",
+      "name": "Prep",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b=$input.first().json.body||{};if(b.secret!=='onb-fu-2026-09-30-Rz4'){throw new Error('bad secret');}return [{json:{col:Number(b.col==null?27:b.col)}}];"
+      }
+    },
+    {
+      "id": "mt",
+      "name": "Meta",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4?fields=sheets.properties.title,sheets.properties.sheetId,sheets.properties.gridProperties,sheets.merges,sheets.protectedRanges",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "o",
+      "name": "Out",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const COL=$('Prep').first().json.col;\nfunction cn(i){let s='';i=i+1;while(i>0){const m=(i-1)%26;s=String.fromCharCode(65+m)+s;i=Math.floor((i-1)/26);}return s;}\nconst m=$input.first().json;\nconst sh=(m.sheets||[]).find(s=>((s.properties||{}).title)==='ONBOARDING');\nif(!sh){throw new Error('ONBOARDING not found');}\nconst mg=sh.merges||[];\nconst inCol=mg.filter(r=>COL>=r.startColumnIndex&&COL<r.endColumnIndex);\nconst nonAnchor=[];const anchor=[];\nfor(const r of inCol){for(let row=r.startRowIndex;row<r.endRowIndex;row++){\n  const isAnchor=(r.startColumnIndex===COL&&r.startRowIndex===row);\n  (isAnchor?anchor:nonAnchor).push(row+1);\n}}\nreturn [{json:{probeCol:cn(COL)+' (idx '+COL+')',totalMerges:mg.length,mergesCoveringProbeCol:inCol.length,nonAnchorRowCount:nonAnchor.length,nonAnchorRows:nonAnchor.sort((a,b)=>a-b),anchorRowCount:anchor.length}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Prep",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep": {
+      "main": [
+        [
+          {
+            "node": "Meta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Meta": {
+      "main": [
+        [
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataSuccessExecution": "none",
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "mTUeFd8PZkiKBXfx",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-10-01T10:03:07.362Z",
+      "updatedAt": "2026-10-01T10:03:07.362Z"
+    }
+  ],
+  "activeVersion": {
+    "versionId": "4b721661-1bba-454b-943e-0422c021d8bc",
+    "workflowId": "mTUeFd8PZkiKBXfx",
+    "nodes": [
+      {
+        "id": "wh",
+        "name": "Webhook",
+        "webhookId": "6d921ea9-fb8c-41fb-a341-a315b724aaa0",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          0
+        ],
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "onb-fu-mergeprobe-8e3f1b",
+          "responseMode": "lastNode",
+          "responseData": "firstEntryJson",
+          "options": {}
+        }
+      },
+      {
+        "id": "pr",
+        "name": "Prep",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          200,
+          0
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const b=$input.first().json.body||{};if(b.secret!=='onb-fu-2026-09-30-Rz4'){throw new Error('bad secret');}return [{json:{col:Number(b.col==null?27:b.col)}}];"
+        }
+      },
+      {
+        "id": "mt",
+        "name": "Meta",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          400,
+          0
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4?fields=sheets.properties.title,sheets.properties.sheetId,sheets.properties.gridProperties,sheets.merges,sheets.protectedRanges",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleSheetsOAuth2Api",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "o",
+        "name": "Out",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          600,
+          0
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const COL=$('Prep').first().json.col;\nfunction cn(i){let s='';i=i+1;while(i>0){const m=(i-1)%26;s=String.fromCharCode(65+m)+s;i=Math.floor((i-1)/26);}return s;}\nconst m=$input.first().json;\nconst sh=(m.sheets||[]).find(s=>((s.properties||{}).title)==='ONBOARDING');\nif(!sh){throw new Error('ONBOARDING not found');}\nconst mg=sh.merges||[];\nconst inCol=mg.filter(r=>COL>=r.startColumnIndex&&COL<r.endColumnIndex);\nconst nonAnchor=[];const anchor=[];\nfor(const r of inCol){for(let row=r.startRowIndex;row<r.endRowIndex;row++){\n  const isAnchor=(r.startColumnIndex===COL&&r.startRowIndex===row);\n  (isAnchor?anchor:nonAnchor).push(row+1);\n}}\nreturn [{json:{probeCol:cn(COL)+' (idx '+COL+')',totalMerges:mg.length,mergesCoveringProbeCol:inCol.length,nonAnchorRowCount:nonAnchor.length,nonAnchorRows:nonAnchor.sort((a,b)=>a-b),anchorRowCount:anchor.length}}];"
+        }
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Prep",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prep": {
+        "main": [
+          [
+            {
+              "node": "Meta",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Meta": {
+        "main": [
+          [
+            {
+              "node": "Out",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "Sidana Ventures",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "createdAt": "2026-10-01T10:04:03.131Z",
+    "updatedAt": "2026-10-01T10:04:03.131Z",
+    "workflowPublishHistory": [
+      {
+        "id": 10591,
+        "workflowId": "mTUeFd8PZkiKBXfx",
+        "versionId": "4b721661-1bba-454b-943e-0422c021d8bc",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-10-01T10:04:03.245Z"
+      }
+    ]
+  }
+}

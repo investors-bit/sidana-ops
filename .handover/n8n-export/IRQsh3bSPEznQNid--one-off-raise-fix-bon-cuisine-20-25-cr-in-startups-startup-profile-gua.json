@@ -1,0 +1,210 @@
+{
+  "id": "IRQsh3bSPEznQNid",
+  "name": "One-off RAISE-FIX — Bon Cuisine 20 -> 25 Cr in STARTUPS + STARTUP_PROFILE (guarded, webhook)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-10-01T09:47:24.330Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "60b7e2fd-7775-46e0-bd45-adb9fbdc1a8e",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "5848a7e8-3134-40e9-a9b4-57a8316d67da",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-raisefix-9d2c4b",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "gt",
+      "name": "Get",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=STARTUPS!A1:L200&ranges=STARTUP_PROFILE!A1:O200",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "pl",
+      "name": "Plan",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b = $('Webhook').first().json.body || {};\nif (b.secret !== 'sv-mail-2026-09-17-Kq7') { throw new Error('bad secret'); }\nconst DRY = b.apply !== true;\nconst s = (v) => String(v == null ? '' : v).trim();\nconst vr = $('Get').first().json.valueRanges || [];\nconst A = (vr[0] || {}).values || [], B = (vr[1] || {}).values || [];\nif (A.length < 40 || B.length < 40) { throw new Error('ABORT short read ' + A.length + '/' + B.length); }\n\n// Bon Cuisine. Founder asked for 25 Cr on the Northern Arc call, 4 Sep 2026.\n// Both tabs still carry the 20 Cr from July, which is what every outreach\n// subject line has been quoting since.\nconst NAME = 'Bon Cuisine';\nconst EXPECT_A = 'INR 20 Cr';   // STARTUPS.raise_inr_cr - builds the subject line\nconst EXPECT_B = '20';          // STARTUP_PROFILE.raise_cr - drives matching\nconst NEW_A = 'INR 25 Cr';\nconst NEW_B = '25';\n\nconst ha = A[0].map(s), hb = B[0].map(s);\nconst ai = ha.indexOf('raise_inr_cr'), bi = hb.indexOf('raise_cr');\nif (ai < 0 || bi < 0) { throw new Error('ABORT: column missing ' + ai + '/' + bi); }\nconst arow = A.findIndex((r, i) => i > 0 && s(r[0]).toLowerCase() === NAME.toLowerCase());\nconst brow = B.findIndex((r, i) => i > 0 && s(r[0]).toLowerCase() === NAME.toLowerCase());\nif (arow < 1 || brow < 1) { throw new Error('ABORT: row not found ' + arow + '/' + brow); }\nconst curA = s((A[arow] || [])[ai]), curB = s((B[brow] || [])[bi]);\n\n// Guard: only overwrite the exact stale value. If someone already corrected it,\n// or it says something else entirely, stop rather than clobber their work.\nconst okA = curA === EXPECT_A, okB = curB === EXPECT_B;\nconst colL = (i) => { let n = i + 1, t = ''; while (n > 0) { const m = (n - 1) % 26; t = String.fromCharCode(65 + m) + t; n = Math.floor((n - 1) / 26); } return t; };\nconst data = [];\nif (okA) { data.push({ range: 'STARTUPS!' + colL(ai) + (arow + 1), values: [[NEW_A]] }); }\nif (okB) { data.push({ range: 'STARTUP_PROFILE!' + colL(bi) + (brow + 1), values: [[NEW_B]] }); }\nconst report = { dry: DRY, startup: NAME,\n  startups_cell: 'STARTUPS!' + colL(ai) + (arow + 1), startups_now: curA, startups_new: okA ? NEW_A : 'SKIPPED - not the expected stale value',\n  profile_cell: 'STARTUP_PROFILE!' + colL(bi) + (brow + 1), profile_now: curB, profile_new: okB ? NEW_B : 'SKIPPED - not the expected stale value',\n  will_write: data.length };\nreturn [{ json: { report, data: DRY ? [] : data } }];"
+      }
+    },
+    {
+      "id": "hw",
+      "name": "Has writes",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const j = $input.first().json;\nreturn (j.data && j.data.length) ? [{ json: j }] : [];"
+      }
+    },
+    {
+      "id": "wr",
+      "name": "Write",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ valueInputOption: 'USER_ENTERED', data: $json.data }) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "rp",
+      "name": "Report",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        660,
+        -180
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json.report) }}",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get": {
+      "main": [
+        [
+          {
+            "node": "Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Plan": {
+      "main": [
+        [
+          {
+            "node": "Has writes",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has writes": {
+      "main": [
+        [
+          {
+            "node": "Write",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "IRQsh3bSPEznQNid",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-10-01T09:47:24.332Z",
+      "updatedAt": "2026-10-01T09:47:24.332Z"
+    }
+  ],
+  "activeVersion": null
+}

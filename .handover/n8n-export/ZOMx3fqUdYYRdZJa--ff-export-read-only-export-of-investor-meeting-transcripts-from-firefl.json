@@ -1,0 +1,162 @@
+{
+  "id": "ZOMx3fqUdYYRdZJa",
+  "name": "FF-EXPORT — read-only export of investor-meeting transcripts from fireflies_transcripts (webhook, paged)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-21T05:57:52.918Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "ce46a8e2-332d-4730-bae4-121c32e3507f",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "8d3f1b6e-4a27-4c9e-b5d0-7e2a1f9c3b84",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-ff-export-4b8e2d7c19",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "ck",
+      "name": "Check",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b = $input.first().json.body || {}; if (b.secret !== 'sv-mail-2026-09-17-Kq7') { throw new Error('bad secret'); } return [{ json: { offset: Number(b.offset) || 0, size: Math.min(Number(b.size) || 60, 150), cap: Number(b.cap) || 20000 } }];"
+      }
+    },
+    {
+      "id": "get",
+      "name": "Get rows",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "executeOnce": true,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "fvpArliLTLLXfxm0"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "title",
+              "condition": "ilike",
+              "keyValue": "%<>%"
+            }
+          ]
+        },
+        "returnAll": true,
+        "options": {}
+      }
+    },
+    {
+      "id": "out",
+      "name": "Out",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const c = $('Check').first().json;\nconst rows = $input.all().map(i => i.json).sort((a, b) => String(a.meeting_date).localeCompare(String(b.meeting_date)));\nconst page = rows.slice(c.offset, c.offset + c.size).map(r => ({ ff_id: r.ff_id, title: r.title, date: String(r.meeting_date || '').slice(0, 10), attendees: r.attendees, overview: r.overview, action_items: r.action_items, transcript_chars: r.transcript_chars, transcript: String(r.transcript || '').slice(0, c.cap) }));\nreturn [{ json: { total: rows.length, offset: c.offset, returned: page.length, rows: page } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check": {
+      "main": [
+        [
+          {
+            "node": "Get rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get rows": {
+      "main": [
+        [
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "none",
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "ZOMx3fqUdYYRdZJa",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-21T05:57:52.921Z",
+      "updatedAt": "2026-09-21T05:57:52.921Z"
+    }
+  ],
+  "activeVersion": null
+}

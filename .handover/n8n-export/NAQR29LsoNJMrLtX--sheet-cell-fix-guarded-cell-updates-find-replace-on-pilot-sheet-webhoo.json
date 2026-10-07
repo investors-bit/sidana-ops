@@ -1,0 +1,213 @@
+{
+  "id": "NAQR29LsoNJMrLtX",
+  "name": "SHEET-CELL-FIX — guarded cell updates + find/replace on pilot sheet (webhook, one-off)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-18T04:55:04.027Z",
+  "updatedAt": "2026-10-07T12:14:27.563Z",
+  "isArchived": false,
+  "versionId": "53fae43a-bca9-4b38-a913-ab3d098e3226",
+  "versionCounter": 4,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "e81b3c5d-9f2a-4c7e-8d16-3a5f0b9e2c74",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-cell-fix-3f8c1a6e92",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "p",
+      "name": "Prep",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b=$input.first().json.body||{};if(b.secret!=='sv-mail-2026-09-17-Kq7'){throw new Error('bad secret');}\nconst rs=Object.keys(b.expect||{}).concat((b.replace||[]).map(x=>x.range));\nconst SH=b.sheet||'1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4';if(['1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4','1WzrrPelm2HsJNXOUNIEOuRajp70CUY-RrzBOs9LENjs'].indexOf(SH)<0){throw new Error('sheet not allowed');}\nreturn [{json:{url:'https://sheets.googleapis.com/v4/spreadsheets/'+SH+'/values:batchGet?'+rs.map(r=>'ranges='+encodeURIComponent(r)).join('&')}}];"
+      }
+    },
+    {
+      "id": "g",
+      "name": "Get",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "v",
+      "name": "Validate",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b=$('Webhook').first().json.body;const vr=$input.first().json.valueRanges;const val=i=>String(((vr[i].values||[[]])[0]||[])[0]||'');\nconst ex=Object.keys(b.expect||{});ex.forEach((r,i)=>{if(val(i).trim()!==b.expect[r]){throw new Error(r+' is '+val(i));}});\nconst data=(b.set||[]).map(s=>({range:s.range,values:[[s.value]]}));\nconst acc={};(b.replace||[]).forEach((x,k)=>{const cur=(x.range in acc)?acc[x.range]:val(ex.length+k);const n=cur.split(x.find).length-1;if(n!==(x.count||1)){throw new Error(x.range+' has '+n+' matches of '+x.find);}acc[x.range]=cur.split(x.find).join(x.repl);});Object.keys(acc).forEach(r=>data.push({range:r,values:[[acc[r]]]}));\nreturn [{json:{body:{valueInputOption:'RAW',data:data}}}];"
+      }
+    },
+    {
+      "id": "w",
+      "name": "Write",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/' + ($('Webhook').first().json.body.sheet || '1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4') + '/values:batchUpdate' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "o",
+      "name": "Out",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const j=$input.first().json;return [{json:{updated:(j.responses||[]).map(r=>r.updatedRange)}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Prep",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep": {
+      "main": [
+        [
+          {
+            "node": "Get",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get": {
+      "main": [
+        [
+          {
+            "node": "Validate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate": {
+      "main": [
+        [
+          {
+            "node": "Write",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write": {
+      "main": [
+        [
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataSuccessExecution": "none",
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "NAQR29LsoNJMrLtX",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-18T04:55:04.029Z",
+      "updatedAt": "2026-09-18T04:55:04.029Z"
+    }
+  ],
+  "activeVersion": null
+}

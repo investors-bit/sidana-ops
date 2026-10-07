@@ -1,0 +1,744 @@
+{
+  "id": "LdYlMTwHKBy1HgvU",
+  "name": "ONB-REPLY-SWEEP (read-only) — match ONBOARDING replies across all 5 mailboxes (webhook)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-30T06:07:07.662Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "d694b1ce-ab2b-48c7-9223-912f10e3e35f",
+  "versionCounter": 7,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Run hook",
+      "webhookId": "4c75126d-1cbc-4c78-8245-c2e9318c3fe5",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "path": "onb-reply-sweep-7f2a19",
+        "httpMethod": "POST",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "s5",
+      "name": "MB5 subj",
+      "webhookId": "45d14e4e-7e29-4024-84ae-e7b38c6c6f2f",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        200,
+        -200
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 80,
+        "simple": false,
+        "filters": {
+          "q": "in:inbox newer_than:10d subject:\"Sidana Ventures\""
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "R5K61omYbU9oT5J8",
+          "name": "Gmail account 5"
+        }
+      }
+    },
+    {
+      "id": "s4",
+      "name": "MB4 subj",
+      "webhookId": "5ae5ef17-61b5-45dd-a530-cec0cc8394c7",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        380,
+        -200
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 80,
+        "simple": false,
+        "filters": {
+          "q": "in:inbox newer_than:10d subject:\"Sidana Ventures\""
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "9IWD8mWqdARPXloL",
+          "name": "Gmail account 4"
+        }
+      }
+    },
+    {
+      "id": "s3",
+      "name": "MB3 subj",
+      "webhookId": "450123aa-afd0-4b2f-81c5-f7a4d39fdd46",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        560,
+        -200
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 80,
+        "simple": false,
+        "filters": {
+          "q": "in:inbox newer_than:10d subject:\"Sidana Ventures\""
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mymSHTFVWtsI3Mh7",
+          "name": "Gmail account 3"
+        }
+      }
+    },
+    {
+      "id": "s2",
+      "name": "MB2 subj",
+      "webhookId": "2d41a9e6-05d4-4f40-a225-aea5a77baf17",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        740,
+        -200
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 80,
+        "simple": false,
+        "filters": {
+          "q": "in:inbox newer_than:10d subject:\"Sidana Ventures\""
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "hwEqMRn6IxzoYs1R",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "id": "s6",
+      "name": "MB6 subj",
+      "webhookId": "bd104eba-f2df-40e3-a897-4d21733c9d96",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        920,
+        -200
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 80,
+        "simple": false,
+        "filters": {
+          "q": "in:inbox newer_than:10d subject:\"Sidana Ventures\""
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "s4YYut2fC7u8aQWl",
+          "name": "Gmail account 6"
+        }
+      }
+    },
+    {
+      "id": "r5",
+      "name": "MB5 rec",
+      "webhookId": "3959091d-a857-4575-8ac5-39c4929942fc",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        200,
+        160
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 40,
+        "simple": false,
+        "filters": {
+          "q": "in:inbox newer_than:4d -from:sidanaventures.com -from:indeedemail.com -from:linkedin.com -from:fireflies.ai -from:read.ai -from:calendly.com -from:google.com -from:canva.com -from:youtube.com"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "R5K61omYbU9oT5J8",
+          "name": "Gmail account 5"
+        }
+      }
+    },
+    {
+      "id": "r4",
+      "name": "MB4 rec",
+      "webhookId": "45b06e42-2e9b-47b9-8678-ee09481a5175",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        380,
+        160
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 40,
+        "simple": false,
+        "filters": {
+          "q": "in:inbox newer_than:4d -from:sidanaventures.com -from:indeedemail.com -from:linkedin.com -from:fireflies.ai -from:read.ai -from:calendly.com -from:google.com -from:canva.com -from:youtube.com"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "9IWD8mWqdARPXloL",
+          "name": "Gmail account 4"
+        }
+      }
+    },
+    {
+      "id": "r3",
+      "name": "MB3 rec",
+      "webhookId": "40e4b392-2de7-4d8c-8a8f-70fac599ce5b",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        560,
+        160
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 40,
+        "simple": false,
+        "filters": {
+          "q": "in:inbox newer_than:4d -from:sidanaventures.com -from:indeedemail.com -from:linkedin.com -from:fireflies.ai -from:read.ai -from:calendly.com -from:google.com -from:canva.com -from:youtube.com"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mymSHTFVWtsI3Mh7",
+          "name": "Gmail account 3"
+        }
+      }
+    },
+    {
+      "id": "r2",
+      "name": "MB2 rec",
+      "webhookId": "1f8fa1db-dc9e-42ac-9c74-aa09cb952cec",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        740,
+        160
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 40,
+        "simple": false,
+        "filters": {
+          "q": "in:inbox newer_than:4d -from:sidanaventures.com -from:indeedemail.com -from:linkedin.com -from:fireflies.ai -from:read.ai -from:calendly.com -from:google.com -from:canva.com -from:youtube.com"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "hwEqMRn6IxzoYs1R",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "id": "r6",
+      "name": "MB6 rec",
+      "webhookId": "4a2b863e-291f-45fc-b909-784788841a12",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        920,
+        160
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 40,
+        "simple": false,
+        "filters": {
+          "q": "in:inbox newer_than:4d -from:sidanaventures.com -from:indeedemail.com -from:linkedin.com -from:fireflies.ai -from:read.ai -from:calendly.com -from:google.com -from:canva.com -from:youtube.com"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "s4YYut2fC7u8aQWl",
+          "name": "Gmail account 6"
+        }
+      }
+    },
+    {
+      "id": "rd",
+      "name": "Read ONBOARDING",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "alwaysOutputData": true,
+      "position": [
+        1120,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/ONBOARDING!A1:AM900?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "col",
+      "name": "Match",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1340,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "var IN=[['MB5 subj','shradhaa@'],['MB4 subj','akansha@'],['MB3 subj','investors@'],['MB2 subj','dealflow@'],['MB6 subj','admin@'],['MB5 rec','shradhaa@'],['MB4 rec','akansha@'],['MB3 rec','investors@'],['MB2 rec','dealflow@'],['MB6 rec','admin@']];\nvar OUT=[['MB5 sent','shradhaa@'],['MB4 sent','akansha@'],['MB3 sent','investors@'],['MB2 sent','dealflow@'],['MB6 sent','admin@']];\nfunction addrOf(s){s=String(s||'');var i=s.indexOf('<'),j=s.indexOf('>');if(i>=0&&j>i)return s.slice(i+1,j).trim().toLowerCase();return s.trim().toLowerCase();}\nfunction hstr(v){if(!v)return '';if(typeof v==='string')return v;if(v.text)return String(v.text);if(v.value&&v.value[0])return (v.value[0].name?v.value[0].name+' ':'')+'<'+v.value[0].address+'>';return String(v);}\nfunction allAddrs(s){var out=[];var m=String(s||'').match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}/g)||[];for(var i=0;i<m.length;i++)out.push(m[i].toLowerCase());return out;}\nfunction norm(s){return String(s||'').toLowerCase().replace(/[^a-z0-9]/g,'');}\nfunction tsOf(j){var d=j.date||j.internalDate||'';var t=Date.parse(d);if(isNaN(t)&&/^[0-9]+$/.test(String(d)))t=Number(d);return isNaN(t)?0:t;}\nfunction clean(t){t=String(t||'').split('\\r').join('');var p=t.indexOf('wrote:');if(p>60)t=t.slice(0,p);var q=t.indexOf('-----Original Message-----');if(q>60)t=t.slice(0,q);var r=t.indexOf('________________________________');if(r>60)t=t.slice(0,r);while(t.indexOf('\\n\\n\\n')>-1)t=t.split('\\n\\n\\n').join('\\n\\n');return t.trim().slice(0,1400);}\n\nvar msgs=[],seen={};\nfor(var n=0;n<IN.length;n++){var nm=IN[n][0],lbl=IN[n][1];var it=[];try{it=$(nm).all();}catch(e){it=[];}\n for(var a=0;a<it.length;a++){var j=it[a].json||{};if(!j.id)continue;var k=lbl+'|'+j.id;if(seen[k])continue;seen[k]=1;\n  var body=j.text||j.textPlain||'';if(!body&&j.html)body=String(j.html).replace(/<[^>]+>/g,' ');if(!body)body=String(j.snippet||'');\n  msgs.push({mailbox:lbl,id:j.id,thread:j.threadId||'',from:hstr(j.from),to:hstr(j.to),subject:String(j.subject||''),dateRaw:String(j.date||''),ts:tsOf(j),labels:(j.labelIds||[]).join(','),snippet:String(j.snippet||'').slice(0,140),body:clean(body)});}}\n\nvar sentByThread={},sentByAddr={},outN=0;\nfor(var o=0;o<OUT.length;o++){var on=OUT[o][0],ol=OUT[o][1];var oi=[];try{oi=$(on).all();}catch(e){oi=[];}\n for(var b=0;b<oi.length;b++){var s=oi[b].json||{};if(!s.id)continue;outN++;\n  var st=tsOf(s);var rec={ts:st,mailbox:ol,subject:String(s.subject||''),iso:st?new Date(st).toISOString():''};\n  if(s.threadId&&!sentByThread[s.threadId])sentByThread[s.threadId]=rec;\n  var tos=allAddrs(hstr(s.to)).concat(allAddrs(hstr(s.cc)));\n  for(var t2=0;t2<tos.length;t2++){if(tos[t2].indexOf('sidanaventures.com')>-1)continue;var pv=sentByAddr[tos[t2]];if(!pv||pv.ts<st)sentByAddr[tos[t2]]=rec;}}}\n\nvar sh=$('Read ONBOARDING').first().json||{};var rows=sh.values||[];\nif(!rows.length)return [{json:{fatal:'ONBOARDING read empty'}}];\nvar hdrRaw=rows[0]||[];var lc=hdrRaw.map(function(x){return String(x||'').trim().toLowerCase();});\nvar iRN=lc.indexOf('review_note');\nvar C={status:4,firm:5,contact:6,email:8,sent:27,thread:28,rr:29,rd:30,tsec:31,tstg:32,tchq:33,lf:34,mtg:35,oc:36,ai:37};\nvar byEmail={},byThread={},firmMap={},meta=[];\nfor(var i=1;i<rows.length;i++){var r=rows[i]||[];\n var em=String(r[C.email]||'').split(/[,;]+/).map(function(x){return x.trim().toLowerCase();}).filter(function(x){return x.indexOf('@')>0;});\n var m={row:i+1,firm:String(r[C.firm]||''),contact:String(r[C.contact]||''),status:String(r[C.status]||''),sent:String(r[C.sent]||''),thread:String(r[C.thread]||'').trim(),emails:em};\n if(!m.firm&&!em.length)continue;meta.push(m);\n for(var e=0;e<em.length;e++){if(!byEmail[em[e]])byEmail[em[e]]=[];byEmail[em[e]].push(m);}\n if(m.thread){if(!byThread[m.thread])byThread[m.thread]=[];byThread[m.thread].push(m);}\n var fn=norm(m.firm);if(fn){if(!firmMap[fn])firmMap[fn]=[];firmMap[fn].push(m);}}\n\nfunction exist(row){var r=rows[row-1]||[];return {reply_received:String(r[C.rr]||''),reply_date:String(r[C.rd]||''),thesis_sector:String(r[C.tsec]||''),thesis_stage:String(r[C.tstg]||''),thesis_cheque:String(r[C.tchq]||''),lead_or_follow:String(r[C.lf]||''),meeting_booked:String(r[C.mtg]||''),outcome:String(r[C.oc]||''),added_to_investors:String(r[C.ai]||''),review_note:iRN>=0?String(r[iRN]||'').slice(0,300):''};}\nfunction sentInfo(replyThread,sheetThread,ad){return sentByThread[replyThread]||(sheetThread?sentByThread[sheetThread]:null)||sentByAddr[ad]||null;}\n\nvar matched=[],near=[],other=[],oSeen={};\nfor(var q=0;q<msgs.length;q++){var M=msgs[q];var ad=addrOf(M.from);\n if(ad.indexOf('sidanaventures.com')>-1)continue;\n var hits=byEmail[ad]||[];var how='email';\n if(!hits.length&&M.thread&&byThread[M.thread]){hits=byThread[M.thread];how='thread';}\n if(hits.length){for(var z=0;z<hits.length;z++){var mt=hits[z];var si=sentInfo(M.thread,mt.thread,ad);\n   var gap=null;if(si&&si.ts&&M.ts)gap=Math.round((M.ts-si.ts)/1000);else{var sd=Date.parse(mt.sent);if(!isNaN(sd)&&M.ts)gap=Math.round((M.ts-sd)/1000);}\n   matched.push({row:mt.row,mailbox:M.mailbox,by:how,firm:mt.firm,contact:mt.contact,status:mt.status,sheet_sent_date:mt.sent,true_sent_at:si?si.iso:'',gapSec:gap,msgId:M.id,thread:M.thread,sheetThread:mt.thread,from:ad,subject:M.subject.slice(0,150),date:M.dateRaw.slice(0,31),iso:M.ts?new Date(M.ts).toISOString():'',labels:M.labels,body:M.body,existing:exist(mt.row)});}continue;}\n var low=M.subject.toLowerCase();\n if(low.indexOf('introducing sidana ventures')>-1){\n  var p=low.lastIndexOf(' for ');var guess=p>-1?M.subject.slice(p+5).trim():'';var gn=norm(guess);var cand=[];\n  if(gn){if(firmMap[gn])cand=firmMap[gn].slice();else{for(var f in firmMap){if(f.indexOf(gn)===0||(gn.length>4&&gn.indexOf(f)===0))cand=cand.concat(firmMap[f]);}}}\n  var si2=sentInfo(M.thread,cand.length?cand[0].thread:'',ad);var g2=null;if(si2&&si2.ts&&M.ts)g2=Math.round((M.ts-si2.ts)/1000);\n  var cl=[];for(var c2=0;c2<cand.length&&c2<4;c2++)cl.push({row:cand[c2].row,firm:cand[c2].firm,contact:cand[c2].contact,status:cand[c2].status,emails:cand[c2].emails,sheet_sent_date:cand[c2].sent,existing:exist(cand[c2].row)});\n  near.push({mailbox:M.mailbox,from:ad,fromName:String(M.from).split('<')[0].trim().slice(0,50),subject:M.subject.slice(0,150),date:M.dateRaw.slice(0,31),iso:M.ts?new Date(M.ts).toISOString():'',firmGuess:guess,true_sent_at:si2?si2.iso:'',gapSec:g2,thread:M.thread,candidates:cl,body:M.body});continue;}\n var ok=ad+'|'+M.mailbox;if(!oSeen[ok]){oSeen[ok]=1;other.push({mailbox:M.mailbox,from:ad,subject:M.subject.slice(0,100),date:M.dateRaw.slice(0,25)});}}\n\nvar sentN=0,recN=0,rowsSeen={};\nfor(var s2=0;s2<meta.length;s2++){if(/sent|onboard|hold|replied/i.test(meta[s2].status))sentN++;var rw=rows[meta[s2].row-1]||[];if(String(rw[C.rr]||'').trim())recN++;}\nfor(var m3=0;m3<matched.length;m3++)rowsSeen[matched[m3].row]=1;\nvar perBox={};for(var p2=0;p2<msgs.length;p2++)perBox[msgs[p2].mailbox]=(perBox[msgs[p2].mailbox]||0)+1;\nvar statusCount={};for(var s3=0;s3<meta.length;s3++){var k3=meta[s3].status||'(blank)';statusCount[k3]=(statusCount[k3]||0)+1;}\n\nreturn [{json:{stats:{sheetDataRows:meta.length,statusCount:statusCount,rowsAlreadyHavingReplyRecorded:recN,inboxMessagesSwept:msgs.length,perMailbox:perBox,onboardingSentMailFound:outN,matchedMessages:matched.length,distinctMatchedRows:Object.keys(rowsSeen).length,nearMisses:near.length,otherExternal:other.length},matched:matched,nearMiss:near,otherExternal:other.slice(0,45)}}];"
+      }
+    },
+    {
+      "id": "o5",
+      "name": "MB5 sent",
+      "webhookId": "8db88f2c-001e-46d1-83d5-c532f6f1a659",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        200,
+        420
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 80,
+        "simple": true,
+        "filters": {
+          "q": "in:sent newer_than:18d subject:\"Sidana Ventures\""
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "R5K61omYbU9oT5J8",
+          "name": "Gmail account 5"
+        }
+      }
+    },
+    {
+      "id": "o4",
+      "name": "MB4 sent",
+      "webhookId": "4a02565b-4081-4168-853c-b2a6f4987d3c",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        380,
+        420
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 80,
+        "simple": true,
+        "filters": {
+          "q": "in:sent newer_than:18d subject:\"Sidana Ventures\""
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "9IWD8mWqdARPXloL",
+          "name": "Gmail account 4"
+        }
+      }
+    },
+    {
+      "id": "o3",
+      "name": "MB3 sent",
+      "webhookId": "4391f7eb-1455-4fe9-be2f-7300753e843f",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        560,
+        420
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 80,
+        "simple": true,
+        "filters": {
+          "q": "in:sent newer_than:18d subject:\"Sidana Ventures\""
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mymSHTFVWtsI3Mh7",
+          "name": "Gmail account 3"
+        }
+      }
+    },
+    {
+      "id": "o2",
+      "name": "MB2 sent",
+      "webhookId": "37d66858-02aa-4069-a205-0f612f166445",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        740,
+        420
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 80,
+        "simple": true,
+        "filters": {
+          "q": "in:sent newer_than:18d subject:\"Sidana Ventures\""
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "hwEqMRn6IxzoYs1R",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "id": "o6",
+      "name": "MB6 sent",
+      "webhookId": "d994badc-8d8c-4678-8d06-d11e58faebef",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        920,
+        420
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 80,
+        "simple": true,
+        "filters": {
+          "q": "in:sent newer_than:18d subject:\"Sidana Ventures\""
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "s4YYut2fC7u8aQWl",
+          "name": "Gmail account 6"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Run hook": {
+      "main": [
+        [
+          {
+            "node": "MB5 subj",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MB5 subj": {
+      "main": [
+        [
+          {
+            "node": "MB4 subj",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MB4 subj": {
+      "main": [
+        [
+          {
+            "node": "MB3 subj",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MB3 subj": {
+      "main": [
+        [
+          {
+            "node": "MB2 subj",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MB2 subj": {
+      "main": [
+        [
+          {
+            "node": "MB6 subj",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MB6 subj": {
+      "main": [
+        [
+          {
+            "node": "MB5 rec",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MB5 rec": {
+      "main": [
+        [
+          {
+            "node": "MB4 rec",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MB4 rec": {
+      "main": [
+        [
+          {
+            "node": "MB3 rec",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MB3 rec": {
+      "main": [
+        [
+          {
+            "node": "MB2 rec",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MB2 rec": {
+      "main": [
+        [
+          {
+            "node": "MB6 rec",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read ONBOARDING": {
+      "main": [
+        [
+          {
+            "node": "Match",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MB6 rec": {
+      "main": [
+        [
+          {
+            "node": "MB5 sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MB5 sent": {
+      "main": [
+        [
+          {
+            "node": "MB4 sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MB4 sent": {
+      "main": [
+        [
+          {
+            "node": "MB3 sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MB3 sent": {
+      "main": [
+        [
+          {
+            "node": "MB2 sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MB2 sent": {
+      "main": [
+        [
+          {
+            "node": "MB6 sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MB6 sent": {
+      "main": [
+        [
+          {
+            "node": "Read ONBOARDING",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionTimeout": 600,
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "LdYlMTwHKBy1HgvU",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-30T06:07:07.664Z",
+      "updatedAt": "2026-09-30T06:07:07.664Z"
+    }
+  ],
+  "activeVersion": null
+}

@@ -1,0 +1,1196 @@
+{
+  "id": "gS9DXz4E3gMzcXYP",
+  "name": "DAILY-REPORT — 6 PM weekday deal report to Rakesh (shares, responses, passes, meetings, interested-no-meeting)",
+  "description": null,
+  "active": true,
+  "activeVersionId": "7fdbca0a-d912-4587-b183-946e7ffc51dd",
+  "createdAt": "2026-09-21T09:22:41.882Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "7fdbca0a-d912-4587-b183-946e7ffc51dd",
+  "versionCounter": 20,
+  "sourceWorkflowId": null,
+  "triggerCount": 2,
+  "nodes": [
+    {
+      "id": "sch",
+      "name": "6 PM Mon-Fri",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 18 * * 1-5"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "wh",
+      "name": "Test webhook",
+      "webhookId": "9e4b2c7a-6d1f-4a38-b5e2-3c8f0a1d7e64",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        200
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-daily-report-7b3e1f9c52",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "ctx",
+      "name": "Ctx",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        100
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const j=$input.first().json;\nif(j.headers||j.body!==undefined){const b=j.body||{};if(b.secret!=='sv-mail-2026-09-17-Kq7'){throw new Error('bad secret');}const to=String(b.to||'investors@sidanaventures.com').trim().toLowerCase();if(!/^[a-z0-9._-]+@sidanaventures\\.com$/.test(to)){throw new Error('internal addresses only');}return [{json:{dry:b.dry!==false,to,src:'webhook'}}];}\nreturn [{json:{dry:false,to:'rakesh@sidanaventures.com',src:'schedule'}}];"
+      }
+    },
+    {
+      "id": "sh",
+      "name": "Sheet",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "position": [
+        440,
+        100
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=PIPELINE!A1:AI20000&ranges=STARTUPS!A1:A300&ranges=INVESTORS!A1:C400",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "c1",
+      "name": "Cal A",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "continueOnFail": true,
+      "position": [
+        660,
+        100
+      ],
+      "parameters": {
+        "url": "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleCalendarOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "timeMin",
+              "value": "2026-08-31T00:00:00+05:30"
+            },
+            {
+              "name": "timeMax",
+              "value": "={{ new Date(Date.now()+120*864e5).toISOString() }}"
+            },
+            {
+              "name": "singleEvents",
+              "value": "true"
+            },
+            {
+              "name": "orderBy",
+              "value": "startTime"
+            },
+            {
+              "name": "maxResults",
+              "value": "2500"
+            },
+            {
+              "name": "fields",
+              "value": "items(id,status,summary,start,created,attendees(email))"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "FMaJN0wYxb8FWUZs",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "id": "c2",
+      "name": "Cal B",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "continueOnFail": true,
+      "position": [
+        880,
+        100
+      ],
+      "parameters": {
+        "url": "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleCalendarOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "timeMin",
+              "value": "2026-08-31T00:00:00+05:30"
+            },
+            {
+              "name": "timeMax",
+              "value": "={{ new Date(Date.now()+120*864e5).toISOString() }}"
+            },
+            {
+              "name": "singleEvents",
+              "value": "true"
+            },
+            {
+              "name": "orderBy",
+              "value": "startTime"
+            },
+            {
+              "name": "maxResults",
+              "value": "2500"
+            },
+            {
+              "name": "fields",
+              "value": "items(id,status,summary,start,created,attendees(email))"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "SUalv0ssD9ruGnuS",
+          "name": "Google Calendar account 2"
+        }
+      }
+    },
+    {
+      "id": "c3",
+      "name": "Cal C",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "continueOnFail": true,
+      "position": [
+        1100,
+        100
+      ],
+      "parameters": {
+        "url": "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleCalendarOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "timeMin",
+              "value": "2026-08-31T00:00:00+05:30"
+            },
+            {
+              "name": "timeMax",
+              "value": "={{ new Date(Date.now()+120*864e5).toISOString() }}"
+            },
+            {
+              "name": "singleEvents",
+              "value": "true"
+            },
+            {
+              "name": "orderBy",
+              "value": "startTime"
+            },
+            {
+              "name": "maxResults",
+              "value": "2500"
+            },
+            {
+              "name": "fields",
+              "value": "items(id,status,summary,start,created,attendees(email))"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "XHTquOpYpODOTLYR",
+          "name": "Google Calendar account 3"
+        }
+      }
+    },
+    {
+      "id": "c4",
+      "name": "Cal D",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "continueOnFail": true,
+      "position": [
+        1320,
+        100
+      ],
+      "parameters": {
+        "url": "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleCalendarOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "timeMin",
+              "value": "2026-08-31T00:00:00+05:30"
+            },
+            {
+              "name": "timeMax",
+              "value": "={{ new Date(Date.now()+120*864e5).toISOString() }}"
+            },
+            {
+              "name": "singleEvents",
+              "value": "true"
+            },
+            {
+              "name": "orderBy",
+              "value": "startTime"
+            },
+            {
+              "name": "maxResults",
+              "value": "2500"
+            },
+            {
+              "name": "fields",
+              "value": "items(id,status,summary,start,created,attendees(email))"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "NdbYgV97aSL2PRCB",
+          "name": "Google Calendar account 4"
+        }
+      }
+    },
+    {
+      "id": "bd",
+      "name": "Build",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1540,
+        100
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// core of DAILY-REPORT Build node; runs in n8n and locally for testing\nfunction buildReport(P, startupRows, cals, nowMs, prev, sinceMs) {\n  const s = v => String(v == null ? '' : v).trim();\n  const nz = x => s(x).toLowerCase().replace(/[’']/g, '').replace(/\\(.*?\\)/g, '').replace(/[^a-z0-9]/g, '');\n  const esc = x => s(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\n  const GENERIC = /^(gmail|yahoo|hotmail|outlook|icloud|msn|live|rediffmail|protonmail|me|ymail|googlemail|aol)\\./i;\n  const doms = v => (s(v).match(/[A-Za-z0-9._%+'-]+@[A-Za-z0-9.-]+/g) || []).map(e => e.split('@')[1].toLowerCase()).filter(d => !GENERIC.test(d) && d !== 'sidanaventures.com');\n  const IST = 5.5 * 3600e3;\n  const today = new Date(nowMs + IST).toISOString().slice(0, 10);\n\n  // startups + aliases\n  const ALIAS = { aisignallabs: ['aisignallab'], caffenacoffee: ['caffena', 'caffeina', 'caffina'], orboai: ['orbo'], bodybeyond: ['bodyandbeyond'], sugarsdaddy: ['sugardaddy'], altfcoworking: ['altf'], springbaseai: ['springbase'], tronixai: ['tronix'], orbislives: ['orbis'], ekosight: ['ecosight'], firearmor: ['fireamor'] };\n  const startups = startupRows.map(r => s(r[0])).filter(x => x && x.toLowerCase() !== 'startup');\n  const skeys = startups.map(x => ({ s: x, k: [nz(x)].concat(ALIAS[nz(x)] || []) }));\n  const findStartup = t => { const n = nz(t); let best = null; for (const x of skeys) for (const k of x.k) if (k.length >= 4 && n.includes(k) && (!best || k.length > best.len)) best = { s: x.s, len: k.length }; return best ? best.s : ''; };\n\n  // calendar events (deduped across the 4 calendars)\n  const evs = [], seenEv = new Set();\n  for (const items of cals) for (const e of (items || [])) {\n    if (e.status === 'cancelled' || !e.summary) continue;\n    const st = (e.start && (e.start.dateTime || e.start.date)) || '';\n    const key = nz(e.summary) + '|' + st.slice(0, 16);\n    if (seenEv.has(key)) continue; seenEv.add(key);\n    if (/interview|internal|onboarding|\\bmou\\b|task/i.test(e.summary)) continue;\n    const su = findStartup(e.summary); if (!su) continue;\n    evs.push({ su, t: nz(e.summary), title: e.summary, st, created: e.created || '', ms: Date.parse(st), doms: new Set((e.attendees || []).map(a => (s(a.email).split('@')[1] || '').toLowerCase()).filter(d => d && d !== 'sidanaventures.com' && !GENERIC.test(d))) });\n  }\n\n  // pipeline\n  const h = P[0].map(s), I = k => h.indexOf(k), g = (r, k) => { const i = I(k); return i < 0 ? '' : s(r[i]); };\n  const pairs = new Map();\n  for (const r of P.slice(1)) {\n    if (g(r, 'deal_shared') !== 'Yes') continue;\n    const su = g(r, 'startup'), inv = g(r, 'investor'); if (!su || !inv) continue;\n    const key = nz(su) + '|' + nz(inv.split(/\\s+-\\s+/)[0]);\n    const x = pairs.get(key) || { su, inv, owner: g(r, 'owner'), date: g(r, 'date_shared'), last: '', resp: '', status: '', ms: '', doms: new Set() };\n    for (const c of ['date_shared', 'last_contact']) { const v = g(r, c).slice(0, 10); if (/^\\d{4}-\\d\\d-\\d\\d$/.test(v) && v > x.last) x.last = v; }\n    if (g(r, 'investor_response')) x.resp = g(r, 'investor_response');\n    if (g(r, 'deal_status')) x.status = g(r, 'deal_status');\n    if (g(r, 'meeting_scheduled')) x.ms = g(r, 'meeting_scheduled');\n    if (g(r, 'next_action')) x.na = g(r, 'next_action');\n    if (g(r, 'date_shared') && (!x.date || g(r, 'date_shared') < x.date)) x.date = g(r, 'date_shared');\n    doms(g(r, 'email') + ',' + g(r, 'cc')).forEach(d => x.doms.add(d));\n    pairs.set(key, x);\n  }\n  const rows = [...pairs.values()];\n  const sharesToday = P.slice(1).filter(r => g(r, 'deal_shared') === 'Yes' && g(r, 'date_shared').startsWith(today)).length;\n\n  for (const x of rows) {\n    const ik = nz(x.inv.split(/\\s+-\\s+/)[0]);\n    const m = evs.filter(e => e.su === x.su && ([...e.doms].some(d => x.doms.has(d)) || (ik.length >= 4 && e.t.includes(ik)))).sort((a, b) => a.ms - b.ms);\n    const both = (x.resp + ' ' + x.status);\n    const sheetMeet = (/meeting/i.test(both) && !/request/i.test(both)) || /^yes/i.test(x.ms);\n    x.meetAt = m.length ? m[0].st : '';\n    x.meetUpcoming = m.length ? m.every(e => e.ms > nowMs) : false;\n    const R = x.resp, St = x.status;\n    if (/^bounced/i.test(R)) x.cat = 'bounced';\n    else if (m.length || sheetMeet) x.cat = 'meeting';\n    else if (/^meeting requested/i.test(R) || /^book meeting/i.test(x.na || '') || /(asked|wants|requested).{0,30}(meeting|call)|slots? (sent|shared|requested)/i.test(R)) x.cat = 'tobook'; // investor asked for a meeting, no invite yet (24 Sep: also catch next_action 'Book meeting' and plain-English requests, so a missing marker cannot hide one)\n    else if (/^pass/i.test(R) || /^pass|not relevant/i.test(St)) x.cat = 'passed';\n    else if (/refer|forward/i.test(R) || (!R && /refer/i.test(St))) x.cat = 'referred';\n    else if (/not active|needs review/i.test(R)) x.cat = 'other';\n    else if (/intrest|interest|question|asked|request|reviewing|under review|deck|document|form|excel|positive|call|evaluat/i.test(R) || (!R && /reviewing|question|docs/i.test(St))) x.cat = 'interested';\n    else if (R) x.cat = 'other';\n    else x.cat = 'none';\n  }\n  // all investor meetings this month (held + scheduled), from calendars\n  const invByDom = {}, invByKey = {};\n  for (const r of P.slice(1)) {\n    const inv = g(r, 'investor'); if (!inv) continue;\n    doms(g(r, 'email') + ',' + g(r, 'cc')).forEach(dm => { if (!invByDom[dm]) invByDom[dm] = inv; });\n    const k = nz(inv.split(/\\s+-\\s+/)[0]); if (k.length >= 5 && !invByKey[k]) invByKey[k] = inv;\n  }\n  const monthKey = today.slice(0, 7);\n  const monthName = new Date(nowMs + IST).toLocaleString('en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' });\n  const invOf = e => {\n    for (const dm of e.doms) if (invByDom[dm]) return invByDom[dm];\n    const tt = e.t.replace(/michelle/g, 'michele');\n    let best = ''; for (const k in invByKey) if (tt.includes(k) && k.length > best.length) best = k;\n    if (best) return invByKey[best];\n    if (e.title.includes('<>')) {\n      // investor not in PIPELINE: take the other side of \"X <> Y\" from the title\n      const side = e.title.split('<>').map(x => x.trim()).find(x => !nz(x).includes(nz(e.su).slice(0, 4))) || '';\n      const clean = side.replace(/\\|.*$/, '').replace(/\\band\\s+(sidana ventures|aditya sv).*$/i, '').replace(/\\b(mr|ms|mrs)\\.?\\s+/ig, '').trim();\n      if (clean && !/sidana|^rakesh/i.test(clean)) return clean;\n    }\n    return '';\n  };\n  const invMeet = [];\n  for (const e of evs) { if (!e.st) continue; const inv = invOf(e); if (inv) invMeet.push({ ...e, inv, held: e.ms <= nowMs }); }\n  invMeet.sort((a, b) => a.ms - b.ms);\n  // reschedules: same startup + investor within 3 days counts once (the latest date is kept)\n  { const kept = {}; for (let i = invMeet.length - 1; i >= 0; i--) { const x = invMeet[i]; const k = x.su + '|' + nz(x.inv).replace(/michelle/g, 'michele').slice(0, 6); if (kept[k] != null && kept[k] - x.ms < 3 * 864e5) invMeet.splice(i, 1); else kept[k] = x.ms; } }\n  const monthMeet = invMeet.filter(x => new Date(x.ms + IST).toISOString().slice(0, 7) === monthKey);\n  // booked since the last report went out (so bookings made after 6 PM are not lost); first run: since midnight IST\n  const since = sinceMs || Date.parse(today + 'T00:00:00+05:30');\n  const newToday = invMeet.filter(x => x.created && Date.parse(x.created) > since && !evs.some(e => e.su === x.su && e.ms === x.ms && e.created && Date.parse(e.created) <= since)); // 22 Sep: a second invite for a meeting already booked (e.g. the investor's own Teams invite) is not a new meeting\n  const MM = { held: monthMeet.filter(x => x.held).length, sched: monthMeet.filter(x => !x.held).length };\n  // ---- brief totals (calendar is the source for meetings) ----\n  // MONTH SCOPE (Aditya, 5 Oct 2026): \"send the data as per a particular month ... share him of\n  // october from today\". The report used to total everything since 31 Aug, so September kept\n  // showing up in an October report. Now: deals shared are the month's own cohort by date_shared,\n  // meetings are the month's own calendar events. Rolls over by itself on the 1st.\n  const mrows = rows.filter(x => s(x.date).slice(0, 7) === monthKey);\n  const calMeet = monthMeet;\n  const sheetOnly = 0; // calendar is the only source: PIPELINE 'meeting' flags without an invite proved unreliable (21 Sep)\n  // interested: split active vs gone quiet (no movement for 10+ days); a date written in the response text counts as movement\n  const MON = { jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06', jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12' };\n  const lastAct = x => { let l = x.last || x.date; const m = x.resp.match(/\\((\\d{1,2}) (jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\\)/i); if (m) { const v = today.slice(0, 4) + '-' + MON[m[2].toLowerCase()] + '-' + m[1].padStart(2, '0'); if (v > l) l = v; } return l; };\n  const intr = mrows.filter(x => x.cat === 'interested');\n  const quiet = intr.filter(x => (Date.parse(today) - Date.parse(lastAct(x))) / 864e5 > 10).length;\n  const T = {\n    shares: mrows.length,\n    responses: mrows.filter(x => !['none', 'bounced'].includes(x.cat)).length,\n    passes: mrows.filter(x => x.cat === 'passed').length,\n    meetings: calMeet.length + sheetOnly + mrows.filter(x => x.cat === 'tobook').length,\n    meetToBook: mrows.filter(x => x.cat === 'tobook').length,\n    meetHeld: calMeet.filter(x => x.held).length + sheetOnly,\n    meetSched: calMeet.filter(x => !x.held).length,\n    interested: intr.length - quiet,\n    quiet,\n    sharesToday,\n    newMeet: newToday.length,\n    monthHeld: MM.held, monthSched: MM.sched,\n  };\n  const pct = (a, b) => b ? Math.round(100 * a / b) + '%' : '-';\n  const d = k => prev && prev[k] != null ? (T[k] - prev[k] >= 0 ? '+' : '') + (T[k] - prev[k]) : '';\n  const td = 'style=\"padding:6px 12px;border-bottom:1px solid #ddd\"';\n  const tdn = 'style=\"padding:6px 12px;border-bottom:1px solid #ddd;text-align:right\"';\n  const tdd = 'style=\"padding:6px 12px;border-bottom:1px solid #ddd;text-align:right;color:#666\"';\n  const th = 'style=\"text-align:left;padding:6px 12px;border-bottom:2px solid #222;background:#f3f3f3\"';\n  const row = (label, val, key) => `<tr><td ${td}>${label}</td><td ${tdn}><b>${val}</b></td><td ${tdd}>${key ? d(key) : ''}</td></tr>`;\n  const dateLabel = new Date(nowMs + IST).toUTCString().slice(0, 16);\n  const html = `<div dir=\"ltr\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:small;color:#222222\">\n<div>Hi Rakesh,</div><div><br></div>\n<div>Daily deal update for ${esc(dateLabel)}. All figures below are for ${esc(monthName)} only.</div><div><br></div>\n<table style=\"border-collapse:collapse;font-size:small;margin:6px 0 16px\">\n<tr><th ${th}></th><th ${th}>${esc(monthName)}</th><th ${th}>Since last report</th></tr>\n${row('Deals shared', T.shares, 'shares')}\n${row('Investor responses', T.responses + ' (' + pct(T.responses, T.shares) + ')', 'responses')}\n${row('Passes', T.passes, 'passes')}\n${row('Meetings', T.meetings + ' (' + T.meetHeld + ' held, ' + T.meetSched + ' scheduled' + (T.meetToBook ? ', ' + T.meetToBook + ' yet to be booked' : '') + ')', 'meetings')}\n${row('Interested, no meeting yet', T.interested, 'interested')}\n${row('Interested but gone quiet (10+ days)', T.quiet, 'quiet')}\n</table>\n<table style=\"border-collapse:collapse;font-size:small;margin:6px 0 16px\">\n<tr><th ${th}>Today</th><th ${th}></th></tr>\n<tr><td ${td}>Deals shared today</td><td ${tdn}><b>${T.sharesToday}</b></td></tr>\n<tr><td ${td}>New meetings booked</td><td ${tdn}><b>${T.newMeet}</b></td></tr>\n</table>\n<div>Meetings per 100 deals shared: <b>${(100 * T.meetings / Math.max(T.shares, 1)).toFixed(1)}</b> (goal: 80).</div><div><br></div>\n</div>`;\n  return { T, html, subject: 'Sidana Ventures | Daily deal report | ' + dateLabel };\n}\n\nconst ctx = $('Ctx').first().json;\nconst V = $('Sheet').first().json.valueRanges;\nif (!V || !V[0] || !V[0].values) { throw new Error('PIPELINE read failed'); }\nconst cals = ['Cal A', 'Cal B', 'Cal C', 'Cal D'].map(n => { try { return $(n).first().json.items || []; } catch (e) { return []; } });\nconst calErr = ['Cal A', 'Cal B', 'Cal C', 'Cal D'].filter(n => { try { return !$(n).first().json.items; } catch (e) { return true; } });\nconst sd = $getWorkflowStaticData('global');\nconst official = ctx.to === 'rakesh@sidanaventures.com';\n// Deltas compare like with like. When the month rolls over the basis changes, so the stored\n// previous totals are dropped rather than shown as a huge fall. Also clears the Sept-basis\n// totals left over from before the 5 Oct month-scope change.\nconst _mon = new Date(Date.now() + 5.5 * 3600e3).toISOString().slice(0, 7);\nif (sd.prevMonth !== _mon) { sd.prev = null; }\nconst r = buildReport(V[0].values, (V[1] && V[1].values) || [], cals, Date.now(), sd.prev || null, sd.lastRun || 0);\nlet html = r.html;\nif (calErr.length) { html = html.replace(/<\\/div>\\s*$/, '<div style=\"color:#b00\">Warning: could not read ' + calErr.join(', ') + ', so meetings may be undercounted.</div></div>'); }\nconst b64 = Buffer.from(html, 'utf8').toString('base64').replace(/(.{76})/g, '$1\\r\\n');\nconst mime = ['From: Aditya SV <investors@sidanaventures.com>', 'To: ' + ctx.to, 'Subject: =?UTF-8?B?' + Buffer.from(r.subject, 'utf8').toString('base64') + '?=', 'MIME-Version: 1.0', 'Content-Type: text/html; charset=\"UTF-8\"', 'Content-Transfer-Encoding: base64', '', b64].join('\\r\\n');\nconst raw = Buffer.from(mime, 'utf8').toString('base64').replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '');\nif (!ctx.dry && official) { sd.prev = r.T; sd.lastRun = Date.now(); sd.prevMonth = _mon; }\nreturn [{ json: { dry: ctx.dry, to: ctx.to, subject: r.subject, totals: r.T, calErr, raw, html: ctx.dry ? html : '' } }];\n"
+      }
+    },
+    {
+      "id": "if",
+      "name": "Dry?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1760,
+        100
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "d1",
+              "leftValue": "={{ $json.dry }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "dout",
+      "name": "Dry out",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1980,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b=$input.first().json;return [{json:{dry:true,to:b.to,subject:b.subject,totals:b.totals,calErr:b.calErr,relError:b.relError||null,engList:b.engList||[],trustList:b.trustList||[],html:b.html}}];"
+      }
+    },
+    {
+      "id": "sd",
+      "name": "Send",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1980,
+        200
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://gmail.googleapis.com/gmail/v1/users/me/messages/send",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ raw: $json.raw }) }}",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mymSHTFVWtsI3Mh7",
+          "name": "Gmail account 3"
+        }
+      }
+    },
+    {
+      "id": "ot",
+      "name": "Out",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2200,
+        200
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b=$('Build').first().json;return [{json:{dry:false,to:b.to,subject:b.subject,totals:b.totals,calErr:b.calErr,sent_id:$input.first().json.id||''}}];"
+      }
+    },
+    {
+      "id": "rel",
+      "name": "Relationship",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1650,
+        320
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b=$input.first().json;\nlet out={dry:b.dry,to:b.to,subject:b.subject,totals:b.totals,calErr:b.calErr,raw:b.raw,html:b.html};\ntry{\n  const ctx=$('Ctx').first().json;\n  const V=$('Sheet').first().json.valueRanges||[];\n  const P=(V[0]&&V[0].values)||[]; const startupRows=(V[1]&&V[1].values)||[]; const invRows=(V[2]&&V[2].values)||[];\n  const s=v=>String(v==null?'':v).trim();\n  const nz=x=>s(x).toLowerCase().replace(/[’']/g,'').replace(/\\(.*?\\)/g,'').replace(/[^a-z0-9]/g,'');\n  const GENERIC=/^(gmail|yahoo|hotmail|outlook|icloud|msn|live|rediffmail|protonmail|me|ymail|googlemail|aol)\\./i;\n  const doms=v=>(s(v).match(/[A-Za-z0-9._%+'-]+@[A-Za-z0-9.-]+/g)||[]).map(e=>e.split('@')[1].toLowerCase()).filter(d=>!GENERIC.test(d)&&d!=='sidanaventures.com');\n  const now=Date.now();\n  // MONTH SCOPE (Aditya, 5 Oct 2026): count only THIS calendar month's meetings. The loop below\n  // still walks the full history to decide whether a meeting is that investor's first (trust) or\n  // a later one (engagement); START only limits what is counted. Rolls over by itself on the 1st.\n  const _ist=new Date(now+5.5*3600e3).toISOString().slice(0,7);\n  const START=Date.parse(_ist+'-01T00:00:00+05:30');\n  // known investors, by domain and by name, from INVESTORS and from PIPELINE\n  const domToInv={}; const nameKeys=[];\n  for(const r of invRows.slice(1)){const n=s(r[0]); if(!n||n.toLowerCase()==='investor')continue; const k=nz(n.split(/\\s+-\\s+/)[0]); if(k.length>=5)nameKeys.push({k:k,n:n}); doms(s(r[2])).forEach(d=>{if(!domToInv[d])domToInv[d]=n;});}\n  const h=P.length?P[0].map(s):[]; const I=k=>h.indexOf(k); const g=(r,k)=>{const i=I(k);return i<0?'':s(r[i]);};\n  for(const r of P.slice(1)){const n=g(r,'investor'); if(!n)continue; const k=nz(n.split(/\\s+-\\s+/)[0]); if(k.length>=5&&!nameKeys.some(x=>x.k===k))nameKeys.push({k:k,n:n}); doms(g(r,'email')+','+g(r,'cc')).forEach(d=>{if(!domToInv[d])domToInv[d]=n;});}\n  const cals=['Cal A','Cal B','Cal C','Cal D'].map(n=>{try{return $(n).first().json.items||[];}catch(e){return [];}});\n  // every event that involves a known investor, oldest first, deduped\n  const seen=new Set(); const evs=[];\n  for(const items of cals) for(const e of (items||[])){\n    if(e.status==='cancelled'||!e.summary)continue;\n    const st=(e.start&&(e.start.dateTime||e.start.date))||''; if(!st)continue;\n    const ms=Date.parse(st); if(!(ms<=now))continue;\n    const key=nz(e.summary)+'|'+st.slice(0,16); if(seen.has(key))continue; seen.add(key);\n    if(/interview|internal|onboarding|\\bmou\\b|task|daily report|team sync|stand ?up|weekly/i.test(e.summary))continue;\n    const ds=(e.attendees||[]).map(a=>(s(a.email).split('@')[1]||'').toLowerCase()).filter(d=>d&&d!=='sidanaventures.com'&&!GENERIC.test(d));\n    let inv='';\n    for(const d of ds){ if(domToInv[d]){inv=domToInv[d];break;} }\n    if(!inv){const t=nz(e.summary); let best=null; for(const x of nameKeys){ if(t.includes(x.k)&&(!best||x.k.length>best.k.length))best=x; } if(best)inv=best.n;}\n    if(!inv)continue;\n    evs.push({inv:inv,ms:ms,st:st.slice(0,10),t:e.summary});\n  }\n  evs.sort((a,b)=>a.ms-b.ms);\n  // first meeting ever with an investor = TRUST; any later meeting = ENGAGEMENT. Count only those since START.\n  const met={}; const eng=[]; const tru=[];\n  for(const e of evs){ const k=nz(e.inv); const first=!met[k]; met[k]=true; if(e.ms<START)continue; (first?tru:eng).push(e); }\n  const T=Object.assign({},b.totals,{engage:eng.length,trust:tru.length});\n  const sd=$getWorkflowStaticData('global'); const pr=(sd.prevRelMonth===_ist)?(sd.prevRel||null):null;\n  const dd=k=>pr&&pr[k]!=null?((T[k]-pr[k]>=0?'+':'')+(T[k]-pr[k])):'';\n  const td='style=\"padding:6px 12px;border-bottom:1px solid #ddd\"';\n  const tdn='style=\"padding:6px 12px;border-bottom:1px solid #ddd;text-align:right\"';\n  const tdd='style=\"padding:6px 12px;border-bottom:1px solid #ddd;text-align:right;color:#666\"';\n  const extra='<tr><td '+td+'>Trust meetings held (first ever meeting with that investor)</td><td '+tdn+'><b>'+T.trust+'</b></td><td '+tdd+'>'+dd('trust')+'</td></tr>'+'<tr><td '+td+'>Engagement meetings held (investors we had already met)</td><td '+tdn+'><b>'+T.engage+'</b></td><td '+tdd+'>'+dd('engage')+'</td></tr>';\n  let html=b.html||'';\n  if(!html&&b.raw){const mt=Buffer.from(String(b.raw).replace(/-/g,'+').replace(/_/g,'/'),'base64').toString('utf8');const ix=mt.indexOf('\\r\\n\\r\\n');html=Buffer.from(mt.slice(ix+4).replace(/\\s+/g,''),'base64').toString('utf8');}\n  // These two count every HELD meeting with a known investor, including fund-level calls that\n  // are not tied to one startup, so their total is higher than the deal-meetings row above.\n  // Say so, or the two lines read as a contradiction.\n  const note='<tr><td '+td+' colspan=\"3\" style=\"padding:4px 12px;color:#666;font-size:x-small;border-bottom:1px solid #ddd\">The two rows above count all meetings held with investors this month, including calls not tied to one startup, so they total more than the deal meetings line.</td></tr>';\n  const i=html.indexOf('</table>');\n  html=i>0?(html.slice(0,i)+extra+note+html.slice(i)):(html+extra+note);\n  const official=ctx.to==='rakesh@sidanaventures.com';\n  if(!ctx.dry&&official){sd.prevRel={engage:T.engage,trust:T.trust};sd.prevRelMonth=_ist;}\n  const b64=Buffer.from(html,'utf8').toString('base64').replace(/(.{76})/g,'$1\\r\\n');\n  const mime=['From: Aditya SV <investors@sidanaventures.com>','To: '+ctx.to,'Subject: =?UTF-8?B?'+Buffer.from(b.subject,'utf8').toString('base64')+'?=','MIME-Version: 1.0','Content-Type: text/html; charset=\"UTF-8\"','Content-Transfer-Encoding: base64','',b64].join('\\r\\n');\n  const raw=Buffer.from(mime,'utf8').toString('base64').replace(/\\+/g,'-').replace(/\\//g,'_').replace(/=+$/,'');\n  out={dry:ctx.dry,to:ctx.to,subject:b.subject,totals:T,calErr:b.calErr,raw:raw,html:ctx.dry?html:'',engList:eng,trustList:tru};\n}catch(err){out.relError=String(err&&err.message||err);}\nreturn [{json:out}];"
+      }
+    }
+  ],
+  "connections": {
+    "6 PM Mon-Fri": {
+      "main": [
+        [
+          {
+            "node": "Ctx",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Test webhook": {
+      "main": [
+        [
+          {
+            "node": "Ctx",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ctx": {
+      "main": [
+        [
+          {
+            "node": "Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sheet": {
+      "main": [
+        [
+          {
+            "node": "Cal A",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cal A": {
+      "main": [
+        [
+          {
+            "node": "Cal B",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cal B": {
+      "main": [
+        [
+          {
+            "node": "Cal C",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cal C": {
+      "main": [
+        [
+          {
+            "node": "Cal D",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cal D": {
+      "main": [
+        [
+          {
+            "node": "Build",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dry?": {
+      "main": [
+        [
+          {
+            "node": "Dry out",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send": {
+      "main": [
+        [
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build": {
+      "main": [
+        [
+          {
+            "node": "Relationship",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Relationship": {
+      "main": [
+        [
+          {
+            "node": "Dry?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:6 PM Mon-Fri": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    },
+    "global": {
+      "prev": {
+        "shares": 299,
+        "responses": 56,
+        "passes": 36,
+        "meetings": 15,
+        "meetToBook": 0,
+        "meetHeld": 10,
+        "meetSched": 5,
+        "interested": 14,
+        "quiet": 0,
+        "sharesToday": 54,
+        "newMeet": 2,
+        "monthHeld": 10,
+        "monthSched": 5
+      },
+      "lastRun": 1791376209715,
+      "prevRel": {
+        "engage": 13,
+        "trust": 5
+      },
+      "prevMonth": "2026-10",
+      "prevRelMonth": "2026-10"
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "gS9DXz4E3gMzcXYP",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-21T09:22:41.884Z",
+      "updatedAt": "2026-09-21T09:22:41.884Z"
+    }
+  ],
+  "activeVersion": {
+    "versionId": "7fdbca0a-d912-4587-b183-946e7ffc51dd",
+    "workflowId": "gS9DXz4E3gMzcXYP",
+    "nodes": [
+      {
+        "id": "sch",
+        "name": "6 PM Mon-Fri",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          0,
+          0
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "0 18 * * 1-5"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "wh",
+        "name": "Test webhook",
+        "webhookId": "9e4b2c7a-6d1f-4a38-b5e2-3c8f0a1d7e64",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          200
+        ],
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "sidana-daily-report-7b3e1f9c52",
+          "responseMode": "lastNode",
+          "responseData": "firstEntryJson",
+          "options": {}
+        }
+      },
+      {
+        "id": "ctx",
+        "name": "Ctx",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          220,
+          100
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const j=$input.first().json;\nif(j.headers||j.body!==undefined){const b=j.body||{};if(b.secret!=='sv-mail-2026-09-17-Kq7'){throw new Error('bad secret');}const to=String(b.to||'investors@sidanaventures.com').trim().toLowerCase();if(!/^[a-z0-9._-]+@sidanaventures\\.com$/.test(to)){throw new Error('internal addresses only');}return [{json:{dry:b.dry!==false,to,src:'webhook'}}];}\nreturn [{json:{dry:false,to:'rakesh@sidanaventures.com',src:'schedule'}}];"
+        }
+      },
+      {
+        "id": "sh",
+        "name": "Sheet",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 5000,
+        "position": [
+          440,
+          100
+        ],
+        "parameters": {
+          "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=PIPELINE!A1:AI20000&ranges=STARTUPS!A1:A300&ranges=INVESTORS!A1:C400",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleSheetsOAuth2Api",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "c1",
+        "name": "Cal A",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "executeOnce": true,
+        "continueOnFail": true,
+        "position": [
+          660,
+          100
+        ],
+        "parameters": {
+          "url": "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleCalendarOAuth2Api",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "timeMin",
+                "value": "2026-08-31T00:00:00+05:30"
+              },
+              {
+                "name": "timeMax",
+                "value": "={{ new Date(Date.now()+120*864e5).toISOString() }}"
+              },
+              {
+                "name": "singleEvents",
+                "value": "true"
+              },
+              {
+                "name": "orderBy",
+                "value": "startTime"
+              },
+              {
+                "name": "maxResults",
+                "value": "2500"
+              },
+              {
+                "name": "fields",
+                "value": "items(id,status,summary,start,created,attendees(email))"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "credentials": {
+          "googleCalendarOAuth2Api": {
+            "id": "FMaJN0wYxb8FWUZs",
+            "name": "Google Calendar account"
+          }
+        }
+      },
+      {
+        "id": "c2",
+        "name": "Cal B",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "executeOnce": true,
+        "continueOnFail": true,
+        "position": [
+          880,
+          100
+        ],
+        "parameters": {
+          "url": "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleCalendarOAuth2Api",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "timeMin",
+                "value": "2026-08-31T00:00:00+05:30"
+              },
+              {
+                "name": "timeMax",
+                "value": "={{ new Date(Date.now()+120*864e5).toISOString() }}"
+              },
+              {
+                "name": "singleEvents",
+                "value": "true"
+              },
+              {
+                "name": "orderBy",
+                "value": "startTime"
+              },
+              {
+                "name": "maxResults",
+                "value": "2500"
+              },
+              {
+                "name": "fields",
+                "value": "items(id,status,summary,start,created,attendees(email))"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "credentials": {
+          "googleCalendarOAuth2Api": {
+            "id": "SUalv0ssD9ruGnuS",
+            "name": "Google Calendar account 2"
+          }
+        }
+      },
+      {
+        "id": "c3",
+        "name": "Cal C",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "executeOnce": true,
+        "continueOnFail": true,
+        "position": [
+          1100,
+          100
+        ],
+        "parameters": {
+          "url": "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleCalendarOAuth2Api",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "timeMin",
+                "value": "2026-08-31T00:00:00+05:30"
+              },
+              {
+                "name": "timeMax",
+                "value": "={{ new Date(Date.now()+120*864e5).toISOString() }}"
+              },
+              {
+                "name": "singleEvents",
+                "value": "true"
+              },
+              {
+                "name": "orderBy",
+                "value": "startTime"
+              },
+              {
+                "name": "maxResults",
+                "value": "2500"
+              },
+              {
+                "name": "fields",
+                "value": "items(id,status,summary,start,created,attendees(email))"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "credentials": {
+          "googleCalendarOAuth2Api": {
+            "id": "XHTquOpYpODOTLYR",
+            "name": "Google Calendar account 3"
+          }
+        }
+      },
+      {
+        "id": "c4",
+        "name": "Cal D",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "executeOnce": true,
+        "continueOnFail": true,
+        "position": [
+          1320,
+          100
+        ],
+        "parameters": {
+          "url": "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleCalendarOAuth2Api",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "timeMin",
+                "value": "2026-08-31T00:00:00+05:30"
+              },
+              {
+                "name": "timeMax",
+                "value": "={{ new Date(Date.now()+120*864e5).toISOString() }}"
+              },
+              {
+                "name": "singleEvents",
+                "value": "true"
+              },
+              {
+                "name": "orderBy",
+                "value": "startTime"
+              },
+              {
+                "name": "maxResults",
+                "value": "2500"
+              },
+              {
+                "name": "fields",
+                "value": "items(id,status,summary,start,created,attendees(email))"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "credentials": {
+          "googleCalendarOAuth2Api": {
+            "id": "NdbYgV97aSL2PRCB",
+            "name": "Google Calendar account 4"
+          }
+        }
+      },
+      {
+        "id": "bd",
+        "name": "Build",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1540,
+          100
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "// core of DAILY-REPORT Build node; runs in n8n and locally for testing\nfunction buildReport(P, startupRows, cals, nowMs, prev, sinceMs) {\n  const s = v => String(v == null ? '' : v).trim();\n  const nz = x => s(x).toLowerCase().replace(/[’']/g, '').replace(/\\(.*?\\)/g, '').replace(/[^a-z0-9]/g, '');\n  const esc = x => s(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\n  const GENERIC = /^(gmail|yahoo|hotmail|outlook|icloud|msn|live|rediffmail|protonmail|me|ymail|googlemail|aol)\\./i;\n  const doms = v => (s(v).match(/[A-Za-z0-9._%+'-]+@[A-Za-z0-9.-]+/g) || []).map(e => e.split('@')[1].toLowerCase()).filter(d => !GENERIC.test(d) && d !== 'sidanaventures.com');\n  const IST = 5.5 * 3600e3;\n  const today = new Date(nowMs + IST).toISOString().slice(0, 10);\n\n  // startups + aliases\n  const ALIAS = { aisignallabs: ['aisignallab'], caffenacoffee: ['caffena', 'caffeina', 'caffina'], orboai: ['orbo'], bodybeyond: ['bodyandbeyond'], sugarsdaddy: ['sugardaddy'], altfcoworking: ['altf'], springbaseai: ['springbase'], tronixai: ['tronix'], orbislives: ['orbis'], ekosight: ['ecosight'], firearmor: ['fireamor'] };\n  const startups = startupRows.map(r => s(r[0])).filter(x => x && x.toLowerCase() !== 'startup');\n  const skeys = startups.map(x => ({ s: x, k: [nz(x)].concat(ALIAS[nz(x)] || []) }));\n  const findStartup = t => { const n = nz(t); let best = null; for (const x of skeys) for (const k of x.k) if (k.length >= 4 && n.includes(k) && (!best || k.length > best.len)) best = { s: x.s, len: k.length }; return best ? best.s : ''; };\n\n  // calendar events (deduped across the 4 calendars)\n  const evs = [], seenEv = new Set();\n  for (const items of cals) for (const e of (items || [])) {\n    if (e.status === 'cancelled' || !e.summary) continue;\n    const st = (e.start && (e.start.dateTime || e.start.date)) || '';\n    const key = nz(e.summary) + '|' + st.slice(0, 16);\n    if (seenEv.has(key)) continue; seenEv.add(key);\n    if (/interview|internal|onboarding|\\bmou\\b|task/i.test(e.summary)) continue;\n    const su = findStartup(e.summary); if (!su) continue;\n    evs.push({ su, t: nz(e.summary), title: e.summary, st, created: e.created || '', ms: Date.parse(st), doms: new Set((e.attendees || []).map(a => (s(a.email).split('@')[1] || '').toLowerCase()).filter(d => d && d !== 'sidanaventures.com' && !GENERIC.test(d))) });\n  }\n\n  // pipeline\n  const h = P[0].map(s), I = k => h.indexOf(k), g = (r, k) => { const i = I(k); return i < 0 ? '' : s(r[i]); };\n  const pairs = new Map();\n  for (const r of P.slice(1)) {\n    if (g(r, 'deal_shared') !== 'Yes') continue;\n    const su = g(r, 'startup'), inv = g(r, 'investor'); if (!su || !inv) continue;\n    const key = nz(su) + '|' + nz(inv.split(/\\s+-\\s+/)[0]);\n    const x = pairs.get(key) || { su, inv, owner: g(r, 'owner'), date: g(r, 'date_shared'), last: '', resp: '', status: '', ms: '', doms: new Set() };\n    for (const c of ['date_shared', 'last_contact']) { const v = g(r, c).slice(0, 10); if (/^\\d{4}-\\d\\d-\\d\\d$/.test(v) && v > x.last) x.last = v; }\n    if (g(r, 'investor_response')) x.resp = g(r, 'investor_response');\n    if (g(r, 'deal_status')) x.status = g(r, 'deal_status');\n    if (g(r, 'meeting_scheduled')) x.ms = g(r, 'meeting_scheduled');\n    if (g(r, 'next_action')) x.na = g(r, 'next_action');\n    if (g(r, 'date_shared') && (!x.date || g(r, 'date_shared') < x.date)) x.date = g(r, 'date_shared');\n    doms(g(r, 'email') + ',' + g(r, 'cc')).forEach(d => x.doms.add(d));\n    pairs.set(key, x);\n  }\n  const rows = [...pairs.values()];\n  const sharesToday = P.slice(1).filter(r => g(r, 'deal_shared') === 'Yes' && g(r, 'date_shared').startsWith(today)).length;\n\n  for (const x of rows) {\n    const ik = nz(x.inv.split(/\\s+-\\s+/)[0]);\n    const m = evs.filter(e => e.su === x.su && ([...e.doms].some(d => x.doms.has(d)) || (ik.length >= 4 && e.t.includes(ik)))).sort((a, b) => a.ms - b.ms);\n    const both = (x.resp + ' ' + x.status);\n    const sheetMeet = (/meeting/i.test(both) && !/request/i.test(both)) || /^yes/i.test(x.ms);\n    x.meetAt = m.length ? m[0].st : '';\n    x.meetUpcoming = m.length ? m.every(e => e.ms > nowMs) : false;\n    const R = x.resp, St = x.status;\n    if (/^bounced/i.test(R)) x.cat = 'bounced';\n    else if (m.length || sheetMeet) x.cat = 'meeting';\n    else if (/^meeting requested/i.test(R) || /^book meeting/i.test(x.na || '') || /(asked|wants|requested).{0,30}(meeting|call)|slots? (sent|shared|requested)/i.test(R)) x.cat = 'tobook'; // investor asked for a meeting, no invite yet (24 Sep: also catch next_action 'Book meeting' and plain-English requests, so a missing marker cannot hide one)\n    else if (/^pass/i.test(R) || /^pass|not relevant/i.test(St)) x.cat = 'passed';\n    else if (/refer|forward/i.test(R) || (!R && /refer/i.test(St))) x.cat = 'referred';\n    else if (/not active|needs review/i.test(R)) x.cat = 'other';\n    else if (/intrest|interest|question|asked|request|reviewing|under review|deck|document|form|excel|positive|call|evaluat/i.test(R) || (!R && /reviewing|question|docs/i.test(St))) x.cat = 'interested';\n    else if (R) x.cat = 'other';\n    else x.cat = 'none';\n  }\n  // all investor meetings this month (held + scheduled), from calendars\n  const invByDom = {}, invByKey = {};\n  for (const r of P.slice(1)) {\n    const inv = g(r, 'investor'); if (!inv) continue;\n    doms(g(r, 'email') + ',' + g(r, 'cc')).forEach(dm => { if (!invByDom[dm]) invByDom[dm] = inv; });\n    const k = nz(inv.split(/\\s+-\\s+/)[0]); if (k.length >= 5 && !invByKey[k]) invByKey[k] = inv;\n  }\n  const monthKey = today.slice(0, 7);\n  const monthName = new Date(nowMs + IST).toLocaleString('en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' });\n  const invOf = e => {\n    for (const dm of e.doms) if (invByDom[dm]) return invByDom[dm];\n    const tt = e.t.replace(/michelle/g, 'michele');\n    let best = ''; for (const k in invByKey) if (tt.includes(k) && k.length > best.length) best = k;\n    if (best) return invByKey[best];\n    if (e.title.includes('<>')) {\n      // investor not in PIPELINE: take the other side of \"X <> Y\" from the title\n      const side = e.title.split('<>').map(x => x.trim()).find(x => !nz(x).includes(nz(e.su).slice(0, 4))) || '';\n      const clean = side.replace(/\\|.*$/, '').replace(/\\band\\s+(sidana ventures|aditya sv).*$/i, '').replace(/\\b(mr|ms|mrs)\\.?\\s+/ig, '').trim();\n      if (clean && !/sidana|^rakesh/i.test(clean)) return clean;\n    }\n    return '';\n  };\n  const invMeet = [];\n  for (const e of evs) { if (!e.st) continue; const inv = invOf(e); if (inv) invMeet.push({ ...e, inv, held: e.ms <= nowMs }); }\n  invMeet.sort((a, b) => a.ms - b.ms);\n  // reschedules: same startup + investor within 3 days counts once (the latest date is kept)\n  { const kept = {}; for (let i = invMeet.length - 1; i >= 0; i--) { const x = invMeet[i]; const k = x.su + '|' + nz(x.inv).replace(/michelle/g, 'michele').slice(0, 6); if (kept[k] != null && kept[k] - x.ms < 3 * 864e5) invMeet.splice(i, 1); else kept[k] = x.ms; } }\n  const monthMeet = invMeet.filter(x => new Date(x.ms + IST).toISOString().slice(0, 7) === monthKey);\n  // booked since the last report went out (so bookings made after 6 PM are not lost); first run: since midnight IST\n  const since = sinceMs || Date.parse(today + 'T00:00:00+05:30');\n  const newToday = invMeet.filter(x => x.created && Date.parse(x.created) > since && !evs.some(e => e.su === x.su && e.ms === x.ms && e.created && Date.parse(e.created) <= since)); // 22 Sep: a second invite for a meeting already booked (e.g. the investor's own Teams invite) is not a new meeting\n  const MM = { held: monthMeet.filter(x => x.held).length, sched: monthMeet.filter(x => !x.held).length };\n  // ---- brief totals (calendar is the source for meetings) ----\n  // MONTH SCOPE (Aditya, 5 Oct 2026): \"send the data as per a particular month ... share him of\n  // october from today\". The report used to total everything since 31 Aug, so September kept\n  // showing up in an October report. Now: deals shared are the month's own cohort by date_shared,\n  // meetings are the month's own calendar events. Rolls over by itself on the 1st.\n  const mrows = rows.filter(x => s(x.date).slice(0, 7) === monthKey);\n  const calMeet = monthMeet;\n  const sheetOnly = 0; // calendar is the only source: PIPELINE 'meeting' flags without an invite proved unreliable (21 Sep)\n  // interested: split active vs gone quiet (no movement for 10+ days); a date written in the response text counts as movement\n  const MON = { jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06', jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12' };\n  const lastAct = x => { let l = x.last || x.date; const m = x.resp.match(/\\((\\d{1,2}) (jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\\)/i); if (m) { const v = today.slice(0, 4) + '-' + MON[m[2].toLowerCase()] + '-' + m[1].padStart(2, '0'); if (v > l) l = v; } return l; };\n  const intr = mrows.filter(x => x.cat === 'interested');\n  const quiet = intr.filter(x => (Date.parse(today) - Date.parse(lastAct(x))) / 864e5 > 10).length;\n  const T = {\n    shares: mrows.length,\n    responses: mrows.filter(x => !['none', 'bounced'].includes(x.cat)).length,\n    passes: mrows.filter(x => x.cat === 'passed').length,\n    meetings: calMeet.length + sheetOnly + mrows.filter(x => x.cat === 'tobook').length,\n    meetToBook: mrows.filter(x => x.cat === 'tobook').length,\n    meetHeld: calMeet.filter(x => x.held).length + sheetOnly,\n    meetSched: calMeet.filter(x => !x.held).length,\n    interested: intr.length - quiet,\n    quiet,\n    sharesToday,\n    newMeet: newToday.length,\n    monthHeld: MM.held, monthSched: MM.sched,\n  };\n  const pct = (a, b) => b ? Math.round(100 * a / b) + '%' : '-';\n  const d = k => prev && prev[k] != null ? (T[k] - prev[k] >= 0 ? '+' : '') + (T[k] - prev[k]) : '';\n  const td = 'style=\"padding:6px 12px;border-bottom:1px solid #ddd\"';\n  const tdn = 'style=\"padding:6px 12px;border-bottom:1px solid #ddd;text-align:right\"';\n  const tdd = 'style=\"padding:6px 12px;border-bottom:1px solid #ddd;text-align:right;color:#666\"';\n  const th = 'style=\"text-align:left;padding:6px 12px;border-bottom:2px solid #222;background:#f3f3f3\"';\n  const row = (label, val, key) => `<tr><td ${td}>${label}</td><td ${tdn}><b>${val}</b></td><td ${tdd}>${key ? d(key) : ''}</td></tr>`;\n  const dateLabel = new Date(nowMs + IST).toUTCString().slice(0, 16);\n  const html = `<div dir=\"ltr\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:small;color:#222222\">\n<div>Hi Rakesh,</div><div><br></div>\n<div>Daily deal update for ${esc(dateLabel)}. All figures below are for ${esc(monthName)} only.</div><div><br></div>\n<table style=\"border-collapse:collapse;font-size:small;margin:6px 0 16px\">\n<tr><th ${th}></th><th ${th}>${esc(monthName)}</th><th ${th}>Since last report</th></tr>\n${row('Deals shared', T.shares, 'shares')}\n${row('Investor responses', T.responses + ' (' + pct(T.responses, T.shares) + ')', 'responses')}\n${row('Passes', T.passes, 'passes')}\n${row('Meetings', T.meetings + ' (' + T.meetHeld + ' held, ' + T.meetSched + ' scheduled' + (T.meetToBook ? ', ' + T.meetToBook + ' yet to be booked' : '') + ')', 'meetings')}\n${row('Interested, no meeting yet', T.interested, 'interested')}\n${row('Interested but gone quiet (10+ days)', T.quiet, 'quiet')}\n</table>\n<table style=\"border-collapse:collapse;font-size:small;margin:6px 0 16px\">\n<tr><th ${th}>Today</th><th ${th}></th></tr>\n<tr><td ${td}>Deals shared today</td><td ${tdn}><b>${T.sharesToday}</b></td></tr>\n<tr><td ${td}>New meetings booked</td><td ${tdn}><b>${T.newMeet}</b></td></tr>\n</table>\n<div>Meetings per 100 deals shared: <b>${(100 * T.meetings / Math.max(T.shares, 1)).toFixed(1)}</b> (goal: 80).</div><div><br></div>\n</div>`;\n  return { T, html, subject: 'Sidana Ventures | Daily deal report | ' + dateLabel };\n}\n\nconst ctx = $('Ctx').first().json;\nconst V = $('Sheet').first().json.valueRanges;\nif (!V || !V[0] || !V[0].values) { throw new Error('PIPELINE read failed'); }\nconst cals = ['Cal A', 'Cal B', 'Cal C', 'Cal D'].map(n => { try { return $(n).first().json.items || []; } catch (e) { return []; } });\nconst calErr = ['Cal A', 'Cal B', 'Cal C', 'Cal D'].filter(n => { try { return !$(n).first().json.items; } catch (e) { return true; } });\nconst sd = $getWorkflowStaticData('global');\nconst official = ctx.to === 'rakesh@sidanaventures.com';\n// Deltas compare like with like. When the month rolls over the basis changes, so the stored\n// previous totals are dropped rather than shown as a huge fall. Also clears the Sept-basis\n// totals left over from before the 5 Oct month-scope change.\nconst _mon = new Date(Date.now() + 5.5 * 3600e3).toISOString().slice(0, 7);\nif (sd.prevMonth !== _mon) { sd.prev = null; }\nconst r = buildReport(V[0].values, (V[1] && V[1].values) || [], cals, Date.now(), sd.prev || null, sd.lastRun || 0);\nlet html = r.html;\nif (calErr.length) { html = html.replace(/<\\/div>\\s*$/, '<div style=\"color:#b00\">Warning: could not read ' + calErr.join(', ') + ', so meetings may be undercounted.</div></div>'); }\nconst b64 = Buffer.from(html, 'utf8').toString('base64').replace(/(.{76})/g, '$1\\r\\n');\nconst mime = ['From: Aditya SV <investors@sidanaventures.com>', 'To: ' + ctx.to, 'Subject: =?UTF-8?B?' + Buffer.from(r.subject, 'utf8').toString('base64') + '?=', 'MIME-Version: 1.0', 'Content-Type: text/html; charset=\"UTF-8\"', 'Content-Transfer-Encoding: base64', '', b64].join('\\r\\n');\nconst raw = Buffer.from(mime, 'utf8').toString('base64').replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '');\nif (!ctx.dry && official) { sd.prev = r.T; sd.lastRun = Date.now(); sd.prevMonth = _mon; }\nreturn [{ json: { dry: ctx.dry, to: ctx.to, subject: r.subject, totals: r.T, calErr, raw, html: ctx.dry ? html : '' } }];\n"
+        }
+      },
+      {
+        "id": "if",
+        "name": "Dry?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          1760,
+          100
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "d1",
+                "leftValue": "={{ $json.dry }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "dout",
+        "name": "Dry out",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1980,
+          0
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const b=$input.first().json;return [{json:{dry:true,to:b.to,subject:b.subject,totals:b.totals,calErr:b.calErr,relError:b.relError||null,engList:b.engList||[],trustList:b.trustList||[],html:b.html}}];"
+        }
+      },
+      {
+        "id": "sd",
+        "name": "Send",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1980,
+          200
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://gmail.googleapis.com/gmail/v1/users/me/messages/send",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "gmailOAuth2",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ raw: $json.raw }) }}",
+          "options": {}
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "mymSHTFVWtsI3Mh7",
+            "name": "Gmail account 3"
+          }
+        }
+      },
+      {
+        "id": "ot",
+        "name": "Out",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2200,
+          200
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const b=$('Build').first().json;return [{json:{dry:false,to:b.to,subject:b.subject,totals:b.totals,calErr:b.calErr,sent_id:$input.first().json.id||''}}];"
+        }
+      },
+      {
+        "id": "rel",
+        "name": "Relationship",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1650,
+          320
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const b=$input.first().json;\nlet out={dry:b.dry,to:b.to,subject:b.subject,totals:b.totals,calErr:b.calErr,raw:b.raw,html:b.html};\ntry{\n  const ctx=$('Ctx').first().json;\n  const V=$('Sheet').first().json.valueRanges||[];\n  const P=(V[0]&&V[0].values)||[]; const startupRows=(V[1]&&V[1].values)||[]; const invRows=(V[2]&&V[2].values)||[];\n  const s=v=>String(v==null?'':v).trim();\n  const nz=x=>s(x).toLowerCase().replace(/[’']/g,'').replace(/\\(.*?\\)/g,'').replace(/[^a-z0-9]/g,'');\n  const GENERIC=/^(gmail|yahoo|hotmail|outlook|icloud|msn|live|rediffmail|protonmail|me|ymail|googlemail|aol)\\./i;\n  const doms=v=>(s(v).match(/[A-Za-z0-9._%+'-]+@[A-Za-z0-9.-]+/g)||[]).map(e=>e.split('@')[1].toLowerCase()).filter(d=>!GENERIC.test(d)&&d!=='sidanaventures.com');\n  const now=Date.now();\n  // MONTH SCOPE (Aditya, 5 Oct 2026): count only THIS calendar month's meetings. The loop below\n  // still walks the full history to decide whether a meeting is that investor's first (trust) or\n  // a later one (engagement); START only limits what is counted. Rolls over by itself on the 1st.\n  const _ist=new Date(now+5.5*3600e3).toISOString().slice(0,7);\n  const START=Date.parse(_ist+'-01T00:00:00+05:30');\n  // known investors, by domain and by name, from INVESTORS and from PIPELINE\n  const domToInv={}; const nameKeys=[];\n  for(const r of invRows.slice(1)){const n=s(r[0]); if(!n||n.toLowerCase()==='investor')continue; const k=nz(n.split(/\\s+-\\s+/)[0]); if(k.length>=5)nameKeys.push({k:k,n:n}); doms(s(r[2])).forEach(d=>{if(!domToInv[d])domToInv[d]=n;});}\n  const h=P.length?P[0].map(s):[]; const I=k=>h.indexOf(k); const g=(r,k)=>{const i=I(k);return i<0?'':s(r[i]);};\n  for(const r of P.slice(1)){const n=g(r,'investor'); if(!n)continue; const k=nz(n.split(/\\s+-\\s+/)[0]); if(k.length>=5&&!nameKeys.some(x=>x.k===k))nameKeys.push({k:k,n:n}); doms(g(r,'email')+','+g(r,'cc')).forEach(d=>{if(!domToInv[d])domToInv[d]=n;});}\n  const cals=['Cal A','Cal B','Cal C','Cal D'].map(n=>{try{return $(n).first().json.items||[];}catch(e){return [];}});\n  // every event that involves a known investor, oldest first, deduped\n  const seen=new Set(); const evs=[];\n  for(const items of cals) for(const e of (items||[])){\n    if(e.status==='cancelled'||!e.summary)continue;\n    const st=(e.start&&(e.start.dateTime||e.start.date))||''; if(!st)continue;\n    const ms=Date.parse(st); if(!(ms<=now))continue;\n    const key=nz(e.summary)+'|'+st.slice(0,16); if(seen.has(key))continue; seen.add(key);\n    if(/interview|internal|onboarding|\\bmou\\b|task|daily report|team sync|stand ?up|weekly/i.test(e.summary))continue;\n    const ds=(e.attendees||[]).map(a=>(s(a.email).split('@')[1]||'').toLowerCase()).filter(d=>d&&d!=='sidanaventures.com'&&!GENERIC.test(d));\n    let inv='';\n    for(const d of ds){ if(domToInv[d]){inv=domToInv[d];break;} }\n    if(!inv){const t=nz(e.summary); let best=null; for(const x of nameKeys){ if(t.includes(x.k)&&(!best||x.k.length>best.k.length))best=x; } if(best)inv=best.n;}\n    if(!inv)continue;\n    evs.push({inv:inv,ms:ms,st:st.slice(0,10),t:e.summary});\n  }\n  evs.sort((a,b)=>a.ms-b.ms);\n  // first meeting ever with an investor = TRUST; any later meeting = ENGAGEMENT. Count only those since START.\n  const met={}; const eng=[]; const tru=[];\n  for(const e of evs){ const k=nz(e.inv); const first=!met[k]; met[k]=true; if(e.ms<START)continue; (first?tru:eng).push(e); }\n  const T=Object.assign({},b.totals,{engage:eng.length,trust:tru.length});\n  const sd=$getWorkflowStaticData('global'); const pr=(sd.prevRelMonth===_ist)?(sd.prevRel||null):null;\n  const dd=k=>pr&&pr[k]!=null?((T[k]-pr[k]>=0?'+':'')+(T[k]-pr[k])):'';\n  const td='style=\"padding:6px 12px;border-bottom:1px solid #ddd\"';\n  const tdn='style=\"padding:6px 12px;border-bottom:1px solid #ddd;text-align:right\"';\n  const tdd='style=\"padding:6px 12px;border-bottom:1px solid #ddd;text-align:right;color:#666\"';\n  const extra='<tr><td '+td+'>Trust meetings held (first ever meeting with that investor)</td><td '+tdn+'><b>'+T.trust+'</b></td><td '+tdd+'>'+dd('trust')+'</td></tr>'+'<tr><td '+td+'>Engagement meetings held (investors we had already met)</td><td '+tdn+'><b>'+T.engage+'</b></td><td '+tdd+'>'+dd('engage')+'</td></tr>';\n  let html=b.html||'';\n  if(!html&&b.raw){const mt=Buffer.from(String(b.raw).replace(/-/g,'+').replace(/_/g,'/'),'base64').toString('utf8');const ix=mt.indexOf('\\r\\n\\r\\n');html=Buffer.from(mt.slice(ix+4).replace(/\\s+/g,''),'base64').toString('utf8');}\n  // These two count every HELD meeting with a known investor, including fund-level calls that\n  // are not tied to one startup, so their total is higher than the deal-meetings row above.\n  // Say so, or the two lines read as a contradiction.\n  const note='<tr><td '+td+' colspan=\"3\" style=\"padding:4px 12px;color:#666;font-size:x-small;border-bottom:1px solid #ddd\">The two rows above count all meetings held with investors this month, including calls not tied to one startup, so they total more than the deal meetings line.</td></tr>';\n  const i=html.indexOf('</table>');\n  html=i>0?(html.slice(0,i)+extra+note+html.slice(i)):(html+extra+note);\n  const official=ctx.to==='rakesh@sidanaventures.com';\n  if(!ctx.dry&&official){sd.prevRel={engage:T.engage,trust:T.trust};sd.prevRelMonth=_ist;}\n  const b64=Buffer.from(html,'utf8').toString('base64').replace(/(.{76})/g,'$1\\r\\n');\n  const mime=['From: Aditya SV <investors@sidanaventures.com>','To: '+ctx.to,'Subject: =?UTF-8?B?'+Buffer.from(b.subject,'utf8').toString('base64')+'?=','MIME-Version: 1.0','Content-Type: text/html; charset=\"UTF-8\"','Content-Transfer-Encoding: base64','',b64].join('\\r\\n');\n  const raw=Buffer.from(mime,'utf8').toString('base64').replace(/\\+/g,'-').replace(/\\//g,'_').replace(/=+$/,'');\n  out={dry:ctx.dry,to:ctx.to,subject:b.subject,totals:T,calErr:b.calErr,raw:raw,html:ctx.dry?html:'',engList:eng,trustList:tru};\n}catch(err){out.relError=String(err&&err.message||err);}\nreturn [{json:out}];"
+        }
+      }
+    ],
+    "connections": {
+      "6 PM Mon-Fri": {
+        "main": [
+          [
+            {
+              "node": "Ctx",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Test webhook": {
+        "main": [
+          [
+            {
+              "node": "Ctx",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Ctx": {
+        "main": [
+          [
+            {
+              "node": "Sheet",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Sheet": {
+        "main": [
+          [
+            {
+              "node": "Cal A",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Cal A": {
+        "main": [
+          [
+            {
+              "node": "Cal B",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Cal B": {
+        "main": [
+          [
+            {
+              "node": "Cal C",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Cal C": {
+        "main": [
+          [
+            {
+              "node": "Cal D",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Cal D": {
+        "main": [
+          [
+            {
+              "node": "Build",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Dry?": {
+        "main": [
+          [
+            {
+              "node": "Dry out",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Send",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Send": {
+        "main": [
+          [
+            {
+              "node": "Out",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build": {
+        "main": [
+          [
+            {
+              "node": "Relationship",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Relationship": {
+        "main": [
+          [
+            {
+              "node": "Dry?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "Sidana Ventures",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "createdAt": "2026-10-05T10:05:13.180Z",
+    "updatedAt": "2026-10-05T10:05:13.180Z",
+    "workflowPublishHistory": [
+      {
+        "id": 11780,
+        "workflowId": "gS9DXz4E3gMzcXYP",
+        "versionId": "7fdbca0a-d912-4587-b183-946e7ffc51dd",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-10-05T10:05:13.294Z"
+      }
+    ]
+  }
+}

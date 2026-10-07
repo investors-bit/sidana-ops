@@ -1,0 +1,395 @@
+{
+  "id": "3e1KWxLmAc9uR6uS",
+  "name": "One-off RO-DAY — daily outreach snapshot: shares, follow-ups, replies, meetings (read-only)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-30T11:45:53.271Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "c6c78147-409f-4992-8912-b9f5a2f9d0eb",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 0,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "a91c3e57-2d4b-4f86-b0e2-5c7d9a1e3f60",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-ro-day-7c4e2a",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "ck",
+      "name": "Check",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b = $('Webhook').first().json.body || {};\nif (b.secret !== 'roday-30sep-Pz8mQ2') throw new Error('bad secret');\nconst day = b.day || new Date(Date.now() + 5.5*3600e3).toISOString().slice(0,10);\nreturn [{ json: { day, timeMin: day + 'T00:00:00+05:30', timeMax: day + 'T23:59:59+05:30', updatedMin: day + 'T00:00:00+05:30', futMax: '2026-12-31T23:59:59+05:30' } }];"
+      }
+    },
+    {
+      "id": "rd",
+      "name": "Sheets",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=PIPELINE%21A1%3AAI8000&ranges=STARTUPS%21A1%3AO200",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "c1",
+      "name": "Cal A",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "continueOnFail": true,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "url": "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleCalendarOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "timeMin",
+              "value": "={{ $('Check').first().json.timeMin }}"
+            },
+            {
+              "name": "timeMax",
+              "value": "={{ $('Check').first().json.futMax }}"
+            },
+            {
+              "name": "singleEvents",
+              "value": "true"
+            },
+            {
+              "name": "maxResults",
+              "value": "2500"
+            },
+            {
+              "name": "fields",
+              "value": "nextPageToken,items(status,summary,start,created,attendees(email))"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "FMaJN0wYxb8FWUZs",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "id": "c2",
+      "name": "Cal B",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "continueOnFail": true,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "url": "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleCalendarOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "timeMin",
+              "value": "={{ $('Check').first().json.timeMin }}"
+            },
+            {
+              "name": "timeMax",
+              "value": "={{ $('Check').first().json.futMax }}"
+            },
+            {
+              "name": "singleEvents",
+              "value": "true"
+            },
+            {
+              "name": "maxResults",
+              "value": "2500"
+            },
+            {
+              "name": "fields",
+              "value": "nextPageToken,items(status,summary,start,created,attendees(email))"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "SUalv0ssD9ruGnuS",
+          "name": "Google Calendar account 2"
+        }
+      }
+    },
+    {
+      "id": "c3",
+      "name": "Cal C",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "continueOnFail": true,
+      "position": [
+        1000,
+        0
+      ],
+      "parameters": {
+        "url": "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleCalendarOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "timeMin",
+              "value": "={{ $('Check').first().json.timeMin }}"
+            },
+            {
+              "name": "timeMax",
+              "value": "={{ $('Check').first().json.futMax }}"
+            },
+            {
+              "name": "singleEvents",
+              "value": "true"
+            },
+            {
+              "name": "maxResults",
+              "value": "2500"
+            },
+            {
+              "name": "fields",
+              "value": "nextPageToken,items(status,summary,start,created,attendees(email))"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "XHTquOpYpODOTLYR",
+          "name": "Google Calendar account 3"
+        }
+      }
+    },
+    {
+      "id": "c4",
+      "name": "Cal D",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "continueOnFail": true,
+      "position": [
+        1200,
+        0
+      ],
+      "parameters": {
+        "url": "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleCalendarOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "timeMin",
+              "value": "={{ $('Check').first().json.timeMin }}"
+            },
+            {
+              "name": "timeMax",
+              "value": "={{ $('Check').first().json.futMax }}"
+            },
+            {
+              "name": "singleEvents",
+              "value": "true"
+            },
+            {
+              "name": "maxResults",
+              "value": "2500"
+            },
+            {
+              "name": "fields",
+              "value": "nextPageToken,items(status,summary,start,created,attendees(email))"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "NdbYgV97aSL2PRCB",
+          "name": "Google Calendar account 4"
+        }
+      }
+    },
+    {
+      "id": "o",
+      "name": "Out",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1400,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const C = $('Check').first().json; const day = C.day;\nconst vr = $('Sheets').first().json.valueRanges || [];\nconst tab = (vals) => { const h = (vals[0]||[]).map(x => String(x).trim()); return vals.slice(1).filter(r => r && r[0]).map(r => { const o = {}; h.forEach((k,i) => o[k] = r[i] != null ? String(r[i]).trim() : ''); return o; }); };\nconst P = tab((vr[0]||{}).values||[]); const S = tab((vr[1]||{}).values||[]);\nconst desk = {}; for (const r of S) desk[r.startup] = r.desk || 'HOT';\nconst is = d => (d||'').slice(0,10) === day;\nconst shares = P.filter(r => is(r.date_shared));\nconst fus = []; for (const r of P) for (const k of ['fu1','fu2','fu3']) if (is(r[k + '_date'])) fus.push({ r, k });\nconst touched = P.filter(r => is(r.last_contact) && !is(r.date_shared));\nconst grp = (arr, f) => { const m = {}; for (const x of arr) { const k = f(x); m[k] = (m[k]||0) + 1; } return m; };\nconst resp = touched.filter(r => r.investor_response).map(r => ({ startup: r.startup, desk: desk[r.startup], investor: r.investor, owner: r.owner, response: r.investor_response.slice(0,140), next: (r.next_action||'').slice(0,80) }));\nconst cal = {}; const info = {};\nfor (const n of ['Cal A','Cal B','Cal C','Cal D']) { const j = $(n).first().json; info[n] = j.items ? { count: j.items.length, truncated: !!j.nextPageToken } : { error: String(JSON.stringify(j.error||j)).slice(0,200) }; for (const e of (j.items||[])) { if (e.status === 'cancelled' || !e.summary) continue; const st = (e.start||{}).dateTime || (e.start||{}).date || ''; const k = st.slice(0,16) + '|' + e.summary.toLowerCase(); cal[k] = { start: st, s: e.summary.replace(/&amp;/g,'&'), created: e.created || '', ext: (e.attendees||[]).filter(a => !/sidanaventures\\.com$/i.test(a.email||'')).map(a => a.email) }; } }\nconst ev = Object.values(cal);\nconst istDay = iso => iso ? new Date(new Date(iso).getTime() + 5.5*3600e3).toISOString().slice(0,10) : '';\nconst todayMeet = ev.filter(e => istDay(e.start) === day || e.start.slice(0,10) === day).sort((a,b) => a.start.localeCompare(b.start)).map(e => e.start.slice(11,16) + ' ' + e.s + (e.ext.length ? ' [ext: ' + e.ext.length + ']' : ' [internal]'));\nconst booked = ev.filter(e => istDay(e.created) === day && !(istDay(e.start) === day)).map(e => istDay(e.start) + ' ' + e.start.slice(11,16) + ' ' + e.s + (e.ext.length ? ' [ext: ' + e.ext.length + ']' : ' [internal]'));\nreturn [{ json: { day, calInfo: info, pipelineRows: P.length,\n  shares: { total: shares.length, byOwner: grp(shares, r => r.owner), byDesk: grp(shares, r => desk[r.startup] || '?'), byStartup: grp(shares, r => r.startup), list: shares.map(r => r.startup + ' -> ' + r.investor + ' (' + r.owner + ')') },\n  followups: { total: fus.length, byOwner: grp(fus, x => x.r.owner), byStage: grp(fus, x => x.k), list: fus.map(x => x.k + ' ' + x.r.startup + ' -> ' + x.r.investor) },\n  touchedToday: touched.length, responses: resp,\n  meetingsToday: todayMeet, bookedToday: booked } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check": {
+      "main": [
+        [
+          {
+            "node": "Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sheets": {
+      "main": [
+        [
+          {
+            "node": "Cal A",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cal A": {
+      "main": [
+        [
+          {
+            "node": "Cal B",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cal B": {
+      "main": [
+        [
+          {
+            "node": "Cal C",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cal C": {
+      "main": [
+        [
+          {
+            "node": "Cal D",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cal D": {
+      "main": [
+        [
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "none",
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "3e1KWxLmAc9uR6uS",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-30T11:45:53.273Z",
+      "updatedAt": "2026-09-30T11:45:53.273Z"
+    }
+  ],
+  "activeVersion": null
+}

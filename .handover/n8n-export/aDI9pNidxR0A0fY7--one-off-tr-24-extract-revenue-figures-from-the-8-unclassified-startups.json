@@ -1,0 +1,143 @@
+{
+  "id": "aDI9pNidxR0A0fY7",
+  "name": "One-off TR-24 — extract revenue figures from the 8 unclassified startups' memos (read only)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-15T15:25:38.906Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "c9aeca83-b76f-40b3-b6ba-c9f3b300d68d",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once (set before activating)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "3 21 15 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "gs",
+      "name": "GET STARTUPS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/STARTUPS!A1:N200",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cc",
+      "name": "Extract",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nfunction nz(x) { return s(x).toLowerCase().replace(/[^a-z0-9]/g, ''); }\nconst v = $('GET STARTUPS').first().json.values || [];\nif (v.length < 40) { throw new Error('ABORT: STARTUPS only ' + v.length); }\nconst h = (v[0] || []).map(s);\nconst I = {}; ['startup','stage','revenue','raise_inr_cr','memo_body','memo_html','highlight_1','highlight_2','highlight_3','active'].forEach(function (n) { I[n] = h.indexOf(n); if (I[n] < 0) { throw new Error('ABORT: STARTUPS missing ' + n); } });\nconst WANT = {};\n['AI Signal Labs','Desi Machines','Road Athena','Chayan Karo','Doffair','Ela Greens','bezgoFresh','DACBY'].forEach(function (n) { WANT[nz(n)] = n; });\nfunction strip(html) { return s(html).replace(/<[^>]*>/g, ' ').replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ').replace(/&mdash;/g, '-').replace(/&ndash;/g, '-').replace(/&rsquo;/g, \"'\").replace(/\\s+/g, ' '); }\nconst MONEY = /(revenue|arr\\b|mrr\\b|gmv|run-?rate|turnover|topline|billings?|profitab|ebitda|earning|monetis|monetiz|paying|subscription|take rate|commission)/i;\nconst out = [];\nfor (let r = 1; r < v.length; r++) { const row = v[r] || []; const n = s(row[I.startup]); if (!n) { continue; }\n  const k = nz(n); if (!WANT[k]) { continue; }\n  const text = strip(row[I.memo_body]) + ' ' + strip(row[I.memo_html]);\n  const sentences = text.split(/(?<=[.;])\\s+|\\s\\|\\s/);\n  const seen = {}; const hits = [];\n  for (const sen of sentences) { const t = s(sen); if (t.length < 8 || t.length > 320) { continue; }\n    if (!MONEY.test(t)) { continue; }\n    const key = t.slice(0, 60).toLowerCase(); if (seen[key]) { continue; } seen[key] = 1;\n    hits.push(t); }\n  out.push({ startup: n, stage: s(row[I.stage]), revenue_column: s(row[I.revenue]), raise: s(row[I.raise_inr_cr]),\n    highlights: [s(row[I.highlight_1]), s(row[I.highlight_2]), s(row[I.highlight_3])],\n    revenue_mentions: hits.slice(0, 14) }); }\nif (out.length !== 8) { throw new Error('ABORT: expected 8 startups, matched ' + out.length + ': ' + out.map(function (x) { return x.startup; }).join(', ')); }\nreturn [{ json: { count: out.length, startups: out } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once (set before activating)": {
+      "main": [
+        [
+          {
+            "node": "GET STARTUPS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET STARTUPS": {
+      "main": [
+        [
+          {
+            "node": "Extract",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once (set before activating)": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "aDI9pNidxR0A0fY7",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-15T15:25:38.908Z",
+      "updatedAt": "2026-09-15T15:25:38.908Z"
+    }
+  ],
+  "activeVersion": null
+}

@@ -1,0 +1,178 @@
+{
+  "id": "p2AcvTSivfr9OYDb",
+  "name": "One-off IA-1 (read-only) — India Accelerator: INVESTORS, criteria, PIPELINE, corrections rows (17 Sep)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-17T07:32:22.344Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "20c7488f-8d6f-4379-b965-a0fb13243f2e",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "4 13 17 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "g1",
+      "name": "GET pilot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=INVESTORS!A1:J1000&ranges=INVESTOR_CRITERIA!A1:AC400&ranges=PIPELINE!A1:AI8000",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "g2",
+      "name": "GET corrections",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/1WOErvuYawblG-HkrK5In5YWtEiKKt_DeoVpmL5na6GU/values:batchGet?ranges=' + encodeURIComponent(\"'Thesis correction'!A1:Z400\") + '&ranges=' + encodeURIComponent(\"'Mail correction'!A1:Z400\") }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "c1",
+      "name": "Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v){return String(v==null?'':v).trim();}\nconst re=/accelerator|vasu|priyanshu|finvolve|iangels/i;\nconst vr=$('GET pilot').first().json.valueRanges||[];\nconst inv=(vr[0]||{}).values||[], crit=(vr[1]||{}).values||[], pipe=(vr[2]||{}).values||[];\nconst invRows=[];inv.forEach((r,i)=>{if(r.some(c=>re.test(s(c))))invRows.push({row:i+1,cells:r.map(s)});});\nconst critRows=[];crit.forEach((r,i)=>{if(re.test(s(r[1])))critRows.push({row:i+1,cells:r.slice(0,21).map(c=>s(c).slice(0,160))});});\nconst h=(pipe[0]||[]).map(s);const X={};h.forEach((k,i)=>X[k]=i);\nconst pr=[];for(let i=1;i<pipe.length;i++){const r=pipe[i]||[];if(re.test(s(r[X.investor]))||re.test(s(r[X.email]))){pr.push([i+1,s(r[X.deal_id]),s(r[X.startup]),s(r[X.investor]),s(r[X.email]),s(r[X.cc]),s(r[X.deal_shared]),s(r[X.date_shared]),s(r[X.next_action]).slice(0,40),s(r[X.next_due]),s(r[X.pause]),s(r[X.investor_response]).slice(0,40),s(r[X.match_type]).slice(0,60)].join(' | '));}}\nconst cv=$('GET corrections').first().json.valueRanges||[];\nconst th=[];((cv[0]||{}).values||[]).forEach((r,i)=>{if(i<2||r.some(c=>re.test(s(c))))th.push({row:i+1,cells:r.map(s)});});\nconst mc=[];((cv[1]||{}).values||[]).forEach((r,i)=>{if(i<1||r.some(c=>re.test(s(c))))mc.push({row:i+1,cells:r.map(s)});});\nreturn [{json:{investors:invRows,criteria:critRows,pipeline_count:pr.length,pipeline:pr.slice(0,120),thesis_tab:th,mail_tab:mc}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once": {
+      "main": [
+        [
+          {
+            "node": "GET pilot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET pilot": {
+      "main": [
+        [
+          {
+            "node": "GET corrections",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET corrections": {
+      "main": [
+        [
+          {
+            "node": "Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataSuccessExecution": "all",
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "p2AcvTSivfr9OYDb",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-17T07:32:22.348Z",
+      "updatedAt": "2026-09-17T07:32:22.348Z"
+    }
+  ],
+  "activeVersion": null
+}

@@ -1,0 +1,127 @@
+{
+  "id": "f0vgo1QmYnREvDls",
+  "name": "HEALTH-CHECK — criteria + startup profile + new-investor gaps (webhook, read-only)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-30T09:44:48.783Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "66cbc206-852a-4c42-ad54-eefea0859d5b",
+  "versionCounter": 6,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "2f988bc6-0d2b-4a06-bfbd-200cca2205d5",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-health-30sep-5a91c2",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "g",
+      "name": "Get",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=INVESTOR_CRITERIA!A1:Z400&ranges=INVESTORS!A1:J1000&ranges=STARTUP_PROFILE!A1:N200",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "c",
+      "name": "Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const s=v=>String(v==null?'':v).trim();\nconst vr=$input.first().json.valueRanges;\nconst C=vr[0].values||[],I=vr[1].values||[],P=vr[2].values||[];\nif(C.length<200)throw new Error('ABORT short criteria '+C.length);\nif(I.length<200)throw new Error('ABORT short investors '+I.length);\nif(P.length<50)throw new Error('ABORT short profile '+P.length);\nconst ch=C[0].map(s),X={};ch.forEach((k,i)=>X[k]=i);\nconst ih=I[0].map(s),Z={};ih.forEach((k,i)=>Z[k]=i);\nconst ph=P[0].map(s),Y={};ph.forEach((k,i)=>Y[k]=i);\nconst num=v=>{const t=s(v);return t===''?null:(isFinite(Number(t))?Number(t):NaN);};\nconst critByName={},dupNames=[],blankB=[],rows=[];\nfor(let i=1;i<C.length;i++){const r=C[i]||[];const g=k=>s(r[X[k]]);\n if(!g('sheet_row')&&!g('investor'))continue;\n const nm=g('investor');\n const o={gridrow:i+1,sheet_row:g('sheet_row'),investor:nm,status:g('status'),mode:g('sector_mode'),sin:g('sectors_in'),smin:g('stage_min'),smax:g('stage_max'),cmin:g('cheque_min_cr'),amin:g('arr_min_cr'),geo:g('geography_scope')};\n rows.push(o);\n if(!nm){blankB.push(i+1);continue;}\n const k=nm.toLowerCase();\n if(critByName[k])dupNames.push(nm+' (rows '+critByName[k].gridrow+','+(i+1)+')');else critByName[k]=o;}\nconst live=rows.filter(r=>r.status===''||r.status.toUpperCase()==='ACTIVE');\nconst a=live.filter(r=>!r.smin||!r.smax).map(r=>r.sheet_row+' '+r.investor);\nconst b=live.filter(r=>r.mode.toUpperCase()==='LIST'&&!r.sin).map(r=>r.sheet_row+' '+r.investor);\nconst cTxt=live.filter(r=>Number.isNaN(num(r.cmin))||Number.isNaN(num(r.amin))).map(r=>r.sheet_row+' '+r.investor+' cheque='+r.cmin+' arr='+r.amin);\nconst arrFloor=live.filter(r=>{const v=num(r.amin);return v!==null&&!Number.isNaN(v);});\nconst geoCount={};live.forEach(r=>{const k=r.geo||'(blank)';geoCount[k]=(geoCount[k]||0)+1;});\nconst sp=[];\nfor(let i=1;i<P.length;i++){const r=P[i]||[];const g=k=>s(r[Y[k]]);\n if(!g('startup'))continue;if(g('active').toLowerCase()!=='yes')continue;\n sp.push({row:i+1,startup:g('startup'),arr:g('arr_cr'),basis:g('revenue_basis')});}\nconst arrBad=sp.filter(x=>{const v=num(x.arr);return v===null||Number.isNaN(v);}).map(x=>x.row+' '+x.startup+' arr='+(x.arr||'(blank)'));\nconst hasDate=t=>/20\\d\\d|\\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/i.test(t);\nconst zeroUndated=sp.filter(x=>num(x.arr)===0&&(!x.basis||!hasDate(x.basis))).map(x=>x.row+' '+x.startup+' basis=\"'+s(x.basis).slice(0,60)+'\"');\nconst zeroAll=sp.filter(x=>num(x.arr)===0).length;\nconst noCrit=[],emailMap={};\nfor(let i=1;i<I.length;i++){const r=I[i]||[];const nm=s(r[Z['investor']]);if(!nm)continue;\n const em=s(r[Z['email']]).toLowerCase();\n if(em){(emailMap[em]=emailMap[em]||[]).push((i+1)+' '+nm);}\n if(!critByName[nm.toLowerCase()])noCrit.push({row:i+1,investor:nm,contact:s(r[Z['contact_person']]),sector:s(r[Z['sector']]).slice(0,70),stage:s(r[Z['stage']]).slice(0,40),cheque:s(r[Z['cheque_inr_cr']]).slice(0,30),dnc:s(r[Z['do_not_contact']])});}\nconst shared=Object.keys(emailMap).filter(k=>emailMap[k].length>1).map(k=>k+' -> '+emailMap[k].join(' | '));\nreturn [{json:{counts:{criteria_rows:rows.length,investors_rows:I.length-1,profile_active:sp.length,live_criteria:live.length,investors_with_arr_floor:arrFloor.length,startups_arr_zero:zeroAll},a_stage_blank:{n:a.length,list:a},b_list_no_sectors:{n:b.length,list:b},c_text_floors:{n:cTxt.length,list:cTxt},c3_startup_arr_unparseable:{n:arrBad.length,list:arrBad},c4_zero_undated:{n:zeroUndated.length,list:zeroUndated},d_dup_names:{n:dupNames.length,list:dupNames.slice(0,40)},d_blank_investor_col:blankB,geo_values:geoCount,step0b_no_criteria_row:{n:noCrit.length,list:noCrit.slice(0,40)},shared_inboxes:{n:shared.length,list:shared.slice(0,30)}}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get": {
+      "main": [
+        [
+          {
+            "node": "Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "none",
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "f0vgo1QmYnREvDls",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-30T09:44:48.785Z",
+      "updatedAt": "2026-09-30T09:44:48.785Z"
+    }
+  ],
+  "activeVersion": null
+}

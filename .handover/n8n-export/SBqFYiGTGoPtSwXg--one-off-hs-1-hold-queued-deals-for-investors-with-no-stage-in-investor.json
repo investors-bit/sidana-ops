@@ -1,0 +1,270 @@
+{
+  "id": "SBqFYiGTGoPtSwXg",
+  "name": "One-off HS-1 — hold queued deals for investors with no stage in INVESTORS",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-10T16:27:47.347Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "fa18dfc7-87ff-493c-b962-c3f0e0159371",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once (set before activating)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "2 22 10 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "h0",
+      "name": "GET header",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/PIPELINE!1:1",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "r1",
+      "name": "Read INVESTORS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "INVESTORS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "r3",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "c1",
+      "name": "Plan holds",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nfunction nz(x) { return s(x).toLowerCase().replace(/[^a-z0-9]/g, ''); }\nconst hdr = (($('GET header').first().json.values || [[]])[0] || []).map(s);\nconst cP = hdr.indexOf('pause'), cN = hdr.indexOf('notes');\nif (cP < 0 || cN < 0) { throw new Error('ABORT: pause/notes column missing: ' + JSON.stringify(hdr)); }\nfunction colLetter(i) { let n = i + 1, out = ''; while (n > 0) { const m = (n - 1) % 26; out = String.fromCharCode(65 + m) + out; n = Math.floor((n - 1) / 26); } return out; }\nconst LP = colLetter(cP), LN = colLetter(cN);\nconst invRaw = $('Read INVESTORS').all().map(function (i) { return i.json; });\nconst pipe = $input.all().map(function (i) { return i.json; });\nif (pipe.length < 500) { throw new Error('ABORT: PIPELINE only ' + pipe.length); }\n\n// an investor counts as 'stage missing' only if EVERY INVESTORS row under that name has a blank stage\nconst hasStage = {}, names = {};\nfor (const r of invRaw) { const n = s(r.investor); if (!n) { continue; } const k = nz(n); names[k] = n;\n  if (s(r.stage) !== '') { hasStage[k] = true; } else if (hasStage[k] === undefined) { hasStage[k] = false; } }\nconst missing = {}; for (const k of Object.keys(hasStage)) { if (!hasStage[k]) { missing[k] = names[k]; } }\n\nconst holds = []; const perInv = {}; const sentPerInv = {};\nfor (const k of Object.keys(missing)) { perInv[k] = 0; sentPerInv[k] = 0; }\nfor (const p of pipe) {\n  const k = nz(p.investor); if (!missing[k]) { continue; }\n  if (s(p.deal_shared).toLowerCase() === 'yes') { sentPerInv[k]++; continue; }   // sent rows untouched\n  if (s(p.pause).toLowerCase() === 'yes') { continue; }                           // already on hold\n  if (!p.row_number) { throw new Error('ABORT: row without row_number'); }\n  const note = s(p.notes);\n  holds.push({ rn: p.row_number, deal: s(p.deal_id), st: s(p.startup), inv: s(p.investor),\n    note: (note ? note + ' | ' : '') + 'ON HOLD 2026-09-10 - investor stage missing in INVESTORS' });\n  perInv[k]++;\n}\nif (holds.length > 900) { throw new Error('ABORT: ' + holds.length + ' holds exceeds guard of 900'); }\nif (!holds.length) { throw new Error('NOTHING TO DO: no queued deals for stage-missing investors'); }\nconst data = [];\nfor (const h of holds) {\n  data.push({ range: 'PIPELINE!' + LP + h.rn, values: [['Yes']] });\n  data.push({ range: 'PIPELINE!' + LN + h.rn, values: [[h.note]] });\n}\nconst invList = Object.keys(missing).map(function (k) { return [missing[k], perInv[k], sentPerInv[k]]; })\n  .sort(function (a, b) { return b[1] - a[1] || a[0].localeCompare(b[0]); });\nreturn [{ json: { pause_col: LP, notes_col: LN, investors_stage_missing: invList.length, deals_put_on_hold: holds.length,\n  investor_cols: ['investor', 'queued_deals_held', 'already_sent_untouched'], investors: invList,\n  held: holds.map(function (h) { return [h.rn, h.deal, h.st, h.inv]; }), data: data } }];"
+      }
+    },
+    {
+      "id": "h1",
+      "name": "Write holds (batch)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "position": [
+        1100,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ valueInputOption: 'RAW', data: $json.data }) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Run once (set before activating)": {
+      "main": [
+        [
+          {
+            "node": "GET header",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET header": {
+      "main": [
+        [
+          {
+            "node": "Read INVESTORS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read INVESTORS": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Plan holds",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Plan holds": {
+      "main": [
+        [
+          {
+            "node": "Write holds (batch)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once (set before activating)": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "SBqFYiGTGoPtSwXg",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-10T16:27:47.348Z",
+      "updatedAt": "2026-09-10T16:27:47.348Z"
+    }
+  ],
+  "activeVersion": null
+}

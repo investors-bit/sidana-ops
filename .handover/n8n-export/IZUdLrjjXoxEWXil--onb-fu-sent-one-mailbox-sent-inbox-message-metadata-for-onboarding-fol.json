@@ -1,0 +1,1221 @@
+{
+  "id": "IZUdLrjjXoxEWXil",
+  "name": "ONB-FU-SENT — one mailbox: sent/inbox message metadata for ONBOARDING follow-ups (webhook, read-only)",
+  "description": null,
+  "active": true,
+  "activeVersionId": "4c131525-5aa2-4f57-b006-7244ce84a0bc",
+  "createdAt": "2026-09-30T10:20:08.173Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "4c131525-5aa2-4f57-b006-7244ce84a0bc",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "2d32c2b2-c171-424b-be5d-d3edda008795",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "onb-fu-sent-9e31c7",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "p",
+      "name": "Prep",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b=$input.first().json.body||{};if(b.secret!=='onb-fu-2026-09-30-Rz4'){throw new Error('bad secret');}const mb=String(b.mb);if(['2','3','4','5','6'].indexOf(mb)<0){throw new Error('mb must be 2,3,4,5 or 6');}return [{json:{mb:mb,q:String(b.q||''),pageToken:String(b.pageToken||''),countOnly:!!b.countOnly}}];"
+      }
+    },
+    {
+      "id": "sw",
+      "name": "Route",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "mode": "expression",
+        "numberOutputs": 5,
+        "output": "={{ Number($json.mb) - 2 }}"
+      }
+    },
+    {
+      "id": "l2",
+      "name": "List mb2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        620,
+        -300
+      ],
+      "parameters": {
+        "url": "=https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=200&q={{ encodeURIComponent($json.q) }}{{ $json.pageToken ? '&pageToken=' + $json.pageToken : '' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "hwEqMRn6IxzoYs1R",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "id": "l3",
+      "name": "List mb3",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        620,
+        -150
+      ],
+      "parameters": {
+        "url": "=https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=200&q={{ encodeURIComponent($json.q) }}{{ $json.pageToken ? '&pageToken=' + $json.pageToken : '' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mymSHTFVWtsI3Mh7",
+          "name": "Gmail account 3"
+        }
+      }
+    },
+    {
+      "id": "l4",
+      "name": "List mb4",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        620,
+        0
+      ],
+      "parameters": {
+        "url": "=https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=200&q={{ encodeURIComponent($json.q) }}{{ $json.pageToken ? '&pageToken=' + $json.pageToken : '' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "9IWD8mWqdARPXloL",
+          "name": "Gmail account 4"
+        }
+      }
+    },
+    {
+      "id": "l5",
+      "name": "List mb5",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        620,
+        150
+      ],
+      "parameters": {
+        "url": "=https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=200&q={{ encodeURIComponent($json.q) }}{{ $json.pageToken ? '&pageToken=' + $json.pageToken : '' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "R5K61omYbU9oT5J8",
+          "name": "Gmail account 5"
+        }
+      }
+    },
+    {
+      "id": "l6",
+      "name": "List mb6",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        620,
+        300
+      ],
+      "parameters": {
+        "url": "=https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=200&q={{ encodeURIComponent($json.q) }}{{ $json.pageToken ? '&pageToken=' + $json.pageToken : '' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "s4YYut2fC7u8aQWl",
+          "name": "Gmail account 6"
+        }
+      }
+    },
+    {
+      "id": "sp",
+      "name": "Split",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        840,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const p=$('Prep').first().json;const r=$input.first().json;const ids=(r.messages||[]);const npt=r.nextPageToken||'';if(p.countOnly||!ids.length){return [{json:{meta:true,mb:p.mb,ids:ids.length,estimate:r.resultSizeEstimate||0,nextPageToken:npt}}];}return ids.map(x=>({json:{id:x.id,mb:p.mb,nextPageToken:npt}}));"
+      }
+    },
+    {
+      "id": "sw2",
+      "name": "Route2",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        1040,
+        0
+      ],
+      "parameters": {
+        "mode": "expression",
+        "numberOutputs": 6,
+        "output": "={{ $json.meta ? 5 : Number($json.mb) - 2 }}"
+      }
+    },
+    {
+      "id": "g2",
+      "name": "Get mb2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1280,
+        -300
+      ],
+      "parameters": {
+        "url": "=https://gmail.googleapis.com/gmail/v1/users/me/messages/{{ $json.id }}?format=metadata&metadataHeaders=To&metadataHeaders=Cc&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 10,
+              "batchInterval": 400
+            }
+          }
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "hwEqMRn6IxzoYs1R",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "id": "g3",
+      "name": "Get mb3",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1280,
+        -150
+      ],
+      "parameters": {
+        "url": "=https://gmail.googleapis.com/gmail/v1/users/me/messages/{{ $json.id }}?format=metadata&metadataHeaders=To&metadataHeaders=Cc&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 10,
+              "batchInterval": 400
+            }
+          }
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mymSHTFVWtsI3Mh7",
+          "name": "Gmail account 3"
+        }
+      }
+    },
+    {
+      "id": "g4",
+      "name": "Get mb4",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1280,
+        0
+      ],
+      "parameters": {
+        "url": "=https://gmail.googleapis.com/gmail/v1/users/me/messages/{{ $json.id }}?format=metadata&metadataHeaders=To&metadataHeaders=Cc&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 10,
+              "batchInterval": 400
+            }
+          }
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "9IWD8mWqdARPXloL",
+          "name": "Gmail account 4"
+        }
+      }
+    },
+    {
+      "id": "g5",
+      "name": "Get mb5",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1280,
+        150
+      ],
+      "parameters": {
+        "url": "=https://gmail.googleapis.com/gmail/v1/users/me/messages/{{ $json.id }}?format=metadata&metadataHeaders=To&metadataHeaders=Cc&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 10,
+              "batchInterval": 400
+            }
+          }
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "R5K61omYbU9oT5J8",
+          "name": "Gmail account 5"
+        }
+      }
+    },
+    {
+      "id": "g6",
+      "name": "Get mb6",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1280,
+        300
+      ],
+      "parameters": {
+        "url": "=https://gmail.googleapis.com/gmail/v1/users/me/messages/{{ $json.id }}?format=metadata&metadataHeaders=To&metadataHeaders=Cc&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 10,
+              "batchInterval": 400
+            }
+          }
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "s4YYut2fC7u8aQWl",
+          "name": "Gmail account 6"
+        }
+      }
+    },
+    {
+      "id": "o",
+      "name": "Out",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1540,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const LBL={'2':'dealflow@','3':'investors@','4':'akansha@','5':'shradhaa@','6':'admin@'};\nconst p=$('Prep').first().json;const first=$input.first().json||{};\nif(first.meta){return [{json:{mode:'count',mb:p.mb,mailbox:LBL[p.mb],ids:first.ids,estimate:first.estimate,nextPageToken:first.nextPageToken}}];}\nconst RX=/[A-Za-z0-9._%+'-]+@[A-Za-z0-9-]+(?:\\.[A-Za-z0-9-]+)+/g;\nconst rows=[];let n=0;\nfor(const it of $input.all()){const m=it.json||{};if(!m.payload){continue;}n++;\n const H={};(m.payload.headers||[]).forEach(h=>{H[String(h.name).toLowerCase()]=h.value;});\n const ts=Number(m.internalDate||0);\n const to=[H.to,H.cc].filter(Boolean).join(', ');\n const toA=[];const seen={};for(const raw of (String(to).match(RX)||[])){const a=raw.toLowerCase();if(/@sidanaventures\\.com$/.test(a)){continue;}if(!seen[a]){seen[a]=1;toA.push(a);}}\n const fromA=(String(H.from||'').match(RX)||[]).map(x=>x.toLowerCase());\n rows.push({id:m.id,thread:m.threadId||'',ts:ts,subject:String(H.subject||'').slice(0,160),to:toA,from:fromA[0]||'',labels:(m.labelIds||[]).join(',')});}\nconst npt=$('Split').first().json.nextPageToken||'';\nreturn [{json:{mode:'fetch',mb:p.mb,mailbox:LBL[p.mb],q:p.q,messages:n,nextPageToken:npt,rows:rows}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Prep",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep": {
+      "main": [
+        [
+          {
+            "node": "Route",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route": {
+      "main": [
+        [
+          {
+            "node": "List mb2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "List mb3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "List mb4",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "List mb5",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "List mb6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List mb2": {
+      "main": [
+        [
+          {
+            "node": "Split",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List mb3": {
+      "main": [
+        [
+          {
+            "node": "Split",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List mb4": {
+      "main": [
+        [
+          {
+            "node": "Split",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List mb5": {
+      "main": [
+        [
+          {
+            "node": "Split",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List mb6": {
+      "main": [
+        [
+          {
+            "node": "Split",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split": {
+      "main": [
+        [
+          {
+            "node": "Route2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route2": {
+      "main": [
+        [
+          {
+            "node": "Get mb2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get mb3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get mb4",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get mb5",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get mb6",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get mb2": {
+      "main": [
+        [
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get mb3": {
+      "main": [
+        [
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get mb4": {
+      "main": [
+        [
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get mb5": {
+      "main": [
+        [
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get mb6": {
+      "main": [
+        [
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionTimeout": 600,
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "IZUdLrjjXoxEWXil",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-30T10:20:08.176Z",
+      "updatedAt": "2026-09-30T10:20:08.176Z"
+    }
+  ],
+  "activeVersion": {
+    "versionId": "4c131525-5aa2-4f57-b006-7244ce84a0bc",
+    "workflowId": "IZUdLrjjXoxEWXil",
+    "nodes": [
+      {
+        "id": "wh",
+        "name": "Webhook",
+        "webhookId": "2d32c2b2-c171-424b-be5d-d3edda008795",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          0
+        ],
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "onb-fu-sent-9e31c7",
+          "responseMode": "lastNode",
+          "responseData": "firstEntryJson",
+          "options": {}
+        }
+      },
+      {
+        "id": "p",
+        "name": "Prep",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          200,
+          0
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const b=$input.first().json.body||{};if(b.secret!=='onb-fu-2026-09-30-Rz4'){throw new Error('bad secret');}const mb=String(b.mb);if(['2','3','4','5','6'].indexOf(mb)<0){throw new Error('mb must be 2,3,4,5 or 6');}return [{json:{mb:mb,q:String(b.q||''),pageToken:String(b.pageToken||''),countOnly:!!b.countOnly}}];"
+        }
+      },
+      {
+        "id": "sw",
+        "name": "Route",
+        "type": "n8n-nodes-base.switch",
+        "typeVersion": 3,
+        "position": [
+          400,
+          0
+        ],
+        "parameters": {
+          "mode": "expression",
+          "numberOutputs": 5,
+          "output": "={{ Number($json.mb) - 2 }}"
+        }
+      },
+      {
+        "id": "l2",
+        "name": "List mb2",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          620,
+          -300
+        ],
+        "parameters": {
+          "url": "=https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=200&q={{ encodeURIComponent($json.q) }}{{ $json.pageToken ? '&pageToken=' + $json.pageToken : '' }}",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "gmailOAuth2",
+          "options": {}
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "hwEqMRn6IxzoYs1R",
+            "name": "Gmail account 2"
+          }
+        }
+      },
+      {
+        "id": "l3",
+        "name": "List mb3",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          620,
+          -150
+        ],
+        "parameters": {
+          "url": "=https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=200&q={{ encodeURIComponent($json.q) }}{{ $json.pageToken ? '&pageToken=' + $json.pageToken : '' }}",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "gmailOAuth2",
+          "options": {}
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "mymSHTFVWtsI3Mh7",
+            "name": "Gmail account 3"
+          }
+        }
+      },
+      {
+        "id": "l4",
+        "name": "List mb4",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          620,
+          0
+        ],
+        "parameters": {
+          "url": "=https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=200&q={{ encodeURIComponent($json.q) }}{{ $json.pageToken ? '&pageToken=' + $json.pageToken : '' }}",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "gmailOAuth2",
+          "options": {}
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "9IWD8mWqdARPXloL",
+            "name": "Gmail account 4"
+          }
+        }
+      },
+      {
+        "id": "l5",
+        "name": "List mb5",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          620,
+          150
+        ],
+        "parameters": {
+          "url": "=https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=200&q={{ encodeURIComponent($json.q) }}{{ $json.pageToken ? '&pageToken=' + $json.pageToken : '' }}",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "gmailOAuth2",
+          "options": {}
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "R5K61omYbU9oT5J8",
+            "name": "Gmail account 5"
+          }
+        }
+      },
+      {
+        "id": "l6",
+        "name": "List mb6",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          620,
+          300
+        ],
+        "parameters": {
+          "url": "=https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=200&q={{ encodeURIComponent($json.q) }}{{ $json.pageToken ? '&pageToken=' + $json.pageToken : '' }}",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "gmailOAuth2",
+          "options": {}
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "s4YYut2fC7u8aQWl",
+            "name": "Gmail account 6"
+          }
+        }
+      },
+      {
+        "id": "sp",
+        "name": "Split",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          840,
+          0
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const p=$('Prep').first().json;const r=$input.first().json;const ids=(r.messages||[]);const npt=r.nextPageToken||'';if(p.countOnly||!ids.length){return [{json:{meta:true,mb:p.mb,ids:ids.length,estimate:r.resultSizeEstimate||0,nextPageToken:npt}}];}return ids.map(x=>({json:{id:x.id,mb:p.mb,nextPageToken:npt}}));"
+        }
+      },
+      {
+        "id": "sw2",
+        "name": "Route2",
+        "type": "n8n-nodes-base.switch",
+        "typeVersion": 3,
+        "position": [
+          1040,
+          0
+        ],
+        "parameters": {
+          "mode": "expression",
+          "numberOutputs": 6,
+          "output": "={{ $json.meta ? 5 : Number($json.mb) - 2 }}"
+        }
+      },
+      {
+        "id": "g2",
+        "name": "Get mb2",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1280,
+          -300
+        ],
+        "parameters": {
+          "url": "=https://gmail.googleapis.com/gmail/v1/users/me/messages/{{ $json.id }}?format=metadata&metadataHeaders=To&metadataHeaders=Cc&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "gmailOAuth2",
+          "options": {
+            "batching": {
+              "batch": {
+                "batchSize": 10,
+                "batchInterval": 400
+              }
+            }
+          }
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "hwEqMRn6IxzoYs1R",
+            "name": "Gmail account 2"
+          }
+        }
+      },
+      {
+        "id": "g3",
+        "name": "Get mb3",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1280,
+          -150
+        ],
+        "parameters": {
+          "url": "=https://gmail.googleapis.com/gmail/v1/users/me/messages/{{ $json.id }}?format=metadata&metadataHeaders=To&metadataHeaders=Cc&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "gmailOAuth2",
+          "options": {
+            "batching": {
+              "batch": {
+                "batchSize": 10,
+                "batchInterval": 400
+              }
+            }
+          }
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "mymSHTFVWtsI3Mh7",
+            "name": "Gmail account 3"
+          }
+        }
+      },
+      {
+        "id": "g4",
+        "name": "Get mb4",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1280,
+          0
+        ],
+        "parameters": {
+          "url": "=https://gmail.googleapis.com/gmail/v1/users/me/messages/{{ $json.id }}?format=metadata&metadataHeaders=To&metadataHeaders=Cc&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "gmailOAuth2",
+          "options": {
+            "batching": {
+              "batch": {
+                "batchSize": 10,
+                "batchInterval": 400
+              }
+            }
+          }
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "9IWD8mWqdARPXloL",
+            "name": "Gmail account 4"
+          }
+        }
+      },
+      {
+        "id": "g5",
+        "name": "Get mb5",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1280,
+          150
+        ],
+        "parameters": {
+          "url": "=https://gmail.googleapis.com/gmail/v1/users/me/messages/{{ $json.id }}?format=metadata&metadataHeaders=To&metadataHeaders=Cc&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "gmailOAuth2",
+          "options": {
+            "batching": {
+              "batch": {
+                "batchSize": 10,
+                "batchInterval": 400
+              }
+            }
+          }
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "R5K61omYbU9oT5J8",
+            "name": "Gmail account 5"
+          }
+        }
+      },
+      {
+        "id": "g6",
+        "name": "Get mb6",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1280,
+          300
+        ],
+        "parameters": {
+          "url": "=https://gmail.googleapis.com/gmail/v1/users/me/messages/{{ $json.id }}?format=metadata&metadataHeaders=To&metadataHeaders=Cc&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "gmailOAuth2",
+          "options": {
+            "batching": {
+              "batch": {
+                "batchSize": 10,
+                "batchInterval": 400
+              }
+            }
+          }
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "s4YYut2fC7u8aQWl",
+            "name": "Gmail account 6"
+          }
+        }
+      },
+      {
+        "id": "o",
+        "name": "Out",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1540,
+          0
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const LBL={'2':'dealflow@','3':'investors@','4':'akansha@','5':'shradhaa@','6':'admin@'};\nconst p=$('Prep').first().json;const first=$input.first().json||{};\nif(first.meta){return [{json:{mode:'count',mb:p.mb,mailbox:LBL[p.mb],ids:first.ids,estimate:first.estimate,nextPageToken:first.nextPageToken}}];}\nconst RX=/[A-Za-z0-9._%+'-]+@[A-Za-z0-9-]+(?:\\.[A-Za-z0-9-]+)+/g;\nconst rows=[];let n=0;\nfor(const it of $input.all()){const m=it.json||{};if(!m.payload){continue;}n++;\n const H={};(m.payload.headers||[]).forEach(h=>{H[String(h.name).toLowerCase()]=h.value;});\n const ts=Number(m.internalDate||0);\n const to=[H.to,H.cc].filter(Boolean).join(', ');\n const toA=[];const seen={};for(const raw of (String(to).match(RX)||[])){const a=raw.toLowerCase();if(/@sidanaventures\\.com$/.test(a)){continue;}if(!seen[a]){seen[a]=1;toA.push(a);}}\n const fromA=(String(H.from||'').match(RX)||[]).map(x=>x.toLowerCase());\n rows.push({id:m.id,thread:m.threadId||'',ts:ts,subject:String(H.subject||'').slice(0,160),to:toA,from:fromA[0]||'',labels:(m.labelIds||[]).join(',')});}\nconst npt=$('Split').first().json.nextPageToken||'';\nreturn [{json:{mode:'fetch',mb:p.mb,mailbox:LBL[p.mb],q:p.q,messages:n,nextPageToken:npt,rows:rows}}];"
+        }
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Prep",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prep": {
+        "main": [
+          [
+            {
+              "node": "Route",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Route": {
+        "main": [
+          [
+            {
+              "node": "List mb2",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "List mb3",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "List mb4",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "List mb5",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "List mb6",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "List mb2": {
+        "main": [
+          [
+            {
+              "node": "Split",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "List mb3": {
+        "main": [
+          [
+            {
+              "node": "Split",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "List mb4": {
+        "main": [
+          [
+            {
+              "node": "Split",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "List mb5": {
+        "main": [
+          [
+            {
+              "node": "Split",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "List mb6": {
+        "main": [
+          [
+            {
+              "node": "Split",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Split": {
+        "main": [
+          [
+            {
+              "node": "Route2",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Route2": {
+        "main": [
+          [
+            {
+              "node": "Get mb2",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Get mb3",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Get mb4",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Get mb5",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Get mb6",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Out",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get mb2": {
+        "main": [
+          [
+            {
+              "node": "Out",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get mb3": {
+        "main": [
+          [
+            {
+              "node": "Out",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get mb4": {
+        "main": [
+          [
+            {
+              "node": "Out",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get mb5": {
+        "main": [
+          [
+            {
+              "node": "Out",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get mb6": {
+        "main": [
+          [
+            {
+              "node": "Out",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "Sidana Ventures",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "createdAt": "2026-09-30T10:20:08.177Z",
+    "updatedAt": "2026-09-30T10:20:08.177Z",
+    "workflowPublishHistory": [
+      {
+        "id": 9476,
+        "workflowId": "IZUdLrjjXoxEWXil",
+        "versionId": "4c131525-5aa2-4f57-b006-7244ce84a0bc",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-09-30T10:20:12.549Z"
+      }
+    ]
+  }
+}

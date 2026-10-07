@@ -1,0 +1,193 @@
+{
+  "id": "B8adaIYUYFpZX2vG",
+  "name": "One-off CG-5 — append INVESTOR_CRITERIA row for Dexter Ventures (investor-stated thesis)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-23T17:08:31.430Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "e7c547fa-cca3-4c7c-8c43-85e124170105",
+  "versionCounter": 5,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "d36eebcc-d16a-42dc-8b3c-46be6c3ef942",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-dexter-crit-row-8b2fa7",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "g",
+      "name": "Read",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=INVESTOR_CRITERIA%21A1%3AAC320&ranges=INVESTORS%21A1%3AJ300",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "v",
+      "name": "Compute",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const R = $json.valueRanges || [];\nconst pick = (n) => (R.find(x => String(x.range||'').indexOf(n) === 0) || {}).values || [];\nconst crit = pick('INVESTOR_CRITERIA');\nconst inv  = pick('INVESTORS!');\nconst g = (row,i) => (row && row[i] != null) ? String(row[i]).trim() : '';\n\nconst TARGET = 287;\n\n// Guard 1: the INVESTORS row must exist and be Dexter\nconst ivRow = inv[TARGET-1];\nif (!ivRow || g(ivRow,0).toLowerCase().indexOf('dexter') < 0) throw new Error('INVESTORS row ' + TARGET + ' is not Dexter: ' + g(ivRow,0));\n\n// Guard 2: no criteria row may already point at 287\nfor (let i = 1; i < crit.length; i++) { if (g(crit[i],0) === String(TARGET)) throw new Error('criteria row already exists for ' + TARGET + ' at sheet row ' + (i+1)); }\n\n// Guard 3: append strictly AFTER the last row that has any data\nlet lastData = 0;\nfor (let i = 1; i < crit.length; i++) { const r = crit[i]; if (r && r.some(c => String(c||'').trim() !== '')) lastData = i; }\nconst newRow = lastData + 2;\nconst chk = crit[newRow-1];\nif (chk && chk.some(c => String(c||'').trim() !== '')) throw new Error('target row ' + newRow + ' is not empty');\n\nconst THESIS = 'Thesis as stated by Dexter in writing (email to investors@, Sep 2026): \"Cheque Size: $100k-$500k / INR 1-4 Cr. Stage: Pre-Seed and Seed with select Pre-Series A - in Pre-Series A, not much into bridge rounds, but love maiden rounds. Sector: Sector Agnostic. Preferred / Focused Sectors: B2B SaaS, AI, FinTech, Consumer (Tech and Brand) and HealthTech. Negative Sectors: EV, Loyalty Tech, Renewables, Crypto / Web 3, Farm Mechanization. For Negative sectors in-case the team is exceptional (2x founder, CXO experience, top domain knowledge) we are open to evaluating. Any deal not in negative sectors, we are happy to look at on a case by case basis.\" India micro-VC, began 2020 as Dexter Angels; 43 companies. Screens founding team first, then large growing markets, then execution and customer evidence; avoids small hyper-competitive markets.';\n\nconst NOTES = '2026-09-23: row created from Dexter’s own written thesis. sector_mode AGNOSTIC because they say \"Sector Agnostic\"; their negative list is encoded in sectors_excluded. Two caveats: they exclude FARM MECHANISATION specifically, not all of AGRITECH, and their Crypto/Web3 exclusion has no matching sector code - both are judgement calls to revisit. They will still look at a negative-sector deal if the team is exceptional (2x founder / CXO / top domain knowledge).';\n\nconst cells = {\n  A: String(TARGET),\n  B: g(ivRow,0),\n  D: 'ACTIVE',\n  E: 'USER',\n  G: 'AGNOSTIC',\n  I: 'EV_CLEAN_MOBILITY, CLIMATE_ENERGY, MARTECH_ADTECH, AGRITECH',\n  L: 'PRE_SEED',\n  M: 'PRE_SERIES_A',\n  N: '1',\n  T: 'India',\n  V: THESIS,\n  W: 'Email from deals@dexter.ventures to investors@sidanaventures.com, Sep 2026 (Body & Beyond and Glazia Windoors threads); dexter.ventures; tracxn.com Dexter Ventures',\n  Y: 'HIGH'\n};\n\nconst data = Object.entries(cells).map(([col,val]) => ({ range: 'INVESTOR_CRITERIA!' + col + newRow, values: [[val]] }));\ndata.push({ range: 'INVESTOR_CRITERIA!Z' + newRow, values: [[NOTES]] });\n\n// also fill the INVESTORS cheque cell if still blank\nconst extra = [];\nif (!g(ivRow,6)) { data.push({ range: 'INVESTORS!G' + TARGET, values: [['US$100-500K (INR 1-4 Cr)']] }); extra.push('INVESTORS G' + TARGET + ' cheque'); }\n\nreturn [{ json: { body: { valueInputOption: 'RAW', data: data }, new_criteria_row: newRow, cells: data.length, also: extra, investor: g(ivRow,0) } }];"
+      }
+    },
+    {
+      "id": "w",
+      "name": "Write",
+      "disabled": false,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "o",
+      "name": "Out",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const c = $('Compute').first().json; const w = $json;\nreturn [{ json: { updatedCells: w.totalUpdatedCells != null ? w.totalUpdatedCells : null, planned: c.cells, new_criteria_row: c.new_criteria_row, investor: c.investor, also: c.also } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read": {
+      "main": [
+        [
+          {
+            "node": "Compute",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute": {
+      "main": [
+        [
+          {
+            "node": "Write",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write": {
+      "main": [
+        [
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "B8adaIYUYFpZX2vG",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-23T17:08:31.439Z",
+      "updatedAt": "2026-09-23T17:08:31.439Z"
+    }
+  ],
+  "activeVersion": null
+}

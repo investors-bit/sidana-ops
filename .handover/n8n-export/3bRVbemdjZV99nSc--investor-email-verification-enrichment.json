@@ -1,0 +1,520 @@
+{
+  "id": "3bRVbemdjZV99nSc",
+  "name": "Investor Email Verification & Enrichment",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-08-29T11:20:26.619Z",
+  "updatedAt": "2026-08-29T16:38:46.000Z",
+  "isArchived": true,
+  "versionId": "299428bb-1d4f-4bbb-be7b-5d5bcb013234",
+  "versionCounter": 9,
+  "sourceWorkflowId": null,
+  "triggerCount": 0,
+  "nodes": [
+    {
+      "id": "ce5e7f45-08e2-4be8-9307-bfb116db4026",
+      "name": "Run Verification",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        176
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "728b6e70-ee23-472e-8c19-cb268a71ef1b",
+      "name": "Read Investor Master",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        176
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "1wBWCcPkxw_RiSs0tUnFFV4aDyxEY2tu-DT73pzIq8b8",
+          "mode": "list",
+          "cachedResultName": "Copy of updated Investor_list_237",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1wBWCcPkxw_RiSs0tUnFFV4aDyxEY2tu-DT73pzIq8b8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 579173326,
+          "mode": "list",
+          "cachedResultName": "INVESTOR MASTER",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1wBWCcPkxw_RiSs0tUnFFV4aDyxEY2tu-DT73pzIq8b8/edit#gid=579173326"
+        },
+        "options": {
+          "returnAllMatches": "returnAllMatches"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cda78a1b-1feb-4b81-92c2-623abcd569db",
+      "name": "Skip Already Done",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        448,
+        176
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "not-done",
+              "leftValue": "={{ $json[\"Verification of email\"] }}",
+              "rightValue": "Done",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "c2bbe186-970a-44fd-8ee6-ae6c54a07185",
+      "name": "Prep Investor",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        96
+      ],
+      "parameters": {
+        "jsCode": "const inv = $input.first().json;\nfunction getField(o, names){\n  const keys = Object.keys(o);\n  for (const n of names){\n    const k = keys.find(key => String(key).trim().toLowerCase() === n.trim().toLowerCase());\n    if (k !== undefined && o[k] !== undefined && o[k] !== null) return o[k];\n  }\n  return \"\";\n}\nconst fundName = String(getField(inv, [\"Firm Name\",\"Investor / VC / Fund Name\",\"Investor\",\"Fund Name\",\"VC\",\"Fund\",\"Firm\"]) || \"\").trim();\nconst contact  = String(getField(inv, [\"Contact Person\",\"Contact Person, if available\",\"Contact\"]) || \"\").trim();\nconst emailRaw = String(getField(inv, [\"Investors Email\",\"Investor Email\",\"Email\"]) || \"\").trim();\nconst re = /[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}/g;\nconst emails = (emailRaw.match(re) || []).map(e => e.toLowerCase());\nconst terms = [];\nif (fundName) terms.push('\"' + fundName + '\"');\nif (contact)  terms.push('\"' + contact + '\"');\nfor (const e of emails) terms.push(e);\nconst query = terms.length ? \"(\" + terms.join(\" OR \") + \")\" : \"rfc822msgid:__no_match__\";\nreturn [{ json: { ...inv, __gmailQuery: query } }];"
+      }
+    },
+    {
+      "id": "9c0a9bd4-48bf-4d54-ae48-dd66e561795c",
+      "name": "Search Received",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1120,
+        0
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 20,
+        "simple": true,
+        "filters": {
+          "q": "={{ $json.__gmailQuery }} -in:sent -in:chats",
+          "includeSpamTrash": false
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mymSHTFVWtsI3Mh7",
+          "name": "Gmail account 3"
+        }
+      },
+      "alwaysOutputData": true,
+      "webhookId": "de34ba59-fb0e-4a10-9f1f-7c5fa2d6e74f"
+    },
+    {
+      "id": "79651d0b-8806-48ce-b0be-cac2de2d69f6",
+      "name": "Search Sent",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1120,
+        192
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 20,
+        "simple": true,
+        "filters": {
+          "q": "={{ $json.__gmailQuery }} in:sent",
+          "includeSpamTrash": false
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mymSHTFVWtsI3Mh7",
+          "name": "Gmail account 3"
+        }
+      },
+      "alwaysOutputData": true,
+      "webhookId": "6dce3d82-8f79-4e61-966d-a0f9612e1a82"
+    },
+    {
+      "id": "15e6de94-8bd3-453d-9c7c-584920f7564d",
+      "name": "Loop Over Investors",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        672,
+        176
+      ],
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      }
+    },
+    {
+      "id": "09506693-b5c5-45e6-b04a-54d2214bec25",
+      "name": "Merge Search Results",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1344,
+        96
+      ],
+      "parameters": {
+        "mode": "append"
+      }
+    },
+    {
+      "id": "9fba74c7-b562-4e5e-a6eb-94d3f92a9b79",
+      "name": "Decide Email + Status",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1568,
+        96
+      ],
+      "parameters": {
+        "jsCode": "// ===== EDITABLE: our own / team addresses & domains (never appended) =====\nconst OUR_DOMAINS = [];      // e.g. [\"sidanaventures.com\"]\nconst OUR_ADDRESSES = [];    // e.g. [\"rakesh@sidanaventures.com\"]\n// =======================================================================\n\nconst trig = $(\"Run Verification\").first().json || {};\nconst dryRun = trig.dryRun === true;\n\nconst inv = $(\"Prep Investor\").first().json;\nfunction getField(o, names){\n  const keys = Object.keys(o);\n  for (const n of names){\n    const k = keys.find(key => String(key).trim().toLowerCase() === n.trim().toLowerCase());\n    if (k !== undefined && o[k] !== undefined && o[k] !== null) return o[k];\n  }\n  return \"\";\n}\nconst fundName = String(getField(inv, [\"Firm Name\",\"Investor / VC / Fund Name\",\"Investor\",\"Fund Name\",\"VC\",\"Fund\",\"Firm\"]) || \"\").trim();\nconst contact  = String(getField(inv, [\"Contact Person\",\"Contact Person, if available\",\"Contact\"]) || \"\").trim();\nconst emailRaw = String(getField(inv, [\"Investors Email\",\"Investor Email\",\"Email\"]) || \"\").trim();\nconst contactRaw = String(getField(inv, [\"Contact Person\",\"Contact Person, if available\",\"Contact\"]) || \"\").trim();\nconst rowNumber = inv.row_number;\n\nconst re = /[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}/g;\nfunction extract(s){ return (String(s || \"\").match(re) || []).map(e => e.toLowerCase()); }\nfunction domainOf(e){ return String(e).split(\"@\")[1] || \"\"; }\n\nconst existing = extract(emailRaw);\nconst existingSet = new Set(existing);\n\n// ---- our-side detection: config + every sender of our Sent mail ----\nfunction nonEmpty(arr){ return arr.filter(i => i.json && Object.keys(i.json).length > 0).map(i => i.json); }\nconst received = nonEmpty($(\"Search Received\").all());\nconst sent = nonEmpty($(\"Search Sent\").all());\nconst ourSet = new Set(OUR_ADDRESSES.map(a => String(a).toLowerCase()));\nfor (const m of sent){ for (const a of extract(m.From)) ourSet.add(a); }\nconst ourDomains = new Set(OUR_DOMAINS.map(d => String(d).toLowerCase()));\nfunction isOurs(e){ if (ourSet.has(e)) return true; const d = domainOf(e); return d ? ourDomains.has(d) : false; }\n\nconst automated = /(no-?reply|noreply|donotreply|do-not-reply|mailer-daemon|postmaster|bounce|notifications?@|newsletter|marketing@|unsubscribe)/i;\n\n// ---- firm-name -> domain correspondence ----\nfunction norm(s){ return String(s||\"\").toLowerCase().replace(/\\([^)]*\\)/g,\" \").replace(/[^a-z0-9]+/g,\" \").trim(); }\nconst firmNorm = norm(fundName);\nconst firmCore = firmNorm.replace(/ /g,\"\");\nconst GENERIC = new Set([\"capital\",\"ventures\",\"venture\",\"partners\",\"partner\",\"fund\",\"funds\",\"vc\",\"llp\",\"pvt\",\"ltd\",\"the\",\"advisors\",\"advisers\",\"group\",\"holdings\",\"angels\",\"angel\",\"network\"]);\nlet firmTokens = firmNorm.split(\" \").filter(t => t && !GENERIC.has(t));\nif (firmTokens.length === 0) firmTokens = firmNorm.split(\" \").filter(Boolean);\nconst COMMON_TLDS = new Set([\"com\",\"in\",\"vc\",\"ai\",\"io\",\"co\",\"org\",\"net\",\"so\",\"xyz\",\"fund\",\"ventures\",\"capital\",\"tech\",\"app\",\"dev\",\"us\",\"uk\",\"eu\"]);\nfunction domainCore(dom){\n  if(!dom) return \"\";\n  const labels = dom.split(\".\").filter(p => !COMMON_TLDS.has(p));\n  const main = labels.length ? labels[labels.length-1] : dom.split(\".\")[0];\n  return String(main).replace(/[^a-z0-9]/g,\"\");\n}\nfunction corresponds(dom){\n  const dc = domainCore(dom);\n  if(!dc || !firmCore) return false;\n  if(dc === firmCore) return true;\n  if(firmCore.length>=4 && (dc.includes(firmCore) || firmCore.includes(dc))) return true;\n  for(const t of firmTokens){\n    if(t.length>=4 && (dc.includes(t) || t.includes(dc))) return true;\n    if(t.length>=3 && dc===t) return true;\n  }\n  return false;\n}\n// firm-linked = domain corresponds to firm OR the address is already a known investor email\nfunction isFirmLinked(e){ return corresponds(domainOf(e)) || existingSet.has(e); }\n\n// ---- parse \"Name <email>\" participant strings into email -> display name ----\nfunction parseParticipants(str){\n  const out = {};\n  const s = String(str || \"\");\n  const re2 = /(?:\"?([^\"<]*?)\"?\\s*)?<([^>]+)>|([a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,})/g;\n  let m;\n  while ((m = re2.exec(s))){\n    if (m[2]){ const email = m[2].toLowerCase().trim(); const name = (m[1]||\"\").trim(); if (email) out[email] = name; }\n    else if (m[3]){ const email = m[3].toLowerCase().trim(); if (email && !(email in out)) out[email] = \"\"; }\n  }\n  return out;\n}\nfunction cleanName(nm){ return String(nm||\"\").replace(/\\s+/g,\" \").trim(); }\nfunction isReliableName(nm, email){\n  const n = cleanName(nm);\n  if(!n) return false;                       // rule 5: no reliable display name -> leave contact unchanged\n  if(!/[a-zA-Z]/.test(n)) return false;\n  if(n.includes(\"@\")) return false;          // rule 4: never derive a name from the address\n  if(n.toLowerCase() === String(email).toLowerCase()) return false;\n  const local = String(email).split(\"@\")[0].toLowerCase().replace(/[^a-z0-9]/g,\"\");\n  if(n.toLowerCase().replace(/[^a-z0-9]/g,\"\") === local) return false; // looks derived from local-part\n  return true;\n}\n\n// ---- build messages, tag side, keep only firm-linked investor-side addrs ----\nconst msgs = [];\nfor (const m of received){\n  msgs.push({ side:\"Received\", date:Number(m.internalDate||0), subject:String(m.Subject||\"\"), raw:String(m.From||\"\"),\n    firm: extract(m.From).filter(e => !isOurs(e) && !automated.test(e) && isFirmLinked(e)) });\n}\nfor (const m of sent){\n  msgs.push({ side:\"Sent\", date:Number(m.internalDate||0), subject:String(m.Subject||\"\"), raw:String(m.To||\"\"),\n    firm: extract(m.To).filter(e => !isOurs(e) && !automated.test(e) && isFirmLinked(e)) });\n}\nmsgs.sort((a,b)=> b.date - a.date);\n\n// most recent VALID (firm-linked) message\nconst chosen = msgs.find(m => m.firm.length > 0) || null;\n\nlet finalEmail = emailRaw;\nlet finalContact = contactRaw;\nlet status, reason = \"\", chosenSubject = \"\", chosenSide = \"\", investorSide = \"\", appendedNames = \"\";\nif (msgs.length === 0){\n  status = \"no matching communication found\";\n  reason = \"No Gmail messages returned for this firm's search terms.\";\n} else if (!chosen){\n  status = \"no confident firm-linked email found\";\n  reason = \"Messages were returned, but none contained an investor-side From/To address whose domain corresponds to '\" + fundName + \"'.\";\n} else {\n  chosenSubject = chosen.subject; chosenSide = chosen.side;\n  const uniqFirm = [...new Set(chosen.firm)];\n  investorSide = uniqFirm.join(\", \");\n  const newOnes = uniqFirm.filter(e => corresponds(domainOf(e)) && !existingSet.has(e));\n  if (newOnes.length){\n    finalEmail = emailRaw ? (emailRaw + \", \" + newOnes.join(\", \")) : newOnes.join(\", \");\n    status = \"recent email appended\";\n    reason = \"Most recent \" + chosen.side + \" message '\" + chosen.subject + \"': investor-side \" + newOnes.join(\", \") + \" (domain corresponds to firm '\" + fundName + \"').\";\n\n    // ---- CONTACT PERSON ENRICHMENT (only for emails that just passed firm-validation) ----\n    const nameMap = parseParticipants(chosen.raw);\n    const existingNames = contactRaw.split(\",\").map(s => cleanName(s)).filter(Boolean);\n    const existingNamesLower = new Set(existingNames.map(n => n.toLowerCase()));\n    const newNames = [];\n    for (const e of newOnes){\n      const nm = cleanName(nameMap[e] || \"\");\n      if (isReliableName(nm, e) && !existingNamesLower.has(nm.toLowerCase()) && !newNames.some(x => x.toLowerCase() === nm.toLowerCase())){\n        newNames.push(nm);\n      }\n    }\n    if (newNames.length){\n      finalContact = contactRaw ? (contactRaw + \", \" + newNames.join(\", \")) : newNames.join(\", \");\n      appendedNames = newNames.join(\", \");\n    }\n  } else {\n    status = \"recent email already present\";\n    reason = \"Most recent \" + chosen.side + \" message '\" + chosen.subject + \"': investor-side \" + investorSide + \" already present / is an existing investor email.\";\n  }\n}\n\nconst date = $now.setZone(\"Asia/Kolkata\").toFormat(\"d LLL yyyy\");\nconst source = \"Gmail mailbox check \\u2014 \" + status + \" \\u2014 \" + date;\n\nreturn [{ json: {\n  row_number: rowNumber,\n  \"Investors Email\": finalEmail,\n  \"Contact Person\": finalContact,\n  \"Verification of email\": \"Done\",\n  \"Email Verification Source / Date\": source,\n  __write: dryRun ? \"no\" : \"yes\",\n  __audit: {\n    firm: fundName,\n    existingBefore: emailRaw,\n    \"Contact Person Before\": contactRaw,\n    \"Contact Person After\": finalContact,\n    contactNamesAppended: appendedNames,\n    chosenSide: chosenSide,\n    chosenMessage: chosenSubject,\n    reason: reason,\n    investorSideExtracted: investorSide,\n    willAppend: status === \"recent email appended\",\n    finalEmail: finalEmail,\n    status: status\n  }\n} }];"
+      }
+    },
+    {
+      "id": "b2c3d4e5-0000-4000-8000-000000000002",
+      "name": "Write Enabled?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1792,
+        368
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "w",
+              "leftValue": "={{ $json.__write }}",
+              "rightValue": "yes",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "09bff242-83fd-4737-852b-3350e3b13e9d",
+      "name": "Update Investor Row",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1792,
+        176
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1wBWCcPkxw_RiSs0tUnFFV4aDyxEY2tu-DT73pzIq8b8",
+          "mode": "list",
+          "cachedResultName": "Copy of updated Investor_list_237",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1wBWCcPkxw_RiSs0tUnFFV4aDyxEY2tu-DT73pzIq8b8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 579173326,
+          "mode": "list",
+          "cachedResultName": "INVESTOR MASTER",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1wBWCcPkxw_RiSs0tUnFFV4aDyxEY2tu-DT73pzIq8b8/edit#gid=579173326"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "row_number"
+          ],
+          "value": {
+            "row_number": "={{ $json.row_number }}",
+            "Investors Email": "={{ $json[\"Investors Email\"] }}",
+            "Contact Person": "={{ $json[\"Contact Person\"] }}",
+            "Verification of email": "={{ $json[\"Verification of email\"] }}",
+            "Email Verification Source / Date": "={{ $json[\"Email Verification Source / Date\"] }}"
+          },
+          "schema": [
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Investors Email",
+              "displayName": "Investors Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Contact Person",
+              "displayName": "Contact Person",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Verification of email",
+              "displayName": "Verification of email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Email Verification Source / Date",
+              "displayName": "Email Verification Source / Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Run Verification": {
+      "main": [
+        [
+          {
+            "node": "Read Investor Master",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Investor Master": {
+      "main": [
+        [
+          {
+            "node": "Skip Already Done",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skip Already Done": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Investors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep Investor": {
+      "main": [
+        [
+          {
+            "node": "Search Received",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Search Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Received": {
+      "main": [
+        [
+          {
+            "node": "Merge Search Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Sent": {
+      "main": [
+        [
+          {
+            "node": "Merge Search Results",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Loop Over Investors": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Prep Investor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Search Results": {
+      "main": [
+        [
+          {
+            "node": "Decide Email + Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Decide Email + Status": {
+      "main": [
+        [
+          {
+            "node": "Write Enabled?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Enabled?": {
+      "main": [
+        [
+          {
+            "node": "Update Investor Row",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop Over Investors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Investor Row": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Investors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [
+    {
+      "id": "3c67f85e-fa1e-4876-aac7-578e772a2b55",
+      "name": "Read & Filter",
+      "nodeIds": [
+        "728b6e70-ee23-472e-8c19-cb268a71ef1b",
+        "cda78a1b-1feb-4b81-92c2-623abcd569db"
+      ],
+      "description": "Read the investor master sheet and keep only rows not yet marked Done."
+    },
+    {
+      "id": "110e0d4e-71d5-4118-b930-72e8c3755d85",
+      "name": "Per-Investor Mailbox Search",
+      "nodeIds": [
+        "c2bbe186-970a-44fd-8ee6-ae6c54a07185",
+        "9c0a9bd4-48bf-4d54-ae48-dd66e561795c",
+        "79651d0b-8806-48ce-b0be-cac2de2d69f6",
+        "09506693-b5c5-45e6-b04a-54d2214bec25"
+      ],
+      "description": "For each firm, search sent and received Gmail using the firm name as the primary key."
+    }
+  ],
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "pinData": {},
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "3bRVbemdjZV99nSc",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-08-29T11:20:26.621Z",
+      "updatedAt": "2026-08-29T11:20:26.621Z"
+    }
+  ],
+  "activeVersion": null
+}

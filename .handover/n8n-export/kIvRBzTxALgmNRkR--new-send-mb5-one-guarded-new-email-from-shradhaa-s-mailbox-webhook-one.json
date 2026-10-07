@@ -1,0 +1,154 @@
+{
+  "id": "kIvRBzTxALgmNRkR",
+  "name": "NEW-SEND-MB5 — one guarded new email from Shradhaa's mailbox (webhook, one-off)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-22T12:11:22.064Z",
+  "updatedAt": "2026-10-07T12:00:25.799Z",
+  "isArchived": false,
+  "versionId": "f32f88f7-74bb-4ed5-b3ab-26e4bc4f9421",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "9c2d4e7f-1a36-4b58-8f90-3e5a7c1b2d64",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-new-send-mb5-6b1d8e3f72",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "bd",
+      "name": "Build",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b=$input.first().json.body||{};if(b.secret!=='sv-mail-2026-09-17-Kq7'){throw new Error('bad secret');}if(b.mb!=='5'){throw new Error('mailbox 5 only');}\nconst re=/^[A-Za-z0-9._%+'-]+@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)+$/;\n// 25 Sep (user): trail mails put EVERYONE on To, nobody on Cc. Accept a comma-separated list; every address must be valid and confirm_to must match the whole string.\nconst to=String(b.to||'').trim().toLowerCase().split(/\\s*,\\s*/).filter(Boolean).join(', ');\nconst parts=to.split(', ');if(!parts.length){throw new Error('bad to');}\nfor(const p of parts){const m=p.match(/<([^>]+)>\\s*$/);const addr=(m?m[1]:p).trim();if(!re.test(addr)){throw new Error('bad to: '+p);}}\nif(String(b.confirm_to||'').trim().toLowerCase().split(/\\s*,\\s*/).filter(Boolean).join(', ')!==to){throw new Error('confirm_to mismatch');}\nif(!b.subject||!b.html){throw new Error('missing subject/html');}\nconst b64=Buffer.from(b.html,'utf8').toString('base64').replace(/(.{76})/g,'$1\\r\\n');\nconst mime=['From: Shradhaa Sidana <shradhaa@sidanaventures.com>','To: '+to,(b.cc?'Cc: '+b.cc:'X-Sidana: 1'),'Subject: =?UTF-8?B?'+Buffer.from(b.subject,'utf8').toString('base64')+'?=','MIME-Version: 1.0','Content-Type: text/html; charset=\"UTF-8\"','Content-Transfer-Encoding: base64','',b64].join('\\r\\n');\nconst raw=Buffer.from(mime,'utf8').toString('base64').replace(/\\+/g,'-').replace(/\\//g,'_').replace(/=+$/,'');\nif(b.dry!==false){throw new Error('DRY OK | to='+to+' | cc='+(b.cc||'')+' | subject='+b.subject+' | htmlLen='+b.html.length);}\nreturn [{json:{to:to,subject:b.subject,raw:raw}}];"
+      }
+    },
+    {
+      "id": "sd",
+      "name": "Send",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://gmail.googleapis.com/gmail/v1/users/me/messages/send",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ raw: $json.raw }) }}",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "R5K61omYbU9oT5J8",
+          "name": "Gmail account 5"
+        }
+      }
+    },
+    {
+      "id": "ot",
+      "name": "Out",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b=$('Build').first().json;const r=$input.first().json;return [{json:{to:b.to,subject:b.subject,sent_id:r.id||'',sent_thread:r.threadId||''}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Build",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build": {
+      "main": [
+        [
+          {
+            "node": "Send",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send": {
+      "main": [
+        [
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "kIvRBzTxALgmNRkR",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-22T12:11:22.068Z",
+      "updatedAt": "2026-09-22T12:11:22.068Z"
+    }
+  ],
+  "activeVersion": null
+}

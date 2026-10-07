@@ -1,0 +1,144 @@
+{
+  "id": "i3PX5DCufizvkb7P",
+  "name": "AUDIT (read-only) — PIPELINE pending rows vs Deal Tracker history",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-06T17:46:05.877Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "3b625779-072a-4ced-a044-fb8001f07f62",
+  "versionCounter": 4,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "trg1",
+      "name": "Run once 23:22 IST 6 Sep",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "18 0 7 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "rd1",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cd1",
+      "name": "Find conflicts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const MAP = {\"100 Unicorns\":[\"Doffair\",\"Fire Armor\",\"Flyment\",\"Fuski.AI\",\"Glazia Windoors\",\"Indie Stori\",\"Lex Protector\",\"My Soul\",\"Orbit AI\",\"RECEX\",\"Shippin\",\"Starz AI\",\"VOLD Energy\",\"Xproguard\",\"bezgoFresh\"],\"247 VC Tech Fund\":[\"Appli\",\"Chayan Karo\",\"Desi Machines\",\"Fire Armor\",\"Koncite\",\"Luxova\",\"MindWox\",\"Opulytics\",\"RECEX\",\"Starz AI\"],\"3one4 Capital\":[\"Alt F Coworking\",\"DACBY\",\"Fire Armor\",\"Lex Protector\",\"My Soul\",\"Road Athena\",\"Talent Recruit\",\"Xproguard\"],\"4U Venture Partner\":[\"Appli\",\"CLIKD\",\"Doffair\",\"Ela Greens\",\"Formverse\",\"Luxova\",\"RECEX\",\"ServeAmigo\",\"Spintly\",\"Starz AI\",\"SureChain\",\"Talent Recruit\",\"Xproguard\",\"YUNO\"],\"8X Ventures\":[\"AI Signal Labs\",\"EkoSight\",\"Fire Armor\",\"Lex Protector\",\"MindWox\",\"Vilva AI\",\"Vira Jal\",\"Xproguard\"],\"Aavishkar Capital\":[\"Alt F Coworking\",\"Bon Cuisine\",\"EkoSight\",\"Ela Greens\",\"EosNox\",\"Healthy Master\",\"Nexcore\",\"Road Athena\",\"Shippin\",\"Spintly\",\"Talent Recruit\",\"Vira Jal\"],\"Accel\":[\"Appli\",\"Chayan Karo\",\"Koncite\",\"MentorCloud\",\"Opulytics\",\"Orbit AI\",\"Orbo AI\",\"Pixelence\",\"Shippin\",\"SkillBytes\",\"Springbase.ai\",\"Xproguard\",\"bezgoFresh\"],\"Alkemi Growth Capital\":[\"EosNox\",\"Healthy Master\",\"My Soul\"],\"Alpha JWC Ventures\":[\"Bon Cuisine\",\"Healthy Master\",\"Luxova\",\"Nexcore\"],\"Anicut Capital\":[\"Appli\",\"Bon Cuisine\",\"Chayan Karo\",\"Doffair\",\"Ela Greens\",\"EosNox\",\"Fire Armor\",\"Fuski.AI\",\"Healthy Master\",\"Indie Stori\",\"Koncite\",\"LUSTR\",\"LearningPad\",\"MindWox\",\"My Soul\",\"Opulytics\",\"Road Athena\",\"Shippin\",\"Starz AI\",\"Sugar's Daddy\",\"SureChain\",\"Vilva AI\",\"Vira Jal\",\"Washtro\",\"Xproguard\",\"bezgoFresh\"],\"Antler\":[\"Orbo AI\",\"Starz AI\",\"Vilva AI\"],\"Arali Ventures\":[\"Fire Armor\",\"Glazia Windoors\",\"Road Athena\"],\"Arkam Ventures\":[\"Bon Cuisine\",\"Xproguard\"],\"Atomic Capital\":[\"Alt F Coworking\",\"Bon Cuisine\",\"EosNox\",\"Healthy Master\",\"LUSTR\",\"Luxova\",\"Road Athena\",\"Sugar's Daddy\"],\"Axilor\":[\"Desi Machines\",\"Formverse\",\"Glazia Windoors\",\"Indie Stori\",\"Road Athena\",\"Ulai\"],\"BEENEXT\":[\"Appli\",\"Formverse\",\"LearningPad\",\"Nexcore\"],\"BITS BIoCyTIH Foundation\":[\"Vilva AI\"],\"Baldota Group\":[\"Alt F Coworking\",\"Fire Armor\",\"MindWox\",\"Orbo AI\",\"Road Athena\",\"Spintly\",\"Talent Recruit\"],\"Bessemer Venture partner\":[\"Lex Protector\",\"MentorCloud\",\"Talent Recruit\"],\"Bhagnani Family Office\":[\"MindWox\"],\"Blinc Invest\":[\"LearningPad\",\"SkillBytes\"],\"BlueHill\":[\"Formverse\",\"MindWox\",\"My Soul\"],\"Blume Ventures\":[\"Alt F Coworking\",\"Appli\",\"DACBY\",\"HYRGPT\",\"Orbit AI\",\"Xproguard\"],\"Borski Fund\":[\"Healthy Master\",\"Talent Recruit\"],\"British International Investment\":[\"AI Signal Labs\",\"Alt F Coworking\",\"Nexcore\",\"Road Athena\",\"Springbase.ai\"],\"CAAF\":[\"Alt F Coworking\",\"DACBY\",\"Healthy Master\"],\"CDM Capital\":[\"Alt F Coworking\",\"Bon Cuisine\",\"CLIKD\",\"Fire Armor\",\"ServeAmigo\",\"Starz AI\",\"Xproguard\"],\"Capital 2B\":[\"AI Signal Labs\",\"Desi Machines\",\"EkoSight\",\"Fire Armor\",\"Formverse\",\"Glazia Windoors\",\"MindWox\",\"Orbo AI\",\"Pixelence\",\"Spintly\",\"Ulai\",\"Vilva AI\",\"Vira Jal\",\"Xproguard\"],\"Chandigarh Angels Network\":[\"AI Signal Labs\",\"Appli\",\"CLIKD\",\"Desi Machines\",\"Doffair\",\"Ela Greens\",\"LUSTR\",\"MindWox\",\"Orbit AI\",\"RECEX\",\"Sugar's Daddy\",\"Vira Jal\",\"Washtro\",\"bezgoFresh\"],\"Chennai Angels\":[\"CLIKD\",\"Caffena Coffee\",\"Desi Machines\",\"Doffair\",\"Ela Greens\",\"EosNox\",\"Fire Armor\",\"Formverse\",\"HYRGPT\",\"Indie Stori\",\"LUSTR\",\"Luxova\",\"MindWox\",\"Opulytics\",\"Outlanders\",\"RECEX\",\"ServeAmigo\",\"Shippin\",\"Starz AI\",\"Sugar's Daddy\",\"Ulai\",\"Vira Jal\",\"Washtro\",\"Xproguard\",\"bezgoFresh\"],\"Chiratae ventures\":[\"Alt F Coworking\",\"Appli\",\"EkoSight\",\"HYRGPT\",\"Orbit AI\",\"Road Athena\",\"Spintly\",\"Talent Recruit\"],\"Dallas VC\":[\"Orbo AI\"],\"Dare Ventures\":[\"EkoSight\",\"Ela Greens\",\"Spintly\",\"Talent Recruit\"],\"Dexter Ventures\":[\"Alt F Coworking\",\"Chayan Karo\",\"Formverse\",\"Glazia Windoors\",\"Indie Stori\",\"Koncite\",\"Lex Protector\",\"RECEX\",\"Road Athena\",\"Sugar's Daddy\",\"SureChain\",\"Talent Recruit\",\"Washtro\"],\"Dynamis Ventures\":[\"Appli\",\"HYRGPT\",\"Nexcore\",\"Orbit AI\",\"SureChain\"],\"Eaglewings Ventures\":[\"Indie Stori\"],\"East Ventures\":[\"Nexcore\"],\"Endiya Partners\":[\"Pixelence\"],\"Enrission India Capital\":[\"Alt F Coworking\",\"Xproguard\"],\"Equanimity Investments\":[\"Alt F Coworking\",\"Chayan Karo\",\"DACBY\",\"Desi Machines\",\"Doffair\",\"Ela Greens\",\"Formverse\",\"Indie Stori\",\"Koncite\",\"Orbo AI\",\"Shippin\",\"SkillBytes\",\"Starz AI\",\"Sugar's Daddy\",\"Talent Recruit\",\"Ulai\",\"YUNO\"],\"Equentis\":[\"Alt F Coworking\",\"DACBY\",\"Desi Machines\",\"Glazia Windoors\",\"Talent Recruit\"],\"Eximius Ventures\":[\"Fydo\",\"Starz AI\",\"Vilva AI\",\"bezgoFresh\"],\"Faad\":[\"Alt F Coworking\",\"DACBY\",\"Xproguard\"],\"Fireside Ventures\":[\"Caffena Coffee\",\"Formverse\",\"VOLD Energy\",\"Washtro\"],\"Flipkart Ventures\":[\"Doffair\",\"Indie Stori\",\"Shippin\"],\"Fuel Venture fund.\":[\"Orbo AI\",\"RECEX\"],\"Fundamental VC\":[\"CLIKD\",\"Formverse\",\"Indie Stori\",\"LUSTR\",\"Luxova\",\"Outlanders\",\"SureChain\"],\"GVFL\":[\"Appli\",\"Glazia Windoors\",\"HYRGPT\",\"Shippin\"],\"Gemba Capital\":[\"Chayan Karo\",\"DACBY\",\"Ela Greens\",\"HYRGPT\",\"Indie Stori\",\"Shippin\"],\"GrowthCap Ventures\":[\"Alt F Coworking\",\"DACBY\",\"Indie Stori\",\"Lex Protector\",\"Spintly\",\"Sugar's Daddy\",\"Vilva AI\"],\"Gruhas Collective Consumer Fund\":[\"Alt F Coworking\",\"Appli\",\"Caffena Coffee\",\"Doffair\",\"Ela Greens\",\"Glazia Windoors\",\"Healthy Master\",\"Indie Stori\",\"LUSTR\",\"Luxova\",\"My Soul\",\"Sugar's Daddy\",\"bezgoFresh\"],\"Hem Angels\":[\"Appli\",\"Bon Cuisine\",\"DACBY\",\"EkoSight\",\"Flyment\",\"Formverse\",\"Healthy Master\",\"LUSTR\",\"Lex Protector\",\"Road Athena\",\"SureChain\",\"Vira Jal\"],\"Hitachi ventures\":[\"Desi Machines\",\"EosNox\",\"Fire Armor\",\"Koncite\",\"Road Athena\",\"Xproguard\"],\"Huddle Ventures\":[\"CLIKD\",\"DACBY\",\"Doffair\",\"Flyment\",\"Formverse\",\"Indie Stori\",\"LUSTR\",\"Luxova\",\"MonitorExam\",\"Orbit AI\",\"Road Athena\",\"ServeAmigo\",\"Starz AI\",\"Sugar's Daddy\",\"SureChain\",\"Vira Jal\",\"Washtro\"],\"IAN Group (Indian Angel Network)\":[\"AI Signal Labs\",\"CLIKD\",\"Desi Machines\",\"EosNox\",\"MindWox\",\"Outlanders\",\"Starz AI\",\"Vira Jal\",\"Washtro\"],\"IPV (New)\":[\"Appli\",\"Desi Machines\",\"LearningPad\",\"My Soul\",\"Orbit AI\",\"Sugar's Daddy\",\"Vilva AI\",\"Xproguard\"],\"Ignacio\":[\"Appli\",\"HYRGPT\",\"Orbit AI\"],\"Incubate Fund\":[\"CLIKD\",\"DACBY\",\"Formverse\",\"Luxova\",\"Orbo AI\",\"SkillBytes\",\"Ulai\"],\"India Quotient\":[\"Appli\",\"Doffair\",\"Orbit AI\"],\"India accelerator\":[\"Appli\",\"DACBY\",\"Desi Machines\",\"Ela Greens\",\"Formverse\",\"HYRGPT\",\"Orbit AI\",\"RECEX\",\"bezgoFresh\"],\"Inflection Point Ventures\":[\"Sugar's Daddy\",\"Vilva AI\",\"Xproguard\"],\"Inflexor Ventures\":[\"Alt F Coworking\",\"EkoSight\",\"EosNox\",\"Fire Armor\",\"Formverse\",\"Fuski.AI\",\"HYRGPT\",\"LearningPad\",\"MindWox\",\"Orbo AI\",\"Pixelence\",\"Road Athena\",\"ServeAmigo\",\"Spintly\",\"Springbase.ai\",\"Talent Recruit\"],\"Info Edge Ventures\":[\"Appli\"],\"Ishan Singh\":[\"Ela Greens\"],\"IvyCap Ventures\":[\"Bon Cuisine\"],\"Jungle Ventures\":[\"Shippin\",\"Xproguard\"],\"Kae Capital\":[\"Alt F Coworking\",\"Appli\",\"CLIKD\",\"Caffena Coffee\",\"Chayan Karo\",\"DACBY\",\"Doffair\",\"Ela Greens\",\"Formverse\",\"GroCliq\",\"HYRGPT\",\"LUSTR\",\"MindWox\",\"Orbo AI\",\"Road Athena\",\"ServeAmigo\",\"Shippin\",\"SkillBytes\",\"Springbase.ai\",\"Starz AI\",\"Vilva AI\",\"Vira Jal\",\"bezgoFresh\"],\"Kairon Capital\":[\"Alt F Coworking\",\"Caffena Coffee\",\"Chayan Karo\",\"DACBY\",\"Doffair\",\"Ela Greens\",\"Healthy Master\",\"Indie Stori\",\"LUSTR\",\"Luxova\",\"Shippin\",\"Sugar's Daddy\",\"VOLD Energy\",\"Washtro\",\"Xproguard\",\"bezgoFresh\"],\"Kaizenvest\":[\"Appli\",\"Orbit AI\"],\"Lockheed Martin Ventures\":[\"Fire Armor\"],\"M Venture Partners\":[\"Indie Stori\"],\"Mirai Ventures\":[\"Formverse\",\"Indie Stori\"],\"Neon Fund\":[\"Lex Protector\",\"MentorCloud\",\"Talent Recruit\"],\"Nexus Venture Partners\":[\"Desi Machines\",\"HYRGPT\",\"Shippin\"],\"Nirman Ventures\":[\"Flyment\",\"Formverse\",\"Glazia Windoors\"],\"Orios Venture Partners\":[\"Alt F Coworking\",\"Doffair\",\"Formverse\",\"Glazia Windoors\",\"Orbo AI\",\"Spintly\",\"Talent Recruit\"],\"Physis Capital\":[\"Spintly\",\"Talent Recruit\"],\"Pi Ventures\":[\"EosNox\",\"Fire Armor\",\"Formverse\",\"Glazia Windoors\",\"Orbo AI\",\"Spintly\",\"Vira Jal\"],\"RPSG Capital\":[\"Sahaj\",\"Talent Recruit\"],\"Rebright Partners\":[\"LearningPad\",\"Orbo AI\",\"RECEX\",\"Road Athena\",\"Shippin\",\"Talent Recruit\",\"Ulai\",\"bezgoFresh\"],\"Riceberg Ventures\":[\"Fire Armor\",\"Flyment\",\"Formverse\",\"Orbo AI\",\"Pixelence\"],\"Rukam Capital\":[\"Indie Stori\",\"LUSTR\",\"Sugar's Daddy\"],\"SIG Group\":[\"Spintly\",\"Talent Recruit\"],\"Sadev Ventures\":[\"Alt F Coworking\",\"Bon Cuisine\",\"CLIKD\",\"Chayan Karo\",\"DACBY\",\"EkoSight\",\"Healthy Master\",\"Indie Stori\",\"Koncite\",\"LUSTR\",\"LearningPad\",\"Luxova\",\"Opulytics\",\"Sugar's Daddy\"],\"SamVed VC\":[\"EkoSight\",\"Indie Stori\",\"RECEX\"],\"Sauce. VC\":[\"Caffena Coffee\",\"Doffair\",\"Indie Stori\",\"LUSTR\",\"VOLD Energy\",\"Vira Jal\",\"bezgoFresh\"],\"Sharrp Ventures\":[\"Caffena Coffee\",\"My Soul\",\"Orbo AI\"],\"Siana Capital\":[\"Formverse\",\"Orbo AI\",\"Pixelence\",\"Spintly\"],\"Sorin Investments\":[\"Fire Armor\",\"Healthy Master\",\"Talent Recruit\"],\"Speciale Invest\":[\"AI Signal Labs\",\"EkoSight\",\"EosNox\",\"Fire Armor\",\"Glazia Windoors\",\"HYRGPT\",\"LearningPad\",\"MindWox\",\"Pixelence\",\"ServeAmigo\",\"Spintly\",\"Springbase.ai\",\"Starz AI\",\"Talent Recruit\",\"Ulai\",\"Vira Jal\",\"Xproguard\"],\"Sprout Venture Partners\":[\"Alt F Coworking\",\"Appli\",\"Bon Cuisine\",\"Caffena Coffee\",\"Chayan Karo\",\"DACBY\",\"Doffair\",\"Ela Greens\",\"Fire Armor\",\"Formverse\",\"Glazia Windoors\",\"Healthy Master\",\"Indie Stori\",\"LUSTR\",\"LearningPad\",\"Lex Protector\",\"Luxova\",\"MentorCloud\",\"Orbit AI\",\"RECEX\",\"Spintly\",\"Sugar's Daddy\",\"Talent Recruit\",\"Ulai\",\"VOLD Energy\",\"Washtro\",\"Xproguard\",\"bezgoFresh\"],\"SucSEED Ventures\":[\"Xproguard\"],\"Sun Icon VC\":[\"Chayan Karo\",\"DACBY\",\"EkoSight\",\"Fire Armor\",\"Vilva AI\",\"Xproguard\"],\"Susquehanna Asia Venture Capital (Abhilash Karri)\":[\"HYRGPT\",\"MindWox\",\"Orbit AI\"],\"TDK Ventures\":[\"Fire Armor\",\"Nexcore\",\"Spintly\"],\"Titan Capital\":[\"Fuski.AI\",\"My Soul\",\"RECEX\",\"Talent Recruit\",\"Ulai\"],\"Transition VC\":[\"Desi Machines\",\"EkoSight\",\"Ela Greens\",\"Fire Armor\",\"Formverse\",\"Glazia Windoors\",\"Koncite\",\"MindWox\",\"Pixelence\",\"Spintly\",\"Ulai\",\"Vira Jal\"],\"Turbostart\":[\"Alt F Coworking\",\"Fire Armor\",\"Xproguard\"],\"Tykheblock Ventures\":[\"CLIKD\",\"Desi Machines\",\"Fire Armor\",\"Formverse\",\"Fuski.AI\",\"Orbo AI\",\"Pixelence\",\"RECEX\",\"ServeAmigo\",\"SkillBytes\",\"Spintly\",\"Springbase.ai\",\"Starz AI\",\"Ulai\",\"Vilva AI\",\"Xproguard\"],\"Udyat Ventures\":[\"Appli\",\"Bon Cuisine\",\"CLIKD\",\"Doffair\",\"Ela Greens\",\"HYRGPT\",\"Healthy Master\",\"Indie Stori\",\"Koncite\",\"LUSTR\",\"Luxova\",\"Orbit AI\",\"Orbo AI\",\"Road Athena\",\"Shippin\",\"Ulai\",\"Xproguard\",\"YUNO\",\"bezgoFresh\"],\"Unicorn India Ventures\":[\"Fire Armor\",\"MindWox\"],\"Venture Catalysts\":[\"Alt F Coworking\",\"Fire Armor\",\"Xproguard\"],\"Vertex Ventures\":[\"Alt F Coworking\",\"Bon Cuisine\",\"DACBY\",\"EosNox\",\"Fire Armor\",\"Glazia Windoors\",\"Orbo AI\",\"Road Athena\",\"Talent Recruit\",\"Vira Jal\"],\"WEH Ventures.\":[\"Appli\",\"Caffena Coffee\",\"DACBY\",\"Doffair\",\"EkoSight\",\"Ela Greens\",\"EosNox\",\"Fire Armor\",\"Formverse\",\"HYRGPT\",\"LUSTR\",\"Orbo AI\",\"RECEX\",\"Starz AI\",\"Sugar's Daddy\",\"Talent Recruit\",\"Ulai\",\"Vilva AI\",\"Washtro\",\"Xproguard\"],\"Warmup Ventures\":[\"Appli\",\"CLIKD\",\"Chayan Karo\",\"Desi Machines\",\"Doffair\",\"EkoSight\",\"Ela Greens\",\"Koncite\",\"LUSTR\",\"MindWox\",\"My Soul\",\"Opulytics\",\"Pixelence\",\"RECEX\",\"SkillBytes\",\"Starz AI\",\"Ulai\",\"Vira Jal\",\"Xproguard\"],\"WhiteBoard Capital\":[\"Appli\",\"Caffena Coffee\",\"Desi Machines\",\"Doffair\",\"LUSTR\",\"Shippin\"],\"Windrose Capital\":[\"Alt F Coworking\",\"Glazia Windoors\",\"Lex Protector\",\"Road Athena\",\"Talent Recruit\"],\"Yali Capital\":[\"Fire Armor\"],\"YourNest\":[\"Formverse\"],\"ZaKa\":[\"Formverse\",\"GroCliq\",\"MentorCloud\",\"Vilva AI\"],\"a99 VC\":[\"Appli\",\"Desi Machines\",\"Fire Armor\",\"Formverse\",\"Glazia Windoors\",\"MindWox\",\"Orbo AI\",\"Road Athena\",\"Shippin\",\"Spintly\"],\"peak XV partners\":[\"Alt F Coworking\",\"Desi Machines\",\"Healthy Master\",\"LUSTR\",\"Orbit AI\",\"Shippin\"]};\n\nfunction nk(s) { return String(s == null ? '' : s).trim().toLowerCase(); }\n\nconst SET = {};\nfor (const inv of Object.keys(MAP)) {\n  for (const st of MAP[inv]) { SET[nk(inv) + '||' + nk(st)] = true; }\n}\n\nconst YEXTRA = ['Anicut Capital','IPV (New)','Eximius Ventures','8X Ventures','Sprout Venture Partners','GrowthCap Ventures','Blinc Invest','Dexter Ventures','BEENEXT','SamVed VC','WEH Ventures.','Mirai Ventures','Sadev Ventures','Inflection Point Ventures','Chiratae ventures','3one4 Capital','Physis Capital'];\nfor (const inv of YEXTRA) { SET[nk(inv) + '||' + nk('YUNO')] = true; }\nconst REXTRA = ['EkoSight','Ela Greens','EosNox','MindWox','RECEX','Road Athena','ServeAmigo','Vira Jal','bezgoFresh'];\nfor (const st of REXTRA) { SET[nk('Rainmatter by Zerodha') + '||' + nk(st)] = true; }\n\nconst rows = $input.all().map(function (i) { return i.json; });\nif (rows.length < 500) { throw new Error('ABORT: PIPELINE returned only ' + rows.length + ' rows'); }\n\nlet pending = 0, alreadySent = 0, paused = 0;\nconst out = [];\nfor (const r of rows) {\n  const isPaused = String(r.pause == null ? '' : r.pause).trim() !== '';\n  const shared = nk(r.deal_shared) === 'yes';\n  let state = 'pending';\n  if (isPaused) { paused++; state = 'paused'; }\n  else if (shared) { alreadySent++; state = 'sent'; }\n  else { pending++; }\n  const key = nk(r.investor) + '||' + nk(r.startup);\n  if (SET[key]) {\n    out.push({ json: {\n      state: state,\n      deal_id: r.deal_id,\n      investor: r.investor,\n      startup: r.startup,\n      owner: r.owner,\n      next_due: r.next_due,\n      next_action: r.next_action,\n      notes: r.notes,\n      _total: rows.length,\n      _pending: pending,\n      _sent: alreadySent,\n      _paused: paused\n    }});\n  }\n}\n\nfunction cnt(s) { return out.filter(function (x) { return x.json.state === s; }).length; }\nfunction uniq(f) { const m = {}; for (const x of out) { m[x.json[f]] = 1; } return Object.keys(m); }\nconst summary = { SUMMARY: true,\n  total_pipeline_rows: rows.length,\n  pipeline_pending: pending, pipeline_sent: alreadySent, pipeline_paused: paused,\n  tracker_pairs_total: Object.keys(SET).length,\n  overlap_total: out.length,\n  overlap_pending_would_resend: cnt('pending'),\n  overlap_already_resent: cnt('sent'),\n  overlap_paused: cnt('paused'),\n  distinct_startups_in_overlap: uniq('startup').length,\n  distinct_investors_in_overlap: uniq('investor').length,\n  startups_in_overlap: uniq('startup').sort(),\n  investors_in_overlap: uniq('investor').sort() };\nreturn [{ json: summary }].concat(out);"
+      }
+    }
+  ],
+  "connections": {
+    "Run once 23:22 IST 6 Sep": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Find conflicts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once 23:22 IST 6 Sep": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "i3PX5DCufizvkb7P",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-06T17:46:05.880Z",
+      "updatedAt": "2026-09-06T17:46:05.880Z"
+    }
+  ],
+  "activeVersion": null
+}

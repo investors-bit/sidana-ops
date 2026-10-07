@@ -1,0 +1,277 @@
+{
+  "id": "TGw5QUJLVLQsiNNe",
+  "name": "One-off IAN-3 — record IAN meetings (Luxova, Nexcore) + create EosNox row",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-07T10:41:13.669Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "411636c9-08b2-41af-a9a5-33093907b81a",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "trg1",
+      "name": "Run once 16:22 IST 7 Sep",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "22 16 7 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "rd1",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cd1",
+      "name": "Build meeting updates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        -110
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// IAN gave meetings for these two. investor_response is already set by the team ('meeting');\n// this adds the structured date so the meeting is queryable and 'meeting-stage' skipping is explicit.\nconst MEET = [\n  { deal_id: 'D00056', startup: 'Luxova', date: '2026-09-15', half: 'second half' },\n  { deal_id: 'D01761', startup: 'Nexcore', date: '2026-09-15', half: 'first half' }\n];\nfunction s(v) { return String(v == null ? '' : v).trim(); }\nconst rows = $input.all().map(function (i) { return i.json; });\nif (rows.length < 500) { throw new Error('ABORT: PIPELINE returned only ' + rows.length + ' rows'); }\n\nconst out = [];\nfor (const m of MEET) {\n  const hits = rows.filter(function (r) { return s(r.deal_id) === m.deal_id; });\n  if (hits.length !== 1) { throw new Error('ABORT: expected 1 row for ' + m.deal_id + ', found ' + hits.length); }\n  const h = hits[0];\n  if (s(h.startup) !== m.startup) { throw new Error('ABORT: ' + m.deal_id + ' is ' + s(h.startup) + ', not ' + m.startup); }\n  if (s(h.investor).toLowerCase().indexOf('ian group') !== 0) { throw new Error('ABORT: ' + m.deal_id + ' is not an IAN row'); }\n  const prev = s(h.notes);\n  out.push({ json: {\n    deal_id: m.deal_id,\n    meeting_scheduled: 'Yes',\n    meeting_date: m.date,\n    deal_status: 'Meeting scheduled',\n    notes: (prev ? prev + ' | ' : '') + 'IAN meeting ' + m.date + ' (' + m.half + ')'\n  }});\n}\nreturn out;"
+      }
+    },
+    {
+      "id": "up1",
+      "name": "Update PIPELINE (meetings)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "position": [
+        660,
+        -110
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "deal_id"
+          ],
+          "schema": [
+            {
+              "id": "deal_id",
+              "displayName": "deal_id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cd2",
+      "name": "Build EosNox row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        110
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Deal Tracker row 212 shows EosNox as IAN's latest deal shared (last mail 2026-08-31, status\n// 'Meeting Scheduled'), but PIPELINE has no row for the pair at all. Create it as already-shared\n// so the meeting is recorded AND future match runs cannot re-pitch it.\nfunction s(v) { return String(v == null ? '' : v).trim(); }\nconst rows = $input.all().map(function (i) { return i.json; });\nif (rows.length < 500) { throw new Error('ABORT: PIPELINE returned only ' + rows.length + ' rows'); }\n\nconst dupe = rows.filter(function (r) {\n  return s(r.startup).toLowerCase() === 'eosnox' && s(r.investor).toLowerCase().indexOf('ian group') === 0;\n});\nif (dupe.length > 0) { throw new Error('ABORT: an IAN <> EosNox row already exists (' + s(dupe[0].deal_id) + ')'); }\n\nlet maxN = 0;\nfor (const r of rows) {\n  const id = s(r.deal_id);\n  if (id.charAt(0) === 'D') { const n = parseInt(id.slice(1), 10); if (!isNaN(n) && n > maxN) { maxN = n; } }\n}\nif (maxN === 0) { throw new Error('ABORT: could not determine max deal_id'); }\n\nlet own = '';\nfor (const r of rows) { if (s(r.startup) === 'EosNox' && s(r.owner)) { own = s(r.owner); break; } }\nif (!own) { throw new Error('ABORT: could not determine owner for EosNox'); }\n\nlet pad = String(maxN + 1);\nwhile (pad.length < 5) { pad = '0' + pad; }\nreturn [{ json: {\n  deal_id: 'D' + pad,\n  startup: 'EosNox',\n  owner: own,\n  investor: 'IAN Group - Angel Fund',\n  email: 'brendon@iangroup.vc',\n  cc: '',\n  priority: 0,\n  deal_shared: 'Yes',\n  date_shared: '2026-08-31',\n  channel: 'Email',\n  last_contact: '2026-08-31',\n  next_action: 'Meeting scheduled',\n  next_due: '',\n  investor_response: 'meeting',\n  meeting_scheduled: 'Yes',\n  meeting_date: '2026-09-09',\n  deal_status: 'Meeting scheduled',\n  notes: 'Backfilled 2026-09-07 from Deal Tracker row 212: shared to IAN (last mail 2026-08-31), meeting 2026-09-09'\n}}];"
+      }
+    },
+    {
+      "id": "ap1",
+      "name": "Append EosNox row",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "position": [
+        660,
+        110
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Run once 16:22 IST 7 Sep": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Build meeting updates",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Build EosNox row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build meeting updates": {
+      "main": [
+        [
+          {
+            "node": "Update PIPELINE (meetings)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build EosNox row": {
+      "main": [
+        [
+          {
+            "node": "Append EosNox row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once 16:22 IST 7 Sep": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "TGw5QUJLVLQsiNNe",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-07T10:41:13.672Z",
+      "updatedAt": "2026-09-07T10:41:13.672Z"
+    }
+  ],
+  "activeVersion": null
+}

@@ -1,0 +1,148 @@
+{
+  "id": "raauoz7Av3cTFyqn",
+  "name": "One-off RMW23-2 (read-only) — 23 Sep 17:30: ERROR LOG unresolved + INVESTORS vs CRITERIA gaps",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-23T12:31:36.883Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "a90ccc73-e4fa-4a5f-a83b-9461ae6bc95d",
+  "versionCounter": 5,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh1",
+      "name": "Hook",
+      "webhookId": "20fa5503-84e7-48cc-8260-12b5cf87b127",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-rmw23-2-read-7d1c",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "http1",
+      "name": "Read sheets",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=%27ERROR%20LOG%27%21A1%3AJ4000&ranges=INVESTORS%21A1%3AJ400&ranges=INVESTOR_CRITERIA%21A1%3AAC400&majorDimension=ROWS",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "code1",
+      "name": "Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const vr = $json.valueRanges || [];\nconst el = (vr[0] && vr[0].values) || [];\nconst inv = (vr[1] && vr[1].values) || [];\nconst cr = (vr[2] && vr[2].values) || [];\nconst norm = s => String(s == null ? '' : s).trim();\nconst key = s => norm(s).toLowerCase().replace(/[^a-z0-9]+/g,'');\n\n// ---- ERROR LOG ----\nconst elH = (el[0]||[]).map(h => key(h));\nconst ci = n => elH.indexOf(n);\nconst iTs = ci('timestamp') >= 0 ? ci('timestamp') : 0;\nconst iWf = ci('workflow');\nconst iType = ci('type') >= 0 ? ci('type') : ci('errortype');\nconst iDet = ci('details') >= 0 ? ci('details') : ci('detail');\nconst iRes = ci('resolved');\nconst unresolved = [];\nconst byWf = {};\nfor (let r = 1; r < el.length; r++) {\n  const row = el[r] || [];\n  if (!row.some(c => norm(c))) continue;\n  const res = iRes >= 0 ? norm(row[iRes]) : '';\n  if (res) continue;\n  const wf = iWf >= 0 ? norm(row[iWf]) : '';\n  byWf[wf || '(blank)'] = (byWf[wf || '(blank)'] || 0) + 1;\n  if (/THESIS/i.test(wf)) {\n    unresolved.push({ row: r + 1, ts: norm(row[iTs]).slice(0,16), wf, type: iType>=0?norm(row[iType]):'', details: (iDet>=0?norm(row[iDet]):'').slice(0,200) });\n  }\n}\n\n// ---- INVESTORS vs CRITERIA ----\nconst invH = (inv[0]||[]).map(h => key(h));\nconst pos = (names, def) => { for (const n of names) { const i = invH.indexOf(n); if (i >= 0) return i; } return def; };\nconst iName = pos(['investorname','investor','name','firm'], 0);\nconst iContact = pos(['contactperson','contact','contactname'], 1);\nconst iEmail = pos(['email','emailaddress'], 2);\nconst iSector = pos(['sector','sectors'], 4);\nconst iStage = pos(['stage','stages'], 5);\nconst iCheque = pos(['chequesize','cheque','ticketsize'], 6);\nconst iDnc = invH.indexOf('donotcontact');\n\nconst crH = (cr[0]||[]).map(h => key(h));\nconst cpos = n => crH.indexOf(n);\nconst cInvestor = cpos('investor') >= 0 ? cpos('investor') : 1;\nconst cSheetRow = cpos('sheetrow');\nconst cStatus = cpos('status');\nconst cConfirmed = cpos('confirmed');\nconst cReview = cpos('reviewreason');\nconst cSectorsIn = cpos('sectorsin');\nconst cStageMin = cpos('stagemin');\nconst cStageMax = cpos('stagemax');\n\nconst critByName = new Map();\nconst critRows = [];\nfor (let r = 1; r < cr.length; r++) {\n  const row = cr[r] || [];\n  const nm = norm(row[cInvestor]);\n  if (!nm) continue;\n  const o = { row: r + 1, name: nm, sheet_row: cSheetRow>=0?norm(row[cSheetRow]):'', status: cStatus>=0?norm(row[cStatus]):'', confirmed: cConfirmed>=0?norm(row[cConfirmed]):'', review: cReview>=0?norm(row[cReview]).slice(0,120):'', sectors_in: cSectorsIn>=0?norm(row[cSectorsIn]).slice(0,60):'', stage_min: cStageMin>=0?norm(row[cStageMin]):'', stage_max: cStageMax>=0?norm(row[cStageMax]):'' };\n  critRows.push(o);\n  critByName.set(key(nm), o);\n}\n\nconst missing = [];\nconst dupNames = [];\nconst seenName = new Map();\nconst emailIdx = new Map();\nconst dupEmail = [];\nfor (let r = 1; r < inv.length; r++) {\n  const row = inv[r] || [];\n  const nm = norm(row[iName]);\n  if (!nm && !norm(row[iContact]) && !norm(row[iEmail])) continue;\n  const rowNo = r + 1;\n  const k = key(nm);\n  if (k) { if (seenName.has(k)) dupNames.push({ name: nm, rows: [seenName.get(k), rowNo] }); else seenName.set(k, rowNo); }\n  const emails = norm(row[iEmail]).toLowerCase().split(/[,;\\s]+/).filter(e => e.includes('@'));\n  for (const e of emails) { if (emailIdx.has(e)) { dupEmail.push({ email: e, rows: [emailIdx.get(e), rowNo], names: [null, nm] }); } else emailIdx.set(e, rowNo); }\n  if (!k || !critByName.has(k)) {\n    missing.push({ row: rowNo, name: nm || '(blank name)', contact: norm(row[iContact]).slice(0,40), email: norm(row[iEmail]).slice(0,60), sector: norm(row[iSector]).slice(0,70), stage: norm(row[iStage]).slice(0,40), cheque: norm(row[iCheque]).slice(0,40), dnc: iDnc>=0?norm(row[iDnc]):'' });\n  }\n}\n\nconst pending = critRows.filter(o => /PENDING/i.test(o.confirmed));\nconst pendingCompact = pending.map(o => o.row + ':' + o.name + (o.status ? '/' + o.status : ''));\nconst holds = critRows.filter(o => /HOLD/i.test(o.status)).map(o => o.row + ':' + o.name);\n\nreturn [{ json: {\n  error_log_rows: el.length - 1,\n  unresolved_by_workflow: byWf,\n  unresolved_thesis_count: unresolved.length,\n  unresolved_thesis: unresolved.slice(0, 30),\n  investors_rows: inv.length - 1,\n  criteria_rows: critRows.length,\n  investors_without_criteria_count: missing.length,\n  investors_without_criteria: missing.slice(0, 40),\n  duplicate_investor_names: dupNames.slice(0, 20),\n  duplicate_emails_count: dupEmail.length,\n  duplicate_emails: dupEmail.slice(0, 15),\n  pending_count: pending.length,\n  pending_list: pendingCompact.slice(0, 60),\n  hold_count: holds.length,\n  hold_list: holds.slice(0, 40),\n  el_headers: (el[0]||[]),\n  el_detail: [2649,2650,2651,2652,2653,2654,2655,2656].map(n => ({row:n, cells:(el[n-1]||[]).map(c=>String(c==null?'':c).slice(0,300))})),\n  crit_template: [246,261,274].map(n => ({row:n, cells:(cr[n-1]||[])})),\n  raw_new: [42,284,285,286,287,288].map(n => ({row:n, cells:(inv[n-1]||[]).slice(0,10)})),\n  same_firm_rows: inv.map((r,i)=>({row:i+1,name:norm((r||[])[iName]),email:norm((r||[])[iEmail])})).filter(o=>/tvs|rainmatter|seafund|cisco|dexter/i.test(o.name)),\n  investors_headers: (inv[0]||[]).slice(0,10),\n  criteria_headers: (cr[0]||[]).slice(0,29)\n} }];"
+      }
+    },
+    {
+      "id": "resp1",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "respondWith": "firstIncomingItem",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Hook": {
+      "main": [
+        [
+          {
+            "node": "Read sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read sheets": {
+      "main": [
+        [
+          {
+            "node": "Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summary": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "raauoz7Av3cTFyqn",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-23T12:31:36.887Z",
+      "updatedAt": "2026-09-23T12:31:36.887Z"
+    }
+  ],
+  "activeVersion": null
+}

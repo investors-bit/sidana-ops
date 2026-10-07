@@ -1,0 +1,279 @@
+{
+  "id": "YuI0oOBJ62paICSX",
+  "name": "One-off TX-2 — match Tronix.AI and add PIPELINE rows",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-09T09:53:41.723Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "b646646a-1a7a-4821-9591-1d2eab532c93",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "trg1",
+      "name": "Run once 15:34 IST 9 Sep",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "34 15 9 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "rd0",
+      "name": "Read Deal Tracker",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        220,
+        -150
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1WzrrPelm2HsJNXOUNIEOuRajp70CUY-RrzBOs9LENjs/edit"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1WzrrPelm2HsJNXOUNIEOuRajp70CUY-RrzBOs9LENjs/edit#gid=189973839"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "rdI",
+      "name": "Read INVESTORS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        440,
+        -80
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "INVESTORS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "rd1",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cd1",
+      "name": "Match Tronix",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Tronix.AI: Healthcare SaaS | AI Clinic Operations, Pilot stage, raising INR 3.5 Cr.\n// Cheque is a FLOOR: an investor whose MINIMUM cheque exceeds 3.5 Cr cannot participate,\n// because the whole round cannot absorb it. No upper limit - co-investment handles that.\nconst RAISE = 3.5;\nfunction s(v) { return String(v == null ? '' : v).trim(); }\nfunction nz(x) { return s(x).toLowerCase().replace(/[^a-z0-9]/g, ''); }\n\nconst trk = $('Read Deal Tracker').all().map(function (i) { return i.json; });\nconst inv = $('Read INVESTORS').all().map(function (i) { return i.json; });\nconst pipe = $input.all().map(function (i) { return i.json; });\nif (pipe.length < 500) { throw new Error('ABORT: PIPELINE only ' + pipe.length); }\nif (trk.length < 200) { throw new Error('ABORT: tracker only ' + trk.length + ' rows - truncated'); }\n\n// Tronix is brand new, but check the tracker anyway in case it was shared outside the pipeline\nconst cols = Object.keys(trk[0] || {});\nlet cInv = null; const cDeals = [];\nfor (const c of cols) {\n  const l = c.toLowerCase();\n  if (!cInv && (l.indexOf('investor') >= 0 || l.indexOf('vc name') >= 0)) { cInv = c; }\n  if (l.indexOf('deals shared') >= 0 || l.indexOf('latest deal') >= 0 || l.indexOf('picked') >= 0) { cDeals.push(c); }\n}\nconst trkSeen = {};\nfor (const r of trk) {\n  for (const c of cDeals) {\n    for (const d of s(r[c]).split(/[,;\\n]/)) { if (nz(d).indexOf('tronix') >= 0) { trkSeen[nz(r[cInv])] = true; } }\n  }\n}\nconst pipeSeen = {};\nfor (const p of pipe) { if (nz(p.startup).indexOf('tronix') >= 0) { pipeSeen[nz(p.investor)] = true; } }\n\n// smallest cheque an investor writes, in INR Cr\nfunction minCr(txt) {\n  const t = s(txt).replace(/,/g, '');\n  if (!t) { return null; }\n  let m = t.match(/(?:US\\$|\\$)\\s*([\\d.]+)\\s*(?:-|to|–)?\\s*([\\d.]+)?\\s*M/i);\n  if (m) { return parseFloat(m[1]) * 8.5; }\n  m = t.match(/(?:US\\$|\\$)\\s*([\\d.]+)\\s*K/i);\n  if (m) { return parseFloat(m[1]) * 0.0085; }\n  m = t.match(/([\\d.]+)\\s*(?:-|to|–)\\s*[\\d.]+\\s*Cr/i);\n  if (m) { return parseFloat(m[1]); }\n  m = t.match(/([\\d.]+)\\s*Cr/i);\n  if (m) { return parseFloat(m[1]); }\n  m = t.match(/([\\d.]+)\\s*Lakh/i);\n  if (m) { return parseFloat(m[1]) / 100; }\n  return null;\n}\n\nconst out = [];\nfor (const r of inv) {\n  const name = s(r.investor);\n  if (!name) { continue; }\n  if (s(r.do_not_contact).toLowerCase() === 'yes') { continue; }\n  const k = nz(name);\n  if (pipeSeen[k] || trkSeen[k]) { continue; }\n\n  const sec = s(r.sector).toLowerCase();\n  const stg = s(r.stage).toLowerCase();\n\n  const agnostic = /agnostic/.test(sec);\n  const health = /health|medtech|bio|clinic|pharma|life science/.test(sec);\n  const softw = /saas|b2b|enterprise|software|\\bai\\b|deeptech|deep tech|tech/.test(sec);\n  if (!agnostic && !health && !softw) { continue; }\n\n  // Pilot stage sits at pre-seed/seed. Exclude funds that only start at Series A or later.\n  const earlyOK = stg === '' || /pre-?seed|seed|early|agnostic|pre seed/.test(stg);\n  const lateOnly = /series a onwards|series c|pre ipo|post series b/.test(stg);\n  if (!earlyOK || lateOnly) { continue; }\n\n  const floor = minCr(r.cheque_inr_cr);\n  if (floor !== null && floor > RAISE) { continue; }\n\n  // Same rubric as every prior run: sector 40 / stage 30 / cheque 30.\n  let secPts;\n  if (agnostic) { secPts = (health || softw) ? 28 : 20; }\n  else if (health) { secPts = 40; }\n  else { secPts = 34; }\n\n  const score = secPts + 30 + (floor === null ? 18 : 30);\n  if (score < 70) { continue; }\n  out.push({ name: name, email: s(r.email), score: score, floor: floor });\n}\n\nout.sort(function (a, b) { return b.score - a.score || a.name.localeCompare(b.name); });\nif (out.length === 0) { throw new Error('ABORT: no matches for Tronix.AI'); }\nif (out.length > 120) { throw new Error('ABORT: ' + out.length + ' matches exceeds guard of 120'); }\n\nlet maxN = 0;\nfor (const p of pipe) {\n  const id = s(p.deal_id);\n  if (id.charAt(0) === 'D') { const n = parseInt(id.slice(1), 10); if (!isNaN(n) && n > maxN) { maxN = n; } }\n}\nfunction weekdays(n, y, m, d) {\n  const a = []; const dt = new Date(Date.UTC(y, m - 1, d));\n  while (a.length < n) { const w = dt.getUTCDay(); if (w !== 0 && w !== 6) { a.push(dt.toISOString().slice(0, 10)); } dt.setUTCDate(dt.getUTCDate() + 1); }\n  return a;\n}\nconst days = weekdays(Math.ceil(out.length / 2) + 1, 2026, 9, 10);\n\nlet n = maxN;\nreturn out.map(function (o, i) {\n  n++;\n  let pad = String(n);\n  while (pad.length < 5) { pad = '0' + pad; }\n  return { json: { deal_id: 'D' + pad, startup: 'Tronix.AI', owner: 'Aditya', investor: o.name,\n    email: o.email, cc: '', priority: o.score, deal_shared: 'No', next_action: 'Initial',\n    next_due: days[Math.floor(i / 2)],\n    notes: (o.score >= 85 ? 'Very High' : (o.score >= 70 ? 'High' : 'Moderate')) + ' match (' + o.score + ') - Tronix.AI added 2026-09-09' } };\n});"
+      }
+    },
+    {
+      "id": "ap1",
+      "name": "Append PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "position": [
+        1100,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Run once 15:34 IST 9 Sep": {
+      "main": [
+        [
+          {
+            "node": "Read Deal Tracker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Deal Tracker": {
+      "main": [
+        [
+          {
+            "node": "Read INVESTORS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read INVESTORS": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Match Tronix",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Match Tronix": {
+      "main": [
+        [
+          {
+            "node": "Append PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once 15:34 IST 9 Sep": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "YuI0oOBJ62paICSX",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-09T09:53:41.725Z",
+      "updatedAt": "2026-09-09T09:53:41.725Z"
+    }
+  ],
+  "activeVersion": null
+}

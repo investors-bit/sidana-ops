@@ -1,0 +1,216 @@
+{
+  "id": "yer85yobEG0qgAUQ",
+  "name": "Investor Cell Cleanup",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-08-29T15:11:04.477Z",
+  "updatedAt": "2026-08-29T16:38:42.000Z",
+  "isArchived": true,
+  "versionId": "0e9fe52e-b23e-446d-a7c2-17f9977fdbb1",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 0,
+  "nodes": [
+    {
+      "id": "13c94f05-3a0e-495c-b909-bf80577e51bd",
+      "name": "Run Cleanup",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "7b9db0f3-74d8-48da-af2e-6d28f28b43dc",
+      "name": "Read Investor Master",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "1wBWCcPkxw_RiSs0tUnFFV4aDyxEY2tu-DT73pzIq8b8",
+          "mode": "list",
+          "cachedResultName": "Copy of updated Investor_list_237",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1wBWCcPkxw_RiSs0tUnFFV4aDyxEY2tu-DT73pzIq8b8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 579173326,
+          "mode": "list",
+          "cachedResultName": "INVESTOR MASTER",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1wBWCcPkxw_RiSs0tUnFFV4aDyxEY2tu-DT73pzIq8b8/edit#gid=579173326"
+        },
+        "options": {
+          "returnAllMatches": "returnAllMatches"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "a9a85269-07b3-4b3d-a383-7b7eab48ff3b",
+      "name": "Clean Cells",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ],
+      "parameters": {
+        "jsCode": "// Conservative cleanup of Investors Email + Contact Person cells.\n// Never drops a distinct email or a real personal name.\nconst emailRe = /[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}/g;\n\nfunction cleanEmails(raw){\n  const s = String(raw || \"\");\n  const found = s.match(emailRe) || [];\n  const seen = new Set();\n  const out = [];\n  for (const e of found){\n    const key = e.toLowerCase();\n    if (!seen.has(key)){ seen.add(key); out.push(e); }\n  }\n  return out.join(\", \");\n}\n\nfunction cleanContacts(raw){\n  const s = String(raw || \"\");\n  // split on comma or semicolon\n  const parts = s.split(/[,;]+/).map(p => p.replace(/\\s+/g,\" \").trim());\n  const cleaned = [];\n  for (let p of parts){\n    if (!p) continue;                                  // drop empties (stray , ; )\n    // strip \"Name <email>\" -> keep the Name portion only\n    p = p.replace(/<[^>]*>/g, \"\").replace(/\\s+/g,\" \").trim();\n    if (!p) continue;\n    if (emailRe.test(p)) { emailRe.lastIndex = 0; continue; }  // pure email fragment -> drop\n    emailRe.lastIndex = 0;\n    if (p.includes(\"@\")) continue;                     // leftover email-ish -> drop\n    if (p.includes(\"|\")) continue;                     // label like \"Investment Team | Warmup Ventures\" -> drop\n    if (!/[a-zA-Z]/.test(p)) continue;                 // no letters -> drop\n    cleaned.push(p);\n  }\n  // remove exact dupes (case-insensitive) and first-name-only near-dupes\n  const result = [];\n  for (const name of cleaned){\n    const nl = name.toLowerCase();\n    // exact dupe?\n    if (result.some(r => r.toLowerCase() === nl)) continue;\n    // if an existing fuller name starts with this (single-token) name, skip this shorter one\n    const isSingle = !name.includes(\" \");\n    if (isSingle && result.some(r => r.toLowerCase().split(\" \")[0] === nl && r.includes(\" \"))) continue;\n    // if this fuller name's first token equals an existing single-token entry, replace that entry\n    const firstTok = nl.split(\" \")[0];\n    const idx = result.findIndex(r => !r.includes(\" \") && r.toLowerCase() === firstTok);\n    if (idx !== -1 && name.includes(\" \")){ result[idx] = name; continue; }\n    result.push(name);\n  }\n  return result.join(\", \");\n}\n\nconst out = [];\nfor (const item of $input.all()){\n  const row = item.json;\n  const rowNumber = row.row_number;\n  const emailBefore = String(row[\"Investors Email\"] || \"\");\n  const contactBefore = String(row[\"Contact Person\"] || \"\");\n\n  let emailAfter = cleanEmails(emailBefore);\n  // safety: never blank out a cell that had content but produced no emails (leave original)\n  if (!emailAfter && emailBefore.trim()) emailAfter = emailBefore;\n\n  const contactAfter = cleanContacts(contactBefore);\n  const contactFinal = (!contactAfter && contactBefore.trim()) ? contactBefore : contactAfter;\n\n  const changed = (emailAfter !== emailBefore) || (contactFinal !== contactBefore);\n  if (changed){\n    out.push({ json: {\n      row_number: rowNumber,\n      \"Investors Email\": emailAfter,\n      \"Contact Person\": contactFinal,\n      __emailBefore: emailBefore,\n      __contactBefore: contactBefore,\n    }});\n  }\n}\nreturn out;"
+      }
+    },
+    {
+      "id": "4abcfeae-b414-4293-8735-03dbed759850",
+      "name": "Update Cleaned Row",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        672,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1wBWCcPkxw_RiSs0tUnFFV4aDyxEY2tu-DT73pzIq8b8",
+          "mode": "list",
+          "cachedResultName": "Copy of updated Investor_list_237",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1wBWCcPkxw_RiSs0tUnFFV4aDyxEY2tu-DT73pzIq8b8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 579173326,
+          "mode": "list",
+          "cachedResultName": "INVESTOR MASTER",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1wBWCcPkxw_RiSs0tUnFFV4aDyxEY2tu-DT73pzIq8b8/edit#gid=579173326"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "row_number"
+          ],
+          "value": {
+            "row_number": "={{ $json.row_number }}",
+            "Investors Email": "={{ $json[\"Investors Email\"] }}",
+            "Contact Person": "={{ $json[\"Contact Person\"] }}"
+          },
+          "schema": [
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Investors Email",
+              "displayName": "Investors Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Contact Person",
+              "displayName": "Contact Person",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Run Cleanup": {
+      "main": [
+        [
+          {
+            "node": "Read Investor Master",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Investor Master": {
+      "main": [
+        [
+          {
+            "node": "Clean Cells",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean Cells": {
+      "main": [
+        [
+          {
+            "node": "Update Cleaned Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "pinData": {},
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "yer85yobEG0qgAUQ",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-08-29T15:11:04.479Z",
+      "updatedAt": "2026-08-29T15:11:04.479Z"
+    }
+  ],
+  "activeVersion": null
+}

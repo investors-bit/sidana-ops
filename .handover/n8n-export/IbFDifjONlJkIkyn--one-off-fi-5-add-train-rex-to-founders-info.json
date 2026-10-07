@@ -1,0 +1,282 @@
+{
+  "id": "IbFDifjONlJkIkyn",
+  "name": "One-off FI-5 — add Train Rex to Founders Info",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-11T10:53:31.772Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "fc700ab9-dabe-4f83-b835-1426b31e375b",
+  "versionCounter": 5,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "fi1-wh",
+      "name": "Webhook",
+      "webhookId": "e3f4a5b6-1111-4c2d-9e8f-fi1bodybeyond",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "fi1-body-beyond-3a9c",
+        "responseMode": "lastNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "fi1-read",
+      "name": "Read Founders Info",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Founders Info"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "fi1-check",
+      "name": "Already there?",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const norm = (x) => String(x == null ? '' : x).toLowerCase().replace(/[^a-z0-9]/g, '');\nconst hit = $input.all().find((i) => ['trainrex'].indexOf(norm(i.json['Startup'])) >= 0);\nif (hit) return [{ json: { action: 'exists', row_number: hit.json.row_number, Startup: hit.json['Startup'], 'Founder Name': hit.json['Founder Name'], Emails: hit.json['Emails'] } }];\nreturn [{ json: { action: 'append', Startup: 'Train Rex', 'Founder Name': 'Arnav', Emails: 'arnav@trainrex.org' } }];"
+      }
+    },
+    {
+      "id": "fi1-if",
+      "name": "Append needed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a",
+              "leftValue": "={{ $json.action }}",
+              "rightValue": "append",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "fi1-append",
+      "name": "Append to Founders Info",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "position": [
+        880,
+        -80
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Founders Info"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Startup": "={{ $json.Startup }}",
+            "Founder Name": "={{ $json['Founder Name'] }}",
+            "Emails": "={{ $json.Emails }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Startup",
+              "displayName": "Startup",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Founder Name",
+              "displayName": "Founder Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Emails",
+              "displayName": "Emails",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "fi1-exists",
+      "name": "Report existing row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        100
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return $input.all();"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Read Founders Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Founders Info": {
+      "main": [
+        [
+          {
+            "node": "Already there?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Already there?": {
+      "main": [
+        [
+          {
+            "node": "Append needed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append needed?": {
+      "main": [
+        [
+          {
+            "node": "Append to Founders Info",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Report existing row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "IbFDifjONlJkIkyn",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-11T10:53:31.774Z",
+      "updatedAt": "2026-09-11T10:53:31.774Z"
+    }
+  ],
+  "activeVersion": null
+}

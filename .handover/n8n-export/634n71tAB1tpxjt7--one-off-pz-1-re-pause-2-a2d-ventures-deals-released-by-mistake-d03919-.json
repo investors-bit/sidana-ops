@@ -1,0 +1,299 @@
+{
+  "id": "634n71tAB1tpxjt7",
+  "name": "One-off PZ-1 — re-pause 2 A2D Ventures deals released by mistake (D03919, D04126)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-11T12:03:27.392Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "2f417902-3ed9-4dd2-a2da-4cd817a2be87",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once (set before activating)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "38 17 11 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "hh",
+      "name": "GET header",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/PIPELINE!1:1",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "r3",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cp",
+      "name": "Plan",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nfunction nz(x) { return s(x).toLowerCase().replace(/[^a-z0-9]/g, ''); }\nfunction colLetter(i) { let n = i + 1, out = ''; while (n > 0) { const m = (n - 1) % 26; out = String.fromCharCode(65 + m) + out; n = Math.floor((n - 1) / 26); } return out; }\nconst hdr = (($('GET header').first().json.values || [[]])[0] || []).map(s);\nconst P = {}; for (const h of ['pause', 'next_action', 'match_type', 'notes']) { const i = hdr.indexOf(h); if (i < 0) { throw new Error('ABORT: column missing ' + h); } P[h] = colLetter(i); }\nconst pipe = $input.all().map(function (i) { return i.json; });\nif (pipe.length < 4600) { throw new Error('ABORT: PIPELINE only ' + pipe.length); }\n// also catch any other unsent, unpaused A2D row (A2D = wrong investor type per audit)\nconst IDS = new Set(['D03919', 'D04126']);\nconst hits = pipe.filter(function (p) { return s(p.deal_shared).toLowerCase() !== 'yes' && s(p.pause).toLowerCase() !== 'yes' && (IDS.has(s(p.deal_id)) || nz(p.investor) === 'a2dventures'); });\nfor (const p of hits) { if (nz(p.investor) !== 'a2dventures') { throw new Error('ABORT: ' + s(p.deal_id) + ' is not A2D (' + s(p.investor) + ')'); } }\nif (hits.length > 10) { throw new Error('ABORT: ' + hits.length + ' rows - unexpected'); }\nconst why = 'wrong investor type (audit 11 Sep: Southeast Asia syndicate, no India mandate)';\nconst data = [];\nfor (const p of hits) { const rn = p.row_number; const n = s(p.notes);\n  data.push({ range: 'PIPELINE!' + P.pause + rn, values: [['Yes']] }, { range: 'PIPELINE!' + P.next_action + rn, values: [['DROPPED - not per strategy']] },\n    { range: 'PIPELINE!' + P.match_type + rn, values: [['Not per strategy: ' + why]] }, { range: 'PIPELINE!' + P.notes + rn, values: [[(n ? n + ' | ' : '') + 'DROPPED 2026-09-11 - released by mistake, re-paused (' + why + ')']] }); }\nif (!data.length) { data.push({ range: 'PIPELINE!' + P.pause + '1', values: [['pause']] }); }\nreturn [{ json: { rows: hits.map(function (p) { return [p.row_number, s(p.deal_id), s(p.startup), s(p.investor)]; }), data: data } }];"
+      }
+    },
+    {
+      "id": "w0",
+      "name": "Write",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ valueInputOption: 'RAW', data: $('Plan').first().json.data }) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "ra",
+      "name": "Read PIPELINE after",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        1000,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cv",
+      "name": "Verify",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nfunction nz(x) { return s(x).toLowerCase().replace(/[^a-z0-9]/g, ''); }\nconst after = $input.all().map(function (i) { return i.json; });\nconst a2dActive = after.filter(function (p) { return nz(p.investor) === 'a2dventures' && s(p.deal_shared).toLowerCase() !== 'yes' && s(p.pause).toLowerCase() !== 'yes'; }).map(function (p) { return s(p.deal_id); });\nconst activeBlank = after.filter(function (p) { return s(p.deal_shared).toLowerCase() !== 'yes' && s(p.pause).toLowerCase() !== 'yes' && !s(p.email); }).map(function (p) { return s(p.deal_id) + ' ' + s(p.investor); });\nreturn [{ json: { paused: $('Plan').first().json.rows, a2d_still_active: a2dActive, active_rows_blank_email: activeBlank, ok: a2dActive.length === 0 && activeBlank.length === 0 } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once (set before activating)": {
+      "main": [
+        [
+          {
+            "node": "GET header",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET header": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Plan": {
+      "main": [
+        [
+          {
+            "node": "Write",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE after",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE after": {
+      "main": [
+        [
+          {
+            "node": "Verify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once (set before activating)": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "634n71tAB1tpxjt7",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-11T12:03:27.395Z",
+      "updatedAt": "2026-09-11T12:03:27.395Z"
+    }
+  ],
+  "activeVersion": null
+}

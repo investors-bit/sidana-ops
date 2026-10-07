@@ -1,0 +1,192 @@
+{
+  "id": "cWn4OtaMZEB9b60K",
+  "name": "One-off BCA-1 — append PIPELINE row Bon Cuisine x Atomic Capital (ENGINE OVERRIDE, 25 Sep)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-25T12:31:55.156Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "4d43d907-4380-48a5-b1da-aa7eae12e7c8",
+  "versionCounter": 6,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "bc1ce45e-29c8-4746-841d-c8694469a733",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-bca-row-4f7c21",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "g",
+      "name": "Read",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=PIPELINE%21A1%3AAI7000",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {
+          "timeout": 180000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "v",
+      "name": "Compute",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const R = $json.valueRanges || [];\nconst pipe = (R[0] || {}).values || [];\nif (pipe.length < 5000) throw new Error('PIPELINE read looks truncated: ' + pipe.length + ' rows');\nconst hdr = pipe[0] || [];\nconst need = ['deal_id','startup','owner','investor','email','match_type','deal_shared','date_shared','channel','thread_id','last_contact','next_action','next_due','investor_response','meeting_scheduled','meeting_date','meetings_held','last_meeting_date','meeting_outcome','deal_status','pause','notes'];\nconst idx = {};\nneed.forEach(n => { const i = hdr.findIndex(h => String(h||'').trim() === n); if (i < 0) throw new Error('missing PIPELINE column: ' + n); idx[n] = i; });\nconst g = (row,i) => (row && row[i] != null) ? String(row[i]).trim() : '';\nconst colLetter = (i) => { let s=''; i=i+1; while(i>0){ const m=(i-1)%26; s=String.fromCharCode(65+m)+s; i=Math.floor((i-1)/26);} return s; };\n\nlet maxId = 0, lastData = 0, sawStartup = 0;\nfor (let i = 1; i < pipe.length; i++) {\n  const r = pipe[i];\n  if (r && r.some(c => String(c||'').trim() !== '')) lastData = i;\n  const st = g(r, idx.startup).toLowerCase().replace(/[^a-z]/g,'');\n  const iv = g(r, idx.investor).toLowerCase();\n  if (st === 'talentrecruit') sawStartup++;\n  if (st === 'talentrecruit' && iv.indexOf('ivy') >= 0) throw new Error('pair already exists at sheet row ' + (i+1) + ': ' + g(r,idx.deal_id));\n  const m = /^D(\\d+)$/.exec(g(r, idx.deal_id));\n  if (m) { const n = parseInt(m[1],10); if (n > maxId) maxId = n; }\n}\nif (maxId < 7000) throw new Error('max deal_id looks wrong: ' + maxId);\nif (sawStartup < 100) throw new Error('expected ~139 Talent Recruit rows, saw ' + sawStartup + ' - wrong startup spelling?');\nconst newRow = lastData + 2;\nconst dealId = 'D' + String(maxId + 1).padStart(5,'0');\n\nconst RESP = 'Interested, met the founder, no outcome given. Devesh Garodia, 27 Aug 2026 18:18 IST, on the day the deal was shared: \"Hey Let\\'s have the call with founder next week ?\" He then picked the slot himself (\"Can we do tommorow 2-3:30? We can have a 30 mins slot\", 30 Aug) and moved it twice. After the meeting on 3 Sep, Alok Gupta wrote in-thread at 13:46 IST: \"It was nice meeting you and I believe you got fair understanding about TalentRecruit.\" NOTHING FROM IVYCAP SINCE. Checked 25 Sep 2026 across mailboxes 2, 3, 4 and 5; WhatsApp was NOT checked, and the Vinners pass of 23 Sep arrived that way.';\n\nconst OUTCOME = 'One meeting, 3 Sep 2026 13:00 IST, after two reschedules (31 Aug 14:30, then 1 Sep 13:00, moved by Devesh to Thursday). Recorded by IvyCap\\'s own Fireflies notetaker, on behalf of devesh@ivycapventures.com: 32+ questions asked and 4+ action items detected, though the action items themselves are behind a link the email does not carry - worth retrieving, because an investor-side action item is the single best predictor we have of whether a deal is alive. '\n + 'FROM THAT RECAP, VERBATIM: \"Investment interest: IV Cap targets HR tech, with $650M AUM, $450M fund; matches $4-5M ask, checks $6.5-7.8M aligned.\" \"Market opportunity: India HR tech nascent, fragmented; huge white space vs. mature US market with 98.3% platform adoption.\" \"Customer traction: $1.7M ARR, 90% recurring; clients include KPMG, EY; recognized by Everest Group & G2 as market leaders.\" \"Product innovation: AI-powered, rebuilt platform launched April 2024; integrates hiring end-to-end with strong privacy controls (DPDP/GDPR).\" \"AI assistant: Erica autonomously manages sourcing, screening, interviews.\" \"Growth plan: Seeking $4-5M to scale globally; enterprise focus with 85% Indian customers.\" '\n + 'NOTE: the Read AI report for the same meeting is PAYWALLED (\"No meetings left this month on your Read Free plan\") and its summary cannot be read. Everything quoted here comes from the Fireflies email, not from Read AI.';\n\nconst NOTES = 'ENGINE OVERRIDE - do not auto-match, do not auto-send. Row created 2026-09-25 by General Ops at the hot-deals desk\\'s request. Talent Recruit x IvyCap had NO PIPELINE row despite 139 other Talent Recruit rows existing. '\n + 'STANDING FOUNDER INSTRUCTION, 31 Aug 2026 - THIS BINDS ALL TALENT RECRUIT OUTREACH, NOT JUST IVYCAP, AND WAS RECORDED NOWHERE UNTIL NOW. Alok Gupta, three messages that morning: (1) \"IvyCap has heavily invested in our competitors Turbohire ... before sharing our entire Deck, please check the Investors if they have invested in a competing companies.\" (2) \"My worry is you are sharing our data to our competitors. Lets discuss which funds you are targeting? By sharing entire investor deck you are making all our data as vulnerable and it reaches to direct competitors. Infoedge is our competitor so is Turbohire (invested by Ivy)\". (3) \"This is old Investor Deck. I will request not to share entire deck with everyone. We can discuss and make 1 pager or teaser or in email content only. The deck has all internal info.\" '\n + 'SO: no full deck for Talent Recruit - a one-pager, teaser or email body only - and screen every investor for a competing portfolio company before sharing. NAMED COMPETITORS: Turbohire (IvyCap portfolio) and InfoEdge. There is currently NO Talent Recruit x InfoEdge row and InfoEdge Ventures IS in INVESTORS, so a future match could create exactly the pair the founder objected to. Treat InfoEdge as excluded for this startup. '\n + 'THE CONFLICT WAS RAISED BEFORE THE MEETING AND THE MEETING WENT AHEAD ANYWAY. Alok flagged the Turbohire overlap on 31 Aug; the call was held on 3 Sep and he was courteous afterwards. Do not read the meeting as the conflict having been resolved - nobody answered it in writing. '\n + 'WHY THIS IS THE ONE TO WORK: with Vinners passing on HYRGPT on 23 Sep, IvyCap is the strongest live HR-tech position the firm has. They put the category at \"huge white space\", their cheque range matches the ask, and there is no recorded outcome either way 22 days after the meeting. IvyCap also has a separate live thread on Bon Cuisine (a second meeting) and on Ulai. '\n + 'NEXT STEP IS HUMAN, NOT AUTOMATED: retrieve the 4 action items from the Fireflies recap, then have Akansha or Aditya ask Devesh directly where it stands - and check WhatsApp before concluding anything from silence. Contact: Devesh Garodia, devesh@ivycapventures.com. Threads: deal share 1a04262bcbeddcc3 (mb4), post-meeting 1a06652aed32ca69 (mb4), founder-side 1a03d9c5e5bcf6ed (mb4).';\n\nconst cells = {};\ncells[colLetter(idx.deal_id)] = dealId;\ncells[colLetter(idx.startup)] = 'Talent Recruit';\ncells[colLetter(idx.owner)] = 'Akansha';\ncells[colLetter(idx.investor)] = 'IvyCap Ventures';\ncells[colLetter(idx.email)] = 'devesh@ivycapventures.com';\ncells[colLetter(idx.match_type)] = 'Hand-run - never matched by the engine; row created retroactively 2026-09-25';\ncells[colLetter(idx.deal_shared)] = 'Yes';\ncells[colLetter(idx.date_shared)] = '2026-08-27';\ncells[colLetter(idx.channel)] = 'Email';\ncells[colLetter(idx.thread_id)] = '1a06652aed32ca69';\ncells[colLetter(idx.last_contact)] = '2026-09-03';\ncells[colLetter(idx.next_action)] = 'HUMAN ONLY - ask Devesh where it stands; no automated send, no full deck';\ncells[colLetter(idx.next_due)] = '2026-09-29';\ncells[colLetter(idx.investor_response)] = RESP;\ncells[colLetter(idx.meeting_scheduled)] = 'Yes';\ncells[colLetter(idx.meeting_date)] = '2026-09-03';\ncells[colLetter(idx.meetings_held)] = '1';\ncells[colLetter(idx.last_meeting_date)] = '2026-09-03';\ncells[colLetter(idx.meeting_outcome)] = OUTCOME;\ncells[colLetter(idx.deal_status)] = 'Met - outcome unknown';\ncells[colLetter(idx.pause)] = 'Yes';\ncells[colLetter(idx.notes)] = NOTES;\n\nconst colIndex = (s) => { let n=0; for (let k=0;k<s.length;k++) n = n*26 + (s.charCodeAt(k)-64); return n-1; };\nconst width = 35;\nconst row = new Array(width).fill('');\nlet filled = 0;\nObject.entries(cells).forEach(([col,val]) => { const i = colIndex(col); if (i >= width) throw new Error('column out of range: ' + col); row[i] = val; filled++; });\nreturn [{ json: { body: { values: [row] }, new_row: newRow, deal_id: dealId, cells: filled, talent_rows_seen: sawStartup } }];"
+      }
+    },
+    {
+      "id": "w",
+      "name": "Write",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/PIPELINE%21A%3AAI:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {
+          "timeout": 180000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "o",
+      "name": "Out",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const c = $('Compute').first().json; const w = $json;\nconst u = w.updates || {};\nreturn [{ json: { updatedRange: u.updatedRange || null, updatedCells: u.updatedCells != null ? u.updatedCells : null, planned_cells: c.cells, expected_row: c.new_row, deal_id: c.deal_id, last_data_row: c.last_data_row } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read": {
+      "main": [
+        [
+          {
+            "node": "Compute",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute": {
+      "main": [
+        [
+          {
+            "node": "Write",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write": {
+      "main": [
+        [
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "cWn4OtaMZEB9b60K",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-25T12:31:55.161Z",
+      "updatedAt": "2026-09-25T12:31:55.161Z"
+    }
+  ],
+  "activeVersion": null
+}

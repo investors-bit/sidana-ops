@@ -1,0 +1,243 @@
+{
+  "id": "BmrTeRuGTrRXuXDT",
+  "name": "ONB-RC-DIAG (read + single test write) — why ONBOARDING cells will not hold values (30 Sep)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-30T11:35:19.583Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "089a8ae7-7db3-4cfb-aed9-3506bc09cc54",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "cec4b2ee-f6cb-4c0b-95b4-03c6dbf369ab",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "onb-rc-diag-30sep",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "meta",
+      "name": "Meta",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4?fields=sheets(properties(sheetId,title),merges)",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cells",
+      "name": "Read cells before",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=ONBOARDING!AD5&ranges=ONBOARDING!AD19&ranges=ONBOARDING!AK19&ranges=ONBOARDING!AD234&ranges=ONBOARDING!AE234&ranges=ONBOARDING!AD542&valueRenderOption=UNFORMATTED_VALUE",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "tw",
+      "name": "Test write USER_ENTERED",
+      "disabled": true,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"valueInputOption\":\"USER_ENTERED\",\"data\":[{\"range\":\"ONBOARDING!AK19\",\"values\":[[\"THESIS\"]]}],\"includeValuesInResponse\":true,\"responseValueRenderOption\":\"UNFORMATTED_VALUE\"}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cells2",
+      "name": "Read cells after",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=ONBOARDING!AK19&ranges=ONBOARDING!AD19&valueRenderOption=UNFORMATTED_VALUE",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "o",
+      "name": "Out",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function g(n){try{return $(n).first().json||{};}catch(e){return {err:'node '+n+' missing'};}}\nfunction cn(i){var s='';i=i+1;while(i>0){var m=(i-1)%26;s=String.fromCharCode(65+m)+s;i=Math.floor((i-1)/26);}return s;}\nvar m=g('Meta');var out={};\n(m.sheets||[]).forEach(function(s){var t=(s.properties||{}).title;var mg=s.merges||[];\n if(!mg.length)return;\n out[t]={count:mg.length,list:mg.slice(0,60).map(function(r){return cn(r.startColumnIndex)+(r.startRowIndex+1)+':'+cn(r.endColumnIndex-1)+r.endRowIndex+'  (rows '+(r.startRowIndex+1)+'-'+r.endRowIndex+', cols '+cn(r.startColumnIndex)+'-'+cn(r.endColumnIndex-1)+')';})};});\nvar onbMerges=[];\n(m.sheets||[]).forEach(function(s){if((s.properties||{}).title!=='ONBOARDING')return;(s.merges||[]).forEach(function(r){onbMerges.push(r);});});\nvar targets=[{r:5,c:29},{r:19,c:29},{r:19,c:36},{r:19,c:37},{r:28,c:29},{r:29,c:29},{r:95,c:29},{r:156,c:29},{r:234,c:29},{r:237,c:29},{r:542,c:29},{r:234,c:30}];\nvar hit=targets.map(function(t){var f=null;onbMerges.forEach(function(r){if(t.r-1>=r.startRowIndex&&t.r-1<r.endRowIndex&&t.c>=r.startColumnIndex&&t.c<r.endColumnIndex)f=cn(r.startColumnIndex)+(r.startRowIndex+1)+':'+cn(r.endColumnIndex-1)+r.endRowIndex;});return {cell:cn(t.c)+t.r,insideMerge:f,isAnchor:f?(f.split(':')[0]===cn(t.c)+t.r):null};});\nreturn [{json:{mergesBySheet:out,onboardingMergeCount:onbMerges.length,targetCheck:hit}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Meta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Meta": {
+      "main": [
+        [
+          {
+            "node": "Read cells before",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read cells before": {
+      "main": [
+        [
+          {
+            "node": "Test write USER_ENTERED",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Test write USER_ENTERED": {
+      "main": [
+        [
+          {
+            "node": "Read cells after",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read cells after": {
+      "main": [
+        [
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "BmrTeRuGTrRXuXDT",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-30T11:35:19.585Z",
+      "updatedAt": "2026-09-30T11:35:19.585Z"
+    }
+  ],
+  "activeVersion": null
+}

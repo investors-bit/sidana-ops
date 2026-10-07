@@ -1,0 +1,181 @@
+{
+  "id": "KYfmnvCYUpwVUE4S",
+  "name": "Founder Fundraising Emails",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-08-18T11:38:16.421Z",
+  "updatedAt": "2026-08-29T16:37:40.000Z",
+  "isArchived": true,
+  "versionId": "448b29da-dddb-4c75-b08e-c99a89cd0693",
+  "versionCounter": 14,
+  "sourceWorkflowId": null,
+  "triggerCount": 0,
+  "nodes": [
+    {
+      "id": "0ee3ddbe-8433-4304-b55d-f378f2f76ce4",
+      "name": "Start",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "739eaa64-d920-4acc-bbcd-fc36d1b8ef2e",
+      "name": "Read Founders",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1QxUZkSIKpHiS9-IMfCwSJLHP369-SsqAwc22cGaAZWc/edit?gid=0#gid=0"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1QxUZkSIKpHiS9-IMfCwSJLHP369-SsqAwc22cGaAZWc/edit?gid=0#gid=0"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YlrFGVhkw9BrV6iE",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "id": "a38ba8bd-3681-491a-8fbf-6fdc4c775d6e",
+      "name": "Skip Invalid Emails",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        448,
+        192
+      ],
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "valid-email",
+              "leftValue": "={{ $json.Email }}",
+              "rightValue": "^\\s*[^\\s@,]+@[^\\s@,]+\\.[^\\s@,]+(\\s*,\\s*[^\\s@,]+@[^\\s@,]+\\.[^\\s@,]+)*\\s*$",
+              "operator": {
+                "type": "string",
+                "operation": "regex"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "bcd53f9e-520c-44cc-9c57-3a4b52c4acaf",
+      "name": "Send Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        448,
+        0
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "={{ $json.Email }}",
+        "subject": "={{ $json[\"Startup Name\"] }} Fundraising – Deal Coordination & Next Steps",
+        "emailType": "html",
+        "message": "=<p>Hi {{ $json[\"Founders Name\"] || \"there\" }},</p>\n<p>I hope you're doing well.</p>\n<p>I'll be coordinating and leading the fundraising process for {{ $json[\"Startup Name\"] }}. I'll support the deal across investor outreach, investor queries, documentation requirements, follow-ups, and any other information required throughout the fundraising process.</p>\n<p>If you have any doubts or would like to discuss anything regarding the fundraising process, investor approach, business positioning, or next steps over a meeting, you can schedule a convenient time here:</p>\n<p><a href=\"https://calendly.com/sidanaventuresinvestors/30min\">https://calendly.com/sidanaventuresinvestors/30min</a></p>\n<p>Feel free to reach out to me directly as well.</p>\n<p>Best regards,<br/>Aditya Mishra<br/>+918527902945</p>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "WnChCwx6dhMlY5iw",
+          "name": "Gmail account"
+        }
+      },
+      "webhookId": "a09b9705-4bab-4dee-8bf5-0bb1a2d52db7"
+    }
+  ],
+  "connections": {
+    "Start": {
+      "main": [
+        [
+          {
+            "node": "Read Founders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Founders": {
+      "main": [
+        [
+          {
+            "node": "Skip Invalid Emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skip Invalid Emails": {
+      "main": [
+        [
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "pinData": {},
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "KYfmnvCYUpwVUE4S",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-08-18T11:38:16.423Z",
+      "updatedAt": "2026-08-18T11:38:16.423Z"
+    }
+  ],
+  "activeVersion": null
+}

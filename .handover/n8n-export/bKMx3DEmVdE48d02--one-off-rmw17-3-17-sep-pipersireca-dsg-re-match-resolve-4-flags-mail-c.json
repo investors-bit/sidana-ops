@@ -1,0 +1,684 @@
+{
+  "id": "bKMx3DEmVdE48d02",
+  "name": "One-off RMW17-3 — 17 Sep: PiperSireca + DSG re-match, resolve 4 flags, mail-correction carry-through",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-17T05:10:53.653Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "8916c5b1-a1b9-4f0f-b8c4-8cd569815041",
+  "versionCounter": 5,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "50 10 17 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "hi",
+      "name": "GET INV header",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/INVESTORS!1:1",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "hp",
+      "name": "GET PIPE header",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/PIPELINE!1:1",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "he",
+      "name": "GET ELOG header",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/' + encodeURIComponent(\"'ERROR LOG'!1:1\") }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "hg",
+      "name": "GET meetings values",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/1d-wSnDCnC_c9_rqD652Zayu6An-dipeVyC7lCD_TD0Y/values/' + encodeURIComponent(\"'Report - No of Deal Flows'!A1:Z400\") }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "r0",
+      "name": "Read Deal Tracker",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        1000,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1WzrrPelm2HsJNXOUNIEOuRajp70CUY-RrzBOs9LENjs/edit"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1WzrrPelm2HsJNXOUNIEOuRajp70CUY-RrzBOs9LENjs/edit#gid=189973839"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "r1",
+      "name": "Read INVESTORS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        1200,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "INVESTORS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "r2",
+      "name": "Read STARTUPS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        1400,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "STARTUPS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "r4",
+      "name": "Read ERROR LOG",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        1600,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "ERROR LOG"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "r3",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        1800,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cp",
+      "name": "Plan",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v){return String(v==null?'':v).trim();}\nfunction nz(x){return s(x).toLowerCase().replace(/[^a-z0-9]/g,'');}\nfunction yes(x){return s(x).toLowerCase()==='yes';}\nfunction ems(x){return (s(x).toLowerCase().match(/[a-z0-9._%+-]+@[a-z0-9-]+(\\.[a-z0-9-]+)+/g)||[]).map(function(e){return e.replace(/\\.+$/,'');});}\nfunction colLetter(i){var n=i+1,o='';while(n>0){var m=(n-1)%26;o=String.fromCharCode(65+m)+o;n=Math.floor((n-1)/26);}return o;}\nfunction cols(node,names,label){var h=((($(node).first().json.values)||[[]])[0]||[]).map(s);var C={};names.forEach(function(n){var i=h.indexOf(n);if(i<0){throw new Error('ABORT: '+label+' column missing '+n);}C[n]=colLetter(i);});return C;}\nfunction addDays(d,n){var t=new Date(d+'T00:00:00Z');t.setUTCDate(t.getUTCDate()+n);return t.toISOString().slice(0,10);}\nfunction dow(d){return new Date(d+'T00:00:00Z').getUTCDay();}\nfunction monday(d){var w=dow(d);return addDays(d,-(w===0?6:w-1));}\nfunction isoDay(x){x=s(x);if(!x){return '';}var m=x.match(/^(\\d{4})-(\\d{2})-(\\d{2})/);if(m){return m[0];}var d=new Date(x);return isNaN(d.getTime())?'':d.toISOString().slice(0,10);}\nfunction raiseCr(t){t=s(t);var v=[],m;var r1=/([\\d.]+)\\s*Cr\\b/ig;while((m=r1.exec(t))){v.push(parseFloat(m[1]));}var r2=/([\\d.]+)\\s*L\\b/g;while((m=r2.exec(t))){v.push(parseFloat(m[1])/100);}var r3=/US\\$\\s*([\\d.]+)\\s*M\\b/ig;while((m=r3.exec(t))){v.push(parseFloat(m[1])*8.5);}var r4=/US\\$\\s*([\\d.]+)\\s*K\\b/ig;while((m=r4.exec(t))){v.push(parseFloat(m[1])*0.0085);}v=v.filter(function(x){return !isNaN(x);});return v.length?Math.max.apply(null,v):null;}\nfunction all(n){return $(n).all().map(function(i){return i.json;});}\nvar TODAY='2026-09-17';\nvar IC=cols('GET INV header',['contact_person','email','sector','stage','cheque_inr_cr'],'INVESTORS');\nvar PC=cols('GET PIPE header',['email','cc','pause','next_action','match_type','notes'],'PIPELINE');\nvar EC=cols('GET ELOG header',['resolved'],'ERROR LOG');\nvar inv=all('Read INVESTORS'),st=all('Read STARTUPS'),trk=all('Read Deal Tracker'),elog=all('Read ERROR LOG');\nvar pipe=$input.all().map(function(i){return i.json;});\nvar grid=$('GET meetings values').first().json.values||[];\nif(pipe.length<5000){throw new Error('ABORT: PIPELINE only '+pipe.length);}\nif(inv.length<200){throw new Error('ABORT: INVESTORS only '+inv.length);}\nif(st.length<55){throw new Error('ABORT: STARTUPS only '+st.length);}\nif(elog.length<2000){throw new Error('ABORT: ERROR LOG only '+elog.length);}\nvar tcols=Object.keys(trk[0]||{});var cInv=null;tcols.forEach(function(c){var l=c.toLowerCase();if(!cInv&&(l.indexOf('investor')>=0||l.indexOf('vc name')>=0)){cInv=c;}});\nif(!cInv){throw new Error('ABORT: tracker investor column not found');}\nvar dInv={};trk.forEach(function(r){var k=nz(r[cInv]);if(k){dInv[k]=1;}});\nif(trk.length<240||Object.keys(dInv).length<235){throw new Error('ABORT: Deal Tracker looks truncated: '+trk.length+' rows / '+Object.keys(dInv).length+' investors');}\n// meetings: latest dated staircase block\nvar start=-1;for(var t=0;t<grid.length;t++){var c0=s((grid[t]||[])[0]);if(/^(\\d{1,2}\\/\\d{1,2}\\/\\d{4}|\\d{4}-\\d{2}-\\d{2})$/.test(c0)){var ok=false;for(var u=t+1;u<Math.min(t+8,grid.length);u++){var rw=grid[u]||[];if(/^\\d+\\s*meetings?/i.test(s(rw[1]))||/^\\d+\\s*meetings?/i.test(s(rw[0]))){ok=true;break;}}if(ok){start=t;}}}\nvar stair={};if(start>=0){for(var v=start+1;v<grid.length;v++){var row=grid[v]||[];var mm=s(row[1]).match(/^(\\d+)\\s*meetings?/i);var off=2;if(!mm){mm=s(row[0]).match(/^(\\d+)\\s*meetings?/i);off=1;}if(!mm){if(Object.keys(stair).length){break;}else{continue;}}var nM=parseInt(mm[1],10);for(var w=off;w<row.length;w++){var nm=nz(row[w]);if(!nm){continue;}if(stair[nm]===undefined||nM>stair[nm]){stair[nm]=nM;}}}}\nif(Object.keys(stair).length<30){throw new Error('ABORT: meetings staircase parse found only '+Object.keys(stair).length+' names');}\nfunction meetingsOf(k){var best=0;Object.keys(stair).forEach(function(n){if(n===k||(n.length>=4&&k.indexOf(n)===0)||(k.length>=4&&n.indexOf(k)===0)){if(stair[n]>best){best=stair[n];}}});return best;}\nvar stBy={};st.forEach(function(r){var k=nz(r.startup);if(k){stBy[k]=r;}});\nfunction stRow(name){var k=nz(name);if(stBy[k]){return stBy[k];}var c=st.filter(function(r){var n=nz(r.startup);return n&&n.length>=4&&(n.indexOf(k)===0||k.indexOf(n)===0);});return c.length===1?c[0]:null;}\n// ---- INVESTORS\nfunction one(k){var r=inv.filter(function(x){return nz(x.investor)===k;});if(r.length!==1){throw new Error('ABORT: '+k+' resolves to '+r.length+' INVESTORS rows');}return r[0];}\nvar PIPER=one('pipersireca'),DSG=one('dsgconsumerpartners'),MVP=one('mventurepartners'),TITAN=one('titancapital'),KARE=one('karekebaventures'),FIRE=one('firesideventures');\nfunction need(r,e){if(ems(r.email).indexOf(e)<0){throw new Error('ABORT: '+s(r.investor)+' email is not '+e+' ('+s(r.email)+')');}}\nneed(DSG,'pshirali@dsgcp.com');need(TITAN,'rohil@titancapital.vc');need(KARE,'ritika@karekeba.com');need(FIRE,'sonia@firesideventures.com');need(MVP,'chiranjeev@m-venturepartners.com');need(PIPER,'amit@piperserica.com');\nvar idata=[],iedits=[];\nfunction iset(r,f,v){if(s(r[f])===v){return;}idata.push({range:'INVESTORS!'+IC[f]+r.row_number,values:[[v]]});iedits.push(s(r.investor)+'.'+f+': '+s(r[f]).slice(0,45)+' -> '+v.slice(0,70));}\niset(PIPER,'sector','Semiconductors, Advanced Electronics, Artificial Intelligence infra, Fintech infra, Space technology and defense technology, Healthcare and life sciences');\niset(PIPER,'stage','Series A');\niset(PIPER,'cheque_inr_cr','25 to 50 crores INR');\niset(DSG,'sector','pureplay consumer brand');\niset(DSG,'stage','Seed, Pre-Series A, Series A');\nvar MVP_EMAIL='shalini@m-venturepartners.com,chiranjeev@m-venturepartners.com';\niset(MVP,'email',MVP_EMAIL);iset(MVP,'contact_person','Shalini, chiranjeev');\n// ---- PIPELINE cell map (one value per cell)\nvar cell={};\nfunction pset(p,f,v){cell['PIPELINE!'+PC[f]+p.row_number]=v;}\nfunction addNote(p,tx){var k='PIPELINE!'+PC.notes+p.row_number;var n=cell[k]!==undefined?cell[k]:s(p.notes);cell[k]=(n?n+' | ':'')+tx;}\nvar dropped=[],kept=[],pausedSent=[];\nfunction drop(p,why){pset(p,'pause','Yes');pset(p,'next_action','DROPPED - not per strategy');pset(p,'match_type','Not per strategy: '+why);addNote(p,'DROPPED '+TODAY+' - '+why);dropped.push(s(p.deal_id)+' '+s(p.startup)+' x '+s(p.investor));}\n// PiperSireca: Series A, INR 25-50 Cr, semis / adv electronics / AI infra / fintech infra / space-defence / healthcare\nvar PIPER_SECTOR_OK={eosnox:1,spintly:1};var PIPER_RUNG={eosnox:2,spintly:3};\nfunction piperEval(p){var k=nz(p.startup);var sr=stRow(p.startup);if(!sr){return {ok:false,why:'startup not found in STARTUPS'};}\n var rc=raiseCr(sr.raise_inr_cr);if(rc===null||rc<25){return {ok:false,why:'round '+s(sr.raise_inr_cr)+' is below PiperSireca minimum cheque of INR 25 Cr (Thesis tab: Series A, INR 25-50 Cr)'};}\n if(!PIPER_SECTOR_OK[k]){return {ok:false,why:'business not in PiperSireca sectors (semiconductors, advanced electronics, AI infra, fintech infra, space/defence, healthcare & life sciences)'};}\n var mt=meetingsOf(k);var diff=3-PIPER_RUNG[k];\n if(diff===0){return {ok:true,type:'Exact match',mt:mt};}\n if(diff===1&&mt<5){return {ok:true,type:'Sector + cheque match (stage one step off)',mt:mt};}\n return {ok:false,why:'stage '+s(sr.stage)+' outside PiperSireca band Series A ('+mt+' meetings, strict)'};}\nvar pq=pipe.filter(function(p){return nz(p.investor)==='pipersireca'&&!yes(p.deal_shared)&&!yes(p.pause);});\nif(pq.length>35){throw new Error('ABORT: PiperSireca queue '+pq.length);}\npq.forEach(function(p){var e=piperEval(p);if(!e.ok){drop(p,e.why);return;}\n if(s(p.match_type)!==e.type){pset(p,'match_type',e.type);addNote(p,(e.type==='Exact match'?'Strict match ':'Meeting-push: stage one step off ')+TODAY+' (PiperSireca band now Series A)');}\n kept.push(s(p.deal_id)+' '+s(p.startup)+' ['+e.type+', '+e.mt+' mtgs]');});\npipe.filter(function(p){return nz(p.investor)==='pipersireca'&&yes(p.deal_shared)&&!s(p.investor_response)&&!yes(p.pause);}).forEach(function(p){var e=piperEval(p);if(e.ok){return;}pset(p,'pause','Yes');addNote(p,'PAUSED '+TODAY+' - off PiperSireca new mandate: '+e.why);pausedSent.push(s(p.deal_id)+' '+s(p.startup)+' x PiperSireca');});\n// DSG: pureplay consumer brands only\nvar DSG_BRAND={lustr:1,healthymaster:1,luxova:1,voldenergy:1,sugarsdaddy:1,caffenacoffee:1,mysoul:1,bodybeyond:1,indiestori:1};\npipe.filter(function(p){return nz(p.investor)==='dsgconsumerpartners'&&!yes(p.pause)&&(!yes(p.deal_shared)||!s(p.investor_response));}).forEach(function(p){if(DSG_BRAND[nz(p.startup)]){return;}var why='DSG Consumer Partners now backs pureplay consumer brands only (Thesis tab); '+s(p.startup)+' is not a consumer brand';if(yes(p.deal_shared)){pset(p,'pause','Yes');addNote(p,'PAUSED '+TODAY+' - '+why);pausedSent.push(s(p.deal_id)+' '+s(p.startup)+' x DSG');}else{drop(p,why);}});\nif(dropped.length>28){throw new Error('ABORT: '+dropped.length+' drops exceeds guard');}\nif(pausedSent.length>4){throw new Error('ABORT: '+pausedSent.length+' sent pauses exceeds guard');}\n// ---- mail corrections: re-point queued rows\nvar repointed={};\nfunction repoint(R,email,wrong,expect){var target=ems(email).sort().join(',');var n=0;pipe.forEach(function(p){if(s(p.investor)!==s(R.investor)||yes(p.deal_shared)||yes(p.pause)){return;}if(ems(p.email).sort().join(',')===target){return;}pset(p,'email',email);if(ems(p.cc).some(function(e){return wrong.indexOf(e)>=0;})){pset(p,'cc',s(R.cc));}n++;});\n if(n!==expect){throw new Error('ABORT: '+s(R.investor)+' re-point count '+n+' expected '+expect);}repointed[s(R.investor)]=n;}\nrepoint(TITAN,s(TITAN.email),['ranveer@titancapital.vc'],15);\nrepoint(FIRE,s(FIRE.email),['aman@firesideventures.com'],2);\nrepoint(MVP,MVP_EMAIL,[],19);\n// ---- capacity events (sent by date_shared, live Initial by next_due)\nvar events=[],badDates=0,dsSample=[];\npipe.forEach(function(p){var paused=yes(p.pause)||cell['PIPELINE!'+PC.pause+p.row_number]==='Yes';var day='';\n if(yes(p.deal_shared)){day=isoDay(p.date_shared);if(!day){badDates++;}else if(dsSample.length<3){dsSample.push(s(p.date_shared));}}else if(!paused&&/^initial/i.test(s(p.next_action))){day=isoDay(p.next_due);}\n if(!day||day<'2026-09-14'){return;}events.push({day:day,owner:s(p.owner),investor:s(p.investor),addrs:ems(p.email)});});\nvar ownerDay={};events.forEach(function(e){var k=e.owner+'|'+e.day;ownerDay[k]=(ownerDay[k]||0)+1;});\nfunction place(R,emailStr,owner){var A=ems(emailStr);var N={};N[s(R.investor)]=1;inv.forEach(function(r){if(ems(r.email).some(function(e){return A.indexOf(e)>=0;})){N[s(r.investor)]=1;}});\n var day={},week={};events.forEach(function(e){if(N[e.investor]||e.addrs.some(function(x){return A.indexOf(x)>=0;})){day[e.day]=(day[e.day]||0)+1;var wk=monday(e.day);week[wk]=(week[wk]||0)+1;}});\n for(var i=1;i<=120;i++){var d=addDays(TODAY,i);var wd=dow(d);if(wd===0||wd===6){continue;}if((day[d]||0)>=2||(week[monday(d)]||0)>=5||(ownerDay[owner+'|'+d]||0)>=20){continue;}\n  events.push({day:d,owner:owner,investor:s(R.investor),addrs:A});ownerDay[owner+'|'+d]=(ownerDay[owner+'|'+d]||0)+1;return d;}\n return '';}\nvar maxN=0,ids={};pipe.forEach(function(p){ids[s(p.deal_id)]=1;var m=s(p.deal_id).match(/^D(\\d+)$/);if(m){var vv=parseInt(m[1],10);if(vv>maxN){maxN=vv;}}});\nvar maxBefore=maxN;\nfunction nextId(){maxN++;var id='D'+String(maxN).padStart(5,'0');if(ids[id]){throw new Error('ABORT: id collision '+id);}ids[id]=1;return id;}\n// ---- sent to wrong inbox: mark + re-share\nvar additions=[],marked=[],reshareSkipped=[];\nvar WRONG=[{R:KARE,wrong:'vishal@karekeba.com',ids:['D00097','D02624']},{R:TITAN,wrong:'ranveer@titancapital.vc',ids:['D02658']}];\nWRONG.forEach(function(w){w.ids.forEach(function(id){var rs=pipe.filter(function(p){return s(p.deal_id)===id;});if(rs.length!==1){throw new Error('ABORT: '+id+' resolves to '+rs.length+' rows');}var p=rs[0];\n if(s(p.investor)!==s(w.R.investor)||!yes(p.deal_shared)||ems(p.email).indexOf(w.wrong)<0){throw new Error('ABORT: '+id+' is not a sent row to '+w.wrong);}\n if(/wrong email/i.test(s(p.next_action))){return;}\n var sr=stRow(p.startup);var exists=pipe.some(function(q){return q!==p&&s(q.investor)===s(w.R.investor)&&nz(q.startup)===nz(p.startup)&&!yes(q.pause)&&ems(q.email).indexOf(w.wrong)<0;});\n var d='';\n if(exists){reshareSkipped.push(id+' already has a live row to the corrected inbox');}\n else if(!sr||!yes(sr.active)){reshareSkipped.push(id+' startup inactive / not found - not re-shared');}\n else if(!/^(Exact match|Sector \\+ cheque match)/.test(s(p.match_type))){reshareSkipped.push(id+' '+s(p.startup)+' x '+s(p.investor)+': not re-shared - old row match_type \"'+s(p.match_type)+'\" is not a current-strategy match (needs human review)');}\n else{var owner=s(sr.owner)||s(p.owner);d=place(w.R,s(w.R.email),owner);if(!d){reshareSkipped.push(id+' no free slot in 120 days');}else{additions.push({deal_id:nextId(),startup:s(p.startup),owner:owner,investor:s(p.investor),email:s(w.R.email),cc:s(w.R.cc),match_type:s(p.match_type),deal_shared:'No',next_action:'Initial',next_due:d,pause:'',notes:'Re-share after wrong email (was '+w.wrong+')'});}}\n pset(p,'pause','Yes');pset(p,'next_action','DROPPED - sent to wrong email');addNote(p,'WRONG EMAIL '+w.wrong+(d?' - resent '+d:' - not re-shared (old match not per current strategy - review))'));marked.push(id+' '+s(p.startup)+' x '+s(p.investor)+(d?' -> re-share '+d:''));});});\n// ---- DSG new matches (sector judged by hand: consumer brands; cheque floor INR 3 Cr; stage Traction inside Seed..Series A)\nvar DSG_CAND=[{n:'LUSTR',k:['lustr'],cr:4},{n:'Healthy Master',k:['healthymaster'],cr:18},{n:'Luxova',k:['luxova'],cr:8.5},{n:'VOLD Energy',k:['voldenergy','vold'],cr:8.5},{n:\"Sugar's Daddy\",k:['sugarsdaddy','sugardaddy'],cr:3},{n:'Caffena Coffee',k:['caffenacoffee','caffena','caffeina'],cr:5},{n:'My Soul',k:['mysoul'],cr:8}];\nvar dsgA=ems(DSG.email);var dsgNames={};dsgNames[s(DSG.investor)]=1;inv.forEach(function(r){if(ems(r.email).some(function(e){return dsgA.indexOf(e)>=0;})){dsgNames[s(r.investor)]=1;}});\nvar trkDsgText='',trkHits=[],dsgTrackerRows=0;\ntrk.forEach(function(r){var vals=Object.keys(r).filter(function(c){return c!=='row_number';}).map(function(c){return s(r[c]);});if(nz(r[cInv]).indexOf('dsg')===0){dsgTrackerRows++;trkDsgText+=' '+nz(vals.join(' '));}else{vals.forEach(function(x){if(nz(x).indexOf('dsg')>=0){trkHits.push(nz(x));}});}});\nvar dsgAdded=[],dsgExcl={tracker:[],pipeline:[],other:[]};\nDSG_CAND.forEach(function(c){var sr=stRow(c.n);if(!sr){dsgExcl.other.push(c.n+': not in STARTUPS');return;}\n if(!yes(sr.active)){dsgExcl.other.push(c.n+': inactive');return;}\n var rc=raiseCr(sr.raise_inr_cr);if(rc===null||Math.abs(rc-c.cr)>0.01||rc<3){dsgExcl.other.push(c.n+': raise now '+s(sr.raise_inr_cr)+' - recheck');return;}\n if(!/traction/i.test(s(sr.stage))||/pre-?revenue|pre-?seed/i.test(s(sr.stage))){dsgExcl.other.push(c.n+': stage '+s(sr.stage)+' - recheck');return;}\n var inPipe=pipe.some(function(p){var hit=dsgNames[s(p.investor)]||nz(p.investor).indexOf('dsg')===0||ems(p.email).some(function(e){return dsgA.indexOf(e)>=0;});if(!hit){return false;}var ps=nz(p.startup);return c.k.some(function(k){return ps.indexOf(k)>=0||(ps.length>=4&&k.indexOf(ps)>=0);});});\n if(inPipe){dsgExcl.pipeline.push(c.n);return;}\n var inTrk=c.k.some(function(k){return trkDsgText.indexOf(k)>=0||trkHits.some(function(x){return x.indexOf(k)>=0;});});\n if(inTrk){dsgExcl.tracker.push(c.n);return;}\n var owner=s(sr.owner);var d=place(DSG,s(DSG.email),owner);if(!d){dsgExcl.other.push(c.n+': no free slot');return;}\n var mt=meetingsOf(c.k[0]);\n additions.push({deal_id:nextId(),startup:s(sr.startup),owner:owner,investor:s(DSG.investor),email:s(DSG.email),cc:s(DSG.cc),match_type:'Exact match',deal_shared:'No',next_action:'Initial',next_due:d,pause:'',notes:'Strict match '+TODAY+' - DSG re-match: pureplay consumer brand (Thesis tab), stage + cheque fit ('+mt+' meetings)'});dsgAdded.push(s(sr.startup)+' '+d+' ('+mt+' mtgs)');});\nvar seen={};additions.forEach(function(a){var k=nz(a.startup)+'|'+ems(a.email).sort().join(',');if(seen[k]){throw new Error('ABORT: in-run duplicate '+k);}seen[k]=1;});\nif(additions.length!==0){throw new Error('ABORT: '+additions.length+' additions but the append path is not wired in this run');}\n// ---- ERROR LOG\nvar RES={'blinc invest':1,'siana capital':1,'pipersireca':1,'dsg consumer partners':1};var edata=[],resolved=[];\nelog.forEach(function(e){if(s(e.workflow)!=='THESIS-WATCH'||s(e.resolved)!==''){return;}if(!RES[s(e.investor).toLowerCase()]){return;}edata.push({range:\"'ERROR LOG'!\"+EC.resolved+e.row_number,values:[['Yes']]});resolved.push(e.row_number+' '+s(e.investor));});\nif(resolved.length!==4){throw new Error('ABORT: expected 4 flags to resolve, found '+resolved.length);}\nvar pdata=Object.keys(cell).map(function(k){return {range:k,values:[[cell[k]]]};});\nreturn [{json:{pipeline_rows:pipe.length,tracker_rows:trk.length,tracker_investors:Object.keys(dInv).length,dsg_tracker_rows:dsgTrackerRows,meetings_names:Object.keys(stair).length,eosnox_meetings:meetingsOf('eosnox'),max_deal_before:maxBefore,date_shared_sample:dsSample,sent_bad_dates:badDates,investors_edits:iedits,piper_queued:pq.length,dropped:dropped,kept:kept,paused_sent:pausedSent,repointed:repointed,marked_wrong:marked,reshare_skipped:reshareSkipped,dsg_added:dsgAdded,dsg_excluded:dsgExcl,additions:additions,resolved:resolved,pipeline_cells:pdata.length,data:idata.concat(pdata).concat(edata)}}];"
+      }
+    },
+    {
+      "id": "cs",
+      "name": "Dry summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2200,
+        -200
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "var p=$('Plan').first().json;var o={};Object.keys(p).forEach(function(k){if(k!=='data'){o[k]=p[k];}});o.data_count=p.data.length;o.data_sample=p.data.slice(0,4).concat(p.data.slice(-5));return [{json:o}];"
+      }
+    },
+    {
+      "id": "wa",
+      "name": "Write all",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "position": [
+        2200,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ valueInputOption: 'RAW', data: $('Plan').first().json.data }) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "ce",
+      "name": "Emit new rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2400,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "var rows=$('Plan').first().json.additions||[];return rows.map(function(r){return {json:r};});"
+      }
+    },
+    {
+      "id": "ap",
+      "name": "Append PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "position": [
+        2600,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "ra",
+      "name": "Read PIPELINE after",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        2800,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cv",
+      "name": "Verify",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3000,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v){return String(v==null?'':v).trim();}\nfunction nz(x){return s(x).toLowerCase().replace(/[^a-z0-9]/g,'');}\nfunction yes(x){return s(x).toLowerCase()==='yes';}\nfunction ems(x){return (s(x).toLowerCase().match(/[a-z0-9._%+-]+@[a-z0-9-]+(\\.[a-z0-9-]+)+/g)||[]).map(function(e){return e.replace(/\\.+$/,'');});}\nvar plan=$('Plan').first().json;var pipe=$input.all().map(function(i){return i.json;});\nvar inv=$('Read INVESTORS').all().map(function(i){return i.json;});\nvar invAddr={};inv.forEach(function(r){invAddr[s(r.investor)]=ems(r.email);});invAddr['M Venture Partners']=ems('shalini@m-venturepartners.com,chiranjeev@m-venturepartners.com');\nvar byId={};pipe.forEach(function(p){var id=s(p.deal_id);(byId[id]=byId[id]||[]).push(p);});\nvar missingNew=plan.additions.filter(function(a){return !byId[a.deal_id]||byId[a.deal_id].length!==1||s(byId[a.deal_id][0].startup)!==a.startup;}).map(function(a){return a.deal_id;});\nvar notPaused=plan.dropped.concat(plan.paused_sent).concat(plan.marked_wrong).map(function(x){return x.split(' ')[0];}).filter(function(id){return !byId[id]||!yes(byId[id][0].pause);});\nvar groups={};pipe.forEach(function(p){var sent=yes(p.deal_shared);var live=!sent&&!yes(p.pause);if(!sent&&!live){return;}if(/wrong email/i.test(s(p.next_action))){return;}var stn=nz(p.startup);if(!stn){return;}var addrs=invAddr[s(p.investor)];if(!addrs||!addrs.length){addrs=ems(p.email);}if(!addrs.length){addrs=['name:'+nz(p.investor)];}var ks={};addrs.forEach(function(a){ks[stn+'|'+a]=1;});Object.keys(ks).forEach(function(k){(groups[k]=groups[k]||[]).push({id:s(p.deal_id),sent:sent,live:live});});});\nvar sets={},liveSets={};Object.keys(groups).forEach(function(k){var g=groups[k];var idl={};g.forEach(function(x){idl[x.id]=1;});var ids=Object.keys(idl).sort();if(ids.length<2){return;}var key=k.split('|')[0]+':'+ids.join(',');sets[key]=1;if(g.some(function(x){return x.live;})){liveSets[key]=g.map(function(x){return x.id+(x.sent?'S':'Q');}).join(',');}});\nvar mv=pipe.filter(function(p){return s(p.investor)==='M Venture Partners'&&!yes(p.deal_shared)&&!yes(p.pause);}).filter(function(p){return ems(p.email).sort().join(',')!=='chiranjeev@m-venturepartners.com,shalini@m-venturepartners.com';}).length;\nvar ti=pipe.filter(function(p){return s(p.investor)==='Titan Capital'&&!yes(p.deal_shared)&&!yes(p.pause)&&ems(p.email).indexOf('ranveer@titancapital.vc')>=0;}).length;\nreturn [{json:{pipeline_before:plan.pipeline_rows,pipeline_after:pipe.length,expected_after:plan.pipeline_rows+plan.additions.length,new_rows_missing:missingNew,should_be_paused_but_not:notPaused,dup_groups_total:Object.keys(sets).length,dup_groups_with_live_unsent:Object.keys(liveSets).length,live_dup_detail:Object.keys(liveSets).slice(0,15).map(function(k){return k+' => '+liveSets[k];}),mventure_queued_not_both:mv,titan_queued_still_ranveer:ti,ok:pipe.length===plan.pipeline_rows+plan.additions.length&&missingNew.length===0&&notPaused.length===0&&mv===0&&ti===0}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once": {
+      "main": [
+        [
+          {
+            "node": "GET INV header",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET INV header": {
+      "main": [
+        [
+          {
+            "node": "GET PIPE header",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET PIPE header": {
+      "main": [
+        [
+          {
+            "node": "GET ELOG header",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET ELOG header": {
+      "main": [
+        [
+          {
+            "node": "GET meetings values",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET meetings values": {
+      "main": [
+        [
+          {
+            "node": "Read Deal Tracker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Deal Tracker": {
+      "main": [
+        [
+          {
+            "node": "Read INVESTORS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read INVESTORS": {
+      "main": [
+        [
+          {
+            "node": "Read STARTUPS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read STARTUPS": {
+      "main": [
+        [
+          {
+            "node": "Read ERROR LOG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read ERROR LOG": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Plan": {
+      "main": [
+        [
+          {
+            "node": "Dry summary",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Write all",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Emit new rows": {
+      "main": [
+        [
+          {
+            "node": "Append PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE after",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE after": {
+      "main": [
+        [
+          {
+            "node": "Verify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write all": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE after",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "bKMx3DEmVdE48d02",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-17T05:10:53.654Z",
+      "updatedAt": "2026-09-17T05:10:53.654Z"
+    }
+  ],
+  "activeVersion": null
+}

@@ -1,0 +1,2109 @@
+{
+  "id": "50KXPqMi5R8ewfVs",
+  "name": "Reply Detection — Aditya",
+  "description": null,
+  "active": true,
+  "activeVersionId": "0c3490f3-ac23-45fd-bc49-7fbbd6bb0fbc",
+  "createdAt": "2026-08-31T20:50:20.734Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "0c3490f3-ac23-45fd-bc49-7fbbd6bb0fbc",
+  "versionCounter": 10,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "d9d12b04-15a0-4152-b462-621caf36252c",
+      "name": "Run (press Execute — testing)",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "d22c3c51-8753-4d8b-8e6a-93bfec04a9a9",
+      "name": "Required labels",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        96
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Emit one item per label we need to exist. Slash-free category names + Reply-Logged.\nconst names = ['Positive-Meeting','Interested-Reviewing','Documents-Requested','Questions','Pass','Not-Relevant','Referral-Forwarded','Out-of-Office','Other','Reply-Logged'];\nreturn names.map((n) => ({ json: { labelName: n } }));"
+      }
+    },
+    {
+      "id": "4b3745d2-fcaf-48cc-ac2f-deb5733115bc",
+      "name": "Create label (if missing)",
+      "webhookId": "0676b589-3fa9-4f01-9b77-9de2d535420c",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        448,
+        96
+      ],
+      "parameters": {
+        "resource": "label",
+        "operation": "create",
+        "name": "={{ $json.labelName }}"
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mymSHTFVWtsI3Mh7",
+          "name": "Gmail account 3"
+        }
+      }
+    },
+    {
+      "id": "27ab5524-6f9d-45da-b482-35d642ce89c2",
+      "name": "Read labels final",
+      "webhookId": "c2a35505-f256-4b63-8b46-8f1032c949db",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "executeOnce": true,
+      "position": [
+        672,
+        96
+      ],
+      "parameters": {
+        "resource": "label",
+        "operation": "getAll",
+        "returnAll": true
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mymSHTFVWtsI3Mh7",
+          "name": "Gmail account 3"
+        }
+      }
+    },
+    {
+      "id": "05197bb2-8063-4033-b824-3b1ee64d5356",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        896,
+        96
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "91353988-a1d2-4ee8-b529-2220cf464771",
+      "name": "Get Many Messages",
+      "webhookId": "4ecdf6c0-9c3c-4f88-8975-ed714d7371ab",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "executeOnce": true,
+      "position": [
+        1120,
+        96
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 200,
+        "simple": false,
+        "filters": {
+          "q": "is:inbox newer_than:2d -label:Reply-Logged -from:me"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mymSHTFVWtsI3Mh7",
+          "name": "Gmail account 3"
+        }
+      }
+    },
+    {
+      "id": "cb75ab5a-b9a6-4235-bd7c-a83056847a9d",
+      "name": "Flag auto-replies",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1344,
+        96
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const out = [];\nconst subjRe = /out of office|automatic reply|auto-?reply|on leave|vacation/i;\nfor (const it of $input.all()) {\n  const m = it.json;\n  const rawHeaders = m.headers || {};\n  const h = {};\n  for (const k in rawHeaders) { h[String(k).toLowerCase()] = rawHeaders[k]; }\n\n  let isAuto = false;\n  let reason = '';\n  const autoSubmitted = h['auto-submitted'];\n  if (autoSubmitted !== undefined && autoSubmitted !== null && String(autoSubmitted).trim().toLowerCase() !== 'no') { isAuto = true; reason = 'Auto-Submitted header'; }\n  if (!isAuto && (h['x-autoreply'] !== undefined || h['x-autorespond'] !== undefined)) { isAuto = true; reason = 'X-Autoreply/X-Autorespond header'; }\n  if (!isAuto && h['precedence'] !== undefined) {\n    const p = String(h['precedence']).trim().toLowerCase();\n    if (p === 'bulk' || p === 'auto_reply' || p === 'junk') { isAuto = true; reason = 'Precedence: ' + p; }\n  }\n  const subject = String(m.Subject || m.subject || '');\n  if (!isAuto && subjRe.test(subject)) { isAuto = true; reason = 'Subject matched auto-reply pattern'; }\n\n  out.push({ json: {\n    messageId: m.id,\n    threadId: m.threadId,\n    from: m.From || m.from || '',\n    subject: subject,\n    body: String(m.text || m.snippet || ''),\n    is_auto: isAuto,\n    auto_reason: reason,\n  }});\n}\nreturn out;"
+      }
+    },
+    {
+      "id": "f729a40e-11de-4f61-a7e7-cf4f7dbea1b0",
+      "name": "Is auto-reply?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1568,
+        96
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "auto",
+              "leftValue": "={{ $json.is_auto }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "9ba43da9-b84d-48dc-bac8-7ddb8d73682a",
+      "name": "Build DEFERRED row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1792,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const tz = 'Asia/Kolkata';\nconst now = DateTime.now().setZone(tz).toFormat('yyyy-MM-dd HH:mm');\nconst m = $json;\nreturn { json: {\n  timestamp: now,\n  workflow: 'Reply-Aditya',\n  threadId: m.threadId || '',\n  from: m.from || '',\n  subject: m.subject || '',\n  reason: m.auto_reason || 'auto-reply',\n} };"
+      }
+    },
+    {
+      "id": "6f50e169-9428-48d6-9d39-a04b7e501509",
+      "name": "Append DEFERRED",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "position": [
+        2016,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "DEFERRED"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "workflow",
+              "displayName": "workflow",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "threadId",
+              "displayName": "threadId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "from",
+              "displayName": "from",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "subject",
+              "displayName": "subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "reason",
+              "displayName": "reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        },
+        "options": {
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "a251596c-6725-4890-814a-685ea0bca649",
+      "name": "Match PIPELINE",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1792,
+        192
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const blank = (x) => x === undefined || x === null || String(x).trim() === '';\nconst byThread = {};\nfor (const p of $('Read PIPELINE').all()) {\n  const tid = String(p.json.thread_id || '').trim();\n  if (tid && byThread[tid] === undefined) byThread[tid] = p.json;\n}\nconst out = [];\nfor (const it of $input.all()) {\n  const m = it.json;\n  const tid = String(m.threadId || '').trim();\n  const row = tid ? byThread[tid] : undefined;\n  let route;\n  if (!row) route = 'unmatched';\n  else if (!blank(row.investor_response)) route = 'already';\n  else route = 'classify';\n  out.push({ json: {\n    route,\n    messageId: m.messageId,\n    threadId: m.threadId,\n    from: m.from,\n    subject: m.subject,\n    body: m.body,\n    deal_id: row ? row.deal_id : '',\n    startup: row ? row.startup : '',\n    investor: row ? row.investor : '',\n    existing_notes: row ? (row.notes || '') : '',\n  }});\n}\nreturn out;"
+      }
+    },
+    {
+      "id": "abcf3c24-67f3-4604-bfb9-b44b71cae9bd",
+      "name": "Matched to our thread?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2016,
+        192
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ours",
+              "leftValue": "={{ $json.route }}",
+              "rightValue": "unmatched",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "6e34ed17-bfc0-47c1-a2f1-d940f22d308d",
+      "name": "Already answered?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2240,
+        192
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "already",
+              "leftValue": "={{ $json.route }}",
+              "rightValue": "already",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "77f364a0-51fb-4501-9d40-799a9d6283b0",
+      "name": "Prepare Reply-Logged (already)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2528,
+        144
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const all = $('Read labels final').all();\nconst wanted = ['Reply-Logged'];\nconst out = [];\nfor (const it of $input.all()) { for (const n of wanted) { const f = all.find((l) => String((l.json.name || '')).trim() === n); if (f && f.json.id) out.push({ json: { messageId: it.json.messageId, labelId: f.json.id } }); } }\nreturn out;"
+      }
+    },
+    {
+      "id": "77168f34-a612-476e-808a-ba0a75e2da60",
+      "name": "Apply Reply-Logged (already)",
+      "webhookId": "137a7862-17af-4806-b081-3193ae2bf454",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "retryOnFail": true,
+      "position": [
+        2816,
+        144
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "addLabels",
+        "messageId": "={{ $json.messageId }}",
+        "labelIds": [
+          "={{ $json.labelId }}"
+        ]
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mymSHTFVWtsI3Mh7",
+          "name": "Gmail account 3"
+        }
+      }
+    },
+    {
+      "id": "9fc7fa1e-a3b3-4b76-acc3-6bc2155e79a4",
+      "name": "Classify reply",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2464,
+        432
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const out = [];\nfor (const item of $input.all()) {\n  const j = item.json;\n  const raw = String(j.textPlain || j.text || j.body || j.snippet || '');\n  const subject = String(j.subject || '');\n  let body = raw.split(/^\\s*On .+ wrote:\\s*$/m)[0].split(/^\\s*From:\\s.+$/m)[0].replace(/^>.*$/gm, '');\n  const t = (subject + ' ' + body).toLowerCase().replace(/\\s+/g, ' ').trim();\n  const has = (...phrases) => phrases.some(p => t.includes(p));\n  const re = (pattern) => pattern.test(t);\n  let category = 'Other';\n  let confidence = 40;\n  let matched = 'no clear signal';\n  if (has('not a fit', 'not the right fit', 'is not a fit', 'we will pass', 'going to pass', 'have to pass', 'passing on this', 'pass on this', 'pass for now', 'not for us', 'not something we', 'outside our thesis', 'outside our mandate', 'does not fit our', 'not aligned with our', 'unfortunately we', 'we are unable to', 'not pursuing', 'decided not to', 'not moving forward')) {\n    category = 'Pass'; confidence = 85; matched = 'explicit pass wording';\n  } else if (has('too early for us', 'too early stage', 'we do not invest in', 'we only invest in', 'out of our geography', 'we do not do', 'not our sector', 'wrong stage', 'below our cheque', 'too small for us', 'too large for us')) {\n    category = 'Not Relevant'; confidence = 80; matched = 'stage/sector/geography mismatch';\n  } else if (has('looping in', 'connecting you with', 'connecting you to', 'forwarded to', 'forwarding this to', 'copying my colleague', 'ccing', 'better person', 'right person', 'the person who covers', 'reach out to my colleague', 'speak to my colleague', 'circulated internally', 'shared internally', 'passed it internally')) {\n    category = 'Referral / Forwarded'; confidence = 80; matched = 'referral / internal circulation';\n  } else if (has('happy to connect', 'happy to chat', 'happy to meet', 'set up a call', 'schedule a call', 'schedule a meeting', 'book a call', 'calendly', 'my calendar', 'find a time', 'find some time', 'are you free', 'would love to chat', 'would love to connect', 'keen to discuss', 'lets discuss', 'jump on a call', 'hop on a call', 'quick call')) {\n    category = 'Positive / Meeting'; confidence = 85; matched = 'meeting request';\n  } else if (has('share the deck', 'send the deck', 'send across the deck', 'financial model', 'financials', 'data room', 'dataroom', 'cap table', 'could you share', 'can you share', 'please share', 'send over the', 'share the memo', 'share more details', 'more information on', 'detailed numbers', 'unit economics')) {\n    category = 'Documents Requested'; confidence = 75; matched = 'document request';\n  } else if (has('looks interesting', 'sounds interesting', 'this is interesting', 'we will review', 'reviewing this', 'taking a look', 'take a look', 'will look into', 'discussing internally', 'discuss internally', 'with the team', 'get back to you', 'revert shortly', 'revert soon', 'come back to you')) {\n    category = 'Interested / Reviewing'; confidence = 70; matched = 'interest / under review';\n  } else if (re(/\\?/) && has('what is', 'what are', 'how much', 'how many', 'who is', 'who are', 'could you clarify', 'can you clarify', 'curious about', 'wondering', 'whats the')) {\n    category = 'Questions'; confidence = 70; matched = 'question asked';\n  } else if (has('out of office', 'out of the office', 'on leave', 'on vacation', 'annual leave', 'away from my desk', 'currently travelling', 'currently traveling', 'limited access to email')) {\n    category = 'Out of Office'; confidence = 90; matched = 'out-of-office wording';\n  }\n  if (category === 'Other' && body.trim().length < 40) { confidence = 30; matched = 'reply too short to classify'; }\n  const firstLine = body.split(/\\n/).map(s => s.trim()).filter(s => s.length > 15 && !/^(hi|hello|hey|dear|thanks|thank you|regards|best)\\b/i.test(s))[0] || '';\n  const summary = (firstLine || body.trim().slice(0, 160)).replace(/\\s+/g, ' ').slice(0, 160);\n  out.push({ json: { ...j, category, summary: summary || '(no readable text)', confidence, classifier: 'rules-v1', rule_matched: matched } });\n}\nreturn out;"
+      }
+    },
+    {
+      "id": "e4a4dbb0-7a3e-4e42-898d-6002bd20c03e",
+      "name": "Classify decision",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2816,
+        432
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const tz = 'Asia/Kolkata';\nconst today = DateTime.now().setZone(tz).toISODate();\nconst ext = $json || {};\nconst ctx = $json;\nconst labelMap = {\n  'Positive / Meeting': 'Positive-Meeting',\n  'Interested / Reviewing': 'Interested-Reviewing',\n  'Documents Requested': 'Documents-Requested',\n  'Questions': 'Questions',\n  'Pass': 'Pass',\n  'Not Relevant': 'Not-Relevant',\n  'Referral / Forwarded': 'Referral-Forwarded',\n  'Out of Office': 'Out-of-Office',\n  'Other': 'Other',\n};\nconst statusMap = {\n  'Pass': 'Passed',\n  'Not Relevant': 'Not Relevant',\n  'Positive / Meeting': 'Meeting Scheduled',\n  'Interested / Reviewing': 'Reviewing',\n  'Documents Requested': 'Docs Requested',\n  'Questions': 'Questions',\n  'Referral / Forwarded': 'Referred',\n};\nconst cat = ext.category;\nconst conf = Number(ext.confidence);\nconst summary = String(ext.summary || '');\nlet doWrite = false, errorLog = false, row = null, errRow = null;\nlet labelNames = ['Reply-Logged'];\nif (!cat || !labelMap[cat]) {\n  errorLog = true;\n  errRow = { timestamp: today, workflow: 'Reply-Aditya', deal_id: ctx.deal_id, startup: ctx.startup, investor: ctx.investor, error_type: 'CLASSIFY_FAILED', details: 'Extractor returned no/invalid category', resolved: '' };\n  labelNames = ['Reply-Logged'];\n} else if (cat === 'Out of Office') {\n  doWrite = false;\n  labelNames = ['Out-of-Office', 'Reply-Logged'];\n} else if (isNaN(conf) || conf < 60) {\n  doWrite = true;\n  row = { deal_id: ctx.deal_id, investor_response: 'Other — needs review', deal_status: 'Needs Review' };\n  labelNames = ['Other', 'Reply-Logged'];\n} else {\n  const notes = (ctx.existing_notes ? ctx.existing_notes + ' | ' : '') + today + ': ' + summary;\n  row = { deal_id: ctx.deal_id, investor_response: cat, deal_status: statusMap[cat] || '', next_due: '', notes: notes, last_contact: today };\n  doWrite = true;\n  labelNames = [labelMap[cat], 'Reply-Logged'];\n}\nreturn { json: { messageId: ctx.messageId, deal_id: ctx.deal_id, doWrite, errorLog, row, errRow, labelNames } };"
+      }
+    },
+    {
+      "id": "3b427514-f56c-4e00-a21e-b89b99903c69",
+      "name": "Needs PIPELINE write?",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        3040,
+        144
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "w",
+              "leftValue": "={{ $json.doWrite }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "2a21cf3e-d680-4b8d-a1ac-b18e066baa77",
+      "name": "Build write row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3264,
+        144
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "return { json: $json.row };"
+      }
+    },
+    {
+      "id": "05b0fd2c-1e10-4fb3-b239-f9f72fd626a6",
+      "name": "Update PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "position": [
+        3488,
+        144
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "deal_id"
+          ],
+          "schema": [
+            {
+              "id": "deal_id",
+              "displayName": "deal_id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {
+          "handlingExtraData": "error"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "b0234939-47d9-44c3-84d6-394e1a121ee6",
+      "name": "Classification failed?",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        3040,
+        336
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "e",
+              "leftValue": "={{ $json.errorLog }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "596131cf-2fa1-40aa-9828-7d00bd8cce42",
+      "name": "Build classify error",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3264,
+        336
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "return { json: $json.errRow };"
+      }
+    },
+    {
+      "id": "ba7df524-7be5-4265-9652-25990115aae8",
+      "name": "Append ERROR LOG",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "position": [
+        3488,
+        336
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "ERROR LOG"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "workflow",
+              "displayName": "workflow",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "deal_id",
+              "displayName": "deal_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "startup",
+              "displayName": "startup",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "investor",
+              "displayName": "investor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "error_type",
+              "displayName": "error_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "details",
+              "displayName": "details",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "resolved",
+              "displayName": "resolved",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        },
+        "options": {
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "2a7643f8-d8aa-4e0d-b743-f4a7d483ddac",
+      "name": "Prepare labels (classify)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3040,
+        528
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const all = $('Read labels final').all();\nconst out = [];\nfor (const it of $input.all()) { const wanted = it.json.labelNames || []; for (const n of wanted) { const f = all.find((l) => String((l.json.name || '')).trim() === n); if (f && f.json.id) out.push({ json: { messageId: it.json.messageId, labelId: f.json.id } }); } }\nreturn out;"
+      }
+    },
+    {
+      "id": "1e9bba71-dade-4240-9155-39fffd392d5b",
+      "name": "Apply labels (classify)",
+      "webhookId": "f50858ac-948b-4470-a767-e0b201f02fc7",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "retryOnFail": true,
+      "position": [
+        3264,
+        528
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "addLabels",
+        "messageId": "={{ $json.messageId }}",
+        "labelIds": [
+          "={{ $json.labelId }}"
+        ]
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mymSHTFVWtsI3Mh7",
+          "name": "Gmail account 3"
+        }
+      }
+    },
+    {
+      "id": "fd5b5b48-9852-4495-9e70-da79af618495",
+      "name": "Every 30 min (Mon–Fri 09–18)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        192
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "*/30 9-18 * * 1-5"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Run (press Execute — testing)": {
+      "main": [
+        [
+          {
+            "node": "Required labels",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Required labels": {
+      "main": [
+        [
+          {
+            "node": "Create label (if missing)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create label (if missing)": {
+      "main": [
+        [
+          {
+            "node": "Read labels final",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read labels final": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Get Many Messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Many Messages": {
+      "main": [
+        [
+          {
+            "node": "Flag auto-replies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Flag auto-replies": {
+      "main": [
+        [
+          {
+            "node": "Is auto-reply?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is auto-reply?": {
+      "main": [
+        [
+          {
+            "node": "Build DEFERRED row",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Match PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build DEFERRED row": {
+      "main": [
+        [
+          {
+            "node": "Append DEFERRED",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Match PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Matched to our thread?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Matched to our thread?": {
+      "main": [
+        [
+          {
+            "node": "Already answered?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Already answered?": {
+      "main": [
+        [
+          {
+            "node": "Prepare Reply-Logged (already)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Classify reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Reply-Logged (already)": {
+      "main": [
+        [
+          {
+            "node": "Apply Reply-Logged (already)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Classify reply": {
+      "main": [
+        [
+          {
+            "node": "Classify decision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Classify decision": {
+      "main": [
+        [
+          {
+            "node": "Needs PIPELINE write?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Classification failed?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Prepare labels (classify)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Needs PIPELINE write?": {
+      "main": [
+        [
+          {
+            "node": "Build write row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build write row": {
+      "main": [
+        [
+          {
+            "node": "Update PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Classification failed?": {
+      "main": [
+        [
+          {
+            "node": "Build classify error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build classify error": {
+      "main": [
+        [
+          {
+            "node": "Append ERROR LOG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare labels (classify)": {
+      "main": [
+        [
+          {
+            "node": "Apply labels (classify)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Every 30 min (Mon–Fri 09–18)": {
+      "main": [
+        [
+          {
+            "node": "Required labels",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Every 30 min (Mon–Fri 09–18)": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "50KXPqMi5R8ewfVs",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-08-31T20:50:20.737Z",
+      "updatedAt": "2026-08-31T20:50:20.737Z"
+    }
+  ],
+  "activeVersion": {
+    "versionId": "0c3490f3-ac23-45fd-bc49-7fbbd6bb0fbc",
+    "workflowId": "50KXPqMi5R8ewfVs",
+    "nodes": [
+      {
+        "id": "d9d12b04-15a0-4152-b462-621caf36252c",
+        "name": "Run (press Execute — testing)",
+        "type": "n8n-nodes-base.manualTrigger",
+        "typeVersion": 1,
+        "position": [
+          0,
+          0
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "d22c3c51-8753-4d8b-8e6a-93bfec04a9a9",
+        "name": "Required labels",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          224,
+          96
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "// Emit one item per label we need to exist. Slash-free category names + Reply-Logged.\nconst names = ['Positive-Meeting','Interested-Reviewing','Documents-Requested','Questions','Pass','Not-Relevant','Referral-Forwarded','Out-of-Office','Other','Reply-Logged'];\nreturn names.map((n) => ({ json: { labelName: n } }));"
+        }
+      },
+      {
+        "id": "4b3745d2-fcaf-48cc-ac2f-deb5733115bc",
+        "name": "Create label (if missing)",
+        "type": "n8n-nodes-base.gmail",
+        "typeVersion": 2.2,
+        "position": [
+          448,
+          96
+        ],
+        "parameters": {
+          "resource": "label",
+          "operation": "create",
+          "name": "={{ $json.labelName }}"
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "mymSHTFVWtsI3Mh7",
+            "name": "Gmail account 3"
+          }
+        },
+        "onError": "continueRegularOutput",
+        "webhookId": "0676b589-3fa9-4f01-9b77-9de2d535420c"
+      },
+      {
+        "id": "27ab5524-6f9d-45da-b482-35d642ce89c2",
+        "name": "Read labels final",
+        "type": "n8n-nodes-base.gmail",
+        "typeVersion": 2.2,
+        "position": [
+          672,
+          96
+        ],
+        "parameters": {
+          "resource": "label",
+          "operation": "getAll",
+          "returnAll": true
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "mymSHTFVWtsI3Mh7",
+            "name": "Gmail account 3"
+          }
+        },
+        "executeOnce": true,
+        "webhookId": "c2a35505-f256-4b63-8b46-8f1032c949db"
+      },
+      {
+        "id": "05197bb2-8063-4033-b824-3b1ee64d5356",
+        "name": "Read PIPELINE",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.7,
+        "position": [
+          896,
+          96
+        ],
+        "parameters": {
+          "resource": "sheet",
+          "operation": "read",
+          "documentId": {
+            "__rl": true,
+            "mode": "url",
+            "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+          },
+          "sheetName": {
+            "__rl": true,
+            "mode": "name",
+            "value": "PIPELINE"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        },
+        "executeOnce": true
+      },
+      {
+        "id": "91353988-a1d2-4ee8-b529-2220cf464771",
+        "name": "Get Many Messages",
+        "type": "n8n-nodes-base.gmail",
+        "typeVersion": 2.2,
+        "position": [
+          1120,
+          96
+        ],
+        "parameters": {
+          "resource": "message",
+          "operation": "getAll",
+          "returnAll": false,
+          "limit": 200,
+          "simple": false,
+          "filters": {
+            "q": "is:inbox newer_than:2d -label:Reply-Logged -from:me"
+          }
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "mymSHTFVWtsI3Mh7",
+            "name": "Gmail account 3"
+          }
+        },
+        "executeOnce": true,
+        "webhookId": "4ecdf6c0-9c3c-4f88-8975-ed714d7371ab"
+      },
+      {
+        "id": "cb75ab5a-b9a6-4235-bd7c-a83056847a9d",
+        "name": "Flag auto-replies",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1344,
+          96
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const out = [];\nconst subjRe = /out of office|automatic reply|auto-?reply|on leave|vacation/i;\nfor (const it of $input.all()) {\n  const m = it.json;\n  const rawHeaders = m.headers || {};\n  const h = {};\n  for (const k in rawHeaders) { h[String(k).toLowerCase()] = rawHeaders[k]; }\n\n  let isAuto = false;\n  let reason = '';\n  const autoSubmitted = h['auto-submitted'];\n  if (autoSubmitted !== undefined && autoSubmitted !== null && String(autoSubmitted).trim().toLowerCase() !== 'no') { isAuto = true; reason = 'Auto-Submitted header'; }\n  if (!isAuto && (h['x-autoreply'] !== undefined || h['x-autorespond'] !== undefined)) { isAuto = true; reason = 'X-Autoreply/X-Autorespond header'; }\n  if (!isAuto && h['precedence'] !== undefined) {\n    const p = String(h['precedence']).trim().toLowerCase();\n    if (p === 'bulk' || p === 'auto_reply' || p === 'junk') { isAuto = true; reason = 'Precedence: ' + p; }\n  }\n  const subject = String(m.Subject || m.subject || '');\n  if (!isAuto && subjRe.test(subject)) { isAuto = true; reason = 'Subject matched auto-reply pattern'; }\n\n  out.push({ json: {\n    messageId: m.id,\n    threadId: m.threadId,\n    from: m.From || m.from || '',\n    subject: subject,\n    body: String(m.text || m.snippet || ''),\n    is_auto: isAuto,\n    auto_reason: reason,\n  }});\n}\nreturn out;"
+        }
+      },
+      {
+        "id": "f729a40e-11de-4f61-a7e7-cf4f7dbea1b0",
+        "name": "Is auto-reply?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          1568,
+          96
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "auto",
+                "leftValue": "={{ $json.is_auto }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          }
+        }
+      },
+      {
+        "id": "9ba43da9-b84d-48dc-bac8-7ddb8d73682a",
+        "name": "Build DEFERRED row",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1792,
+          0
+        ],
+        "parameters": {
+          "mode": "runOnceForEachItem",
+          "jsCode": "const tz = 'Asia/Kolkata';\nconst now = DateTime.now().setZone(tz).toFormat('yyyy-MM-dd HH:mm');\nconst m = $json;\nreturn { json: {\n  timestamp: now,\n  workflow: 'Reply-Aditya',\n  threadId: m.threadId || '',\n  from: m.from || '',\n  subject: m.subject || '',\n  reason: m.auto_reason || 'auto-reply',\n} };"
+        }
+      },
+      {
+        "id": "6f50e169-9428-48d6-9d39-a04b7e501509",
+        "name": "Append DEFERRED",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.7,
+        "position": [
+          2016,
+          0
+        ],
+        "parameters": {
+          "resource": "sheet",
+          "operation": "append",
+          "documentId": {
+            "__rl": true,
+            "mode": "url",
+            "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+          },
+          "sheetName": {
+            "__rl": true,
+            "mode": "name",
+            "value": "DEFERRED"
+          },
+          "columns": {
+            "mappingMode": "autoMapInputData",
+            "value": {},
+            "matchingColumns": [],
+            "schema": [
+              {
+                "id": "timestamp",
+                "displayName": "timestamp",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "workflow",
+                "displayName": "workflow",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "threadId",
+                "displayName": "threadId",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "from",
+                "displayName": "from",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "subject",
+                "displayName": "subject",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "reason",
+                "displayName": "reason",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              }
+            ]
+          },
+          "options": {
+            "handlingExtraData": "ignoreIt"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        },
+        "retryOnFail": true
+      },
+      {
+        "id": "a251596c-6725-4890-814a-685ea0bca649",
+        "name": "Match PIPELINE",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1792,
+          192
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const blank = (x) => x === undefined || x === null || String(x).trim() === '';\nconst byThread = {};\nfor (const p of $('Read PIPELINE').all()) {\n  const tid = String(p.json.thread_id || '').trim();\n  if (tid && byThread[tid] === undefined) byThread[tid] = p.json;\n}\nconst out = [];\nfor (const it of $input.all()) {\n  const m = it.json;\n  const tid = String(m.threadId || '').trim();\n  const row = tid ? byThread[tid] : undefined;\n  let route;\n  if (!row) route = 'unmatched';\n  else if (!blank(row.investor_response)) route = 'already';\n  else route = 'classify';\n  out.push({ json: {\n    route,\n    messageId: m.messageId,\n    threadId: m.threadId,\n    from: m.from,\n    subject: m.subject,\n    body: m.body,\n    deal_id: row ? row.deal_id : '',\n    startup: row ? row.startup : '',\n    investor: row ? row.investor : '',\n    existing_notes: row ? (row.notes || '') : '',\n  }});\n}\nreturn out;"
+        }
+      },
+      {
+        "id": "abcf3c24-67f3-4604-bfb9-b44b71cae9bd",
+        "name": "Matched to our thread?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          2016,
+          192
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "ours",
+                "leftValue": "={{ $json.route }}",
+                "rightValue": "unmatched",
+                "operator": {
+                  "type": "string",
+                  "operation": "notEquals"
+                }
+              }
+            ],
+            "combinator": "and"
+          }
+        }
+      },
+      {
+        "id": "6e34ed17-bfc0-47c1-a2f1-d940f22d308d",
+        "name": "Already answered?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          2240,
+          192
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "already",
+                "leftValue": "={{ $json.route }}",
+                "rightValue": "already",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          }
+        }
+      },
+      {
+        "id": "77f364a0-51fb-4501-9d40-799a9d6283b0",
+        "name": "Prepare Reply-Logged (already)",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2528,
+          144
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const all = $('Read labels final').all();\nconst wanted = ['Reply-Logged'];\nconst out = [];\nfor (const it of $input.all()) { for (const n of wanted) { const f = all.find((l) => String((l.json.name || '')).trim() === n); if (f && f.json.id) out.push({ json: { messageId: it.json.messageId, labelId: f.json.id } }); } }\nreturn out;"
+        }
+      },
+      {
+        "id": "77168f34-a612-476e-808a-ba0a75e2da60",
+        "name": "Apply Reply-Logged (already)",
+        "type": "n8n-nodes-base.gmail",
+        "typeVersion": 2.2,
+        "position": [
+          2816,
+          144
+        ],
+        "parameters": {
+          "resource": "message",
+          "operation": "addLabels",
+          "messageId": "={{ $json.messageId }}",
+          "labelIds": [
+            "={{ $json.labelId }}"
+          ]
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "mymSHTFVWtsI3Mh7",
+            "name": "Gmail account 3"
+          }
+        },
+        "retryOnFail": true,
+        "webhookId": "137a7862-17af-4806-b081-3193ae2bf454"
+      },
+      {
+        "id": "9fc7fa1e-a3b3-4b76-acc3-6bc2155e79a4",
+        "name": "Classify reply",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2464,
+          432
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const out = [];\nfor (const item of $input.all()) {\n  const j = item.json;\n  const raw = String(j.textPlain || j.text || j.body || j.snippet || '');\n  const subject = String(j.subject || '');\n  let body = raw.split(/^\\s*On .+ wrote:\\s*$/m)[0].split(/^\\s*From:\\s.+$/m)[0].replace(/^>.*$/gm, '');\n  const t = (subject + ' ' + body).toLowerCase().replace(/\\s+/g, ' ').trim();\n  const has = (...phrases) => phrases.some(p => t.includes(p));\n  const re = (pattern) => pattern.test(t);\n  let category = 'Other';\n  let confidence = 40;\n  let matched = 'no clear signal';\n  if (has('not a fit', 'not the right fit', 'is not a fit', 'we will pass', 'going to pass', 'have to pass', 'passing on this', 'pass on this', 'pass for now', 'not for us', 'not something we', 'outside our thesis', 'outside our mandate', 'does not fit our', 'not aligned with our', 'unfortunately we', 'we are unable to', 'not pursuing', 'decided not to', 'not moving forward')) {\n    category = 'Pass'; confidence = 85; matched = 'explicit pass wording';\n  } else if (has('too early for us', 'too early stage', 'we do not invest in', 'we only invest in', 'out of our geography', 'we do not do', 'not our sector', 'wrong stage', 'below our cheque', 'too small for us', 'too large for us')) {\n    category = 'Not Relevant'; confidence = 80; matched = 'stage/sector/geography mismatch';\n  } else if (has('looping in', 'connecting you with', 'connecting you to', 'forwarded to', 'forwarding this to', 'copying my colleague', 'ccing', 'better person', 'right person', 'the person who covers', 'reach out to my colleague', 'speak to my colleague', 'circulated internally', 'shared internally', 'passed it internally')) {\n    category = 'Referral / Forwarded'; confidence = 80; matched = 'referral / internal circulation';\n  } else if (has('happy to connect', 'happy to chat', 'happy to meet', 'set up a call', 'schedule a call', 'schedule a meeting', 'book a call', 'calendly', 'my calendar', 'find a time', 'find some time', 'are you free', 'would love to chat', 'would love to connect', 'keen to discuss', 'lets discuss', 'jump on a call', 'hop on a call', 'quick call')) {\n    category = 'Positive / Meeting'; confidence = 85; matched = 'meeting request';\n  } else if (has('share the deck', 'send the deck', 'send across the deck', 'financial model', 'financials', 'data room', 'dataroom', 'cap table', 'could you share', 'can you share', 'please share', 'send over the', 'share the memo', 'share more details', 'more information on', 'detailed numbers', 'unit economics')) {\n    category = 'Documents Requested'; confidence = 75; matched = 'document request';\n  } else if (has('looks interesting', 'sounds interesting', 'this is interesting', 'we will review', 'reviewing this', 'taking a look', 'take a look', 'will look into', 'discussing internally', 'discuss internally', 'with the team', 'get back to you', 'revert shortly', 'revert soon', 'come back to you')) {\n    category = 'Interested / Reviewing'; confidence = 70; matched = 'interest / under review';\n  } else if (re(/\\?/) && has('what is', 'what are', 'how much', 'how many', 'who is', 'who are', 'could you clarify', 'can you clarify', 'curious about', 'wondering', 'whats the')) {\n    category = 'Questions'; confidence = 70; matched = 'question asked';\n  } else if (has('out of office', 'out of the office', 'on leave', 'on vacation', 'annual leave', 'away from my desk', 'currently travelling', 'currently traveling', 'limited access to email')) {\n    category = 'Out of Office'; confidence = 90; matched = 'out-of-office wording';\n  }\n  if (category === 'Other' && body.trim().length < 40) { confidence = 30; matched = 'reply too short to classify'; }\n  const firstLine = body.split(/\\n/).map(s => s.trim()).filter(s => s.length > 15 && !/^(hi|hello|hey|dear|thanks|thank you|regards|best)\\b/i.test(s))[0] || '';\n  const summary = (firstLine || body.trim().slice(0, 160)).replace(/\\s+/g, ' ').slice(0, 160);\n  out.push({ json: { ...j, category, summary: summary || '(no readable text)', confidence, classifier: 'rules-v1', rule_matched: matched } });\n}\nreturn out;"
+        }
+      },
+      {
+        "id": "e4a4dbb0-7a3e-4e42-898d-6002bd20c03e",
+        "name": "Classify decision",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2816,
+          432
+        ],
+        "parameters": {
+          "mode": "runOnceForEachItem",
+          "jsCode": "const tz = 'Asia/Kolkata';\nconst today = DateTime.now().setZone(tz).toISODate();\nconst ext = $json || {};\nconst ctx = $json;\nconst labelMap = {\n  'Positive / Meeting': 'Positive-Meeting',\n  'Interested / Reviewing': 'Interested-Reviewing',\n  'Documents Requested': 'Documents-Requested',\n  'Questions': 'Questions',\n  'Pass': 'Pass',\n  'Not Relevant': 'Not-Relevant',\n  'Referral / Forwarded': 'Referral-Forwarded',\n  'Out of Office': 'Out-of-Office',\n  'Other': 'Other',\n};\nconst statusMap = {\n  'Pass': 'Passed',\n  'Not Relevant': 'Not Relevant',\n  'Positive / Meeting': 'Meeting Scheduled',\n  'Interested / Reviewing': 'Reviewing',\n  'Documents Requested': 'Docs Requested',\n  'Questions': 'Questions',\n  'Referral / Forwarded': 'Referred',\n};\nconst cat = ext.category;\nconst conf = Number(ext.confidence);\nconst summary = String(ext.summary || '');\nlet doWrite = false, errorLog = false, row = null, errRow = null;\nlet labelNames = ['Reply-Logged'];\nif (!cat || !labelMap[cat]) {\n  errorLog = true;\n  errRow = { timestamp: today, workflow: 'Reply-Aditya', deal_id: ctx.deal_id, startup: ctx.startup, investor: ctx.investor, error_type: 'CLASSIFY_FAILED', details: 'Extractor returned no/invalid category', resolved: '' };\n  labelNames = ['Reply-Logged'];\n} else if (cat === 'Out of Office') {\n  doWrite = false;\n  labelNames = ['Out-of-Office', 'Reply-Logged'];\n} else if (isNaN(conf) || conf < 60) {\n  doWrite = true;\n  row = { deal_id: ctx.deal_id, investor_response: 'Other — needs review', deal_status: 'Needs Review' };\n  labelNames = ['Other', 'Reply-Logged'];\n} else {\n  const notes = (ctx.existing_notes ? ctx.existing_notes + ' | ' : '') + today + ': ' + summary;\n  row = { deal_id: ctx.deal_id, investor_response: cat, deal_status: statusMap[cat] || '', next_due: '', notes: notes, last_contact: today };\n  doWrite = true;\n  labelNames = [labelMap[cat], 'Reply-Logged'];\n}\nreturn { json: { messageId: ctx.messageId, deal_id: ctx.deal_id, doWrite, errorLog, row, errRow, labelNames } };"
+        }
+      },
+      {
+        "id": "3b427514-f56c-4e00-a21e-b89b99903c69",
+        "name": "Needs PIPELINE write?",
+        "type": "n8n-nodes-base.filter",
+        "typeVersion": 2.2,
+        "position": [
+          3040,
+          144
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "w",
+                "leftValue": "={{ $json.doWrite }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          }
+        }
+      },
+      {
+        "id": "2a21cf3e-d680-4b8d-a1ac-b18e066baa77",
+        "name": "Build write row",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3264,
+          144
+        ],
+        "parameters": {
+          "mode": "runOnceForEachItem",
+          "jsCode": "return { json: $json.row };"
+        }
+      },
+      {
+        "id": "05b0fd2c-1e10-4fb3-b239-f9f72fd626a6",
+        "name": "Update PIPELINE",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.7,
+        "position": [
+          3488,
+          144
+        ],
+        "parameters": {
+          "resource": "sheet",
+          "operation": "update",
+          "documentId": {
+            "__rl": true,
+            "mode": "url",
+            "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+          },
+          "sheetName": {
+            "__rl": true,
+            "mode": "name",
+            "value": "PIPELINE"
+          },
+          "columns": {
+            "mappingMode": "autoMapInputData",
+            "value": {},
+            "matchingColumns": [
+              "deal_id"
+            ],
+            "schema": [
+              {
+                "id": "deal_id",
+                "displayName": "deal_id",
+                "required": false,
+                "defaultMatch": true,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              }
+            ]
+          },
+          "options": {
+            "handlingExtraData": "error"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        },
+        "retryOnFail": true
+      },
+      {
+        "id": "b0234939-47d9-44c3-84d6-394e1a121ee6",
+        "name": "Classification failed?",
+        "type": "n8n-nodes-base.filter",
+        "typeVersion": 2.2,
+        "position": [
+          3040,
+          336
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "e",
+                "leftValue": "={{ $json.errorLog }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          }
+        }
+      },
+      {
+        "id": "596131cf-2fa1-40aa-9828-7d00bd8cce42",
+        "name": "Build classify error",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3264,
+          336
+        ],
+        "parameters": {
+          "mode": "runOnceForEachItem",
+          "jsCode": "return { json: $json.errRow };"
+        }
+      },
+      {
+        "id": "ba7df524-7be5-4265-9652-25990115aae8",
+        "name": "Append ERROR LOG",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.7,
+        "position": [
+          3488,
+          336
+        ],
+        "parameters": {
+          "resource": "sheet",
+          "operation": "append",
+          "documentId": {
+            "__rl": true,
+            "mode": "url",
+            "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+          },
+          "sheetName": {
+            "__rl": true,
+            "mode": "name",
+            "value": "ERROR LOG"
+          },
+          "columns": {
+            "mappingMode": "autoMapInputData",
+            "value": {},
+            "matchingColumns": [],
+            "schema": [
+              {
+                "id": "timestamp",
+                "displayName": "timestamp",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "workflow",
+                "displayName": "workflow",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "deal_id",
+                "displayName": "deal_id",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "startup",
+                "displayName": "startup",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "investor",
+                "displayName": "investor",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "error_type",
+                "displayName": "error_type",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "details",
+                "displayName": "details",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "resolved",
+                "displayName": "resolved",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              }
+            ]
+          },
+          "options": {
+            "handlingExtraData": "ignoreIt"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        },
+        "retryOnFail": true
+      },
+      {
+        "id": "2a7643f8-d8aa-4e0d-b743-f4a7d483ddac",
+        "name": "Prepare labels (classify)",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3040,
+          528
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const all = $('Read labels final').all();\nconst out = [];\nfor (const it of $input.all()) { const wanted = it.json.labelNames || []; for (const n of wanted) { const f = all.find((l) => String((l.json.name || '')).trim() === n); if (f && f.json.id) out.push({ json: { messageId: it.json.messageId, labelId: f.json.id } }); } }\nreturn out;"
+        }
+      },
+      {
+        "id": "1e9bba71-dade-4240-9155-39fffd392d5b",
+        "name": "Apply labels (classify)",
+        "type": "n8n-nodes-base.gmail",
+        "typeVersion": 2.2,
+        "position": [
+          3264,
+          528
+        ],
+        "parameters": {
+          "resource": "message",
+          "operation": "addLabels",
+          "messageId": "={{ $json.messageId }}",
+          "labelIds": [
+            "={{ $json.labelId }}"
+          ]
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "mymSHTFVWtsI3Mh7",
+            "name": "Gmail account 3"
+          }
+        },
+        "retryOnFail": true,
+        "webhookId": "f50858ac-948b-4470-a767-e0b201f02fc7"
+      },
+      {
+        "id": "fd5b5b48-9852-4495-9e70-da79af618495",
+        "name": "Every 30 min (Mon–Fri 09–18)",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.4,
+        "position": [
+          0,
+          192
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "*/30 9-18 * * 1-5"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Run (press Execute — testing)": {
+        "main": [
+          [
+            {
+              "node": "Required labels",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Required labels": {
+        "main": [
+          [
+            {
+              "node": "Create label (if missing)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Create label (if missing)": {
+        "main": [
+          [
+            {
+              "node": "Read labels final",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Read labels final": {
+        "main": [
+          [
+            {
+              "node": "Read PIPELINE",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Read PIPELINE": {
+        "main": [
+          [
+            {
+              "node": "Get Many Messages",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get Many Messages": {
+        "main": [
+          [
+            {
+              "node": "Flag auto-replies",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Flag auto-replies": {
+        "main": [
+          [
+            {
+              "node": "Is auto-reply?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Is auto-reply?": {
+        "main": [
+          [
+            {
+              "node": "Build DEFERRED row",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Match PIPELINE",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build DEFERRED row": {
+        "main": [
+          [
+            {
+              "node": "Append DEFERRED",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Match PIPELINE": {
+        "main": [
+          [
+            {
+              "node": "Matched to our thread?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Matched to our thread?": {
+        "main": [
+          [
+            {
+              "node": "Already answered?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Already answered?": {
+        "main": [
+          [
+            {
+              "node": "Prepare Reply-Logged (already)",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Classify reply",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prepare Reply-Logged (already)": {
+        "main": [
+          [
+            {
+              "node": "Apply Reply-Logged (already)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Classify reply": {
+        "main": [
+          [
+            {
+              "node": "Classify decision",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Classify decision": {
+        "main": [
+          [
+            {
+              "node": "Needs PIPELINE write?",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Classification failed?",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Prepare labels (classify)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Needs PIPELINE write?": {
+        "main": [
+          [
+            {
+              "node": "Build write row",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build write row": {
+        "main": [
+          [
+            {
+              "node": "Update PIPELINE",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Classification failed?": {
+        "main": [
+          [
+            {
+              "node": "Build classify error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build classify error": {
+        "main": [
+          [
+            {
+              "node": "Append ERROR LOG",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prepare labels (classify)": {
+        "main": [
+          [
+            {
+              "node": "Apply labels (classify)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Every 30 min (Mon–Fri 09–18)": {
+        "main": [
+          [
+            {
+              "node": "Required labels",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "Sidana Ventures",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "createdAt": "2026-09-03T04:57:23.997Z",
+    "updatedAt": "2026-09-03T04:57:23.997Z",
+    "workflowPublishHistory": [
+      {
+        "id": 50,
+        "workflowId": "50KXPqMi5R8ewfVs",
+        "versionId": "0c3490f3-ac23-45fd-bc49-7fbbd6bb0fbc",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-09-03T07:15:38.421Z"
+      },
+      {
+        "id": 51,
+        "workflowId": "50KXPqMi5R8ewfVs",
+        "versionId": "0c3490f3-ac23-45fd-bc49-7fbbd6bb0fbc",
+        "event": "deactivated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-09-03T07:15:38.925Z"
+      },
+      {
+        "id": 52,
+        "workflowId": "50KXPqMi5R8ewfVs",
+        "versionId": "0c3490f3-ac23-45fd-bc49-7fbbd6bb0fbc",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-09-03T07:15:38.926Z"
+      }
+    ]
+  }
+}

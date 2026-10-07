@@ -1,0 +1,288 @@
+{
+  "id": "9GE35r7AoGYp6d4G",
+  "name": "One-off CAL-14U — invite 14U Capital, Fri 25 Sep 15:00 IST, from investors@ calendar",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-24T10:27:21.832Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "89b69552-81c6-430f-b635-ffb863eda138",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "a4d17e93-2c5b-4f8a-9e61-0b3c7d2f5e48",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-cal-14u-3b7e2c",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "ex",
+      "name": "Existing",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleCalendarOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "timeMin",
+              "value": "2026-09-25T00:00:00+05:30"
+            },
+            {
+              "name": "timeMax",
+              "value": "2026-09-26T00:00:00+05:30"
+            },
+            {
+              "name": "singleEvents",
+              "value": "true"
+            },
+            {
+              "name": "q",
+              "value": "14U"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "FMaJN0wYxb8FWUZs",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "id": "ck",
+      "name": "Check",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b = $('Webhook').first().json.body || {};\nif (b.secret !== 'sv-mail-2026-09-17-Kq7') throw new Error('bad secret');\nconst ex = $input.first().json.items || [];\nif (ex.length) throw new Error('ABORT: a 14U event already exists on investors@ on 25 Sep: ' + ex.map(e => e.summary + ' ' + (e.start && e.start.dateTime)).join('; '));\nconst ev = {\n  summary: '14U Capital (Internal SV Meeting)',\n  description: 'Intro call with 14U Capital (Shashank Umashankar, Founder & Managing Partner).\\nAgenda: how 14U Capital works - do you invest directly, and if so which sectors, stage and cheque size; and how you work with founders.',\n  start: { dateTime: '2026-09-25T15:00:00+05:30', timeZone: 'Asia/Kolkata' },\n  end: { dateTime: '2026-09-25T15:30:00+05:30', timeZone: 'Asia/Kolkata' },\n  attendees: ['shashanku@14ucapital.in', 'sridharshashank@14ucapital.in', 'hello@14ucapital.in', 'investors@sidanaventures.com', 'dealflow@sidanaventures.com', 'shradhaa@sidanaventures.com'].map(e => ({ email: e })),\n  conferenceData: { createRequest: { requestId: 'sv-14u-' + Date.now(), conferenceSolutionKey: { type: 'hangoutsMeet' } } }\n};\nconst dry = b.dry !== false;\nreturn [{ json: { dry, ev } }];"
+      }
+    },
+    {
+      "id": "if",
+      "name": "Dry?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "d1",
+              "leftValue": "={{ $json.dry }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "od",
+      "name": "Out dry",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        -150
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const e = $('Check').first().json.ev; return [{ json: { dry: true, summary: e.summary, start: e.start.dateTime, end: e.end.dateTime, attendees: e.attendees.map(a => a.email), description: e.description } }];"
+      }
+    },
+    {
+      "id": "cr",
+      "name": "Create",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        800,
+        100
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleCalendarOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "conferenceDataVersion",
+              "value": "1"
+            },
+            {
+              "name": "sendUpdates",
+              "value": "all"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.ev) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "FMaJN0wYxb8FWUZs",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "id": "ot",
+      "name": "Out",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        100
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const j = $input.first().json; return [{ json: { dry: false, id: j.id, summary: j.summary, start: j.start, end: j.end, organizer: j.organizer && j.organizer.email, meet: j.hangoutLink || '', attendees: (j.attendees || []).map(a => a.email), link: j.htmlLink } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Existing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Existing": {
+      "main": [
+        [
+          {
+            "node": "Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check": {
+      "main": [
+        [
+          {
+            "node": "Dry?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dry?": {
+      "main": [
+        [
+          {
+            "node": "Out dry",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create": {
+      "main": [
+        [
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "9GE35r7AoGYp6d4G",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-24T10:27:21.834Z",
+      "updatedAt": "2026-09-24T10:27:21.834Z"
+    }
+  ],
+  "activeVersion": null
+}

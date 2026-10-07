@@ -1,0 +1,299 @@
+{
+  "id": "uqkKNOqJu9PHauzr",
+  "name": "One-off RD-2 — re-date queued deals: minimum 5 per startup per week, investor caps kept",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-12T13:36:18.694Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "e19dc100-6451-4d92-ab25-4354ce360528",
+  "versionCounter": 7,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once (set before activating)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "47 20 12 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "hh",
+      "name": "GET header",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/PIPELINE!1:1",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "r3",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cp",
+      "name": "Plan",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nfunction nz(x) { return s(x).toLowerCase().replace(/[^a-z0-9]/g, ''); }\nfunction colLetter(i) { let n = i + 1, out = ''; while (n > 0) { const m = (n - 1) % 26; out = String.fromCharCode(65 + m) + out; n = Math.floor((n - 1) / 26); } return out; }\nconst yes = function (x) { return s(x).toLowerCase() === 'yes'; };\nconst hdr = (($('GET header').first().json.values || [[]])[0] || []).map(s);\nconst iDue = hdr.indexOf('next_due'); if (iDue < 0) { throw new Error('ABORT: next_due column missing'); }\nconst DUE = colLetter(iDue);\nconst pipe = $input.all().map(function (i) { return i.json; });\nif (pipe.length < 5000) { throw new Error('ABORT: PIPELINE only ' + pipe.length); }\n// caps (user rules): >=5 new deals per startup per week, no maximum; per investor inbox 5/week and 2/day; per owner mailbox 20/weekday\nconst MIN_PER_STARTUP_WEEK = 5, INV_WEEK = 5, INV_DAY = 2, OWNER_DAY = 20;\nfunction inbox(p) { const e = s(p.email).split(/[,;\\s]+/)[0].toLowerCase(); return e ? e : 'name:' + nz(p.investor); }\n// weekday list from Monday 15 Sep 2026\nconst days = []; { const d = new Date(Date.UTC(2026, 8, 14)); while (days.length < 260) { const w = d.getUTCDay(); if (w !== 0 && w !== 6) { days.push(d.toISOString().slice(0, 10)); } d.setUTCDate(d.getUTCDate() + 1); } }\nfunction weekOf(iso) { const d = new Date(iso + 'T00:00:00Z'); const w = d.getUTCDay(); d.setUTCDate(d.getUTCDate() - (w === 0 ? 6 : w - 1)); return d.toISOString().slice(0, 10); }\nconst weeks = []; const daysOfWeek = {};\nfor (const dy of days) { const wk = weekOf(dy); if (!daysOfWeek[wk]) { daysOfWeek[wk] = []; weeks.push(wk); } daysOfWeek[wk].push(dy); }\n// queue per startup, keeping the existing order (earliest dated first, then deal_id)\nconst active = pipe.filter(function (p) { return !yes(p.deal_shared) && !yes(p.pause); });\nif (active.length < 3000) { throw new Error('ABORT: only ' + active.length + ' active rows'); }\nconst byStartup = {};\nfor (const p of active) { const k = s(p.startup); (byStartup[k] = byStartup[k] || []).push(p); }\nfor (const k of Object.keys(byStartup)) { byStartup[k].sort(function (a, b) { const x = s(a.next_due), y = s(b.next_due); if (x !== y) { return x < y ? -1 : 1; } return s(a.deal_id) < s(b.deal_id) ? -1 : 1; }); }\nconst iw = {}, idd = {}, od = {};\nfunction place(p, wk) { const ib = inbox(p), ow = s(p.owner);\n  if ((iw[ib + '|' + wk] || 0) >= INV_WEEK) { return null; }\n  for (const dy of daysOfWeek[wk]) {\n    if ((idd[ib + '|' + dy] || 0) >= INV_DAY) { continue; }\n    if ((od[ow + '|' + dy] || 0) >= OWNER_DAY) { continue; }\n    iw[ib + '|' + wk] = (iw[ib + '|' + wk] || 0) + 1; idd[ib + '|' + dy] = (idd[ib + '|' + dy] || 0) + 1; od[ow + '|' + dy] = (od[ow + '|' + dy] || 0) + 1;\n    return dy; }\n  return null; }\n// try each of a startup's remaining deals until one fits this week - a blocked investor must not stall the startup\nfunction placeAny(k, wk) { const arr = left[k];\n  for (let i = 0; i < arr.length; i++) { const dy = place(arr[i], wk); if (dy) { const p = arr.splice(i, 1)[0]; plan[p.row_number] = dy; perWeek[wk + '|' + k] = (perWeek[wk + '|' + k] || 0) + 1; return true; } }\n  return false; }\nconst plan = {}, perWeek = {};\nconst names = Object.keys(byStartup);\nconst left = {}; for (const k of names) { left[k] = byStartup[k].slice(); }\nfor (const wk of weeks) {\n  if (!names.some(function (k) { return left[k].length; })) { break; }\n  // pass 1: the weekly minimum for every startup that still has deals\n  for (let round = 0; round < MIN_PER_STARTUP_WEEK; round++) {\n    const order1 = names.filter(function (k) { return left[k].length && (perWeek[wk + '|' + k] || 0) < MIN_PER_STARTUP_WEEK; })\n      .sort(function (a, b) { return left[a].length - left[b].length; });\n    for (const k of order1) { placeAny(k, wk); } }\n  // pass 2: no maximum - keep filling this week while capacity allows, biggest queue first\n  let moved = true;\n  while (moved) { moved = false;\n    const order = names.filter(function (k) { return left[k].length; }).sort(function (a, b) { return left[b].length - left[a].length; });\n    for (const k of order) { if (placeAny(k, wk)) { moved = true; } } }\n}\nconst unplaced = names.reduce(function (n, k) { return n + left[k].length; }, 0);\nif (unplaced > 0) { throw new Error('ABORT: ' + unplaced + ' deals could not be placed'); }\nconst data = [], changed = [];\nfor (const p of active) { const dy = plan[p.row_number]; if (!dy || dy === s(p.next_due)) { continue; }\n  data.push({ range: 'PIPELINE!' + DUE + p.row_number, values: [[dy]] }); changed.push([p.row_number, s(p.deal_id), s(p.startup), s(p.investor), s(p.next_due), dy]); }\nif (!data.length) { data.push({ range: 'PIPELINE!' + DUE + '1', values: [['next_due']] }); }\n// first four weeks per startup, for the report\nconst first4 = {};\nfor (const k of names) { first4[k] = weeks.slice(0, 4).map(function (wk) { return perWeek[wk + '|' + k] || 0; }); }\nconst below = Object.keys(first4).filter(function (k) { return first4[k][0] < MIN_PER_STARTUP_WEEK; }).map(function (k) { return k + ' (' + first4[k][0] + ')'; });\nreturn [{ json: { active: active.length, rescheduled: changed.length, weeks_used: weeks.filter(function (wk) { return names.some(function (k) { return perWeek[wk + '|' + k]; }); }).length,\n  first_week: weeks[0], below_min_first_week: below, first4: first4, data: data, sample: changed.slice(0, 15) } }];"
+      }
+    },
+    {
+      "id": "wp",
+      "name": "Write dates",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ valueInputOption: 'RAW', data: $('Plan').first().json.data }) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "ra",
+      "name": "Read PIPELINE after",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        1000,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cv",
+      "name": "Verify",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nfunction nz(x) { return s(x).toLowerCase().replace(/[^a-z0-9]/g, ''); }\nconst yes = function (x) { return s(x).toLowerCase() === 'yes'; };\nfunction weekOf(iso) { const d = new Date(iso + 'T00:00:00Z'); if (isNaN(d.getTime())) { return ''; } const w = d.getUTCDay(); d.setUTCDate(d.getUTCDate() - (w === 0 ? 6 : w - 1)); return d.toISOString().slice(0, 10); }\nconst plan = $('Plan').first().json;\nconst pipe = $input.all().map(function (i) { return i.json; });\nconst active = pipe.filter(function (p) { return !yes(p.deal_shared) && !yes(p.pause); });\nconst sw = {}, iwk = {}, idy = {}, owd = {};\nfor (const p of active) { const dy = s(p.next_due).slice(0, 10); if (!dy) { continue; } const wk = weekOf(dy);\n  sw[wk + '|' + s(p.startup)] = (sw[wk + '|' + s(p.startup)] || 0) + 1;\n  const ib = s(p.email).split(/[,;\\s]+/)[0].toLowerCase() || ('name:' + nz(p.investor));\n  iwk[ib + '|' + wk] = (iwk[ib + '|' + wk] || 0) + 1; idy[ib + '|' + dy] = (idy[ib + '|' + dy] || 0) + 1; owd[s(p.owner) + '|' + dy] = (owd[s(p.owner) + '|' + dy] || 0) + 1; }\nconst overInvWeek = Object.keys(iwk).filter(function (k) { return iwk[k] > 5; });\nconst overInvDay = Object.keys(idy).filter(function (k) { return idy[k] > 2; });\nconst overOwner = Object.keys(owd).filter(function (k) { return owd[k] > 20; });\nconst wk1 = plan.first_week;\nconst week1 = {}; for (const k of Object.keys(sw)) { if (k.indexOf(wk1 + '|') === 0) { week1[k.split('|')[1]] = sw[k]; } }\nconst under5 = Object.keys(week1).filter(function (k) { return week1[k] < 5; }).map(function (k) { return k + ' (' + week1[k] + ')'; });\nconst dayTot = {}, weekTot = {}, ownerWeek = {};\nfor (const p of active) { const dy = s(p.next_due).slice(0, 10); if (!dy) { continue; } const wk = weekOf(dy);\n  dayTot[dy] = (dayTot[dy] || 0) + 1; weekTot[wk] = (weekTot[wk] || 0) + 1; ownerWeek[s(p.owner) + '|' + wk] = (ownerWeek[s(p.owner) + '|' + wk] || 0) + 1; }\nconst dayList = Object.keys(dayTot).sort().map(function (k) { return [k, dayTot[k]]; });\nconst weekList = Object.keys(weekTot).sort().map(function (k) { return [k, weekTot[k]]; });\nconst ow1 = {}; for (const k of Object.keys(ownerWeek)) { if (k.indexOf('|' + wk1) > 0) { ow1[k.split('|')[0]] = ownerWeek[k]; } }\nreturn [{ json: { per_day: dayList, per_week: weekList, owner_week1: ow1, active_after: active.length, rescheduled: plan.rescheduled, first_week: wk1, startups_in_week1: Object.keys(week1).length,\n  week1_counts: week1, startups_under_5_in_week1: under5, over_investor_week_cap: overInvWeek, over_investor_day_cap: overInvDay, over_owner_day_cap: overOwner,\n  ok: overInvWeek.length === 0 && overInvDay.length === 0 && overOwner.length === 0 } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once (set before activating)": {
+      "main": [
+        [
+          {
+            "node": "GET header",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET header": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Plan": {
+      "main": [
+        [
+          {
+            "node": "Write dates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write dates": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE after",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE after": {
+      "main": [
+        [
+          {
+            "node": "Verify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once (set before activating)": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "uqkKNOqJu9PHauzr",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-12T13:36:18.698Z",
+      "updatedAt": "2026-09-12T13:36:18.698Z"
+    }
+  ],
+  "activeVersion": null
+}

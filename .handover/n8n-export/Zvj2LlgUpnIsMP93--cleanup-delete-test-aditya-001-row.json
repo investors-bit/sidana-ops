@@ -1,0 +1,247 @@
+{
+  "id": "Zvj2LlgUpnIsMP93",
+  "name": "CLEANUP — Delete TEST-ADITYA-001 row",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-01T08:41:37.186Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "97b56582-5445-4766-be97-cb0de2e6884f",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 0,
+  "nodes": [
+    {
+      "id": "3028b961-22ad-4bc9-b3b3-b03f101c3757",
+      "name": "Run (press Execute)",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "3d9991c3-3844-46ac-b508-d372435d644a",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      },
+      "executeOnce": true
+    },
+    {
+      "id": "5c27326e-9abc-4ffc-be21-c5144e75b968",
+      "name": "Locate test row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst rows = $('Read PIPELINE').all().map(i => i.json);\nconst matches = rows.filter(r => String(r.deal_id).trim() === 'TEST-ADITYA-001');\nif (matches.length === 0) throw new Error('ABORT: no TEST-ADITYA-001 row found — nothing to delete.');\nif (matches.length > 1) throw new Error('ABORT: found ' + matches.length + ' TEST-ADITYA-001 rows; refusing to delete to avoid removing the wrong one.');\nconst r = matches[0];\nif (!r.row_number) throw new Error('ABORT: matched row has no row_number.');\n// Safety: confirm it is the throwaway test row (pause held) before deleting.\nif (String(r.pause || '').indexOf('TEST-HOLD') === -1) throw new Error('ABORT: matched row does not carry the TEST-HOLD pause marker; refusing to delete.');\nreturn [{ json: { rowNumber: Number(r.row_number), deal_id: r.deal_id, startup: r.startup, investor: r.investor } }];\n"
+      }
+    },
+    {
+      "id": "d8349148-c32f-4bce-a88f-598b1277b829",
+      "name": "Delete test row",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        672,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "delete",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        },
+        "toDelete": "rows",
+        "startIndex": "={{ $json.rowNumber }}",
+        "numberToDelete": 1
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "c1c3b271-7a93-45f5-9e15-9112bc62cd77",
+      "name": "Verify gone",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        896,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "deal_id",
+              "lookupValue": "TEST-ADITYA-001"
+            }
+          ]
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      },
+      "executeOnce": true,
+      "alwaysOutputData": true
+    },
+    {
+      "id": "aa3541cd-e2c9-47d7-a262-da2a8f675f8d",
+      "name": "Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst remaining = $('Verify gone').all().map(i => i.json).filter(r => Object.keys(r).length > 0 && String(r.deal_id).trim() === 'TEST-ADITYA-001');\nreturn [{ json: {\n  deleted_row: $('Locate test row').first().json,\n  test_rows_remaining_after_delete: remaining.length,\n  status: remaining.length === 0 ? 'DELETED — no TEST-ADITYA-001 remains' : 'WARNING — test row still present',\n} }];\n"
+      }
+    }
+  ],
+  "connections": {
+    "Run (press Execute)": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Locate test row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Locate test row": {
+      "main": [
+        [
+          {
+            "node": "Delete test row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete test row": {
+      "main": [
+        [
+          {
+            "node": "Verify gone",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify gone": {
+      "main": [
+        [
+          {
+            "node": "Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": {},
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "Zvj2LlgUpnIsMP93",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-01T08:41:37.186Z",
+      "updatedAt": "2026-09-01T08:41:37.186Z"
+    }
+  ],
+  "activeVersion": null
+}

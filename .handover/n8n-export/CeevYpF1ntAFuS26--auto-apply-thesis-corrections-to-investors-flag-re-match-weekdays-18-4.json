@@ -1,0 +1,339 @@
+{
+  "id": "CeevYpF1ntAFuS26",
+  "name": "AUTO — apply Thesis corrections to INVESTORS + flag re-match (weekdays 18:45 IST)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-08T05:23:16.698Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "7d6eb7eb-4877-42a0-a5a9-f9991914dbda",
+  "versionCounter": 6,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "trg1",
+      "name": "Weekdays 07:35 IST",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "42 12 8 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "rd1",
+      "name": "Read Thesis correction",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        220,
+        -100
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1WOErvuYawblG-HkrK5In5YWtEiKKt_DeoVpmL5na6GU/edit"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Thesis correction"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "rd2",
+      "name": "Read INVESTORS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "INVESTORS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cd1",
+      "name": "Diff thesis rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// The Thesis tab has a MERGED two-row header, so column NAMES are unusable:\n// row 1 is 'Firm name | Contact person name | email | [merged] Updated thesis ...' and the real\n// labels (Sector / Stage / Cheque / Geography / ARR) live in row 2, which a reader treats as data.\n// So: locate the row containing 'Sector' and map columns BY POSITION from it. Abort if the shape\n// changes, rather than silently writing the wrong field onto an investor.\nconst ALIAS = {\n  'piperserica': 'PiperSireca', 'ricebergvc': 'Riceberg Ventures', 'vertex': 'Vertex Ventures',\n  'sianacapital': 'Siana Capital', '247vc': '247 VC Tech Fund', 'swishinvc': 'Swishin Ventures',\n  'atomiccapital': 'Atomic Capital', 'cedarhillcapital': 'CedarHill Capital',\n  'rainmatterzerodha': 'Rainmatter by Zerodha', 'zerencapital': 'Zeren Capital',\n  'lorealventurecapital': \"L'Oreal Venture Capital\"\n};\nfunction s(v) { return String(v == null ? '' : v).trim(); }\nfunction norm(x) { return s(x).toLowerCase().replace(/[^a-z0-9]/g, ''); }\nfunction skip(v) { const t = s(v).toLowerCase(); return t === '' || t === 'same as previous'; }\n\n// NOTE: the Sheets node injects its own 'row_number' key into every row. Taking Object.values\n// blindly makes row_number column 0 and shifts every real column right by one.\nconst raw = $('Read Thesis correction').all().map(function (i) {\n  const o = i.json;\n  return Object.keys(o).filter(function (k) { return k !== 'row_number'; })\n                       .map(function (k) { return o[k]; });\n});\nconst inv = $input.all().map(function (i) { return i.json; });\nif (inv.length < 100) { throw new Error('ABORT: INVESTORS returned only ' + inv.length + ' rows'); }\n\n// find the label row and derive column positions\nlet P = null;\nfor (const r of raw) {\n  const idx = r.findIndex(function (c) { return s(c).toLowerCase() === 'sector'; });\n  if (idx > 0) {\n    P = { firm: 0, contact: 1, email: 2, sector: idx, stage: idx + 1, cheque: idx + 2, geo: idx + 3 };\n    break;\n  }\n}\nif (!P) { throw new Error('ABORT: could not locate the Sector label row - Thesis tab layout changed'); }\n\nconst byNorm = {};\nfor (const r of inv) { byNorm[norm(r.investor)] = r; }\n\nconst updates = [], flags = [], unmatched = [];\nfor (const r of raw) {\n  const firm = s(r[P.firm]);\n  if (!firm || firm.toLowerCase() === 'firm name') { continue; }\n  const key = norm(firm);\n  const t = byNorm[key] || (ALIAS[key] ? byNorm[norm(ALIAS[key])] : null);\n  if (!t) { unmatched.push(firm); continue; }\n  if (s(t.do_not_contact).toLowerCase() === 'yes') { continue; }\n\n  const row = { investor: s(t.investor) };\n  let changed = 0, thesisChanged = false;\n  const pairs = [['contact_person', r[P.contact]], ['email', r[P.email]],\n                 ['sector', r[P.sector]], ['stage', r[P.stage]], ['cheque_inr_cr', r[P.cheque]]];\n  for (const p of pairs) {\n    const k = p[0], v = s(p[1]);\n    if (skip(v)) { continue; }\n    if (s(t[k]) === v) { continue; }\n    row[k] = v; changed++;\n    if (k === 'sector' || k === 'stage' || k === 'cheque_inr_cr') { thesisChanged = true; }\n  }\n  if (changed > 0) { updates.push({ json: row }); }\n\n  // A changed thesis invalidates that investor's existing matches. This job only edits the\n  // record - re-matching is judgement work - so raise it in ERROR LOG instead of leaving it silent.\n  if (thesisChanged) {\n    flags.push({ json: {\n      timestamp: new Date().toISOString().slice(0, 10),\n      workflow: 'THESIS-AUTO',\n      deal_id: '', startup: '', investor: s(t.investor),\n      error_type: 'THESIS_CHANGED_NEEDS_REMATCH',\n      details: 'Thesis fields updated from corrections sheet; existing PIPELINE rows still reflect the old mandate and need re-matching',\n      resolved: ''\n    }});\n  }\n}\n\nif (unmatched.length > 0) { throw new Error('ABORT: thesis rows not found in INVESTORS: ' + unmatched.join(', ') + ' - add an alias'); }\nif (updates.length > 20) { throw new Error('ABORT: ' + updates.length + ' updates exceeds guard of 20'); }\nreturn updates.concat(flags);"
+      }
+    },
+    {
+      "id": "sw1",
+      "name": "Update or flag?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        880,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "isflag",
+              "leftValue": "={{ $json.error_type }}",
+              "rightValue": "THESIS_CHANGED_NEEDS_REMATCH",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "ap1",
+      "name": "Append ERROR LOG (re-match needed)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "position": [
+        1100,
+        -110
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "ERROR LOG"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "up1",
+      "name": "Update INVESTORS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "position": [
+        1100,
+        110
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "INVESTORS"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "investor"
+          ],
+          "schema": [
+            {
+              "id": "investor",
+              "displayName": "investor",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Weekdays 07:35 IST": {
+      "main": [
+        [
+          {
+            "node": "Read Thesis correction",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Thesis correction": {
+      "main": [
+        [
+          {
+            "node": "Read INVESTORS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read INVESTORS": {
+      "main": [
+        [
+          {
+            "node": "Diff thesis rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Diff thesis rows": {
+      "main": [
+        [
+          {
+            "node": "Update or flag?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update or flag?": {
+      "main": [
+        [
+          {
+            "node": "Append ERROR LOG (re-match needed)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update INVESTORS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Weekdays 07:35 IST": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "CeevYpF1ntAFuS26",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-08T05:23:16.700Z",
+      "updatedAt": "2026-09-08T05:23:16.700Z"
+    }
+  ],
+  "activeVersion": null
+}

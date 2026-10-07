@@ -1,0 +1,279 @@
+{
+  "id": "R9lBdoncjdrEVZ90",
+  "name": "One-off FU-RAJUL — follow-up reply in thread from dealflow@ (5 Oct)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-10-05T09:18:13.812Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "ceb9087d-01af-46fa-939e-2d35559218fb",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "2c7a9e41-8b3d-4f16-a5e2-7d0b1c9f4a83",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-fu-rajul-8d3c1a",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "ck",
+      "name": "Check",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b = $('Webhook').first().json.body || {};\nif (b.secret !== 'furajul-05oct-Kc4tX9') throw new Error('bad secret');\nreturn [{ json: { dry: b.dry !== false } }];"
+      }
+    },
+    {
+      "id": "gm",
+      "name": "Orig",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "url": "https://gmail.googleapis.com/gmail/v1/users/me/threads/1a0ecfc0ac7b57dd?format=metadata&metadataHeaders=Message-ID&metadataHeaders=Subject&metadataHeaders=To&metadataHeaders=From&metadataHeaders=References",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "hwEqMRn6IxzoYs1R",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "id": "bd",
+      "name": "Build",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const t = $input.first().json; const msgs = t.messages || [];\nif (!msgs.length) throw new Error('ABORT: thread not found');\nconst hd = m => { const o = {}; for (const x of ((m.payload||{}).headers||[])) o[x.name.toLowerCase()] = x.value; return o; };\nconst last = msgs[msgs.length-1]; const H = hd(last); const first = hd(msgs[0]);\nif (!/rajul\\.vohra@gmail\\.com/i.test(first.to || '')) throw new Error('ABORT: original To is ' + first.to);\nconst others = msgs.filter(m => !/sidanaventures\\.com/i.test(hd(m).from || ''));\nif (others.length) throw new Error('ABORT: thread already has a reply from ' + hd(others[0]).from + ' - read it before following up');\nconst subj = /^re:/i.test(first.subject) ? first.subject : 'Re: ' + first.subject;\nconst html = '<div dir=\"ltr\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:small;color:#222222\"><div>Dear Rajul,</div><div><br></div><div>Hope you are doing well. Following up on the two opportunities I shared last week, Washtro (hyperlocal garment care) and Chayan Karo (home-services marketplace).</div><div><br></div><div>If either looks interesting, I would be happy to set up a short call with the founders at a time that suits you. And if neither fits what you are looking for, just let me know the sectors or stages you prefer, and I will make sure the next deals I share are closer to your interests.</div><div><br></div><div>Looking forward to hearing from you.</div><div><br></div><div>Regards,</div><div><b>Chaman Yadav</b></div><div>Investor Relations</div><div>SIDANA VENTURES LLP</div><div>424A Tower B3, Spaze iTech Park, Sector 49, Sohna Road</div><div>Gurgaon, Haryana 122022</div><div>+91 87965 31802</div><div><a href=\"https://www.sidanaventures.com\">www.sidanaventures.com</a></div></div>';\nconst refs = [H.references, H['message-id']].filter(Boolean).join(' ');\nconst mime = ['To: rajul.vohra@gmail.com', 'Subject: ' + subj, 'In-Reply-To: ' + H['message-id'], 'References: ' + refs, 'MIME-Version: 1.0', 'Content-Type: text/html; charset=UTF-8', 'Content-Transfer-Encoding: base64', '', Buffer.from(html, 'utf8').toString('base64')].join('\\r\\n');\nconst raw = Buffer.from(mime, 'utf8').toString('base64').replace(/\\+/g,'-').replace(/\\//g,'_').replace(/=+$/,'');\nreturn [{ json: { dry: $('Check').first().json.dry, threadId: t.id, messagesInThread: msgs.length, to: 'rajul.vohra@gmail.com', subject: subj, inReplyTo: H['message-id'], text: html.replace(/<div><br><\\/div>/g,'\\n').replace(/<[^>]+>/g,'\\n').replace(/\\n{2,}/g,'\\n').trim(), body: { raw, threadId: t.id } } }];"
+      }
+    },
+    {
+      "id": "if",
+      "name": "Dry?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "d1",
+              "leftValue": "={{ $json.dry }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "od",
+      "name": "Out dry",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        -150
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const c = $('Build').first().json; return [{ json: { dry: true, threadId: c.threadId, messagesInThread: c.messagesInThread, to: c.to, subject: c.subject, inReplyTo: c.inReplyTo, text: c.text } }];"
+      }
+    },
+    {
+      "id": "sd",
+      "name": "Send",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1000,
+        100
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://gmail.googleapis.com/gmail/v1/users/me/messages/send",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($('Build').first().json.body) }}",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "hwEqMRn6IxzoYs1R",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "id": "ov",
+      "name": "Out",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        100
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const j = $input.first().json; return [{ json: { dry: false, sentId: j.id, threadId: j.threadId, labels: j.labelIds } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check": {
+      "main": [
+        [
+          {
+            "node": "Orig",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Orig": {
+      "main": [
+        [
+          {
+            "node": "Build",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build": {
+      "main": [
+        [
+          {
+            "node": "Dry?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dry?": {
+      "main": [
+        [
+          {
+            "node": "Out dry",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send": {
+      "main": [
+        [
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "none",
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "R9lBdoncjdrEVZ90",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-10-05T09:18:13.826Z",
+      "updatedAt": "2026-10-05T09:18:13.826Z"
+    }
+  ],
+  "activeVersion": null
+}

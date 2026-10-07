@@ -1,0 +1,367 @@
+{
+  "id": "msxuuKOriWua0TRf",
+  "name": "One-off NEWINV-FO — Family Offices tab: celebrity, Asian FOs, Swiss investors (29 Sep)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-29T07:24:14.164Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "44563d9c-80fe-4b12-866a-4db0eebb82a2",
+  "versionCounter": 18,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "b8e2c4a1-7d3f-4e90-a5b6-1c9d8e7f6a52",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-newinv-fo-8c3d1e",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "mt",
+      "name": "Meta",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1Dgs-58U9fIDQst5Na3jby48unemyewUbDvta0enOW0U?fields=sheets.properties",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "rv",
+      "name": "Values",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1Dgs-58U9fIDQst5Na3jby48unemyewUbDvta0enOW0U/values/%27Family%20Offices%27%21A1%3AM120",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cp",
+      "name": "Compute",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const body = $('Webhook').first().json.body || {};\nif (body.secret !== 'sv-mail-2026-09-17-Kq7') throw new Error('bad secret');\nconst dry = body.dry !== false;\nconst sheets = ($('Meta').first().json.sheets || []).map(s => s.properties);\nconst tab = sheets.find(p => String(p.title).trim() === 'Family Offices');\nif (!tab) throw new Error('ABORT: no Family Offices tab');\nconst sid = tab.sheetId;\nconst V = $input.first().json.values || [];\nconst g = (r, c) => (V[r-1] && V[r-1][c] != null) ? String(V[r-1][c]).trim() : '';\nif (body.section === 'uae') {\n  // 5 Oct: append a 'UAE Family Offices' section below the last data row, matching the team's section layout.\n  let last = 0; for (let r = 1; r <= V.length; r++) if (/^\\d+$/.test(g(r,0)) && g(r,1)) last = r;\n  let titleRow = 0; for (let r = 1; r <= V.length; r++) if (/^swiss investors/i.test(g(r,0))) titleRow = r;\n  if (!titleRow) throw new Error('ABORT: Swiss section title not found');\n  for (let r = 1; r <= V.length; r++) if (/^uae/i.test(g(r,0))) throw new Error('ABORT: a UAE section already exists at row ' + r);\n  const lastSn = +g(last,0);\n  const existing = new Set(); for (let r = 1; r <= last; r++) { if (g(r,1)) existing.add(g(r,1).toLowerCase()); for (const c of [3,4,5]) if (g(r,c)) existing.add(g(r,c).toLowerCase()); }\n  const U = [\n   ['Abbey Road Investment Group', ['Arjun Mittal','Mehrez Kheir','Matein Khalid'], 'Dubai multi family office (2021): portfolio construction, investment consulting, and co-investments and direct deals in PE, VC, real estate, crypto and algo strategies; partners invest alongside clients. India links on its advisory board. info@abbeyroadig.com.'],\n   ['Vivium', ['Elie Khouri','Omar Salameh','Mido Khatib'], 'Dubai (DIFC) single family office of Elie Khouri: real estate, hospitality, design, collectibles and ventures (seed/pre-seed proptech, fintech, consumer tech); Middle East and Europe. Omar Salameh is Group CEO since Jun 2024; Mido Khatib does deal due diligence. info@viviumholding.com.'],\n   ['Patrimium Multi Family Office', ['Zaid Al-Qaimi','Amine Bentaleb','Malek Rizeq'], 'Dubai (DIFC, DFSA-regulated) multi family office: public equities, private equity, venture capital, credit, real estate and hedge funds, via funds and proprietary deal flow. Partners ex-ADIA and Kimera SFO. info@patrimiummfo.com.'],\n   ['GRC Investment Group SFO', ['Kamil Homsi','',''], 'Dubai single family office (New York arm Global Realty Capital): real estate, infrastructure, renewable energy, private credit, plus growth-stage fintech, medtech and life sciences; direct deals and global co-investments. Contact form on globalrealtycapital.com.'],\n   ['Pharos Multi Family Office', ['Rams Kanouni','Paulina Díaz Salgado',''], 'Dubai multi family office: wealth management and asset oversight, family governance, succession, corporate advisory. No direct or venture investing found; Rams Kanouni (CEO) is the investment-side contact. info@pharosmfo.com.'],\n   ['Redwood Heritage Multi-Family Office', ['Ahmad Saidali','Anas Benbachir',''], 'Dubai multi family office: family governance, succession, global asset allocation, cross-border structuring, tax and philanthropy, private capital access and Dubai real estate. Advisory-led; no direct startup investing found.']\n  ];\n  for (const a of U) { if (existing.has(a[0].toLowerCase())) throw new Error('ABORT: firm already in tab: ' + a[0]); for (const p of a[1]) if (p && existing.has(p.toLowerCase())) throw new Error('ABORT: person already in tab: ' + p); }\n  const blank = last + 1, title = last + 2, first = last + 3, end = last + 2 + U.length;\n  for (let r = blank; r <= end; r++) for (let c = 0; c <= 11; c++) if (g(r,c)) throw new Error('ABORT: ' + 'ABCDEFGHIJKL'[c] + r + ' not empty: ' + g(r,c));\n  const data = [{ range: \"'Family Offices'!A\" + title, values: [['UAE Family Offices']] }];\n  U.forEach((a, i) => { const r = first + i; const row = [lastSn + 1 + i, a[0], null, a[1][0]||null, a[1][1]||null, a[1][2]||null, null, null, null, a[2], null, 'No']; a[1].forEach((p, k) => { if (p) row[6+k] = 'Not connected'; }); data.push({ range: \"'Family Offices'!A\" + r + ':L' + r, values: [row] }); });\n  const hex = h => ({ red: parseInt(h.slice(1,3),16)/255, green: parseInt(h.slice(3,5),16)/255, blue: parseInt(h.slice(5,7),16)/255 });\n  const rg = (c0, c1) => ({ sheetId: sid, startRowIndex: first-1, endRowIndex: end, startColumnIndex: c0, endColumnIndex: c1 });\n  const fmt = [\n    { copyPaste: { source: { sheetId: sid, startRowIndex: titleRow-1, endRowIndex: titleRow, startColumnIndex: 0, endColumnIndex: 12 }, destination: { sheetId: sid, startRowIndex: title-1, endRowIndex: title, startColumnIndex: 0, endColumnIndex: 12 }, pasteType: 'PASTE_FORMAT' } },\n    { copyPaste: { source: { sheetId: sid, startRowIndex: last-1, endRowIndex: last, startColumnIndex: 0, endColumnIndex: 12 }, destination: rg(0, 12), pasteType: 'PASTE_FORMAT' } },\n    { setDataValidation: { range: rg(6, 9), rule: { condition: { type: 'ONE_OF_LIST', values: [{ userEnteredValue: 'Connected' }, { userEnteredValue: 'Request sent' }, { userEnteredValue: 'Not connected' }] }, showCustomUi: true, strict: false } } },\n    { setDataValidation: { range: rg(11, 12), rule: { condition: { type: 'ONE_OF_LIST', values: [{ userEnteredValue: 'Yes' }, { userEnteredValue: 'No' }] }, showCustomUi: true, strict: false } } },\n    { addConditionalFormatRule: { index: 0, rule: { ranges: [rg(11, 12)], booleanRule: { condition: { type: 'TEXT_EQ', values: [{ userEnteredValue: 'Yes' }] }, format: { backgroundColor: hex('#B7E1CD'), textFormat: { foregroundColor: hex('#0B8043'), bold: true } } } } } },\n    { addConditionalFormatRule: { index: 1, rule: { ranges: [rg(11, 12)], booleanRule: { condition: { type: 'TEXT_EQ', values: [{ userEnteredValue: 'No' }] }, format: { backgroundColor: hex('#F4C7C3'), textFormat: { foregroundColor: hex('#A50E0E'), bold: true } } } } } }\n  ];\n  return [{ json: { dry, sheetId: sid, header_row: title, dataRows: U.length, blocks: ['after row ' + last + ' (' + g(last,1) + ')', 'title A' + title, 'data A' + first + ':L' + end, 'S.No ' + (lastSn+1) + '-' + (lastSn+U.length)], valuesBody: { valueInputOption: 'RAW', data }, fmtBody: { requests: fmt }, preview: data.map(d => d.range.replace(\"'Family Offices'!\", '') + ' ' + d.values[0].slice(1, 9).map(x => x == null ? '-' : x).join(' | ')) } }];\n}\n// 29 Sep: append a 'Swiss Investors' section (blank row, title row, 26 investors in priority order), matching the team's section layout.\nlet last = 0; for (let r = 1; r <= V.length; r++) if (/^\\d+$/.test(g(r,0)) && g(r,1)) last = r;\nif (g(last,1) !== 'Bright Star Investments') throw new Error('ABORT: last data row ' + last + ' is ' + g(last,1));\nlet titleRow = 0; for (let r = 1; r <= V.length; r++) if (/^asian family offices/i.test(g(r,0))) titleRow = r;\nif (!titleRow) throw new Error('ABORT: Asian section title not found');\nconst lastSn = +g(last,0);\nconst existing = new Set(); for (let r = 1; r <= last; r++) { if (g(r,1)) existing.add(g(r,1).toLowerCase()); for (const c of [3,4,5]) if (g(r,c)) existing.add(g(r,c).toLowerCase()); }\nconst S = [\n ['Swiss Post Ventures', ['Raphael Fässler','Jiayun Shen','Ivo Ronner'], 'Corporate VC of Swiss Post: logistics, mobility, cybersecurity, enterprise software. Pre-Series A to Series B, first ticket US$0.5-2M. Europe and international; has a project manager for Asian ecosystem partnerships (Jiayun Shen). Bern. Published: cvc@post.ch.'],\n ['Swisscom Ventures', ['Sören Fehrmann','Stefan Kuentz','Anish Srivastava'], 'Corporate VC of Swisscom: digital infrastructure, cybersecurity, AI and software, fintech, robotics, deep tech. Seed to Series C, first ticket US$2-10M. Switzerland plus international (Israel, US). Zurich; Anish Srivastava is US Venture Partner. Contact form on ventures.swisscom.com.'],\n ['Roche Venture Fund', ['Anja Harmeier','Simon Greenwood','Monique Schiersing'], 'Therapeutics, diagnostics and digital health; mainly Series A, preclinical therapeutics preferred. First round CHF 3-10M for about 15%. CHF 750M evergreen fund, global mandate. Basel.'],\n ['Debiopharm Innovation Fund', ['Marc Cikes','Tom Gibbs','Vincent Lepreux'], 'Digital health: AI for drug R&D and oncology/cancer-care tech. Seed programme through Series A/B; about US$150M. Europe and US. Lausanne.'],\n ['Swiss Health Angels', ['Achim Diedenhofen','Daniel Bär','Gabi Huber'], 'Angel association: healthcare, therapeutics, diagnostics, medtech, digital health. Early stage. Speaks of Swiss and European startups; the most open angel group on the list. Basel. Application form linked from swisshealthangels.com; info@swisshealthangels.com.'],\n ['Anaïs Ventures', ['Lana Exertier','Julien Firmenich',''], 'Investment vehicle of members of the Firmenich family: industry and chemistry, technology, leisure and hospitality. Series A to C (Bloom Biorenewables, Neural Concept). Swiss-based, international exposure. Geneva.'],\n ['Preon Capital', ['Jari Ovaskainen','Alberto de Min','Zhiliang Li'], 'Family office / venture firm: digital technology combined with gaming, fintech, medicine, commerce, science. Seed and early stage; wants internationally scalable companies; mostly Europe so far. Geneva. Proposal form on preoncapital.com; info@preoncapital.com.'],\n ['NewOak', ['Gregory Armstrong','',''], 'Multi-family office: private equity, real estate and off-market club deals among client families; claims global coverage. Geneva and Zurich. No named venture team. contact@newoak.ch.'],\n ['Wille Finance', ['','',''], 'Single family office: VC in B2B ICT and biotech/medtech at Series A-B (CHF 1-6M, Europe only) and buyouts (CHF 5-20M, DACH/Europe). Zurich. No team names published; deals to pe@willefinance.com.'],\n ['SICTIC', ['Thomas Dübendorfer','Marcel Egger','Lucas du Croo de Jongh'], 'Swiss ICT angel club (500+ members; members invest directly): ICT-heavy tech, seed, rounds up to CHF 2M, valuation up to CHF 8M. Team must be based in Switzerland. Zurich. Pitch via sictic.ch/pitch; info@sictic.ch.'],\n ['Business Angels Switzerland', ['Ramon Zurbuchen','Frédéric Lauchenauer',''], 'Angel association (~100 members, ~20 pitch dinners a year): sector-agnostic, first external round, valuation up to CHF 5M, average round ~CHF 250k. Swiss-based companies only. Zurich and Lausanne/Geneva. Apply via businessangels.ch/for-startups.'],\n ['Redalpine', ['Luca Del Medico','Sebastian Becker','Lezama Schneider'], 'VC: software and science (deep tech, AI, energy transition, health/bio, enterprise software). Pre-seed to Series A plus follow-ons; initial ticket about US$0.5-5M. Pan-European. Zug/Zurich. info@redalpine.com (prefers warm intros).'],\n ['Serpentine Ventures', ['Mike Baur','Oliver Walzer','Guy Giuffredi'], 'VC arm of Swiss Ventures Group: ICT, healthtech, deep tech, AI/robotics, cleantech. Pre-seed to Series A. Switzerland and Europe. Zurich. Mike Baur also runs Swiss Startup Factory.'],\n ['Verve Ventures', ['Friederike Reinl','Xavier Mesnier','Thomas Meier'], 'VC: European deep tech in energy and resources, future of computing, health and bio. Pre-seed and seed, EUR 1-5M. European founders only. Zurich. Friederike Reinl heads investor relations.'],\n ['Verium AG', ['Marc Erni','George Merk','Stephanie Roller'], 'Multi-family office with a direct-investment arm: tech, services, health, environment. Growth buyouts and succession deals, EBITDA above CHF 2M, tickets from CHF 9M. DACH. Zurich. info@verium.ch.'],\n ['Aribeda', ['Peter Wuffli','Beat Wuffli',''], 'Single family office of the Wuffli family (Peter Wuffli, former UBS CEO): seed to Series A, mostly Swiss (evulpo, alao). Zurich. Pitch-deck form via aribeda.com/process.'],\n ['Spectrum Value Management', ['Ilias Läber','',''], 'Single family office of the Thomas Schmidheiny family: private equity, venture, real estate; biotech, cleantech, deep tech, hardware. Rapperswil-Jona. Contact form only.'],\n ['Vi Partners', ['Nikita Kado','Arnd Kaltofen','Olivier Laplace'], 'VC: healthcare and life sciences plus B2B tech. Seed and Series A, CHF 2-4M. Switzerland and Europe. Introductions through its network only.'],\n ['Mutschler Ventures', ['Maximilian Engelken','Lukas Lang',''], 'Family venture arm: fintech, digital health, proptech, regtech, edtech, cleantech, mobility (no biotech, consumer, crypto). Early stage with revenue; seed follow-on specialist. DACH, mostly Germany. Baar (Zug).'],\n ['EquityPitcher Ventures', ['Sascha Horrig','Andrea Silberschmidt-Buhofer','Silvan Gehmann'], 'VC: B2B tech (SaaS, AI, robotics, energy, manufacturing tech). Seed to Series A. DACH only. Zurich. info@equitypitcher.com.'],\n ['Founderful', ['Pascal Mathis','Alex Stöckl','Lukas Weder'], 'VC (formerly Wingman Ventures): leads the first round of Swiss tech startups, pre-seed, up to about US$2M. Swiss founders only. Zurich.'],\n ['MICA Ventures', ['Michael Hartweg','',''], 'Single family office venture vehicle: cleantech, ICT, medtech. Seed and early stage, Europe (Planted, IDUN). Wollerau. No website; LinkedIn only.'],\n ['BioValley Basel - Business Angel Chapter', ['Matthias Staehelin','Ruedi Gygax',''], 'Angel chapter inside the BioValley Basel life-science association: biotech, pharma, diagnostics, medtech. Seed/early, CHF 250k-1M per deal. Basel region (CH/FR/DE). contact@biovalley.ch.'],\n ['StartAngels Network', ['Norbert Zeller','Gisela Reichmuth',''], 'Angel network (~85 angels): medtech, ICT, cleantech, instruments. Early stage, rounds CHF 0.5-3M. Swiss startups only; next cycle January 2027. Zurich.'],\n ['Business Angels Club Aargau', ['Ueli Dietiker','Iris Welten',''], 'Regional angel club: sector-agnostic, seed/early, CHF 50k-2M. Aargau and German-speaking Switzerland. Brugg. info@businessangels-ag.ch.'],\n ['MINUS2', ['Nathaly Bachmann','',''], 'Investment boutique: textile technology, sustainable fashion and design only. Early stage, Europe. Feusisberg. info@minus-zwei.ch.']\n];\nconst CONNECTED = new Set(['Sören Fehrmann','Luca Del Medico','Nikita Kado']);\nfor (const a of S) { if (existing.has(a[0].toLowerCase())) throw new Error('ABORT: firm already in tab: ' + a[0]); for (const p of a[1]) if (p && existing.has(p.toLowerCase())) throw new Error('ABORT: person already in tab: ' + p); }\nconst blank = last + 1, title = last + 2, first = last + 3, end = last + 2 + S.length;\nfor (let r = blank; r <= end; r++) for (let c = 0; c <= 11; c++) if (g(r,c)) throw new Error('ABORT: ' + 'ABCDEFGHIJKL'[c] + r + ' not empty: ' + g(r,c));\nconst data = [{ range: \"'Family Offices'!A\" + title, values: [['Swiss Investors']] }];\nS.forEach((a, i) => {\n  const r = first + i;\n  const row = [lastSn + 1 + i, a[0], null, a[1][0]||null, a[1][1]||null, a[1][2]||null, null, null, null, a[2], null, 'No'];\n  a[1].forEach((p, k) => { if (p) row[6+k] = CONNECTED.has(p) ? 'Connected' : 'Not connected'; });\n  data.push({ range: \"'Family Offices'!A\" + r + ':L' + r, values: [row] });\n});\nconst hex = h => ({ red: parseInt(h.slice(1,3),16)/255, green: parseInt(h.slice(3,5),16)/255, blue: parseInt(h.slice(5,7),16)/255 });\nconst rg = (c0, c1) => ({ sheetId: sid, startRowIndex: first-1, endRowIndex: end, startColumnIndex: c0, endColumnIndex: c1 });\nconst fmt = [\n  { copyPaste: { source: { sheetId: sid, startRowIndex: titleRow-1, endRowIndex: titleRow, startColumnIndex: 0, endColumnIndex: 12 }, destination: { sheetId: sid, startRowIndex: title-1, endRowIndex: title, startColumnIndex: 0, endColumnIndex: 12 }, pasteType: 'PASTE_FORMAT' } },\n  { copyPaste: { source: { sheetId: sid, startRowIndex: last-1, endRowIndex: last, startColumnIndex: 0, endColumnIndex: 12 }, destination: rg(0, 12), pasteType: 'PASTE_FORMAT' } },\n  { setDataValidation: { range: rg(6, 9), rule: { condition: { type: 'ONE_OF_LIST', values: [{ userEnteredValue: 'Connected' }, { userEnteredValue: 'Request sent' }, { userEnteredValue: 'Not connected' }] }, showCustomUi: true, strict: false } } },\n  { setDataValidation: { range: rg(11, 12), rule: { condition: { type: 'ONE_OF_LIST', values: [{ userEnteredValue: 'Yes' }, { userEnteredValue: 'No' }] }, showCustomUi: true, strict: false } } },\n  { addConditionalFormatRule: { index: 0, rule: { ranges: [rg(11, 12)], booleanRule: { condition: { type: 'TEXT_EQ', values: [{ userEnteredValue: 'Yes' }] }, format: { backgroundColor: hex('#B7E1CD'), textFormat: { foregroundColor: hex('#0B8043'), bold: true } } } } } },\n  { addConditionalFormatRule: { index: 1, rule: { ranges: [rg(11, 12)], booleanRule: { condition: { type: 'TEXT_EQ', values: [{ userEnteredValue: 'No' }] }, format: { backgroundColor: hex('#F4C7C3'), textFormat: { foregroundColor: hex('#A50E0E'), bold: true } } } } } }\n];\nreturn [{ json: { dry, sheetId: sid, header_row: title, dataRows: S.length, blocks: ['title A' + title, 'data A' + first + ':L' + end, 'S.No ' + (lastSn+1) + '-' + (lastSn+S.length)], valuesBody: { valueInputOption: 'RAW', data }, fmtBody: { requests: fmt }, preview: data.map(d => d.range.replace(\"'Family Offices'!\", '') + ' ' + d.values[0].slice(1, 9).map(x => x == null ? '-' : x).join(' | ')) } }];"
+      }
+    },
+    {
+      "id": "if",
+      "name": "Dry?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "d1",
+              "leftValue": "={{ $json.dry }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "od",
+      "name": "Out dry",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        -150
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const c = $('Compute').first().json; if (c.inspect) return [{ json: c }]; return [{ json: { dry: true, header_row: c.header_row, dataRows: c.dataRows, blocks: c.blocks, preview: c.preview } }];"
+      }
+    },
+    {
+      "id": "wv",
+      "name": "Write values",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1000,
+        100
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1Dgs-58U9fIDQst5Na3jby48unemyewUbDvta0enOW0U/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.valuesBody) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "wf",
+      "name": "Write format",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        100
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1Dgs-58U9fIDQst5Na3jby48unemyewUbDvta0enOW0U:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($('Compute').first().json.fmtBody) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "rb",
+      "name": "Read back",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1400,
+        100
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1Dgs-58U9fIDQst5Na3jby48unemyewUbDvta0enOW0U/values/%27Family%20Offices%27%21A80%3AL100",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "ov",
+      "name": "Out verify",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        100
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const c = $('Compute').first().json; const w = $('Write values').first().json; const f = $('Write format').first().json; return [{ json: { dry: false, updatedCells: w.totalUpdatedCells, formatReplies: (f.replies || []).length, readback: ($input.first().json.values || []).map(r => (r || []).slice(0, 9).join(' | ') + ' || L=' + ((r || [])[11] || '')) } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Meta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Meta": {
+      "main": [
+        [
+          {
+            "node": "Values",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Values": {
+      "main": [
+        [
+          {
+            "node": "Compute",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute": {
+      "main": [
+        [
+          {
+            "node": "Dry?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dry?": {
+      "main": [
+        [
+          {
+            "node": "Out dry",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Write values",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write values": {
+      "main": [
+        [
+          {
+            "node": "Write format",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write format": {
+      "main": [
+        [
+          {
+            "node": "Read back",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read back": {
+      "main": [
+        [
+          {
+            "node": "Out verify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "msxuuKOriWua0TRf",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-29T07:24:14.166Z",
+      "updatedAt": "2026-09-29T07:24:14.166Z"
+    }
+  ],
+  "activeVersion": null
+}

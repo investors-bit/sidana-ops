@@ -1,0 +1,147 @@
+{
+  "id": "6h8djasGGb93kBla",
+  "name": "One-off RW-3 — dump raw raise values from STARTUPS",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-09T12:36:27.822Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "a60342a0-d28b-4bfe-aea7-7492276d3484",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once 18:10 IST 9 Sep",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "10 18 9 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "r2",
+      "name": "Read STARTUPS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "STARTUPS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "c1",
+      "name": "Dump raise",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nconst st = $input.all().map(function (i) { return i.json; });\nconst SIX = ['nexcore', 'recex', 'washtro', 'formverse', 'pixelence', 'doffair'];\n\n// exactly the parser used in RW-2, so I can see which branch fails\nfunction toCr(txt) {\n  const t = s(txt).replace(/,/g, '');\n  if (!t) { return null; }\n  let m = t.match(/(?:US\\$|\\$)\\s*([\\d.]+)\\s*M/i);\n  if (m) { return parseFloat(m[1]) * 8.5; }\n  m = t.match(/([\\d.]+)\\s*(?:-|to|–)\\s*[\\d.]+\\s*Cr/i);\n  if (m) { return parseFloat(m[1]); }\n  m = t.match(/([\\d.]+)\\s*Cr/i);\n  if (m) { return parseFloat(m[1]); }\n  m = t.match(/([\\d.]+)\\s*Lakh/i);\n  if (m) { return parseFloat(m[1]) / 100; }\n  return null;\n}\n\nconst headers = Object.keys(st[0] || {});\nconst six = [];\nconst allNull = [];\nfor (const r of st) {\n  const n = s(r.startup);\n  if (!n) { continue; }\n  const raw = r.raise_inr_cr;\n  const parsed = toCr(raw);\n  const rec = { startup: n, active: s(r.active), raw_value: raw,\n    raw_type: typeof raw, raw_json: JSON.stringify(raw), parsed: parsed };\n  if (SIX.indexOf(n.toLowerCase().replace(/[^a-z0-9]/g, '')) >= 0) { six.push(rec); }\n  if (parsed === null && s(r.active).toLowerCase() === 'yes') { allNull.push(rec); }\n}\nreturn [{ json: { headers: headers, the_six: six,\n  every_active_startup_that_failed_to_parse: allNull,\n  fail_count: allNull.length } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once 18:10 IST 9 Sep": {
+      "main": [
+        [
+          {
+            "node": "Read STARTUPS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read STARTUPS": {
+      "main": [
+        [
+          {
+            "node": "Dump raise",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once 18:10 IST 9 Sep": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "6h8djasGGb93kBla",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-09T12:36:27.824Z",
+      "updatedAt": "2026-09-09T12:36:27.824Z"
+    }
+  ],
+  "activeVersion": null
+}

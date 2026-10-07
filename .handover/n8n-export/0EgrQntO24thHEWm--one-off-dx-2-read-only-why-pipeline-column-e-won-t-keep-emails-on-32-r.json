@@ -1,0 +1,217 @@
+{
+  "id": "0EgrQntO24thHEWm",
+  "name": "One-off DX-2 — read-only: why PIPELINE column E won't keep emails on 32 rows (formula / validation / protection)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-11T11:29:39.307Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "5f6471fe-dbdd-4519-bbfb-3838ea3c1945",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once (set before activating)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "4 17 11 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "g1",
+      "name": "GET grid E",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4?ranges={{ encodeURIComponent('PIPELINE!D2694:G2699') }}&ranges={{ encodeURIComponent('PIPELINE!D2793:G2797') }}&ranges={{ encodeURIComponent('PIPELINE!A1:G1') }}&fields={{ encodeURIComponent('sheets(properties(title,sheetId,gridProperties),protectedRanges,data(startRow,startColumn,rowData(values(userEnteredValue,effectiveValue,formattedValue,dataValidation))))') }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "g2",
+      "name": "GET E formulas",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/{{ encodeURIComponent('PIPELINE!E1:E6') }}?valueRenderOption=FORMULA",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "g3",
+      "name": "GET sheets list",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4?fields={{ encodeURIComponent('sheets(properties(title,sheetId,hidden),protectedRanges(range,description,warningOnly,unprotectedRanges))') }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "c1",
+      "name": "Pack",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const grid = $('GET grid E').first().json;\nconst f = $('GET E formulas').first().json;\nconst sl = $('GET sheets list').first().json;\nconst out = { e1_e6_formulas: f.values || [], sheets: (sl.sheets || []).map(function (s) { return { title: s.properties.title, id: s.properties.sheetId, hidden: !!s.properties.hidden, protected: (s.protectedRanges || []).map(function (p) { return { range: p.range, desc: p.description || '', warningOnly: !!p.warningOnly }; }) }; }), blocks: [] };\nfor (const sh of (grid.sheets || [])) { for (const d of (sh.data || [])) {\n  const rows = (d.rowData || []).map(function (r, i) { return { row: (d.startRow || 0) + i + 1, cells: (r.values || []).map(function (v, j) { return { col: String.fromCharCode(65 + (d.startColumn || 0) + j), user: v.userEnteredValue || null, shown: v.formattedValue || '', dv: v.dataValidation ? JSON.stringify(v.dataValidation).slice(0, 300) : '' }; }) }; });\n  out.blocks.push({ startRow: (d.startRow || 0) + 1, startCol: String.fromCharCode(65 + (d.startColumn || 0)), rows: rows }); } }\nreturn [{ json: out }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once (set before activating)": {
+      "main": [
+        [
+          {
+            "node": "GET grid E",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET grid E": {
+      "main": [
+        [
+          {
+            "node": "GET E formulas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET E formulas": {
+      "main": [
+        [
+          {
+            "node": "GET sheets list",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET sheets list": {
+      "main": [
+        [
+          {
+            "node": "Pack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once (set before activating)": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "0EgrQntO24thHEWm",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-11T11:29:39.310Z",
+      "updatedAt": "2026-09-11T11:29:39.310Z"
+    }
+  ],
+  "activeVersion": null
+}

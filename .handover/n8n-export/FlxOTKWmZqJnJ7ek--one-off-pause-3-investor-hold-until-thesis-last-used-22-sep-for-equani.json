@@ -1,0 +1,208 @@
+{
+  "id": "FlxOTKWmZqJnJ7ek",
+  "name": "One-off PAUSE-3 — investor HOLD until thesis (last used 22 Sep for Equanimity; originally Chiratae/Blume/Orios)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-17T11:32:43.199Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "7c8fc86e-25a9-4efb-92ac-f615ad055b42",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "c0d8b9e1-25d6-4be2-93a4-7f8091021324",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-pause3-8e4b1d6a70",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "g",
+      "name": "GET pilot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=INVESTORS!A1:J1000&ranges=INVESTOR_CRITERIA!A1:AC400&ranges=PIPELINE!A1:AI8000&ranges=THESIS_ASK!A1:O3000",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "p",
+      "name": "Plan",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v){return String(v==null?'':v).trim();}\nfunction nz(x){return s(x).toLowerCase().replace(/[^a-z0-9]/g,'');}\nfunction colL(i){let n=i+1,t='';while(n>0){const m=(n-1)%26;t=String.fromCharCode(65+m)+t;n=Math.floor((n-1)/26);}return t;}\nconst b=$('Webhook').first().json.body||{};if(b.secret!=='sv-crit-2026-09-17-q8Lz'){throw new Error('bad secret');}const dry=b.dry!==false;\nconst DOMS=['equanimity.vc'];\nconst hit=e=>s(e).toLowerCase().split(/[,;\\s]+/).some(x=>DOMS.some(d=>x.endsWith('@'+d)));\nconst vr=$('GET pilot').first().json.valueRanges||[];const inv=(vr[0]||{}).values||[],crit=(vr[1]||{}).values||[],pipe=(vr[2]||{}).values||[];\nif(inv.length<150||crit.length<200||pipe.length<5000){throw new Error('ABORT short read');}\nconst TODAY=new Date(Date.now()+330*60000).toISOString().slice(0,10);\nconst NOTE='HOLD by user '+TODAY+': Equanimity thesis-update call Wed 30 Sep 3 PM - resume after the call with the new thesis';\nconst data=[];const put=(r,v)=>data.push({range:r,values:[[v]]});\nconst names={};const invRows=[];for(let i=1;i<inv.length;i++){const r=inv[i]||[];if(hit(s(r[2])+','+s(r[3]))||/equanimity/i.test(s(r[0]))){names[nz(r[0])]=s(r[0]);invRows.push((i+1)+' '+s(r[0]));}}\nconst ch=crit[0].map(s);const CX={};ch.forEach((k,i)=>CX[k]=i);const critRows=[];\nfor(let i=1;i<crit.length;i++){const r=crit[i]||[];if(names[nz(r[CX.investor])]){critRows.push((i+1)+' '+s(r[CX.investor])+' was '+s(r[CX.status]));put('INVESTOR_CRITERIA!'+colL(CX.status)+(i+1),'HOLD');put('INVESTOR_CRITERIA!'+colL(CX.rule_notes)+(i+1),(s(r[CX.rule_notes])?s(r[CX.rule_notes])+' | ':'')+NOTE+' (was '+s(r[CX.status])+')');}}\nconst ph=pipe[0].map(s);const X={};ph.forEach((k,i)=>X[k]=i);let held=0,stopped=0;const heldList=[],stoppedList=[];\nfor(let i=1;i<pipe.length;i++){const r=pipe[i]||[];const g=k=>s(r[X[k]]);if(!(names[nz(g('investor'))]||hit(g('email')))){continue;}const rn=i+1;const sent=/^yes$/i.test(g('deal_shared'));const paused=/^yes$/i.test(g('pause'));const notes=g('notes');\n  if(!sent&&!paused){put('PIPELINE!'+colL(X.pause)+rn,'Yes');put('PIPELINE!'+colL(X.next_action)+rn,'HOLD - until Equanimity thesis call 30 Sep');put('PIPELINE!'+colL(X.notes)+rn,(notes?notes+' | ':'')+NOTE);held++;heldList.push(g('startup')+' '+g('next_due'));}\n  else if(sent&&!paused&&!g('investor_response')){put('PIPELINE!'+colL(X.pause)+rn,'Yes');put('PIPELINE!'+colL(X.notes)+rn,(notes?notes+' | ':'')+NOTE+' - follow-ups stopped');stopped++;stoppedList.push(g('startup'));}}\nif(invRows.length<1||invRows.length>4){throw new Error('ABORT unexpected investor rows '+invRows.join(';'));}\nreturn [{json:{dry:dry,investors_rows:invRows,criteria_rows:critRows,queued_held:held,held:heldList,followups_stopped:stopped,stopped:stoppedList,cells:data.length,data:dry?[]:data}}];"
+      }
+    },
+    {
+      "id": "hw",
+      "name": "Write?",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        -150
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const j=$('Plan').first().json;return (j.dry||!j.data.length)?[]:[{json:{n:j.data.length}}];"
+      }
+    },
+    {
+      "id": "w",
+      "name": "Write",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        800,
+        -150
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ valueInputOption: 'RAW', data: $('Plan').first().json.data }) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "o",
+      "name": "Out",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        150
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const j=Object.assign({},$('Plan').first().json);delete j.data;return [{json:j}];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "GET pilot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET pilot": {
+      "main": [
+        [
+          {
+            "node": "Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Plan": {
+      "main": [
+        [
+          {
+            "node": "Write?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write?": {
+      "main": [
+        [
+          {
+            "node": "Write",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataSuccessExecution": "all",
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "FlxOTKWmZqJnJ7ek",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-17T11:32:43.202Z",
+      "updatedAt": "2026-09-17T11:32:43.202Z"
+    }
+  ],
+  "activeVersion": null
+}

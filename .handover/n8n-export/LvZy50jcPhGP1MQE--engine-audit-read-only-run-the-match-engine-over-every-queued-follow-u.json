@@ -1,0 +1,255 @@
+{
+  "id": "LvZy50jcPhGP1MQE",
+  "name": "ENGINE-AUDIT (read-only) — run the match engine over every queued + follow-up deal in PIPELINE (17 Sep)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-17T06:06:24.137Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "2fd800ad-2baa-4c71-b4ea-01573c769da1",
+  "versionCounter": 5,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once (set before activating)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "3 12 17 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "gp",
+      "name": "GET pilot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=INVESTOR_CRITERIA!A1:AC400&ranges=STARTUP_PROFILE!A1:O200&ranges=PIPELINE!A1:AJ6000",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "gm",
+      "name": "GET meetings",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/1d-wSnDCnC_c9_rqD652Zayu6An-dipeVyC7lCD_TD0Y/values/' + encodeURIComponent(\"'Report - No of Deal Flows'!A1:Z400\") }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "au",
+      "name": "Audit",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nfunction nz(x) { return s(x).toLowerCase().replace(/[^a-z0-9]/g, ''); }\nconst vr = $('GET pilot').first().json.valueRanges || [];\nconst crit = (vr[0] || {}).values || [], prof = (vr[1] || {}).values || [], pipe = (vr[2] || {}).values || [];\nconst grid = $('GET meetings').first().json.values || [];\nif (crit.length < 200 || prof.length < 50 || pipe.length < 5000) { throw new Error('ABORT short read ' + crit.length + '/' + prof.length + '/' + pipe.length); }\nfunction objs(rows) { const h = (rows[0] || []).map(s); return rows.slice(1).map(function (r) { const o = {}; h.forEach(function (k, i) { o[k] = r[i] === undefined ? '' : r[i]; }); return o; }); }\nconst C = objs(crit), SP = objs(prof);\n// ===== ENGINE CORE v1 (identical to engine-core.js) =====\nconst LADDER = ['PRE_SEED', 'SEED', 'TRACTION', 'PRE_SERIES_A', 'SERIES_A', 'SERIES_B', 'SERIES_C_PLUS'];\nfunction list(v) { if (Array.isArray(v)) { return v.map(function (x) { return String(x).trim(); }).filter(Boolean); } return String(v == null ? '' : v).split(/[,;|]/).map(function (x) { return x.trim(); }).filter(Boolean); }\nfunction num(v) { if (v === null || v === undefined || v === '') { return null; } const n = Number(v); return isFinite(n) ? n : null; }\nfunction yes(v) { return /^y(es)?$/i.test(String(v == null ? '' : v).trim()); }\nfunction evaluate(inv, st, ctx) {\n  const gates = []; function gate(name, ok, why) { gates.push({ gate: name, ok: ok, why: why }); }\n  const meetings = ctx && typeof ctx.meetings === 'number' ? ctx.meetings : 0;\n  const status = String(inv.status || '').toUpperCase(); gate('investor_active', status === 'ACTIVE', 'status ' + (status || 'blank'));\n  gate('startup_active', yes(st.active), 'startup active=' + st.active);\n  const sIn = list(inv.sectors_in), sEx = list(inv.sectors_excluded), sSt = list(st.sector_codes);\n  const excludedHit = sSt.filter(function (c) { return sEx.indexOf(c) >= 0; });\n  if (excludedHit.length) { gate('sector', false, 'startup sector ' + excludedHit.join('/') + ' is EXCLUDED by investor'); }\n  else if (String(inv.sector_mode || '').toUpperCase() === 'AGNOSTIC') { gate('sector', true, 'investor sector-agnostic'); }\n  else { const overlap = sSt.filter(function (c) { return sIn.indexOf(c) >= 0; }); gate('sector', overlap.length > 0, overlap.length ? 'overlap ' + overlap.join('/') : 'no overlap: startup ' + sSt.join('/') + ' vs investor ' + (sIn.join('/') || 'none')); }\n  const mIn = list(inv.models_in), mEx = list(inv.models_excluded), m = String(st.business_model || '');\n  if (mEx.indexOf(m) >= 0) { gate('business_model', false, m + ' excluded by investor'); }\n  else if (!mIn.length || mIn.indexOf('ANY') >= 0) { gate('business_model', true, 'any model'); }\n  else { gate('business_model', mIn.indexOf(m) >= 0, mIn.indexOf(m) >= 0 ? m + ' allowed' : m + ' not in ' + mIn.join('/')); }\n  let stageOffBy = 0;\n  const si = LADDER.indexOf(String(st.stage_code || '')), lo = LADDER.indexOf(String(inv.stage_min || '')), hi = LADDER.indexOf(String(inv.stage_max || ''));\n  if (si < 0) { gate('stage', false, 'startup stage missing'); }\n  else if (lo < 0 || hi < 0) { gate('stage', false, 'investor stage missing (ON HOLD rule)'); }\n  else if (si >= lo && si <= hi) { gate('stage', true, st.stage_code + ' inside ' + inv.stage_min + '..' + inv.stage_max); }\n  else { const dist = si < lo ? lo - si : si - hi;\n    if (meetings >= 5) { const exception = si >= LADDER.indexOf('PRE_SERIES_A') && lo <= LADDER.indexOf('SEED') && hi >= LADDER.indexOf('SEED'); gate('stage', exception, exception ? 'strict tier, Series-A-and-later exception' : st.stage_code + ' outside ' + inv.stage_min + '..' + inv.stage_max + ' (' + meetings + ' meetings = strict)'); }\n    else { stageOffBy = dist; gate('stage', dist <= 1, dist <= 1 ? 'one rung off (' + meetings + ' meetings, tolerance allowed)' : st.stage_code + ' is ' + dist + ' rungs from ' + inv.stage_min + '..' + inv.stage_max); } }\n  const cmin = num(inv.cheque_min_cr), raise = num(st.raise_cr);\n  if (cmin === null) { gate('cheque', true, 'no minimum on file'); } else if (raise === null) { gate('cheque', false, 'startup raise unknown'); } else { gate('cheque', raise >= cmin, 'raise ' + raise + ' Cr vs min cheque ' + cmin + ' Cr'); }\n  const amin = num(inv.arr_min_cr), arr = num(st.arr_cr);\n  if (amin !== null) { if (arr === null) { gate('arr_bar', false, 'needs ARR ' + (yes(inv.arr_min_strict) ? '>' : '>=') + ' ' + amin + ' Cr, startup revenue unknown'); } else { const ok = yes(inv.arr_min_strict) ? arr > amin : arr >= amin; gate('arr_bar', ok, 'ARR ' + arr + ' Cr vs ' + (yes(inv.arr_min_strict) ? '>' : '>=') + ' ' + amin + ' Cr'); } }\n  if (yes(inv.revenue_required)) { gate('revenue_required', arr !== null && arr > 0, arr === null ? 'revenue unknown' : 'ARR ' + arr + ' Cr'); }\n  if (yes(inv.women_only)) { gate('women_only', yes(st.women), 'woman in cap table=' + st.women); }\n  if (yes(inv.excludes_jain_sensitive)) { gate('jain_exclusion', !yes(st.jain_sensitive), 'jain_sensitive=' + st.jain_sensitive); }\n  const geo = String(inv.geography_scope || '').toUpperCase();\n  if (geo && geo !== 'GLOBAL' && geo !== 'ANY') { const g = String(st.geography || '').toLowerCase();\n    const REGION = { INDIA: /india|bharat/, SEA: /indonesia|singapore|malaysia|vietnam|thailand|philippines|southeast asia/, EUROPE: /europe|\\buk\\b|united kingdom|germany|france|netherlands|belgium/, US: /\\busa?\\b|united states|america/ };\n    const ok = geo === 'NON_INDIA' ? !/india|bharat/.test(g) : (REGION[geo] ? REGION[geo].test(g) : true);\n    gate('geography', ok, 'investor invests in ' + geo + '; startup market ' + (st.geography || 'unknown')); }\n  const failed = gates.filter(function (g) { return !g.ok; }); const pass = failed.length === 0;\n  return { pass: pass, match_type: pass ? (stageOffBy === 1 ? 'Sector + cheque match (stage one step off)' : 'Exact match') : 'Not per strategy: ' + failed.map(function (g) { return g.gate + ' - ' + g.why; }).join('; '), failed: failed.map(function (g) { return g.gate; }), gates: gates };\n}\n// ===== meetings (latest staircase block) =====\nconst TODAY = new Date();\nfunction isHdr(row) { return /startup got meetings/i.test(s((row || [])[1])) && /\\d/.test(s((row || [])[0])); }\nconst hdrs = []; for (let i = 0; i < grid.length; i++) { if (isHdr(grid[i])) { hdrs.push(i); } }\nif (!hdrs.length) { throw new Error('ABORT: no staircase blocks in meetings sheet'); }\nfunction blockDate(label) { const mm = s(label).match(/^(\\d{1,2})[\\/\\-.](\\d{1,2})[\\/\\-.](\\d{4})/); if (!mm) { return null; } const a = +mm[1], b = +mm[2], y = +mm[3]; const c = [];\n  if (b >= 1 && b <= 12 && a >= 1 && a <= 31) { c.push(new Date(Date.UTC(y, b - 1, a))); } if (a >= 1 && a <= 12 && b >= 1 && b <= 31) { c.push(new Date(Date.UTC(y, a - 1, b))); }\n  const past = c.filter(function (d) { return d <= TODAY; }); const pool = past.length ? past : c; pool.sort(function (x, z) { return z - x; }); return pool[0] || null; }\nlet li = hdrs[hdrs.length - 1]; let ld = blockDate(s(grid[li][0]));\nfor (const i of hdrs) { const d = blockDate(s(grid[i][0])); if (d && (!ld || d > ld)) { ld = d; li = i; } }\nconst stair = {};\nfor (let i = li + 1; i < grid.length; i++) { const row = grid[i] || []; if (isHdr(row)) { break; } const mm = s(row[1]).match(/^(\\d+)\\s*meetings?/i); if (!mm) { if (Object.keys(stair).length) { break; } else { continue; } }\n  const n = parseInt(mm[1], 10); for (let j = 2; j < row.length; j++) { const nm = s(row[j]); if (!nm) { continue; } const k = nz(nm); if (stair[k] === undefined || n > stair[k]) { stair[k] = n; } } }\nconst MALIAS = { caffeinacoffee: 'caffenacoffee', springbaseai: 'springbaseai' };\nfunction meetingsFor(name) { const k = nz(name); let best = null; for (const sk of Object.keys(stair)) { const kk = MALIAS[sk] || sk; const hit = kk === k || (kk.length >= 4 && k.length >= 4 && (kk.indexOf(k) === 0 || k.indexOf(kk) === 0)); if (hit && (best === null || stair[sk] > best)) { best = stair[sk]; } } return best === null ? 0 : best; }\n// ===== audit =====\nconst critBy = {}; C.forEach(function (c) { const k = nz(c.investor); if (!critBy[k]) { critBy[k] = c; } });\nconst profBy = {}; SP.forEach(function (p) { profBy[nz(p.startup)] = p; });\nconst ph = (pipe[0] || []).map(s); const PX = {}; ph.forEach(function (h, i) { PX[h] = i; });\nconst cat = {}, gateFails = {}, byInv = {}, bySt = {}, samples = [], pendingInv = {}, noCrit = {};\nconst meet = {};\nlet queued = 0, fuLive = 0;\nfor (let r = 1; r < pipe.length; r++) { const row = pipe[r] || [];\n  const sent = /^yes$/i.test(s(row[PX.deal_shared])); const paused = /^yes$/i.test(s(row[PX.pause])); const resp = s(row[PX.investor_response]); const na = s(row[PX.next_action]);\n  let kind; if (!sent && !paused) { kind = 'QUEUED'; queued++; } else if (sent && !paused && !resp && /follow/i.test(na)) { kind = 'FOLLOWUP'; fuLive++; } else { continue; }\n  const invName = s(row[PX.investor]), stName = s(row[PX.startup]);\n  const c = critBy[nz(invName)], p = profBy[nz(stName)];\n  let key;\n  if (!c) { key = kind + ' NO_CRITERIA'; noCrit[invName] = (noCrit[invName] || 0) + 1; }\n  else if (!p) { key = kind + ' NO_PROFILE'; }\n  else {\n    if (meet[stName] === undefined) { meet[stName] = meetingsFor(stName); }\n    const ev = evaluate(c, p, { meetings: meet[stName] });\n    const pend = s(c.confirmed).toUpperCase() === 'PENDING';\n    if (ev.pass) { key = kind + (pend ? ' PASS (investor pending review)' : ' PASS'); }\n    else {\n      key = kind + (pend ? ' FAIL (investor pending review)' : ' FAIL');\n      ev.failed.forEach(function (g) { gateFails[kind + ':' + g] = (gateFails[kind + ':' + g] || 0) + 1; });\n      if (!pend) { const bi = byInv[invName] = byInv[invName] || { n: 0, gates: {} }; bi.n++; ev.failed.forEach(function (g) { bi.gates[g] = (bi.gates[g] || 0) + 1; });\n        const bs = bySt[stName] = bySt[stName] || { n: 0 }; bs.n++;\n        if (samples.length < 60) { samples.push([s(row[PX.deal_id]), stName, invName, kind, s(row[PX.next_due]).slice(0, 10), ev.match_type.slice(0, 230)]); } }\n      else { pendingInv[invName] = (pendingInv[invName] || 0) + 1; }\n    }\n  }\n  cat[key] = (cat[key] || 0) + 1; }\nconst topInv = Object.keys(byInv).map(function (k) { return [k, byInv[k].n, Object.keys(byInv[k].gates).map(function (g) { return g + ':' + byInv[k].gates[g]; }).join(' ')]; }).sort(function (a, b) { return b[1] - a[1]; }).slice(0, 40);\nconst topSt = Object.keys(bySt).map(function (k) { return [k, bySt[k].n, 'meetings ' + meet[k]]; }).sort(function (a, b) { return b[1] - a[1]; }).slice(0, 40);\nreturn [{ json: { staircase_block: s(grid[li][0]), queued_rows: queued, followup_live_rows: fuLive, categories: cat, gate_fail_counts: gateFails, no_criteria_investors: noCrit, pending_investor_fail_counts: pendingInv, top_investors_failing: topInv, top_startups_failing: topSt, samples: samples, meetings: meet } }];"
+      }
+    },
+    {
+      "id": "s1",
+      "name": "Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const j = $('Audit').first().json; return [{ json: { staircase_block: j.staircase_block, queued_rows: j.queued_rows, followup_live_rows: j.followup_live_rows, categories: j.categories, gate_fail_counts: j.gate_fail_counts, no_criteria_investors: j.no_criteria_investors, pending_investor_fail_counts: j.pending_investor_fail_counts, meetings: j.meetings } }];"
+      }
+    },
+    {
+      "id": "s2",
+      "name": "Top failing",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const j = $('Audit').first().json; return [{ json: { top_investors_failing: j.top_investors_failing, top_startups_failing: j.top_startups_failing } }];"
+      }
+    },
+    {
+      "id": "s3",
+      "name": "Samples",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const j = $('Audit').first().json; return [{ json: { samples: j.samples } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once (set before activating)": {
+      "main": [
+        [
+          {
+            "node": "GET pilot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET pilot": {
+      "main": [
+        [
+          {
+            "node": "GET meetings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET meetings": {
+      "main": [
+        [
+          {
+            "node": "Audit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Audit": {
+      "main": [
+        [
+          {
+            "node": "Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summary": {
+      "main": [
+        [
+          {
+            "node": "Top failing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Top failing": {
+      "main": [
+        [
+          {
+            "node": "Samples",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once (set before activating)": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "LvZy50jcPhGP1MQE",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-17T06:06:24.138Z",
+      "updatedAt": "2026-09-17T06:06:24.138Z"
+    }
+  ],
+  "activeVersion": null
+}

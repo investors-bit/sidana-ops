@@ -1,0 +1,188 @@
+{
+  "id": "5UYiGWpmcHni14io",
+  "name": "SHEET-BATCH-FORMAT — apply Sheets API batchUpdate requests to an existing sheet (webhook, one-off)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-24T08:47:57.279Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "a9af82cc-de8e-4d2d-bc3e-eec093cb47ea",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "7e357a74-830c-4f3d-b360-9a267ba3d26a",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-sheet-format-6b3d9f2a84",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "g",
+      "name": "Get sheet meta",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $json.body.spreadsheetId }}?fields=sheets.properties",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "p",
+      "name": "Resolve sheet names",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b=$('Webhook').first().json.body||{};if(b.secret!=='sv-mail-2026-09-17-Kq7'){throw new Error('bad secret');}\nif(!b.spreadsheetId||!Array.isArray(b.requests)||!b.requests.length){throw new Error('need spreadsheetId + requests[]');}\nconst meta=$input.first().json;const map={};(meta.sheets||[]).forEach(s=>{map[s.properties.title]=s.properties.sheetId;});\nfunction walk(v){if(Array.isArray(v)){return v.map(walk);}\n if(v&&typeof v==='object'){const o={};for(const k of Object.keys(v)){let x=v[k];if(k==='sheetId'&&typeof x==='string'&&x.charAt(0)==='@'){const n=x.slice(1);if(!(n in map)){throw new Error('no tab named '+n+' (have: '+Object.keys(map).join(', ')+')');}x=map[n];}else{x=walk(x);}o[k]=x;}return o;}\n return v;}\nreturn [{json:{spreadsheetId:b.spreadsheetId,tabs:map,body:{requests:walk(b.requests)}}}];"
+      }
+    },
+    {
+      "id": "u",
+      "name": "Apply format",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $json.spreadsheetId }}:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "o",
+      "name": "Out",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const j=$input.first().json;const pv=$('Resolve sheet names').first().json;\nreturn [{json:{spreadsheetId:pv.spreadsheetId,tabs:pv.tabs,repliesApplied:(j.replies||[]).length}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get sheet meta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get sheet meta": {
+      "main": [
+        [
+          {
+            "node": "Resolve sheet names",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve sheet names": {
+      "main": [
+        [
+          {
+            "node": "Apply format",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apply format": {
+      "main": [
+        [
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataSuccessExecution": "none",
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "5UYiGWpmcHni14io",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-24T08:47:57.281Z",
+      "updatedAt": "2026-09-24T08:47:57.281Z"
+    }
+  ],
+  "activeVersion": null
+}

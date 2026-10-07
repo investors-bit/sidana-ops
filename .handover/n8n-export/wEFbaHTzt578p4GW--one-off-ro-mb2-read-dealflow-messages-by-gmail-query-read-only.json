@@ -1,0 +1,224 @@
+{
+  "id": "wEFbaHTzt578p4GW",
+  "name": "One-off RO-MB2 — read dealflow@ messages by Gmail query (read-only)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-10-05T09:12:58.428Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "1b825be1-782b-41b1-b6ff-7edeb3049120",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "9e4c2b71-6a3d-4f58-b1e9-0d7a5c3f8e26",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-ro-mb2-6f1a3e",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "ck",
+      "name": "Check",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b = $('Webhook').first().json.body || {};\nif (b.secret !== 'romb2-05oct-Vq2nJ8') throw new Error('bad secret');\nif (!b.q) throw new Error('q required');\nreturn [{ json: { q: b.q, max: Math.min(+(b.max||15), 30) } }];"
+      }
+    },
+    {
+      "id": "ls",
+      "name": "List",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "url": "https://gmail.googleapis.com/gmail/v1/users/me/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ $json.q }}"
+            },
+            {
+              "name": "maxResults",
+              "value": "={{ $json.max }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "hwEqMRn6IxzoYs1R",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "id": "sp",
+      "name": "Split",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const m = $input.first().json.messages || []; if (!m.length) return [{ json: { none: true } }]; return m.map(x => ({ json: { id: x.id } }));"
+      }
+    },
+    {
+      "id": "gt",
+      "name": "Get",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "continueOnFail": true,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "url": "={{ $json.none ? 'https://gmail.googleapis.com/gmail/v1/users/me/profile' : 'https://gmail.googleapis.com/gmail/v1/users/me/messages/' + $json.id + '?format=full' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "hwEqMRn6IxzoYs1R",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "id": "o",
+      "name": "Out",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const dec = s => { try { return Buffer.from(String(s).replace(/-/g,'+').replace(/_/g,'/'), 'base64').toString('utf8'); } catch (e) { return ''; } };\nconst findText = p => { if (!p) return ''; if (p.mimeType === 'text/plain' && p.body && p.body.data) return dec(p.body.data); for (const c of (p.parts||[])) { const t = findText(c); if (t) return t; } if (p.mimeType === 'text/html' && p.body && p.body.data) return dec(p.body.data).replace(/<[^>]+>/g,' '); return ''; };\nconst out = [];\nfor (const it of $input.all()) { const j = it.json; if (!j.payload) { if (j.emailAddress) out.push({ mailbox: j.emailAddress, note: 'no messages matched' }); continue; } const h = {}; for (const x of (j.payload.headers||[])) h[x.name.toLowerCase()] = x.value; let body = findText(j.payload); const cut = body.search(/\\nOn .{5,80}wrote:|\\n-----Original Message|\\nFrom: .*\\nSent:/); if (cut > 0) body = body.slice(0, cut); out.push({ id: j.id, threadId: j.threadId, date: h.date, from: h.from, to: h.to, subject: h.subject, body: body.replace(/\\r/g,'').replace(/\\n{3,}/g,'\\n\\n').trim().slice(0, 1500), attachments: [] }); }\nreturn [{ json: { count: out.length, messages: out } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check": {
+      "main": [
+        [
+          {
+            "node": "List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List": {
+      "main": [
+        [
+          {
+            "node": "Split",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split": {
+      "main": [
+        [
+          {
+            "node": "Get",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get": {
+      "main": [
+        [
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "none",
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "wEFbaHTzt578p4GW",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-10-05T09:12:58.430Z",
+      "updatedAt": "2026-10-05T09:12:58.430Z"
+    }
+  ],
+  "activeVersion": null
+}

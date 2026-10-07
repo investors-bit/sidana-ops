@@ -1,0 +1,151 @@
+{
+  "id": "yyv26k6Frzh9kIB3",
+  "name": "CRIT-READ — INVESTOR_CRITERIA + INVESTORS rows for named investors (webhook, read-only)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-10-05T12:27:32.450Z",
+  "updatedAt": "2026-10-07T06:05:26.136Z",
+  "isArchived": false,
+  "versionId": "3692ea5e-e2f3-4f88-ba12-accaff59d1bd",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "6eb3c287-77f5-4abc-88d7-5dd49a2b6715",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-crit-read-9b4f2a",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "pr",
+      "name": "Prep",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b=$input.first().json.body||{};\nif(b.secret!=='sv-crit-2026-09-17-q8Lz'){throw new Error('bad secret');}\nreturn [{json:{names:(b.names||[]).map(x=>String(x).toLowerCase().trim()).filter(Boolean)}}];"
+      }
+    },
+    {
+      "id": "rd",
+      "name": "Read",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?majorDimension=ROWS&valueRenderOption=FORMATTED_VALUE&ranges=INVESTOR_CRITERIA!A1:AZ900&ranges=INVESTORS!A1:AZ800",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "o",
+      "name": "Out",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const names=$('Prep').first().json.names;\nconst vr=($input.first().json.valueRanges||[]);\nconst s=v=>String(v==null?'':v).trim();\nconst pick=n=>{const m=vr.find(x=>String(x.range||'').replace(/'/g,'').toUpperCase().startsWith(n+'!'));return (m&&m.values)?m.values:[];};\nconst CR=pick('INVESTOR_CRITERIA'),IN=pick('INVESTORS');\nconst crh=(CR[0]||[]).map(s), inh=(IN[0]||[]).map(s);\nconst ci=crh.map(h=>h.toLowerCase()).indexOf('investor');\nconst ii=inh.map(h=>h.toLowerCase()).findIndex(h=>/^(investor|firm|investor_name|name)$/.test(h));\nconst hit=(v)=>names.some(n=>s(v).toLowerCase().indexOf(n)>=0);\nconst crRows=[],inRows=[];\nfor(let i=1;i<CR.length;i++){const r=CR[i]||[];if(ci>=0&&hit(r[ci])){const o={_row:i+1};crh.forEach((h,k)=>{if(h&&s(r[k]))o[h]=s(r[k]);});crRows.push(o);}}\nfor(let i=1;i<IN.length;i++){const r=IN[i]||[];if(ii>=0&&hit(r[ii])){const o={_row:i+1};inh.forEach((h,k)=>{if(h&&s(r[k]))o[h]=s(r[k]);});inRows.push(o);}}\nreturn [{json:{crit_header:crh,crit_rows_total:CR.length-1,inv_rows_total:IN.length-1,criteria:crRows,investors:inRows}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Prep",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep": {
+      "main": [
+        [
+          {
+            "node": "Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read": {
+      "main": [
+        [
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionTimeout": 300,
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "yyv26k6Frzh9kIB3",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-10-05T12:27:32.453Z",
+      "updatedAt": "2026-10-05T12:27:32.453Z"
+    }
+  ],
+  "activeVersion": null
+}

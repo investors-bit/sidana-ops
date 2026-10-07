@@ -1,0 +1,594 @@
+{
+  "id": "I8VWdHLb6fxhciqN",
+  "name": "SYNC-BOOK — hourly Sheets to Supabase (startups + investors)",
+  "description": null,
+  "active": true,
+  "activeVersionId": "1f7fb0a5-6f17-4a1d-a473-98ecdc8a84e3",
+  "createdAt": "2026-09-30T17:46:32.559Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "1f7fb0a5-6f17-4a1d-a473-98ecdc8a84e3",
+  "versionCounter": 4,
+  "sourceWorkflowId": null,
+  "triggerCount": 2,
+  "nodes": [
+    {
+      "id": "sch",
+      "name": "Hourly",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "hook",
+      "name": "Test hook",
+      "webhookId": "f6e0dd7f-f266-480d-a4fe-53ff4354acb3",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        200
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-syncbook-test-4a2e",
+        "responseMode": "lastNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "get",
+      "name": "GET sheets",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        240,
+        100
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=STARTUPS!A1:P200&ranges=INVESTORS!A1:J1000&ranges=INVESTOR_CRITERIA!A1:AF400",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "build",
+      "name": "Build rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        100
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Mirrors the approved 30 Sep column mapping exactly.\n// Blank stays NULL. Dollars are never converted. A lone figure sets the floor\n// only; a ceiling is never invented. Dedupe by name BEFORE the request, or\n// Postgres throws \"ON CONFLICT DO UPDATE cannot affect row a second time\".\nconst res = $input.first().json;\nconst byTab = {};\nfor (const vr of (res.valueRanges || [])) {\n  byTab[String(vr.range).split('!')[0].replace(/'/g, '')] = vr.values || [];\n}\nfunction rows(tab) {\n  const v = byTab[tab] || [];\n  if (!v.length) return [];\n  const h = v[0];\n  return v.slice(1).map(function (r) {\n    const o = {};\n    h.forEach(function (k, i) { o[k] = (r[i] === undefined ? '' : r[i]); });\n    return o;\n  });\n}\nconst S = rows('STARTUPS'), I = rows('INVESTORS'), C = rows('INVESTOR_CRITERIA');\nconst nz = function (s) { return String(s == null ? '' : s).toLowerCase().replace(/[^a-z0-9]/g, ''); };\nconst g = function (r, k) { const v = String(r[k] == null ? '' : r[k]).trim(); return v === '' ? null : v; };\nconst skips = [];\nconst log = function (e, n, f, why, raw) { skips.push({ entity: e, name: n, field: f, reason: why, raw: raw || '' }); };\n\nconst UNIT = { cr: 1, crore: 1, crores: 1, l: 0.01, lac: 0.01, lacs: 0.01, lakh: 0.01, lakhs: 0.01 };\nconst INR_RANGE = /INR\\s*([\\d.]+)\\s*(cr|crores|crore|lacs|lac|lakhs|lakh|l)?\\s*(?:-|to)\\s*([\\d.]+)\\s*(cr|crores|crore|lacs|lac|lakhs|lakh|l)/i;\nconst INR_ONE = /INR\\s*([\\d.]+)\\s*(cr|crores|crore|lacs|lac|lakhs|lakh|l)/i;\nconst BARE_RANGE = /([\\d.]+)\\s*(cr|crores|crore|lacs|lac|lakhs|lakh|l)?\\s*(?:-|to)\\s*([\\d.]+)\\s*(cr|crores|crore|lacs|lac|lakhs|lakh|l)/i;\nconst BARE_ONE = /([\\d.]+)\\s*(cr|crores|crore)/i;\nconst CEILING = /up\\s*to|max|below/i;\nconst FUNDSIZE = /fund|corpus|aum/i;\nconst HAS_USD = /us\\$|usd|\\$/i;\nconst r2 = function (x) { return Math.round(x * 100) / 100; };\n\nfunction money(s) {\n  s = String(s == null ? '' : s).trim();\n  if (!s) return [null, null, 'blank'];\n  let m = INR_RANGE.exec(s);\n  if (m) { const u2 = UNIT[m[4].toLowerCase()]; const u1 = UNIT[(m[2] || '').toLowerCase()] || u2;\n           return [r2(parseFloat(m[1]) * u1), r2(parseFloat(m[3]) * u2), null]; }\n  m = INR_ONE.exec(s);\n  if (m) { const v = r2(parseFloat(m[1]) * UNIT[m[2].toLowerCase()]);\n           return CEILING.test(s) ? [null, v, null] : [v, null, null]; }\n  m = BARE_RANGE.exec(s);\n  if (m) { const u2 = UNIT[m[4].toLowerCase()]; const u1 = UNIT[(m[2] || '').toLowerCase()] || u2;\n           return [r2(parseFloat(m[1]) * u1), r2(parseFloat(m[3]) * u2), null]; }\n  m = BARE_ONE.exec(s);\n  if (m && !FUNDSIZE.test(s)) { const v = r2(parseFloat(m[1]));\n           return CEILING.test(s) ? [null, v, null] : [v, null, null]; }\n  if (HAS_USD.test(s)) return [null, null, 'USD, no exchange rate given'];\n  return [null, null, 'unparseable'];\n}\n// Currency-aware raise. STARTUPS.raise_inr_cr is the operational truth: it is\n// the exact text the outreach subject line quotes, so the dashboard shows it\n// verbatim rather than a converted figure. Forcing dollar rounds into crore is\n// what produced 29 wrong raises before 1 Oct 2026.\n// ask_amount is for sorting only and takes the FIRST currency named, matching\n// how the subject line leads. A range or a word like 'Undisclosed' keeps its\n// text and gets no number, because inventing one would be a guess.\nfunction raiseParts(sv) {\n  const t = String(sv == null ? '' : sv).trim();\n  if (!t) { return [null, null, null]; }\n  const u = /US?\\$\\s*([\\d.]+)\\s*([MK])?/i.exec(t);\n  const i = /INR\\s*([\\d.]+)\\s*Cr\\b/i.exec(t);\n  if (u && (!i || u.index < i.index)) {\n    const n = parseFloat(u[1]); const unit = (u[2] || 'M').toUpperCase();\n    return ['USD', r2(unit === 'K' ? n / 1000 : n), t];\n  }\n  if (i) { return ['INR', r2(parseFloat(i[1])), t]; }\n  return [null, null, t];\n}\nconst ISO = /^\\d{4}-\\d{2}-\\d{2}$/;\n\nconst HOT = {};\n['Spintly','Bon Cuisine','EosNox','HYRGPT','Talent Recruit','Hoora','CLIKD','MindWox','MentorCloud','Road Athena','LearningPad'].forEach(function (x) { HOT[nz(x)] = 1; });\n\nconst startups = []; const seenS = {};\nfor (const r of S) {\n  const name = g(r, 'startup');\n  if (!name) { log('startup', '(blank)', 'name', 'blank name'); continue; }\n  if (seenS[nz(name)]) { log('startup', name, 'name', 'duplicate name, first kept'); continue; }\n  seenS[nz(name)] = 1;\n  const desk = String(r.desk || '').trim().toUpperCase();\n  const bucket = HOT[nz(name)] ? 'HOT10' : (desk === 'ANGEL' ? 'A' : (desk === 'MIDDLE' ? 'C' : 'UNASSIGNED'));\n  const active = String(r.active || '').trim().toLowerCase();\n  let status = 'live';\n  if (active === 'no') { status = 'blocked'; }\n  else if (active !== 'yes') { log('startup', name, 'status', 'active blank, defaulted to live'); }\n  const mm = money(r.raise_inr_cr);\n  const rp = raiseParts(r.raise_inr_cr);\n  let ask = null;\n  if (mm[0] !== null && mm[1] !== null) { log('startup', name, 'ask_current_cr', 'a range, not a single ask', r.raise_inr_cr || ''); }\n  else if (mm[0] !== null) { ask = mm[0]; }\n  else if (mm[1] !== null) { ask = mm[1]; }\n  else if (mm[2] !== 'blank') { log('startup', name, 'ask_current_cr', mm[2], r.raise_inr_cr || ''); }\n  let reset = null;\n  const rr = g(r, 'recommended_raise_cr');\n  if (rr) { const n = parseFloat(String(rr).replace(/[^\\d.]/g, '')); if (isFinite(n)) { reset = r2(n); } else { log('startup', name, 'ask_reset_cr', 'not numeric', rr); } }\n  startups.push({ name: name, sector: g(r, 'sector'), stage: g(r, 'stage'), bucket: bucket,\n                  owner_name: g(r, 'owner'), status: status, ask_current_cr: ask,\n                  ask_reset_cr: reset, revenue_note: g(r, 'revenue'),\n                  ask_currency: rp[0], ask_amount: rp[1], ask_as_written: rp[2] });\n}\n\n// criteria joined BY NAME: 303/303. sheet_row mispairs two rows and has a blank and two duplicates.\n// Helpers for the criteria fields. Blank stays NULL; nothing is inferred.\nconst txt = function (x) { const s = String(x == null ? '' : x).trim(); return s || null; };\nconst arr = function (x) { const a = String(x == null ? '' : x).split(',').map(function (y) { return y.trim(); }).filter(Boolean); return a.length ? a : null; };\nconst yn = function (x) { const s = String(x == null ? '' : x).trim().toUpperCase(); if (s === 'Y' || s === 'YES' || s === 'TRUE') return true; if (s === 'N' || s === 'NO' || s === 'FALSE') return false; return null; };\nconst numOrNull = function (x) { const s = String(x == null ? '' : x).replace(/[^\\d.]/g, ''); if (!s) return null; const n = parseFloat(s); return isFinite(n) ? n : null; };\n\nconst crit = {};\nfor (const r of C) { const k = nz(r.investor); if (k && !crit[k]) { crit[k] = r; } }\nconst TYPE = { VC: 'institutional_vc', ANGEL: 'angel', CVC: 'other', FAMILY_OFFICE: 'family_office',\n  ANGEL_NETWORK: 'angel_network', DEBT: 'other', ACCELERATOR: 'other', PE: 'other',\n  GOVT_FUND: 'other', ADVISOR: 'other', 'FAMILY OFFICE / ACCELERATOR': 'family_office',\n  'VC HOLDING COMPANY': 'other' };\nconst STAT = { ACTIVE: 'active', HOLD: 'paused', DNC: 'do_not_contact', STOP: 'paused',\n  PENDING: 'pending', INACTIVE: 'paused' };\n\nconst investors = []; const seenI = {};\nfor (const r of I) {\n  const name = g(r, 'investor');\n  if (!name) { log('investor', '(blank)', 'name', 'blank name'); continue; }\n  if (seenI[nz(name)]) { log('investor', name, 'name', 'duplicate name, first kept'); continue; }\n  seenI[nz(name)] = 1;\n  const c = crit[nz(name)] || {};\n  const t = String(c.investor_type || '').trim().toUpperCase();\n  const typ = TYPE[t] || 'other';\n  if (t && !TYPE[t]) { log('investor', name, 'type', 'unknown investor_type, set to other', t); }\n  const st = String(c.status || '').trim().toUpperCase();\n  const status = STAT[st] || 'pending';\n  if (st && !STAT[st]) { log('investor', name, 'status', 'unknown status, set to pending', st); }\n  let secs = String(c.sectors_in || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean);\n  if (!secs.length) { secs = null; log('investor', name, 'sectors', 'criteria sectors_in is blank'); }\n  let stg = String(r.stage || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean);\n  if (!stg.length) { stg = null; log('investor', name, 'stage_pref', 'INVESTORS.stage is blank'); }\n  const cm = money(r.cheque_inr_cr);\n  if (cm[2] && cm[2] !== 'blank') { log('investor', name, 'cheque_min/max', cm[2], r.cheque_inr_cr || ''); }\n  else if (cm[2] === 'blank') { log('investor', name, 'cheque_min/max', 'cheque cell is empty'); }\n  else if (cm[0] === null || cm[1] === null) { log('investor', name, 'cheque_min/max', 'source gives only one bound', r.cheque_inr_cr || ''); }\n  let last = g(r, 'last_contacted_any');\n  if (last && !ISO.test(last)) { log('investor', name, 'last_contacted_on', 'date not ISO', last); last = null; }\n  investors.push({ name: name, contact_person: g(r, 'contact_person'), email: g(r, 'email'),\n    cc_email: g(r, 'cc'), type: typ, status: status, sectors: secs, stage_pref: stg,\n    cheque_min_cr: cm[0], cheque_max_cr: cm[1], cheque_as_written: g(r, 'cheque_inr_cr'),\n    geography: (String(c.geography_scope || '').trim() || null), do_not_contact: (!!g(r, 'do_not_contact')) || st === 'DNC',\n    last_contacted_on: last, contacted_by: g(r, 'contacted_by'),\n    notes: (String(c.thesis_summary || '').trim() || null),\n    // Full thesis, so the dashboard can show WHY a deal does or does not fit.\n    arr_min_cr: numOrNull(c.arr_min_cr),\n    arr_min_strict: yn(c.arr_min_strict),\n    revenue_required: yn(c.revenue_required),\n    women_only: yn(c.women_only),\n    sector_mode: txt(c.sector_mode),\n    sectors_excluded: arr(c.sectors_excluded),\n    models_in: arr(c.models_in),\n    models_excluded: arr(c.models_excluded),\n    stage_min: txt(c.stage_min),\n    stage_max: txt(c.stage_max),\n    confirmed: txt(c.confirmed),\n    cheque_max_cr_stated: numOrNull(c.cheque_max_cr),\n    lead_max_cr: numOrNull(c.lead_max_cr),\n    round_max_cr: numOrNull(c.round_max_cr),\n    other_requirements: [txt(c.unchecked_requirements), txt(c.rule_notes)].filter(Boolean).join(' | ') || null });\n}\nreturn [{ json: { startups: startups, investors: investors, skips: skips,\n                  counts: { startups: startups.length, investors: investors.length, skips: skips.length } } }];"
+      }
+    },
+    {
+      "id": "ps",
+      "name": "Upsert startups",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        720,
+        100
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://elwaquzawoscotlojtnv.supabase.co/rest/v1/startups?on_conflict=name",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates,return=minimal"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.startups) }}",
+        "options": {
+          "timeout": 120000,
+          "response": {
+            "response": {
+              "neverError": true,
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "ntQxeHO20ZUMASMg",
+          "name": "Supabase service"
+        }
+      }
+    },
+    {
+      "id": "pi",
+      "name": "Upsert investors",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        960,
+        100
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://elwaquzawoscotlojtnv.supabase.co/rest/v1/investors?on_conflict=name",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates,return=minimal"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($('Build rows').first().json.investors) }}",
+        "options": {
+          "timeout": 120000,
+          "response": {
+            "response": {
+              "neverError": true,
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "ntQxeHO20ZUMASMg",
+          "name": "Supabase service"
+        }
+      }
+    },
+    {
+      "id": "rep",
+      "name": "Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        100
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b = $('Build rows').first().json;\nconst s = $('Upsert startups').first().json;\nconst i = $input.first().json;\nconst ok = function (r) { return r && r.statusCode >= 200 && r.statusCode < 300; };\nconst why = function (r) { if (!r) return 'no response'; if (ok(r)) return 'ok'; return 'HTTP ' + r.statusCode + ' ' + JSON.stringify(r.body).slice(0, 200); };\nconst reasons = {};\nfor (const k of b.skips) { reasons[k.reason] = (reasons[k.reason] || 0) + 1; }\nreturn [{ json: {\n  ran_at_ist: new Date(Date.now() + 19800000).toISOString().replace('T', ' ').slice(0, 19) + ' IST',\n  startups_sent: b.counts.startups, startups_result: why(s),\n  investors_sent: b.counts.investors, investors_result: why(i),\n  all_ok: ok(s) && ok(i),\n  values_not_carried: b.counts.skips, reasons: reasons\n} }];"
+      }
+    }
+  ],
+  "connections": {
+    "Hourly": {
+      "main": [
+        [
+          {
+            "node": "GET sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Test hook": {
+      "main": [
+        [
+          {
+            "node": "GET sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET sheets": {
+      "main": [
+        [
+          {
+            "node": "Build rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build rows": {
+      "main": [
+        [
+          {
+            "node": "Upsert startups",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert startups": {
+      "main": [
+        [
+          {
+            "node": "Upsert investors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert investors": {
+      "main": [
+        [
+          {
+            "node": "Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Hourly": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "I8VWdHLb6fxhciqN",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-30T17:46:32.562Z",
+      "updatedAt": "2026-09-30T17:46:32.562Z"
+    }
+  ],
+  "activeVersion": {
+    "versionId": "1f7fb0a5-6f17-4a1d-a473-98ecdc8a84e3",
+    "workflowId": "I8VWdHLb6fxhciqN",
+    "nodes": [
+      {
+        "id": "sch",
+        "name": "Hourly",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          0,
+          0
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "hours",
+                "hoursInterval": 1
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "hook",
+        "name": "Test hook",
+        "webhookId": "f6e0dd7f-f266-480d-a4fe-53ff4354acb3",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          200
+        ],
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "sidana-syncbook-test-4a2e",
+          "responseMode": "lastNode",
+          "options": {}
+        }
+      },
+      {
+        "id": "get",
+        "name": "GET sheets",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "executeOnce": true,
+        "retryOnFail": true,
+        "maxTries": 5,
+        "waitBetweenTries": 5000,
+        "position": [
+          240,
+          100
+        ],
+        "parameters": {
+          "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=STARTUPS!A1:P200&ranges=INVESTORS!A1:J1000&ranges=INVESTOR_CRITERIA!A1:AF400",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleSheetsOAuth2Api",
+          "options": {
+            "timeout": 120000
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "build",
+        "name": "Build rows",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          480,
+          100
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "// Mirrors the approved 30 Sep column mapping exactly.\n// Blank stays NULL. Dollars are never converted. A lone figure sets the floor\n// only; a ceiling is never invented. Dedupe by name BEFORE the request, or\n// Postgres throws \"ON CONFLICT DO UPDATE cannot affect row a second time\".\nconst res = $input.first().json;\nconst byTab = {};\nfor (const vr of (res.valueRanges || [])) {\n  byTab[String(vr.range).split('!')[0].replace(/'/g, '')] = vr.values || [];\n}\nfunction rows(tab) {\n  const v = byTab[tab] || [];\n  if (!v.length) return [];\n  const h = v[0];\n  return v.slice(1).map(function (r) {\n    const o = {};\n    h.forEach(function (k, i) { o[k] = (r[i] === undefined ? '' : r[i]); });\n    return o;\n  });\n}\nconst S = rows('STARTUPS'), I = rows('INVESTORS'), C = rows('INVESTOR_CRITERIA');\nconst nz = function (s) { return String(s == null ? '' : s).toLowerCase().replace(/[^a-z0-9]/g, ''); };\nconst g = function (r, k) { const v = String(r[k] == null ? '' : r[k]).trim(); return v === '' ? null : v; };\nconst skips = [];\nconst log = function (e, n, f, why, raw) { skips.push({ entity: e, name: n, field: f, reason: why, raw: raw || '' }); };\n\nconst UNIT = { cr: 1, crore: 1, crores: 1, l: 0.01, lac: 0.01, lacs: 0.01, lakh: 0.01, lakhs: 0.01 };\nconst INR_RANGE = /INR\\s*([\\d.]+)\\s*(cr|crores|crore|lacs|lac|lakhs|lakh|l)?\\s*(?:-|to)\\s*([\\d.]+)\\s*(cr|crores|crore|lacs|lac|lakhs|lakh|l)/i;\nconst INR_ONE = /INR\\s*([\\d.]+)\\s*(cr|crores|crore|lacs|lac|lakhs|lakh|l)/i;\nconst BARE_RANGE = /([\\d.]+)\\s*(cr|crores|crore|lacs|lac|lakhs|lakh|l)?\\s*(?:-|to)\\s*([\\d.]+)\\s*(cr|crores|crore|lacs|lac|lakhs|lakh|l)/i;\nconst BARE_ONE = /([\\d.]+)\\s*(cr|crores|crore)/i;\nconst CEILING = /up\\s*to|max|below/i;\nconst FUNDSIZE = /fund|corpus|aum/i;\nconst HAS_USD = /us\\$|usd|\\$/i;\nconst r2 = function (x) { return Math.round(x * 100) / 100; };\n\nfunction money(s) {\n  s = String(s == null ? '' : s).trim();\n  if (!s) return [null, null, 'blank'];\n  let m = INR_RANGE.exec(s);\n  if (m) { const u2 = UNIT[m[4].toLowerCase()]; const u1 = UNIT[(m[2] || '').toLowerCase()] || u2;\n           return [r2(parseFloat(m[1]) * u1), r2(parseFloat(m[3]) * u2), null]; }\n  m = INR_ONE.exec(s);\n  if (m) { const v = r2(parseFloat(m[1]) * UNIT[m[2].toLowerCase()]);\n           return CEILING.test(s) ? [null, v, null] : [v, null, null]; }\n  m = BARE_RANGE.exec(s);\n  if (m) { const u2 = UNIT[m[4].toLowerCase()]; const u1 = UNIT[(m[2] || '').toLowerCase()] || u2;\n           return [r2(parseFloat(m[1]) * u1), r2(parseFloat(m[3]) * u2), null]; }\n  m = BARE_ONE.exec(s);\n  if (m && !FUNDSIZE.test(s)) { const v = r2(parseFloat(m[1]));\n           return CEILING.test(s) ? [null, v, null] : [v, null, null]; }\n  if (HAS_USD.test(s)) return [null, null, 'USD, no exchange rate given'];\n  return [null, null, 'unparseable'];\n}\n// Currency-aware raise. STARTUPS.raise_inr_cr is the operational truth: it is\n// the exact text the outreach subject line quotes, so the dashboard shows it\n// verbatim rather than a converted figure. Forcing dollar rounds into crore is\n// what produced 29 wrong raises before 1 Oct 2026.\n// ask_amount is for sorting only and takes the FIRST currency named, matching\n// how the subject line leads. A range or a word like 'Undisclosed' keeps its\n// text and gets no number, because inventing one would be a guess.\nfunction raiseParts(sv) {\n  const t = String(sv == null ? '' : sv).trim();\n  if (!t) { return [null, null, null]; }\n  const u = /US?\\$\\s*([\\d.]+)\\s*([MK])?/i.exec(t);\n  const i = /INR\\s*([\\d.]+)\\s*Cr\\b/i.exec(t);\n  if (u && (!i || u.index < i.index)) {\n    const n = parseFloat(u[1]); const unit = (u[2] || 'M').toUpperCase();\n    return ['USD', r2(unit === 'K' ? n / 1000 : n), t];\n  }\n  if (i) { return ['INR', r2(parseFloat(i[1])), t]; }\n  return [null, null, t];\n}\nconst ISO = /^\\d{4}-\\d{2}-\\d{2}$/;\n\nconst HOT = {};\n['Spintly','Bon Cuisine','EosNox','HYRGPT','Talent Recruit','Hoora','CLIKD','MindWox','MentorCloud','Road Athena','LearningPad'].forEach(function (x) { HOT[nz(x)] = 1; });\n\nconst startups = []; const seenS = {};\nfor (const r of S) {\n  const name = g(r, 'startup');\n  if (!name) { log('startup', '(blank)', 'name', 'blank name'); continue; }\n  if (seenS[nz(name)]) { log('startup', name, 'name', 'duplicate name, first kept'); continue; }\n  seenS[nz(name)] = 1;\n  const desk = String(r.desk || '').trim().toUpperCase();\n  const bucket = HOT[nz(name)] ? 'HOT10' : (desk === 'ANGEL' ? 'A' : (desk === 'MIDDLE' ? 'C' : 'UNASSIGNED'));\n  const active = String(r.active || '').trim().toLowerCase();\n  let status = 'live';\n  if (active === 'no') { status = 'blocked'; }\n  else if (active !== 'yes') { log('startup', name, 'status', 'active blank, defaulted to live'); }\n  const mm = money(r.raise_inr_cr);\n  const rp = raiseParts(r.raise_inr_cr);\n  let ask = null;\n  if (mm[0] !== null && mm[1] !== null) { log('startup', name, 'ask_current_cr', 'a range, not a single ask', r.raise_inr_cr || ''); }\n  else if (mm[0] !== null) { ask = mm[0]; }\n  else if (mm[1] !== null) { ask = mm[1]; }\n  else if (mm[2] !== 'blank') { log('startup', name, 'ask_current_cr', mm[2], r.raise_inr_cr || ''); }\n  let reset = null;\n  const rr = g(r, 'recommended_raise_cr');\n  if (rr) { const n = parseFloat(String(rr).replace(/[^\\d.]/g, '')); if (isFinite(n)) { reset = r2(n); } else { log('startup', name, 'ask_reset_cr', 'not numeric', rr); } }\n  startups.push({ name: name, sector: g(r, 'sector'), stage: g(r, 'stage'), bucket: bucket,\n                  owner_name: g(r, 'owner'), status: status, ask_current_cr: ask,\n                  ask_reset_cr: reset, revenue_note: g(r, 'revenue'),\n                  ask_currency: rp[0], ask_amount: rp[1], ask_as_written: rp[2] });\n}\n\n// criteria joined BY NAME: 303/303. sheet_row mispairs two rows and has a blank and two duplicates.\n// Helpers for the criteria fields. Blank stays NULL; nothing is inferred.\nconst txt = function (x) { const s = String(x == null ? '' : x).trim(); return s || null; };\nconst arr = function (x) { const a = String(x == null ? '' : x).split(',').map(function (y) { return y.trim(); }).filter(Boolean); return a.length ? a : null; };\nconst yn = function (x) { const s = String(x == null ? '' : x).trim().toUpperCase(); if (s === 'Y' || s === 'YES' || s === 'TRUE') return true; if (s === 'N' || s === 'NO' || s === 'FALSE') return false; return null; };\nconst numOrNull = function (x) { const s = String(x == null ? '' : x).replace(/[^\\d.]/g, ''); if (!s) return null; const n = parseFloat(s); return isFinite(n) ? n : null; };\n\nconst crit = {};\nfor (const r of C) { const k = nz(r.investor); if (k && !crit[k]) { crit[k] = r; } }\nconst TYPE = { VC: 'institutional_vc', ANGEL: 'angel', CVC: 'other', FAMILY_OFFICE: 'family_office',\n  ANGEL_NETWORK: 'angel_network', DEBT: 'other', ACCELERATOR: 'other', PE: 'other',\n  GOVT_FUND: 'other', ADVISOR: 'other', 'FAMILY OFFICE / ACCELERATOR': 'family_office',\n  'VC HOLDING COMPANY': 'other' };\nconst STAT = { ACTIVE: 'active', HOLD: 'paused', DNC: 'do_not_contact', STOP: 'paused',\n  PENDING: 'pending', INACTIVE: 'paused' };\n\nconst investors = []; const seenI = {};\nfor (const r of I) {\n  const name = g(r, 'investor');\n  if (!name) { log('investor', '(blank)', 'name', 'blank name'); continue; }\n  if (seenI[nz(name)]) { log('investor', name, 'name', 'duplicate name, first kept'); continue; }\n  seenI[nz(name)] = 1;\n  const c = crit[nz(name)] || {};\n  const t = String(c.investor_type || '').trim().toUpperCase();\n  const typ = TYPE[t] || 'other';\n  if (t && !TYPE[t]) { log('investor', name, 'type', 'unknown investor_type, set to other', t); }\n  const st = String(c.status || '').trim().toUpperCase();\n  const status = STAT[st] || 'pending';\n  if (st && !STAT[st]) { log('investor', name, 'status', 'unknown status, set to pending', st); }\n  let secs = String(c.sectors_in || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean);\n  if (!secs.length) { secs = null; log('investor', name, 'sectors', 'criteria sectors_in is blank'); }\n  let stg = String(r.stage || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean);\n  if (!stg.length) { stg = null; log('investor', name, 'stage_pref', 'INVESTORS.stage is blank'); }\n  const cm = money(r.cheque_inr_cr);\n  if (cm[2] && cm[2] !== 'blank') { log('investor', name, 'cheque_min/max', cm[2], r.cheque_inr_cr || ''); }\n  else if (cm[2] === 'blank') { log('investor', name, 'cheque_min/max', 'cheque cell is empty'); }\n  else if (cm[0] === null || cm[1] === null) { log('investor', name, 'cheque_min/max', 'source gives only one bound', r.cheque_inr_cr || ''); }\n  let last = g(r, 'last_contacted_any');\n  if (last && !ISO.test(last)) { log('investor', name, 'last_contacted_on', 'date not ISO', last); last = null; }\n  investors.push({ name: name, contact_person: g(r, 'contact_person'), email: g(r, 'email'),\n    cc_email: g(r, 'cc'), type: typ, status: status, sectors: secs, stage_pref: stg,\n    cheque_min_cr: cm[0], cheque_max_cr: cm[1], cheque_as_written: g(r, 'cheque_inr_cr'),\n    geography: (String(c.geography_scope || '').trim() || null), do_not_contact: (!!g(r, 'do_not_contact')) || st === 'DNC',\n    last_contacted_on: last, contacted_by: g(r, 'contacted_by'),\n    notes: (String(c.thesis_summary || '').trim() || null),\n    // Full thesis, so the dashboard can show WHY a deal does or does not fit.\n    arr_min_cr: numOrNull(c.arr_min_cr),\n    arr_min_strict: yn(c.arr_min_strict),\n    revenue_required: yn(c.revenue_required),\n    women_only: yn(c.women_only),\n    sector_mode: txt(c.sector_mode),\n    sectors_excluded: arr(c.sectors_excluded),\n    models_in: arr(c.models_in),\n    models_excluded: arr(c.models_excluded),\n    stage_min: txt(c.stage_min),\n    stage_max: txt(c.stage_max),\n    confirmed: txt(c.confirmed),\n    cheque_max_cr_stated: numOrNull(c.cheque_max_cr),\n    lead_max_cr: numOrNull(c.lead_max_cr),\n    round_max_cr: numOrNull(c.round_max_cr),\n    other_requirements: [txt(c.unchecked_requirements), txt(c.rule_notes)].filter(Boolean).join(' | ') || null });\n}\nreturn [{ json: { startups: startups, investors: investors, skips: skips,\n                  counts: { startups: startups.length, investors: investors.length, skips: skips.length } } }];"
+        }
+      },
+      {
+        "id": "ps",
+        "name": "Upsert startups",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          720,
+          100
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://elwaquzawoscotlojtnv.supabase.co/rest/v1/startups?on_conflict=name",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpCustomAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Prefer",
+                "value": "resolution=merge-duplicates,return=minimal"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json.startups) }}",
+          "options": {
+            "timeout": 120000,
+            "response": {
+              "response": {
+                "neverError": true,
+                "fullResponse": true
+              }
+            }
+          }
+        },
+        "credentials": {
+          "httpCustomAuth": {
+            "id": "ntQxeHO20ZUMASMg",
+            "name": "Supabase service"
+          }
+        }
+      },
+      {
+        "id": "pi",
+        "name": "Upsert investors",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          960,
+          100
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://elwaquzawoscotlojtnv.supabase.co/rest/v1/investors?on_conflict=name",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpCustomAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Prefer",
+                "value": "resolution=merge-duplicates,return=minimal"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($('Build rows').first().json.investors) }}",
+          "options": {
+            "timeout": 120000,
+            "response": {
+              "response": {
+                "neverError": true,
+                "fullResponse": true
+              }
+            }
+          }
+        },
+        "credentials": {
+          "httpCustomAuth": {
+            "id": "ntQxeHO20ZUMASMg",
+            "name": "Supabase service"
+          }
+        }
+      },
+      {
+        "id": "rep",
+        "name": "Report",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1200,
+          100
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const b = $('Build rows').first().json;\nconst s = $('Upsert startups').first().json;\nconst i = $input.first().json;\nconst ok = function (r) { return r && r.statusCode >= 200 && r.statusCode < 300; };\nconst why = function (r) { if (!r) return 'no response'; if (ok(r)) return 'ok'; return 'HTTP ' + r.statusCode + ' ' + JSON.stringify(r.body).slice(0, 200); };\nconst reasons = {};\nfor (const k of b.skips) { reasons[k.reason] = (reasons[k.reason] || 0) + 1; }\nreturn [{ json: {\n  ran_at_ist: new Date(Date.now() + 19800000).toISOString().replace('T', ' ').slice(0, 19) + ' IST',\n  startups_sent: b.counts.startups, startups_result: why(s),\n  investors_sent: b.counts.investors, investors_result: why(i),\n  all_ok: ok(s) && ok(i),\n  values_not_carried: b.counts.skips, reasons: reasons\n} }];"
+        }
+      }
+    ],
+    "connections": {
+      "Hourly": {
+        "main": [
+          [
+            {
+              "node": "GET sheets",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Test hook": {
+        "main": [
+          [
+            {
+              "node": "GET sheets",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "GET sheets": {
+        "main": [
+          [
+            {
+              "node": "Build rows",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build rows": {
+        "main": [
+          [
+            {
+              "node": "Upsert startups",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Upsert startups": {
+        "main": [
+          [
+            {
+              "node": "Upsert investors",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Upsert investors": {
+        "main": [
+          [
+            {
+              "node": "Report",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "Sidana Ventures",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "createdAt": "2026-10-01T09:50:36.922Z",
+    "updatedAt": "2026-10-01T09:50:36.922Z",
+    "workflowPublishHistory": [
+      {
+        "id": 10544,
+        "workflowId": "I8VWdHLb6fxhciqN",
+        "versionId": "1f7fb0a5-6f17-4a1d-a473-98ecdc8a84e3",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-10-01T09:50:37.028Z"
+      }
+    ]
+  }
+}

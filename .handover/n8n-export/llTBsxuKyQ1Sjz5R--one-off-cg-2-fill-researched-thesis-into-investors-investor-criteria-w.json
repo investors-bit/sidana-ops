@@ -1,0 +1,195 @@
+{
+  "id": "llTBsxuKyQ1Sjz5R",
+  "name": "One-off CG-2 — fill researched thesis into INVESTORS + INVESTOR_CRITERIA (webhook payload, blank-only)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-23T15:12:36.383Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "59078eb3-575e-4de1-a6cb-3cb78dc72606",
+  "versionCounter": 6,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "c33672f7-d133-4218-947c-98b442782e6f",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-thesis-fill-3d81ba",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {
+          "rawBody": false
+        }
+      }
+    },
+    {
+      "id": "g",
+      "name": "Read",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=INVESTOR_CRITERIA%21A1%3AAC300&ranges=INVESTORS%21A1%3AJ300",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "v",
+      "name": "Compute",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const body = $('Webhook').first().json.body || {};\nconst UP = body.updates || [];\nif (!Array.isArray(UP) || !UP.length) throw new Error('No updates array in webhook body');\n\nconst R = $json.valueRanges || [];\nconst pick = (n) => (R.find(x => String(x.range||'').indexOf(n) === 0) || {}).values || [];\nconst crit = pick('INVESTOR_CRITERIA');\nconst inv  = pick('INVESTORS!');\nif (!crit.length || !inv.length) throw new Error('Read failed: ' + R.map(x=>x.range).join(' , '));\n\nconst g = (row,i) => (row && row[i] != null) ? String(row[i]).trim() : '';\nconst critByRow = {};\ncrit.forEach((r,i) => { const k = g(r,0); if (k) critByRow[k] = i + 1; });\n\n// field -> [sheet, column letter, column index]\nconst INV_MAP = { s:['INVESTORS','E',4], g:['INVESTORS','F',5], c:['INVESTORS','G',6] };\nconst CR_MAP  = { m:['INVESTOR_CRITERIA','G',6], si:['INVESTOR_CRITERIA','H',7],\n                  lo:['INVESTOR_CRITERIA','L',11], hi:['INVESTOR_CRITERIA','M',12],\n                  cm:['INVESTOR_CRITERIA','N',13], arr:['INVESTOR_CRITERIA','O',14],\n                  geo:['INVESTOR_CRITERIA','T',19], th:['INVESTOR_CRITERIA','V',21],\n                  ev:['INVESTOR_CRITERIA','W',22], cf:['INVESTOR_CRITERIA','Y',24] };\n\nconst data = [], wrote = [], skipped = [], problems = [];\n\nfor (const u of UP) {\n  const n = parseInt(u.r, 10);\n  const ivRow = (n > 1 && n <= inv.length) ? inv[n-1] : null;\n  if (!ivRow || !g(ivRow,0)) { problems.push(n + ' :: no INVESTORS row'); continue; }\n  const name = g(ivRow,0);\n  const cRow = critByRow[String(n)];\n  const cArr = cRow ? crit[cRow-1] : null;\n  const did = [], skip = [];\n\n  for (const [f, spec] of Object.entries(INV_MAP)) {\n    if (u[f] == null) continue;\n    if (g(ivRow, spec[2])) { skip.push(f + ' (already set)'); continue; }\n    data.push({ range: 'INVESTORS!' + spec[1] + n, values: [[String(u[f])]] });\n    did.push(f);\n  }\n  for (const [f, spec] of Object.entries(CR_MAP)) {\n    if (u[f] == null) continue;\n    if (!cArr) { skip.push(f + ' (no criteria row)'); continue; }\n    if (g(cArr, spec[2])) { skip.push(f + ' (already set)'); continue; }\n    data.push({ range: 'INVESTOR_CRITERIA!' + spec[1] + cRow, values: [[String(u[f])]] });\n    did.push(f);\n  }\n  wrote.push({ row: n, investor: name, crit_row: cRow || null, filled: did, left_alone: skip });\n  if (skip.length) skipped.push(n + ' ' + name + ' :: ' + skip.join('; '));\n}\n\nif (!data.length) throw new Error('Nothing to write - every target cell already had a value');\nif (data.length > 400) throw new Error('Guard: refusing ' + data.length + ' cells (cap 400)');\n\nreturn [{ json: { body: { valueInputOption: 'RAW', data: data }, cells: data.length,\n                  investors: wrote.length, wrote: wrote, skipped: skipped, problems: problems } }];"
+      }
+    },
+    {
+      "id": "w",
+      "name": "Write",
+      "disabled": false,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {
+          "timeout": 180000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "o",
+      "name": "Out",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const c = $('Compute').first().json;\nconst w = $json;\nreturn [{ json: { updatedCells: w.totalUpdatedCells != null ? w.totalUpdatedCells : null,\n                  planned_cells: c.cells, investors_touched: c.investors,\n                  per_investor: c.wrote, left_alone: c.skipped, problems: c.problems } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read": {
+      "main": [
+        [
+          {
+            "node": "Compute",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute": {
+      "main": [
+        [
+          {
+            "node": "Write",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write": {
+      "main": [
+        [
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "llTBsxuKyQ1Sjz5R",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-23T15:12:36.385Z",
+      "updatedAt": "2026-09-23T15:12:36.385Z"
+    }
+  ],
+  "activeVersion": null
+}

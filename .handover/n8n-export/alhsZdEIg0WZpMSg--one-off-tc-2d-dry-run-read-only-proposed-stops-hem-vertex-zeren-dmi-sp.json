@@ -1,0 +1,143 @@
+{
+  "id": "alhsZdEIg0WZpMSg",
+  "name": "One-off TC-2D (DRY RUN, read-only) — proposed stops: Hem / Vertex / Zeren / DMI Sparkle + Dexter view (17 Sep)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-17T05:10:00.390Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "8e0a00af-5bbb-4f17-bce5-cedc917bf4eb",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once (set before activating)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "47 10 17 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "gp",
+      "name": "GET pilot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=STARTUPS!A1:L400&ranges=PIPELINE!A1:AJ6000&ranges=INVESTORS!A1:Z400",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "an",
+      "name": "Plan",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nfunction nz(x) { return s(x).toLowerCase().replace(/[^a-z0-9]/g, ''); }\nfunction idx(h) { const o = {}; (h || []).forEach(function (k, i) { o[nz(k)] = i; }); return o; }\nconst v = $('GET pilot').first().json.valueRanges || [];\nconst st = (v[0] || {}).values || [], pipe = (v[1] || {}).values || [], inv = (v[2] || {}).values || [];\nif (st.length < 40 || pipe.length < 500 || inv.length < 100) { throw new Error('ABORT short read'); }\nconst SH = idx(st[0]), PH = idx(pipe[0]), IH = idx(inv[0]);\n// Parse the best revenue figure in INR Cr from free text. Projections/markets/GMV are ignored.\nfunction revCr(t) { const x = s(t); if (!x) { return null; }\n  if (/pre-?\\s*revenue|pre-?\\s*monetis|no revenue/i.test(x)) { return 0; }\n  const clean = x.replace(/projected[^;.]*/gi, ' ').replace(/(market|tam|industry|gmv|loans facilitated)[^;.]*/gi, ' ');\n  const re = /(us\\$|\\$|inr|rs\\.?|₹)?\\s*(\\d[\\d,]*(?:\\.\\d+)?)\\s*(cr|crore|lakh|lac|l\\b|k\\b|m\\b|mn|million)/gi; let m, best = null;\n  while ((m = re.exec(clean)) !== null) { const cur = s(m[1]).toLowerCase(); const n = parseFloat(m[2].replace(/,/g, '')); const u = m[3].toLowerCase(); let cr;\n    if (/^(cr|crore)$/.test(u)) { cr = n; } else if (/^(lakh|lac|l)$/.test(u)) { cr = n / 100; }\n    else if (/^k$/.test(u)) { cr = cur.indexOf('$') >= 0 ? n * 0.0085 : n / 10000; } else { cr = cur.indexOf('$') >= 0 ? n * 8.5 : n / 10; }\n    if (/mrr/i.test(clean.slice(Math.max(0, m.index - 12), m.index + m[0].length + 6))) { cr = cr * 12; }\n    if (best === null || cr > best) { best = cr; } }\n  return best; }\nconst S = {};\nfor (let r = 1; r < st.length; r++) { const row = st[r] || []; const n = s(row[SH.startup]); if (!n) { continue; }\n  S[nz(n)] = { n: n, sector: s(row[SH.sector]), stage: s(row[SH.stage]), rev: s(row[SH.revenue]), revCr: revCr(row[SH.revenue]) }; }\nconst FNB = /f\\s*&\\s*b|food|beverage|coffee|\\btea\\b|snack|cafeteria|meat|seafood|restaurant|bakery|dairy|spice|honey|nutrition bar|drink/i;\nconst JAIN = /meat|seafood|\\bfish|chicken|mutton|egg\\b|alcohol|liquor|\\bbeer|\\bwine|spirits|brewer|distill/i;\nconst D2C = /d2c|consumer brand|beauty|personal care|skincare|wellness d2c|jewell|apparel|fashion|home decor|sexual wellness|lifestyle brand/i;\nfunction decide(invName, x) { const rc = x ? x.revCr : null; const sec = x ? x.sector : '';\n  if (/^hemangels$/.test(nz(invName))) { if (JAIN.test(sec)) { return 'STOP: Jain-community exclusion (' + sec.slice(0, 40) + ')'; } if (rc === null) { return 'REVIEW: revenue unknown'; } return rc > 5 ? 'KEEP: ARR ~' + rc.toFixed(1) + ' Cr > 5' : 'STOP: ARR ~' + rc.toFixed(1) + ' Cr, needs > 5 Cr'; }\n  if (/^vertexventures$/.test(nz(invName))) { if (rc === null) { return 'REVIEW: revenue unknown'; } return rc >= 25.5 ? 'KEEP: ARR ~' + rc.toFixed(1) + ' Cr >= $3M' : 'STOP: ARR ~' + rc.toFixed(1) + ' Cr, needs US$3M (~25.5 Cr)'; }\n  if (/^zerencapital$/.test(nz(invName))) { if (rc === null) { return 'REVIEW: revenue unknown'; } return rc > 0 ? 'KEEP: revenue-generating (~' + rc.toFixed(1) + ' Cr)' : 'STOP: not revenue-generating'; }\n  if (/dmi/.test(nz(invName))) { if (FNB.test(sec)) { return 'STOP: F&B excluded for DMI (' + sec.slice(0, 40) + ')'; } if (D2C.test(sec)) { return 'KEEP: pure-play consumer / D2C'; } return 'STOP?: not a pure-play consumer D2C brand (' + sec.slice(0, 40) + ')'; }\n  return 'VIEW'; }\nconst TARGET = function (n) { const k = nz(n); return k === 'hemangels' || k === 'vertexventures' || k === 'zerencapital' || k.indexOf('dmi') === 0 || k === 'dexterventures'; };\nconst invOut = [];\nfor (let r = 1; r < inv.length; r++) { const row = inv[r] || []; const n = s(row[IH.investor]); if (TARGET(n)) { invOut.push([r + 1, n, s(row[IH.stage]), s(row[IH.chequeinrcr]), s(row[IH.sector]).slice(0, 120), s(row[IH.email]), 'dnc=' + s(row[IH.donotcontact])]); } }\nconst plan = {};\nfor (let r = 1; r < pipe.length; r++) { const row = pipe[r] || []; const iv = s(row[PH.investor]); if (!TARGET(iv) || nz(iv) === 'dexterventures') { continue; }\n  const sent = /^yes$/i.test(s(row[PH.dealshared])); const paused = /^yes$/i.test(s(row[PH.pause])); const resp = s(row[PH.investorresponse]); const na = s(row[PH.nextaction]);\n  let kind; if (!sent && !paused) { kind = 'QUEUED'; } else if (sent && !paused && !resp && /follow/i.test(na)) { kind = 'SENT_FU_LIVE'; } else if (sent) { kind = 'SENT_DONE' + (resp ? '(resp:' + resp.slice(0, 20) + ')' : ''); } else { continue; }\n  const x = S[nz(row[PH.startup])];\n  (plan[iv] = plan[iv] || []).push([r + 1, s(row[PH.dealid]), s(row[PH.startup]), kind, s(row[PH.datshared] || row[PH.dateshared]).slice(0, 10) || s(row[PH.nextdue]).slice(0, 10), decide(iv, x), x ? x.rev.slice(0, 45) : 'NOT IN STARTUPS']); }\nconst summary = {}; Object.keys(plan).forEach(function (k) { const c = {}; plan[k].forEach(function (p) { const key = p[3].split('(')[0] + ' ' + p[5].split(':')[0]; c[key] = (c[key] || 0) + 1; }); summary[k] = c; });\nconst dexter = []; for (let r = 1; r < pipe.length; r++) { const row = pipe[r] || []; if (nz(row[PH.investor]) === 'dexterventures' && !/^yes$/i.test(s(row[PH.pause])) && !/^yes$/i.test(s(row[PH.dealshared]))) { dexter.push(s(row[PH.startup])); } }\nreturn [{ json: { investors_rows: invOut, summary: summary, plan: plan, dexter_queued_live: dexter.length } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once (set before activating)": {
+      "main": [
+        [
+          {
+            "node": "GET pilot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET pilot": {
+      "main": [
+        [
+          {
+            "node": "Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once (set before activating)": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "alhsZdEIg0WZpMSg",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-17T05:10:00.393Z",
+      "updatedAt": "2026-09-17T05:10:00.393Z"
+    }
+  ],
+  "activeVersion": null
+}

@@ -1,0 +1,246 @@
+{
+  "id": "oGvKr1AOnQR7lS9A",
+  "name": "One-off TR-28 — release the held angel x pre-revenue deals now the sanitiser is live",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-15T16:31:26.822Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "09f2b534-b66e-4515-8a5d-64c33343bafd",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once (set before activating)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "8 22 15 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "gp",
+      "name": "GET PIPELINE",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/PIPELINE!A1:AJ6000",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cp",
+      "name": "Plan",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nfunction colLetter(i) { let n = i + 1, out = ''; while (n > 0) { const m = (n - 1) % 26; out = String.fromCharCode(65 + m) + out; n = Math.floor((n - 1) / 26); } return out; }\nconst TODAY = '2026-09-15';\nconst pipe = $('GET PIPELINE').first().json.values || [];\nif (pipe.length < 500) { throw new Error('ABORT: PIPELINE only ' + pipe.length); }\nconst ph = (pipe[0] || []).map(s);\nconst P = {};\n['deal_id','startup','investor','email','owner','deal_shared','pause','next_action','next_due','notes'].forEach(function (n) { P[n] = ph.indexOf(n); if (P[n] < 0) { throw new Error('ABORT: PIPELINE missing ' + n); } });\nconst C = {}; ['pause','next_action','next_due','notes'].forEach(function (n) { C[n] = colLetter(P[n]); });\n\nfunction parseDate(v) { const t = s(v); if (!t) { return null; }\n  const m = t.match(/^(\\d{4})-(\\d{2})-(\\d{2})/); return m ? m[0] : null; }\nfunction inbox(email, name) { const e = s(email).split(/[,;\\s]+/)[0].toLowerCase(); return e ? e : 'name:' + s(name).toLowerCase(); }\nfunction weekKey(ds) { const d = new Date(ds + 'T00:00:00Z'); const w = d.getUTCDay(); d.setUTCDate(d.getUTCDate() - (w === 0 ? 6 : w - 1)); return d.toISOString().slice(0, 10); }\n// caps from the live queue, excluding the rows we are about to release\nconst targets = [];\nfor (let r = 1; r < pipe.length; r++) { const row = pipe[r] || [];\n  if (s(row[P.pause]).toLowerCase() !== 'yes') { continue; }\n  if (s(row[P.deal_shared]).toLowerCase() === 'yes') { continue; }\n  if (!/HOLD - angel memo sanitiser pending/i.test(s(row[P.next_action]))) { continue; }\n  targets.push({ row: r + 1, deal_id: s(row[P.deal_id]), startup: s(row[P.startup]), investor: s(row[P.investor]),\n    owner: s(row[P.owner]), email: s(row[P.email]), notes: s(row[P.notes]) }); }\nif (!targets.length) { throw new Error('ABORT: no held rows found'); }\nif (targets.length > 80) { throw new Error('ABORT: ' + targets.length + ' held rows exceeds guard'); }\nconst held = {}; targets.forEach(function (t) { held[t.row] = 1; });\n\nconst iw = {}, idd = {}, od = {};\nfor (let r = 1; r < pipe.length; r++) { const row = pipe[r] || [];\n  if (held[r + 1]) { continue; }\n  if (s(row[P.deal_shared]).toLowerCase() === 'yes' || s(row[P.pause]).toLowerCase() === 'yes') { continue; }\n  const d = parseDate(row[P.next_due]); if (!d) { continue; }\n  const ib = inbox(row[P.email], row[P.investor]);\n  iw[ib + '|' + weekKey(d)] = (iw[ib + '|' + weekKey(d)] || 0) + 1;\n  idd[ib + '|' + d] = (idd[ib + '|' + d] || 0) + 1;\n  od[s(row[P.owner]) + '|' + d] = (od[s(row[P.owner]) + '|' + d] || 0) + 1; }\nconst days = []; { const d = new Date(Date.UTC(2026, 8, 16)); while (days.length < 300) { const w = d.getUTCDay(); if (w !== 0 && w !== 6) { days.push(d.toISOString().slice(0, 10)); } d.setUTCDate(d.getUTCDate() + 1); } }\nfunction place(ib, o) { for (const d of days) { const wk = weekKey(d);\n    if ((od[o + '|' + d] || 0) >= 20 || (idd[ib + '|' + d] || 0) >= 2 || (iw[ib + '|' + wk] || 0) >= 5) { continue; }\n    od[o + '|' + d] = (od[o + '|' + d] || 0) + 1; idd[ib + '|' + d] = (idd[ib + '|' + d] || 0) + 1; iw[ib + '|' + wk] = (iw[ib + '|' + wk] || 0) + 1; return d; }\n  return null; }\n\nconst updates = [], released = [];\ntargets.sort(function (a, b) { return a.startup.localeCompare(b.startup) || a.investor.localeCompare(b.investor); });\nfor (const t of targets) { const day = place(inbox(t.email, t.investor), t.owner);\n  if (!day) { throw new Error('ABORT: no capped slot for ' + t.startup + ' / ' + t.investor); }\n  updates.push({ range: 'PIPELINE!' + C.pause + t.row, values: [['']] });\n  updates.push({ range: 'PIPELINE!' + C.next_action + t.row, values: [['Initial']] });\n  updates.push({ range: 'PIPELINE!' + C.next_due + t.row, values: [[day]] });\n  updates.push({ range: 'PIPELINE!' + C.notes + t.row, values: [[t.notes + ' | RELEASED ' + TODAY + ' - angel memo sanitiser is live in all four outreach workflows; the raise is stripped from the subject and memo at send time']] });\n  released.push([t.row, t.deal_id, t.startup, t.investor, t.owner, day]); }\nreturn [{ json: { summary: { released: released.length, cell_writes: updates.length, earliest: released.map(function (x) { return x[5]; }).sort()[0] },\n  released: released, updates: updates } }];"
+      }
+    },
+    {
+      "id": "wv",
+      "name": "Write release",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ valueInputOption: 'RAW', data: $('Plan').first().json.updates }) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "ga",
+      "name": "GET PIPELINE after",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/PIPELINE!A1:AJ6000",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cv",
+      "name": "Verify",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nconst plan = $('Plan').first().json;\nconst pipe = $input.first().json.values || [];\nconst ph = (pipe[0] || []).map(s);\nconst P = {}; ['deal_id','pause','next_action','next_due','email','owner','startup','investor','deal_shared'].forEach(function (n) { P[n] = ph.indexOf(n); });\nconst want = {}; plan.released.forEach(function (x) { want[x[1]] = x[5]; });\nlet ok = 0; const bad = [];\nfor (let r = 1; r < pipe.length; r++) { const row = pipe[r] || []; const id = s(row[P.deal_id]);\n  if (!want[id]) { continue; }\n  const good = s(row[P.pause]) === '' && s(row[P.next_action]) === 'Initial' && s(row[P.next_due]).slice(0, 10) === want[id] && s(row[P.email]) !== '';\n  if (good) { ok++; } else { bad.push([id, s(row[P.pause]), s(row[P.next_action]), s(row[P.next_due])]); } }\nlet stillHeld = 0;\nfor (let r = 1; r < pipe.length; r++) { if (/HOLD - angel memo sanitiser pending/i.test(s((pipe[r] || [])[P.next_action]))) { stillHeld++; } }\nfunction weekKey(ds) { const d = new Date(ds + 'T00:00:00Z'); const w = d.getUTCDay(); d.setUTCDate(d.getUTCDate() - (w === 0 ? 6 : w - 1)); return d.toISOString().slice(0, 10); }\nconst iw = {}, idd = {}; let overW = 0, overD = 0;\nfor (let r = 1; r < pipe.length; r++) { const row = pipe[r] || [];\n  if (s(row[P.deal_shared]).toLowerCase() === 'yes' || s(row[P.pause]).toLowerCase() === 'yes') { continue; }\n  const d = s(row[P.next_due]).slice(0, 10); if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(d)) { continue; }\n  const ib = (s(row[P.email]).split(/[,;\\s]+/)[0] || '').toLowerCase();\n  iw[ib + '|' + weekKey(d)] = (iw[ib + '|' + weekKey(d)] || 0) + 1; idd[ib + '|' + d] = (idd[ib + '|' + d] || 0) + 1; }\nfor (const k of Object.keys(iw)) { if (iw[k] > 5) { overW++; } }\nfor (const k of Object.keys(idd)) { if (idd[k] > 2) { overD++; } }\nreturn [{ json: { planned: plan.summary.released, released_ok: ok, not_applied: bad, still_held: stillHeld,\n  earliest_due: plan.summary.earliest, inbox_weeks_over_5: overW, inbox_days_over_2: overD,\n  sample: plan.released.slice(0, 12), ok: ok === plan.summary.released && bad.length === 0 && stillHeld === 0 && overW === 0 && overD === 0 } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once (set before activating)": {
+      "main": [
+        [
+          {
+            "node": "GET PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Plan": {
+      "main": [
+        [
+          {
+            "node": "Write release",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write release": {
+      "main": [
+        [
+          {
+            "node": "GET PIPELINE after",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET PIPELINE after": {
+      "main": [
+        [
+          {
+            "node": "Verify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once (set before activating)": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "oGvKr1AOnQR7lS9A",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-15T16:31:26.824Z",
+      "updatedAt": "2026-09-15T16:31:26.824Z"
+    }
+  ],
+  "activeVersion": null
+}

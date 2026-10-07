@@ -1,0 +1,218 @@
+{
+  "id": "nmoS6OmXs3EXqV9f",
+  "name": "One-off READ — onboarding replies in Shradhaa inbox (18 Sep)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-18T06:09:34.458Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "25b86ae0-3ce4-4c6f-83a2-c0bb6430a9e1",
+  "versionCounter": 8,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "d1000001-0000-4000-8000-000000000001",
+      "name": "Webhook",
+      "webhookId": "d5e6f7a8-b9c0-4d1e-2f3a-4b5c6d7e8f9a",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "onb-replies-read-7c3e19",
+        "responseMode": "lastNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "d1000001-0000-4000-8000-000000000002",
+      "name": "Search replies",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        300
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://gmail.googleapis.com/gmail/v1/users/me/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "subject:\"co-investment and curated dealflow\" after:2026/09/16"
+            },
+            {
+              "name": "maxResults",
+              "value": "200"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "R5K61omYbU9oT5J8",
+          "name": "Gmail account 5"
+        }
+      }
+    },
+    {
+      "id": "d1000001-0000-4000-8000-000000000003",
+      "name": "Split",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const msgs = $input.first().json.messages || [];\nif (!msgs.length) return [{ json: { none: true } }];\nreturn msgs.map(m => ({ json: { id: m.id, threadId: m.threadId } }));"
+      }
+    },
+    {
+      "id": "d1000001-0000-4000-8000-000000000004",
+      "name": "Get message",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        660,
+        300
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "=https://gmail.googleapis.com/gmail/v1/users/me/messages/{{ $json.id || 'none' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "format",
+              "value": "metadata"
+            },
+            {
+              "name": "metadataHeaders",
+              "value": "From"
+            },
+            {
+              "name": "metadataHeaders",
+              "value": "To"
+            },
+            {
+              "name": "metadataHeaders",
+              "value": "Subject"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "R5K61omYbU9oT5J8",
+          "name": "Gmail account 5"
+        }
+      }
+    },
+    {
+      "id": "d1000001-0000-4000-8000-000000000005",
+      "name": "Summarise",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const incoming = [], sentReplies = [];\nfor (const it of $input.all()) { const m = it.json; if (!m.payload) continue;\n  const h = {}; for (const x of m.payload.headers || []) h[x.name.toLowerCase()] = x.value;\n  const d = new Date(Number(m.internalDate)).toLocaleString('sv-SE', { timeZone: 'Asia/Kolkata' });\n  const isSent = (m.labelIds || []).includes('SENT');\n  const line = d + ' | from ' + (h.from || '') + ' | to ' + (h.to || '') + ' | ' + (h.subject || '') + ' | ' + String(m.snippet || '').slice(0, 120);\n  if (!isSent) incoming.push(line); else if (/^re:/i.test(h.subject || '')) sentReplies.push(line); }\nincoming.sort().reverse(); sentReplies.sort().reverse();\nreturn [{ json: { incoming_replies: incoming.length, incoming, shradha_replies_in_threads: sentReplies } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Search replies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search replies": {
+      "main": [
+        [
+          {
+            "node": "Split",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split": {
+      "main": [
+        [
+          {
+            "node": "Get message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get message": {
+      "main": [
+        [
+          {
+            "node": "Summarise",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "nmoS6OmXs3EXqV9f",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-18T06:09:34.461Z",
+      "updatedAt": "2026-09-18T06:09:34.461Z"
+    }
+  ],
+  "activeVersion": null
+}

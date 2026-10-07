@@ -1,0 +1,214 @@
+{
+  "id": "T29l4xoxbdsFNDCz",
+  "name": "REPLY-SEND-MB5 — guarded in-thread reply from Shradhaa's mailbox (webhook)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-24T10:10:53.673Z",
+  "updatedAt": "2026-10-07T07:12:40.314Z",
+  "isArchived": false,
+  "versionId": "c5846405-d0ac-45e4-a090-041675fa25f3",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "3758ac97-2c86-45e0-9dd7-d0209c60ad97",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-reply-send-mb5-2e9b7a4c15",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "ck",
+      "name": "Check",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b=$input.first().json.body||{};if(b.secret!=='sv-mail-2026-09-17-Kq7'){throw new Error('bad secret');}if(!/^[0-9a-f]{16}$/.test(b.thread_id||'')){throw new Error('bad thread id');}if(!b.html||!b.expect_last_from){throw new Error('missing html / expect_last_from');}return [{json:b}];"
+      }
+    },
+    {
+      "id": "gt",
+      "name": "Get thread",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "url": "={{ 'https://gmail.googleapis.com/gmail/v1/users/me/threads/' + $json.thread_id + '?format=metadata&metadataHeaders=From&metadataHeaders=To&metadataHeaders=Cc&metadataHeaders=Subject&metadataHeaders=Message-ID&metadataHeaders=References' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "R5K61omYbU9oT5J8",
+          "name": "Gmail account 5"
+        }
+      }
+    },
+    {
+      "id": "bd",
+      "name": "Build",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const p=$('Check').first().json;const m=$input.first().json;\nfunction hdr(x,n){const h=((x.payload||{}).headers||[]).find(y=>String(y.name).toLowerCase()===n);return h?String(h.value):'';}\nconst addrs=v=>(String(v).match(/[A-Za-z0-9._%+'-]+@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)+/g)||[]).map(x=>x.toLowerCase());\nconst OURS=/@sidanaventures\\.com$/;\nconst msgs=m.messages||[];if(m.id!==p.thread_id||!msgs.length){throw new Error('thread not found in mailbox 5');}\nconst first=msgs[0],last=msgs[msgs.length-1];\nif(!p.allow_external_start&&!/@sidanaventures\\.com/i.test(hdr(first,'from'))){throw new Error('thread not started by us');}\nconst lf=addrs(hdr(last,'from'))[0]||'';if(lf!==p.expect_last_from.toLowerCase()){throw new Error('latest message is from '+lf+', expected '+p.expect_last_from+' - someone replied since; not sending');}\nconst onThread=new Set();msgs.forEach(x=>['from','to','cc'].forEach(k=>addrs(hdr(x,k)).forEach(a=>onThread.add(a))));\nlet to=[];\nif(Array.isArray(p.to_only)&&p.to_only.length){to=p.to_only.map(a=>String(a).trim().toLowerCase());const bad=to.filter(a=>!onThread.has(a));if(bad.length){throw new Error('not on thread: '+bad.join(', '));}}\nelse{to=[...onThread].filter(a=>!OURS.test(a)&&!/calendar|calendly|noreply|no-reply|otter|fireflies/.test(a));}\nif(!to.length){throw new Error('no recipients');}\nconst subj='Re: '+hdr(first,'subject').replace(/^\\s*(re|fwd?|fw)\\s*:\\s*/i,'');\nconst msgId=hdr(last,'message-id');const refs=(hdr(last,'references')+' '+msgId).trim();\nconst b64=Buffer.from(p.html,'utf8').toString('base64').replace(/(.{76})/g,'$1\\r\\n');\nconst mime=['From: Shradhaa Sidana <shradhaa@sidanaventures.com>','To: '+to.join(', '),(p.cc?'Cc: '+p.cc:'X-Sidana: 1'),'Subject: =?UTF-8?B?'+Buffer.from(subj,'utf8').toString('base64')+'?=','In-Reply-To: '+msgId,'References: '+refs,'MIME-Version: 1.0','Content-Type: text/html; charset=\"UTF-8\"','Content-Transfer-Encoding: base64','',b64].join('\\r\\n');\nconst raw=Buffer.from(mime,'utf8').toString('base64').replace(/\\+/g,'-').replace(/\\//g,'_').replace(/=+$/,'');\nif(p.dry!==false){throw new Error('DRY OK | to='+to.join(', ')+' | cc='+(p.cc||'')+' | subject='+subj+' | msgs='+msgs.length+' | first_from='+hdr(first,'from'));}\nreturn [{json:{to:to.join(', '),subject:subj,raw:raw,threadId:p.thread_id}}];"
+      }
+    },
+    {
+      "id": "sd",
+      "name": "Send",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://gmail.googleapis.com/gmail/v1/users/me/messages/send",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ raw: $json.raw, threadId: $json.threadId }) }}",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "R5K61omYbU9oT5J8",
+          "name": "Gmail account 5"
+        }
+      }
+    },
+    {
+      "id": "ot",
+      "name": "Out",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b=$('Build').first().json;const r=$input.first().json;return [{json:{to:b.to,subject:b.subject,sent_id:r.id||'',thread:r.threadId||''}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check": {
+      "main": [
+        [
+          {
+            "node": "Get thread",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get thread": {
+      "main": [
+        [
+          {
+            "node": "Build",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build": {
+      "main": [
+        [
+          {
+            "node": "Send",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send": {
+      "main": [
+        [
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "none",
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "T29l4xoxbdsFNDCz",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-24T10:10:53.675Z",
+      "updatedAt": "2026-09-24T10:10:53.675Z"
+    }
+  ],
+  "activeVersion": null
+}

@@ -1,0 +1,127 @@
+{
+  "id": "jVVRssFPKY4GFrOz",
+  "name": "PIPE-READ — PIPELINE rows with investor response / meeting fields (webhook, read-only)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-17T11:45:03.535Z",
+  "updatedAt": "2026-10-07T11:40:28.976Z",
+  "isArchived": false,
+  "versionId": "4cb94729-e9eb-4291-a43a-22cb9512e9fe",
+  "versionCounter": 8,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "e2fadbc3-47f8-4d04-b526-910213243546",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-pipe-read-9b4e03a2c7",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "g",
+      "name": "GET pipeline",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/PIPELINE!A1:AI8000",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "c",
+      "name": "Filter",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v){return String(v==null?'':v).trim();}\nconst b=$('Webhook').first().json.body||{};if(b.secret!=='sv-mail-2026-09-17-Kq7'){throw new Error('bad secret');}\nconst v=$('GET pipeline').first().json.values||[];const h=v[0].map(s);const X={};h.forEach((k,i)=>X[k]=i);\nif(b.entry){const rows=[];for(let i=1;i<v.length;i++){const r=v[i]||[];const g=k=>s(r[X[k]]);if(g('current_stage')){continue;}const ir=g('investor_response'),na=g('next_action');if(!(/^meeting requested/i.test(ir)||/^book meeting/i.test(na)||/asked for (a )?(meeting|call|slots)/i.test(ir)||/slots/i.test(na))){continue;}rows.push({row:i+1,deal_id:g('deal_id'),startup:g('startup'),owner:g('owner'),investor:g('investor'),email:g('email'),thread_id:g('thread_id'),next_action:na,next_due:g('next_due'),investor_response:ir.slice(0,300),meeting_scheduled:g('meeting_scheduled'),meeting_date:g('meeting_date'),deal_status:g('deal_status'),pause:g('pause'),notes:g('notes').slice(0,300)});}return [{json:{found:rows.length,rows:rows}}];}\nif(b.staged){const rows=[];for(let i=1;i<v.length;i++){const r=v[i]||[];const g=k=>s(r[X[k]]);if(!g('current_stage')){continue;}rows.push({row:i+1,deal_id:g('deal_id'),startup:g('startup'),owner:g('owner'),investor:g('investor'),email:g('email'),thread_id:g('thread_id'),current_stage:g('current_stage'),next_action:g('next_action'),next_due:g('next_due'),investor_response:g('investor_response'),meeting_scheduled:g('meeting_scheduled'),meeting_date:g('meeting_date'),meetings_held:g('meetings_held'),deal_status:g('deal_status'),pause:g('pause'),notes:g('notes').slice(0,700)});}return [{json:{found:rows.length,headers:h,rows:rows}}];}\nconst F=['deal_id','startup','owner','investor','deal_shared','date_shared','next_action','investor_response','pass_reason','meeting_scheduled','meeting_date','meetings_held','last_meeting_date','meeting_outcome','committed_cr','deal_status','pause','notes'];\nif(Array.isArray(b.threads)){const want=new Set(b.threads.map(String));const out=[];for(let i=1;i<v.length;i++){const r=v[i]||[];const g=k=>s(r[X[k]]);if(want.has(g('thread_id'))){out.push({row:i+1,deal_id:g('deal_id'),startup:g('startup'),owner:g('owner'),investor:g('investor'),email:g('email'),thread_id:g('thread_id'),deal_shared:g('deal_shared'),next_action:g('next_action'),investor_response:g('investor_response'),pause:g('pause')});}}return [{json:{found:out.length,rows:out}}];}\nif(b.investor_re||b.startup_re){const re=new RegExp(b.investor_re||b.startup_re,'i');const fld=b.startup_re?'startup':null;const rows=[];for(let i=1;i<v.length;i++){const r=v[i]||[];const g=k=>s(r[X[k]]);if(!(fld?re.test(g('startup')):re.test(g('investor')+' '+g('email')))){continue;}rows.push({row:i+1,deal_id:g('deal_id'),startup:g('startup'),owner:g('owner'),investor:g('investor'),email:g('email'),deal_shared:g('deal_shared'),date_shared:g('date_shared'),next_action:g('next_action'),next_due:g('next_due'),investor_response:g('investor_response'),pass_reason:g('pass_reason'),meeting_date:g('meeting_date'),pause:g('pause'),thread_id:g('thread_id'),notes:g('notes').slice(0,160)});}return [{json:{found:rows.length,rows:rows}}];}\nif(b.all_sent){const rows=[];for(let i=1;i<v.length;i++){const r=v[i]||[];const g=k=>s(r[X[k]]);if(!/^yes$/i.test(g('deal_shared'))){continue;}rows.push([i+1,g('deal_id'),g('startup'),g('owner'),g('investor'),g('email'),g('date_shared'),g('thread_id'),g('next_action'),g('investor_response'),g('pass_reason'),g('meeting_scheduled'),g('meeting_date'),g('meetings_held'),g('deal_status'),g('pause'),g('notes').slice(0,200)]);}return [{json:{cols:['row','deal_id','startup','owner','investor','email','date_shared','thread_id','next_action','investor_response','pass_reason','meeting_scheduled','meeting_date','meetings_held','deal_status','pause','notes'],rows:rows}}];}\nconst out=[];let sent=0;for(let i=1;i<v.length;i++){const r=v[i]||[];const g=k=>s(r[X[k]]);if(/^yes$/i.test(g('deal_shared'))){sent++;}\n if(g('investor_response')||g('meeting_scheduled')||g('meeting_date')||g('meetings_held')||g('meeting_outcome')||g('deal_status')||g('pass_reason')){const o={row:i+1};F.forEach(k=>o[k]=k==='notes'?g(k).slice(0,160):g(k));out.push(o);}}\nreturn [{json:{rows_total:v.length-1,sent:sent,with_response_fields:out.length,rows:out}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "GET pipeline",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET pipeline": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataSuccessExecution": "none",
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "jVVRssFPKY4GFrOz",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-17T11:45:03.537Z",
+      "updatedAt": "2026-09-17T11:45:03.537Z"
+    }
+  ],
+  "activeVersion": null
+}

@@ -1,0 +1,207 @@
+{
+  "id": "D260RXB6Qm0BvZ0t",
+  "name": "One-off — Pause 2 Kaizenvest rows already shared (Deal Tracker)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-06T16:07:14.768Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "59675807-e343-43ba-8c72-b3e7ee8f955a",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "trg1",
+      "name": "Run once 21:48 IST 6 Sep",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "48 21 6 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "rd1",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cd1",
+      "name": "Find rows to pause",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const TARGETS = [\n  { investor: 'kaizenvest', startup: 'appli',    why: 'Already shared - meeting held 26-05-26 (Deal Tracker)' },\n  { investor: 'kaizenvest', startup: 'orbit ai', why: 'Already shared - meeting 27-05-26, investor PASSED: too early for mandate (Deal Tracker)' }\n];\n\nconst existing = $input.all().map(function (i) { return i.json; });\nif (existing.length < 500) { throw new Error('ABORT: PIPELINE returned only ' + existing.length + ' rows'); }\n\nconst out = [];\nfor (const t of TARGETS) {\n  const hits = existing.filter(function (r) {\n    return String(r.investor == null ? '' : r.investor).trim().toLowerCase() === t.investor\n        && String(r.startup  == null ? '' : r.startup ).trim().toLowerCase() === t.startup;\n  });\n  if (hits.length === 0) { throw new Error('ABORT: no PIPELINE row for ' + t.investor + ' <> ' + t.startup); }\n  for (const h of hits) {\n    if (String(h.deal_shared == null ? '' : h.deal_shared).trim().toLowerCase() === 'yes') {\n      throw new Error('ABORT: ' + h.deal_id + ' already has deal_shared=Yes - refusing to touch a sent row');\n    }\n    if (String(h.pause == null ? '' : h.pause).trim() !== '') { continue; }\n    out.push({ json: { deal_id: h.deal_id, pause: 'Yes', notes: t.why } });\n  }\n}\n\nif (out.length === 0) { throw new Error('ABORT: nothing to pause - already done?'); }\nif (out.length > 5) { throw new Error('ABORT: ' + out.length + ' rows exceeds guard of 5'); }\nreturn out;"
+      }
+    },
+    {
+      "id": "up1",
+      "name": "Update PIPELINE (pause)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "deal_id"
+          ],
+          "schema": [
+            {
+              "id": "deal_id",
+              "displayName": "deal_id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Run once 21:48 IST 6 Sep": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Find rows to pause",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find rows to pause": {
+      "main": [
+        [
+          {
+            "node": "Update PIPELINE (pause)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once 21:48 IST 6 Sep": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "D260RXB6Qm0BvZ0t",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-06T16:07:14.771Z",
+      "updatedAt": "2026-09-06T16:07:14.771Z"
+    }
+  ],
+  "activeVersion": null
+}

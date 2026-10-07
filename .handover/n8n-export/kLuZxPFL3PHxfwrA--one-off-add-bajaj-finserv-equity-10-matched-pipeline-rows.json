@@ -1,0 +1,383 @@
+{
+  "id": "kLuZxPFL3PHxfwrA",
+  "name": "One-off — Add Bajaj Finserv (Equity) + 10 matched PIPELINE rows",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-03T12:40:37.206Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "b19954fb-218f-4422-a429-2918c4a3815c",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run (press Execute)",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "t2",
+      "name": "Apply at 18:20 IST today",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        200
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "20 18 3 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "n1",
+      "name": "Read INVESTORS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        224,
+        100
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "INVESTORS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "n2",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        448,
+        100
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "n3",
+      "name": "Read STARTUPS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        672,
+        100
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "STARTUPS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "n4",
+      "name": "Build INVESTOR row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        100
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const INVESTOR = 'Bajaj Finserv (Equity)';\nfor (const v of $('Read INVESTORS').all()) {\n  if (String(v.json.investor || '').trim().toLowerCase() === INVESTOR.toLowerCase()) {\n    throw new Error('Investor already exists in INVESTORS - aborting to avoid a duplicate');\n  }\n}\nfor (const p of $('Read PIPELINE').all()) {\n  if (String(p.json.investor || '').trim().toLowerCase() === INVESTOR.toLowerCase()) {\n    throw new Error('PIPELINE already has rows for this investor - aborting');\n  }\n}\nreturn [{ json: {\n  investor: INVESTOR,\n  contact_person: 'Gaurav',\n  email: 'gaurav.navani@bajajfinserv.in',\n  cc: '',\n  sector: 'Quantum, AI, Consumer Tech, Cybersecurity',\n  stage: 'Pre-Seed, Seed, Pre-Series A, Series A, Series B',\n  cheque_inr_cr: 'INR 5-50 Cr',\n  last_contacted_any: '',\n  contacted_by: '',\n  do_not_contact: '',\n} }];"
+      }
+    },
+    {
+      "id": "n5",
+      "name": "Append INVESTORS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "position": [
+        1120,
+        100
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "INVESTORS"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {
+          "handlingExtraData": "error"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "n6",
+      "name": "Build PIPELINE rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1344,
+        100
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const INVESTOR = 'Bajaj Finserv (Equity)';\nconst EMAIL = 'gaurav.navani@bajajfinserv.in';\nconst SCORE = 85;\nconst NOTE = 'Very High match (85)';\n\n// 2 per day, one per mailbox, weekdays only\nconst PLAN = [\n  { startup: 'Xproguard',     next_due: '2026-09-04' },\n  { startup: 'Ulai',          next_due: '2026-09-04' },\n  { startup: 'GroCliq',       next_due: '2026-09-07' },\n  { startup: 'AI Signal Labs', next_due: '2026-09-07' },\n  { startup: 'Springbase.ai', next_due: '2026-09-08' },\n  { startup: 'Orbo AI',       next_due: '2026-09-08' },\n  { startup: 'Opulytics',     next_due: '2026-09-09' },\n  { startup: 'Vilva AI',      next_due: '2026-09-09' },\n  { startup: 'Pixelence',     next_due: '2026-09-10' },\n  { startup: 'EosNox',        next_due: '2026-09-10' },\n];\n\nconst startupByName = {};\nfor (const s of $('Read STARTUPS').all()) { startupByName[String(s.json.startup).trim()] = s.json; }\n\nlet maxId = 0;\nfor (const p of $('Read PIPELINE').all()) {\n  const m = String(p.json.deal_id || '').trim().match(/^D(\\d+)$/);\n  if (m) { const n = parseInt(m[1], 10); if (n > maxId) maxId = n; }\n}\n\nconst out = [];\nlet seq = maxId;\nfor (const p of PLAN) {\n  const st = startupByName[p.startup];\n  if (!st) { throw new Error('Startup not found in STARTUPS: ' + p.startup); }\n  if (String(st.active || '').trim().toLowerCase() !== 'yes') { throw new Error('Startup not active: ' + p.startup); }\n  const owner = String(st.owner || '').trim();\n  if (owner === '') { throw new Error('Startup has no owner: ' + p.startup); }\n  seq++;\n  out.push({ json: {\n    deal_id: 'D' + String(seq).padStart(5, '0'),\n    startup: p.startup,\n    owner: owner,\n    investor: INVESTOR,\n    email: EMAIL,\n    cc: '',\n    priority: SCORE,\n    deal_shared: 'No',\n    next_action: 'Initial',\n    next_due: p.next_due,\n    notes: NOTE,\n  } });\n}\nif (out.length !== PLAN.length) { throw new Error('Row count mismatch - aborting'); }\nreturn out;"
+      }
+    },
+    {
+      "id": "n7",
+      "name": "Append PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "position": [
+        1568,
+        100
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {
+          "handlingExtraData": "error"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Run (press Execute)": {
+      "main": [
+        [
+          {
+            "node": "Read INVESTORS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apply at 18:20 IST today": {
+      "main": [
+        [
+          {
+            "node": "Read INVESTORS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read INVESTORS": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Read STARTUPS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read STARTUPS": {
+      "main": [
+        [
+          {
+            "node": "Build INVESTOR row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build INVESTOR row": {
+      "main": [
+        [
+          {
+            "node": "Append INVESTORS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append INVESTORS": {
+      "main": [
+        [
+          {
+            "node": "Build PIPELINE rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build PIPELINE rows": {
+      "main": [
+        [
+          {
+            "node": "Append PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append PIPELINE": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Apply at 18:20 IST today": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "kLuZxPFL3PHxfwrA",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-03T12:40:37.210Z",
+      "updatedAt": "2026-09-03T12:40:37.210Z"
+    }
+  ],
+  "activeVersion": null
+}

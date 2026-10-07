@@ -1,0 +1,188 @@
+{
+  "id": "hQ0alr8QkOjUXK6f",
+  "name": "One-off PHASE 2 — delete 28 Deal Tracker duplicate rows",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-06T18:19:59.120Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "3c229426-4a8e-4cb7-af8b-dcaaeeaebccc",
+  "versionCounter": 4,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "trg1",
+      "name": "Phase 2 trigger (set when armed)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "42 0 7 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "rd1",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cd1",
+      "name": "Resolve rows (desc)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Deal Tracker duplicates: 27 audit conflicts + D03008 (Kaizenvest <> Appli).\n// D03010 was removed in Phase 1.\nconst TARGETS = ['D00092','D00109','D00140','D00143','D00773','D00810','D00969','D01055','D01060','D01110','D01156','D01553','D01606','D01658','D01671','D01840','D01870','D02015','D02048','D02136','D02240','D02244','D02303','D02615','D02665','D02750','D02761','D02784','D02873','D02896','D03008'];\n\nconst rows = $input.all().map(function (i) { return i.json; });\nif (rows.length < 500) { throw new Error('ABORT: PIPELINE returned only ' + rows.length + ' rows'); }\n\nconst byId = {};\nfor (const r of rows) {\n  const id = String(r.deal_id == null ? '' : r.deal_id).trim();\n  if (id) { (byId[id] = byId[id] || []).push(r); }\n}\n\nconst out = [];\nfor (const t of TARGETS) {\n  const hits = byId[t] || [];\n  if (hits.length !== 1) { throw new Error('ABORT: expected 1 row for ' + t + ', found ' + hits.length); }\n  const h = hits[0];\n  if (String(h.deal_shared == null ? '' : h.deal_shared).trim().toLowerCase() === 'yes') {\n    throw new Error('ABORT: ' + t + ' has deal_shared=Yes - refusing to delete a sent row');\n  }\n  if (!h.row_number) { throw new Error('ABORT: no row_number for ' + t); }\n  out.push({ json: { row_number: Number(h.row_number), deal_id: t, investor: h.investor, startup: h.startup } });\n}\n\nif (out.length !== TARGETS.length) { throw new Error('ABORT: resolved ' + out.length + ' of ' + TARGETS.length); }\n\n// Descending row order: deleting the highest row first keeps lower row numbers valid.\nout.sort(function (a, b) { return b.json.row_number - a.json.row_number; });\n\nfor (let i = 1; i < out.length; i++) {\n  if (out[i].json.row_number === out[i - 1].json.row_number) { throw new Error('ABORT: duplicate row_number'); }\n}\nreturn out;"
+      }
+    },
+    {
+      "id": "dl1",
+      "name": "Delete rows (desc)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "delete",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        },
+        "toDelete": "rows",
+        "startIndex": "={{ $json.row_number }}",
+        "numberToDelete": 1
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Phase 2 trigger (set when armed)": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Resolve rows (desc)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve rows (desc)": {
+      "main": [
+        [
+          {
+            "node": "Delete rows (desc)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Phase 2 trigger (set when armed)": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "hQ0alr8QkOjUXK6f",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-06T18:19:59.122Z",
+      "updatedAt": "2026-09-06T18:19:59.122Z"
+    }
+  ],
+  "activeVersion": null
+}

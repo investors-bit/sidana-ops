@@ -1,0 +1,274 @@
+{
+  "id": "ih9uNg5p65talITo",
+  "name": "ENGINE-UPLOAD — write INVESTOR_CRITERIA + STARTUP_PROFILE tabs from a local POST (activate only while uploading)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-17T06:03:58.658Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "20fa7ed9-9f31-439e-88dc-695e3801b158",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "b7d41e2c-9a3f-4c1e-8d52-3f6a1c9e7b40",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-criteria-upload-7f3c9e21b4d8",
+        "responseMode": "lastNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "gm",
+      "name": "GET meta",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4?fields=sheets.properties.title",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "pr",
+      "name": "Prepare",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const body = $('Webhook').first().json.body || {};\nif (body.secret !== 'sv-crit-2026-09-17-q8Lz') { throw new Error('ABORT: bad secret'); }\nconst tabs = body.tabs || [];\nconst ALLOWED = ['INVESTOR_CRITERIA', 'STARTUP_PROFILE', 'MATCH_REVIEW'];\nfor (const t of tabs) { if (ALLOWED.indexOf(t.name) < 0) { throw new Error('ABORT: tab not allowed ' + t.name); } if (!Array.isArray(t.values) || t.values.length < 2) { throw new Error('ABORT: empty tab ' + t.name); } }\nconst existing = (($('GET meta').first().json.sheets) || []).map(function (s) { return s.properties.title; });\nconst add = tabs.filter(function (t) { return existing.indexOf(t.name) < 0; }).map(function (t) { return { addSheet: { properties: { title: t.name, gridProperties: { rowCount: Math.max(1000, t.values.length + 50), columnCount: Math.max(30, t.values[0].length + 2), frozenRowCount: 1 } } } }; });\nreturn [{ json: { add: add, clear: tabs.map(function (t) { return \"'\" + t.name + \"'!A1:AZ5000\"; }), data: tabs.map(function (t) { return { range: \"'\" + t.name + \"'!A1\", values: t.values }; }), counts: tabs.map(function (t) { return t.name + ': ' + (t.values.length - 1) + ' rows'; }) } }];"
+      }
+    },
+    {
+      "id": "ad",
+      "name": "Add missing tabs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ requests: $('Prepare').first().json.add.length ? $('Prepare').first().json.add : [{ updateSpreadsheetProperties: { properties: {}, fields: '*' } }] }) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cl",
+      "name": "Clear tabs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchClear",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ ranges: $('Prepare').first().json.clear }) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "wr",
+      "name": "Write tabs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "position": [
+        1000,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ valueInputOption: 'RAW', data: $('Prepare').first().json.data }) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "rs",
+      "name": "Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const w = $('Write tabs').first().json;\nreturn [{ json: { ok: true, written: $('Prepare').first().json.counts, totalUpdatedCells: w.totalUpdatedCells, totalUpdatedRows: w.totalUpdatedRows } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "GET meta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET meta": {
+      "main": [
+        [
+          {
+            "node": "Prepare",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare": {
+      "main": [
+        [
+          {
+            "node": "Add missing tabs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add missing tabs": {
+      "main": [
+        [
+          {
+            "node": "Clear tabs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clear tabs": {
+      "main": [
+        [
+          {
+            "node": "Write tabs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write tabs": {
+      "main": [
+        [
+          {
+            "node": "Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "none",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "ih9uNg5p65talITo",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-17T06:03:58.661Z",
+      "updatedAt": "2026-09-17T06:03:58.661Z"
+    }
+  ],
+  "activeVersion": null
+}

@@ -1,0 +1,209 @@
+{
+  "id": "wrJsWWqsCJMEQot8",
+  "name": "One-off TR-21 — Michele x pre-revenue: report all, hold anything due before 24 Sep",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-15T14:53:31.765Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "d05727e4-d0d7-419d-ae67-57017da645e0",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once (set before activating)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "29 20 15 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "gp",
+      "name": "GET PIPELINE",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/PIPELINE!A1:AJ6000",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cp",
+      "name": "Plan",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nfunction nz(x) { return s(x).toLowerCase().replace(/[^a-z0-9]/g, ''); }\nfunction colLetter(i) { let n = i + 1, out = ''; while (n > 0) { const m = (n - 1) % 26; out = String.fromCharCode(65 + m) + out; n = Math.floor((n - 1) / 26); } return out; }\nconst TODAY = '2026-09-15';\nconst CUTOFF = '2026-09-23';\nconst PRE = {};\n['Body & Beyond','MonitorExam','Outlanders','ServeAmigo','SkillBytes','Fire Armor','Vira Jal','Washtro','Fuski.AI','Orbit AI','Koncite','Pixelence','Tronix.AI'].forEach(function (n) { PRE[nz(n)] = 1; });\nconst pipe = $('GET PIPELINE').first().json.values || [];\nif (pipe.length < 500) { throw new Error('ABORT: PIPELINE only ' + pipe.length); }\nconst ph = (pipe[0] || []).map(s);\nconst P = {};\n['deal_id','startup','investor','owner','deal_shared','pause','next_action','next_due','notes'].forEach(function (n) { P[n] = ph.indexOf(n); if (P[n] < 0) { throw new Error('ABORT: PIPELINE missing ' + n); } });\nconst C = {}; ['pause','next_action','notes'].forEach(function (n) { C[n] = colLetter(P[n]); });\nfunction d10(x) { const t = s(x); const m = t.match(/^(\\d{4})-(\\d{2})-(\\d{2})/); return m ? m[0] : ''; }\nconst updates = [], held = [], later = [], sent = [];\nconst why = 'HELD ' + TODAY + ' - angel + pre-revenue startup (Michele confirmed an angel by the user): memo and subject still carry the raise / pre-revenue wording. Release once the angel memo sanitiser is live.';\nfor (let r = 1; r < pipe.length; r++) { const row = pipe[r] || [];\n  if (nz(row[P.investor]) !== 'michele') { continue; }\n  if (!PRE[nz(row[P.startup])]) { continue; }\n  const rn = r + 1; const id = s(row[P.deal_id]); const due = d10(row[P.next_due]);\n  const rec = [rn, id, s(row[P.startup]), s(row[P.owner]), due];\n  if (s(row[P.deal_shared]).toLowerCase() === 'yes') { sent.push(rec); continue; }\n  if (s(row[P.pause]).toLowerCase() === 'yes') { continue; }\n  if (due && due > CUTOFF) { later.push(rec); continue; }\n  const note = s(row[P.notes]);\n  updates.push({ range: 'PIPELINE!' + C.pause + rn, values: [['Yes']] });\n  updates.push({ range: 'PIPELINE!' + C.next_action + rn, values: [['HOLD - angel memo sanitiser pending']] });\n  updates.push({ range: 'PIPELINE!' + C.notes + rn, values: [[(note ? note + ' | ' : '') + why]] });\n  held.push(rec); }\nif (held.length > 25) { throw new Error('ABORT: ' + held.length + ' holds exceeds guard'); }\nif (!updates.length) { updates.push({ range: 'PIPELINE!' + C.pause + '1', values: [['pause']] }); }\nreturn [{ json: { summary: { held_now: held.length, due_later: later.length, already_sent: sent.length, cutoff: CUTOFF, cell_writes: updates.length },\n  held: held, later: later, already_sent: sent, updates: updates } }];"
+      }
+    },
+    {
+      "id": "wv",
+      "name": "Write holds",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ valueInputOption: 'RAW', data: $('Plan').first().json.updates }) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cv",
+      "name": "Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const plan = $('Plan').first().json;\nconst wrote = $input.first().json || {};\nreturn [{ json: { held_now: plan.summary.held_now, held: plan.held, due_later: plan.summary.due_later, later: plan.later,\n  already_sent: plan.summary.already_sent, already_sent_rows: plan.already_sent,\n  cells_updated: wrote.totalUpdatedCells || 0 } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once (set before activating)": {
+      "main": [
+        [
+          {
+            "node": "GET PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Plan": {
+      "main": [
+        [
+          {
+            "node": "Write holds",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write holds": {
+      "main": [
+        [
+          {
+            "node": "Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once (set before activating)": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "wrJsWWqsCJMEQot8",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-15T14:53:31.770Z",
+      "updatedAt": "2026-09-15T14:53:31.770Z"
+    }
+  ],
+  "activeVersion": null
+}

@@ -1,0 +1,203 @@
+{
+  "id": "jZY9pozyB7WNS9zR",
+  "name": "One-off IA-2 — India Accelerator: drop Priyanshu, set Vasu thesis; Vertex US$3M cheque; Z47 no EdTech (17 Sep)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-17T07:36:50.275Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "829b9b3f-1244-4c4d-8d4e-8279e3241480",
+  "versionCounter": 4,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "9 13 17 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "g1",
+      "name": "GET pilot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=INVESTORS!A1:J1000&ranges=INVESTOR_CRITERIA!A1:AC400&ranges=PIPELINE!A1:AI8000",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "c1",
+      "name": "Plan",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v){return String(v==null?'':v).trim();}\nfunction nz(x){return s(x).toLowerCase().replace(/[^a-z0-9]/g,'');}\nfunction colL(i){let n=i+1,t='';while(n>0){const m=(n-1)%26;t=String.fromCharCode(65+m)+t;n=Math.floor((n-1)/26);}return t;}\nconst vr=$('GET pilot').first().json.valueRanges||[];\nconst inv=(vr[0]||{}).values||[], crit=(vr[1]||{}).values||[], pipe=(vr[2]||{}).values||[];\nif(inv.length<150||crit.length<200||pipe.length<5000){throw new Error('ABORT short read');}\nconst data=[];const put=(range,v)=>data.push({range:range,values:[[v]]});\nconst TODAY=new Date(Date.now()+330*60000).toISOString().slice(0,10);\n// ---- INVESTORS row 70 -> Vasu ----\nif(nz((inv[69]||[])[0])!=='indiaaccelerator'){throw new Error('ABORT: INVESTORS row 70 is '+s((inv[69]||[])[0]));}\nput('INVESTORS!A70','India Accelerator - Vasu');put('INVESTORS!B70','Vasu');put('INVESTORS!C70','vasu.gupta@indiaaccelerator.co');put('INVESTORS!D70','');\nput('INVESTORS!E70','Deep tech, Energy, Healthcare');put('INVESTORS!F70','Pre-Series A, Series A, Series B, Pre-IPO');put('INVESTORS!G70','INR 2-8 Cr');\n// ---- INVESTOR_CRITERIA ----\nconst ch=(crit[0]||[]).map(s);const CX={};ch.forEach((k,i)=>CX[k]=i);\nfunction critRow(sheetRow){for(let i=1;i<crit.length;i++){if(s((crit[i]||[])[CX.sheet_row])===String(sheetRow)){return i+1;}}throw new Error('ABORT criteria row missing for '+sheetRow);}\nfunction cset(r,col,v){put('INVESTOR_CRITERIA!'+colL(CX[col])+r,v);}\nconst r70=critRow(70);\ncset(r70,'investor','India Accelerator - Vasu');cset(r70,'confirmed','AUTO');cset(r70,'review_reason','');\ncset(r70,'sector_mode','LIST');\ncset(r70,'sectors_in','AI_FOUNDATIONAL, SEMICONDUCTOR_ELECTRONICS, SPACETECH, DEFENCE_AEROSPACE, IOT_SMART_HARDWARE, XR_IMMERSIVE, CLIMATE_ENERGY, EV_CLEAN_MOBILITY, HEALTHTECH_DIGITAL, HEALTHCARE_DELIVERY, MEDTECH_DEVICES, BIOTECH_PHARMA');\ncset(r70,'sectors_excluded','');cset(r70,'models_in','ANY');cset(r70,'models_excluded','');cset(r70,'stage_min','PRE_SERIES_A');cset(r70,'stage_max','SERIES_C_PLUS');cset(r70,'cheque_min_cr','2');cset(r70,'geography_scope','INDIA');\ncset(r70,'thesis_summary','User 17 Sep: Priyanshu has left India Accelerator. Vasu covers deep tech, energy and healthcare, Pre-Series A to pre-IPO, INR 2-8 Cr cheques. Gargi Tandon covers fintech on a separate row (same stage and cheque).');\ncset(r70,'rule_notes','user 17 Sep thesis update (replaces accelerator pre-seed/seed research profile)');cset(r70,'confidence','HIGH');\n// ---- new INVESTORS + criteria row for Gargi (fintech) ----\nif(inv.some(function(r){return /gargi\\.tandon@indiaaccelerator\\.co/i.test(s(r[2]));})){throw new Error('ABORT: Gargi row already exists');}\nconst gRow=inv.length+1;\ndata.push({range:'INVESTORS!A'+gRow+':J'+gRow,values:[['India Accelerator - Gargi (FinTech)','Gargi Tandon','gargi.tandon@indiaaccelerator.co','','FinTech','Pre-Series A, Series A, Series B, Pre-IPO','INR 2-8 Cr','','','']]});\nconst base=(crit[r70-1]||[]).slice();while(base.length<ch.length){base.push('');}\nconst G={sheet_row:String(gRow),investor:'India Accelerator - Gargi (FinTech)',investor_type:'ACCELERATOR',status:'ACTIVE',confirmed:'AUTO',review_reason:'',sector_mode:'LIST',sectors_in:'FINTECH_CONSUMER, FINTECH_SME_LENDING, FINTECH_INFRA',sectors_excluded:'',models_in:'ANY',models_excluded:'',stage_min:'PRE_SERIES_A',stage_max:'SERIES_C_PLUS',cheque_min_cr:'2',arr_min_cr:'',arr_min_strict:'N',revenue_required:'N',women_only:'N',excludes_jain_sensitive:'N',geography_scope:'INDIA',unchecked_requirements:'',thesis_summary:'User 17 Sep: Gargi Tandon covers fintech for India Accelerator, Pre-Series A to pre-IPO, INR 2-8 Cr cheques (Vasu covers deep tech, energy, healthcare).',evidence:'',conflicts:'',confidence:'HIGH',rule_notes:'user 17 Sep thesis update',sources:'user message 17 Sep 2026',reviewer_decision:'',reviewer_notes:''};\nconst gVals=ch.map(function(k){return G[k]!==undefined?G[k]:'';});\nconst cRowNew=crit.length+1;\ndata.push({range:'INVESTOR_CRITERIA!A'+cRowNew+':'+colL(ch.length-1)+cRowNew,values:[gVals]});\nconst rV=critRow(128);cset(rV,'cheque_min_cr','25.5');cset(rV,'rule_notes','Thesis tab 17 Sep: no cheques below US$3M (~INR 25.5 Cr); ARR bar US$3M kept');\nput('INVESTORS!G128','US$3M+ (INR 25.5 Cr+) | ARR at least US$3M (Corrections sheet)');\nconst rZ=critRow(137);const zEx=s((crit[rZ-1]||[])[CX.sectors_excluded]);\ncset(rZ,'sectors_excluded',[zEx,'EDTECH_K12_TESTPREP, EDTECH_HIGHER_ED_ADMISSIONS, EDTECH_UPSKILLING_ENTERPRISE'].filter(Boolean).join(', '));\ncset(rZ,'rule_notes','Thesis tab 17 Sep (Aniket): Ed-Tech is not a sector they are currently investing in');\n// ---- PIPELINE: Priyanshu rows ----\nconst h=(pipe[0]||[]).map(s);const X={};h.forEach((k,i)=>X[k]=i);\nlet stoppedFU=0,droppedQ=0,skipped=0;const touched=[];\nfor(let i=1;i<pipe.length;i++){const r=pipe[i]||[];const rn=i+1;const g=k=>s(r[X[k]]);\n  const isIA=nz(g('investor'))==='indiaaccelerator'||/priyanshu\\.karnani@indiaaccelerator\\.co/i.test(g('email'));\n  if(!isIA){continue;}\n  const sent=/^yes$/i.test(g('deal_shared'));const na=g('next_action');const notes=g('notes');\n  if(g('investor_response')){skipped++;continue;}\n  if(sent){ if(/^yes$/i.test(g('pause'))&&/Priyanshu left/.test(notes)){continue;} put('PIPELINE!'+colL(X.pause)+rn,'Yes');put('PIPELINE!'+colL(X.notes)+rn,(notes?notes+' | ':'')+'Priyanshu left India Accelerator (user '+TODAY+') - follow-ups stopped');stoppedFU++;touched.push(g('deal_id')+' sent '+g('startup'));}\n  else { if(/^DROPPED - replaced by/.test(na)||/^DROPPED - contact left/.test(na)){skipped++;continue;} put('PIPELINE!'+colL(X.pause)+rn,'Yes');put('PIPELINE!'+colL(X.next_action)+rn,'DROPPED - contact left firm (Priyanshu)');put('PIPELINE!'+colL(X.notes)+rn,(notes?notes+' | ':'')+'Priyanshu left India Accelerator (user '+TODAY+'); Vasu / fintech partner get matched fresh by the engine');droppedQ++;touched.push(g('deal_id')+' queued '+g('startup')+' was '+na.slice(0,20));}\n}\nif(stoppedFU+droppedQ>90||stoppedFU+droppedQ<30){throw new Error('ABORT unexpected Priyanshu row count '+(stoppedFU+droppedQ));}\nreturn [{json:{data:data,summary:{cells:data.length,followups_stopped:stoppedFU,queued_dropped:droppedQ,skipped:skipped,criteria_rows:{vasu:r70,vertex:rV,z47:rZ,gargi_investors_row:gRow,gargi_criteria_row:cRowNew},touched:touched}}}];"
+      }
+    },
+    {
+      "id": "w1",
+      "name": "Write",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ valueInputOption: 'RAW', data: $('Plan').first().json.data }) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "s1",
+      "name": "Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return [{ json: Object.assign({ written_cells: $('Write').first().json.totalUpdatedCells }, $('Plan').first().json.summary) }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once": {
+      "main": [
+        [
+          {
+            "node": "GET pilot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET pilot": {
+      "main": [
+        [
+          {
+            "node": "Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Plan": {
+      "main": [
+        [
+          {
+            "node": "Write",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write": {
+      "main": [
+        [
+          {
+            "node": "Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataSuccessExecution": "all",
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "jZY9pozyB7WNS9zR",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-17T07:36:50.279Z",
+      "updatedAt": "2026-09-17T07:36:50.279Z"
+    }
+  ],
+  "activeVersion": null
+}

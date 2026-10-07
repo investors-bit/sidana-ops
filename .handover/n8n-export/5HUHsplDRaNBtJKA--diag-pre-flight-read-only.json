@@ -1,0 +1,290 @@
+{
+  "id": "5HUHsplDRaNBtJKA",
+  "name": "DIAG — Pre-flight (read-only)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-01T08:21:59.373Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "2d6e01bd-7e5e-43fe-9293-e28f4aec61c2",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 0,
+  "nodes": [
+    {
+      "id": "56ff5827-cce2-4b5d-acbb-317ebddaa105",
+      "name": "Run (press Execute)",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "c7c83801-0f75-4aea-bbea-f8a5117ac096",
+      "name": "Read CONFIG",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "CONFIG"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      },
+      "executeOnce": true
+    },
+    {
+      "id": "6b510251-8191-4f85-bd6d-49607d32b239",
+      "name": "Build CONFIG object",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const rows = $input.all();\nconst cfg = {};\nfor (const it of rows) {\n  const k = it.json.setting !== undefined ? it.json.setting : it.json.key;\n  if (k === undefined || k === null || String(k).trim() === '') continue;\n  cfg[String(k).trim()] = it.json.value;\n}\ncfg.OWNER_NAME = 'Aditya';\ncfg.SENDER_NAME = 'Aditya';\nreturn [{ json: cfg }];"
+      }
+    },
+    {
+      "id": "2bdb0548-ecae-49b4-9f79-356bb7eb2ea5",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        672,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "owner",
+              "lookupValue": "Aditya"
+            },
+            {
+              "lookupColumn": "owner",
+              "lookupValue": ""
+            }
+          ]
+        },
+        "combineFilters": "OR"
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      },
+      "executeOnce": true
+    },
+    {
+      "id": "6b2376e7-3437-431e-bb2e-abfc6d16f303",
+      "name": "Read STARTUPS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        896,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "STARTUPS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      },
+      "executeOnce": true
+    },
+    {
+      "id": "af46876d-7761-4da7-a336-cd58a167de53",
+      "name": "Read INVESTORS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1120,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "INVESTORS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      },
+      "executeOnce": true
+    },
+    {
+      "id": "8b335508-83fa-404a-84a4-c8273db668e5",
+      "name": "Diagnose (read-only, no send)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1344,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst cfg = $('Build CONFIG object').first().json;\nconst OWNER = cfg.OWNER_NAME;\nconst VALID_OWNERS = ['Aditya', 'Chaman', 'Akansha'];\nconst tz = cfg.TIMEZONE || 'Asia/Kolkata';\nconst nowTz = DateTime.now().setZone(tz);\nconst today = nowTz.toISODate();\nconst todayWeekday = nowTz.toFormat('cccc');\nconst rotateBySendDay = String(cfg.ROTATE_BY_SEND_DAY || '').trim().toLowerCase() === 'yes';\n\nconst startupByName = {};\nfor (const s of $('Read STARTUPS').all()) { startupByName[String(s.json.startup).trim()] = s.json; }\nconst investorByName = {};\nfor (const v of $('Read INVESTORS').all()) { investorByName[String(v.json.investor).trim()] = v.json; }\n\nconst blank = (x) => x === undefined || x === null || String(x).trim() === '';\nconst isYes = (x) => String(x).trim().toLowerCase() === 'yes';\nconst num = (x) => { const n = parseFloat(String(x).replace(/[^0-9.\\-]/g, '')); return isNaN(n) ? 0 : n; };\nconst isoRe = /^\\d{4}-\\d{2}-\\d{2}$/;\nconst parseDue = (x) => {\n  if (blank(x)) return { ok: true, val: null };\n  const str = String(x).trim();\n  if (!isoRe.test(str)) return { ok: false, val: null };\n  const d = DateTime.fromISO(str, { zone: tz });\n  if (!d.isValid) return { ok: false, val: null };\n  return { ok: true, val: str };\n};\nconst due = (val) => val !== null && val <= today;\n\nconst pipeRows = $('Read PIPELINE').all().map(i => i.json);\n\n// ---- Q1: pause column ----\nconst pauseValues = {};\nlet pauseNonBlank = 0;\nfor (const r of pipeRows) {\n  if (!blank(r.pause)) { pauseNonBlank++; const v = String(r.pause).trim(); pauseValues[v] = (pauseValues[v]||0)+1; }\n}\n\n// ---- Q2: STARTUPS active column ----\nconst activeValues = {};\nlet activeYes = 0;\nfor (const s of $('Read STARTUPS').all()) {\n  const v = String(s.json.active == null ? '' : s.json.active).trim();\n  activeValues[v || '(blank)'] = (activeValues[v || '(blank)']||0)+1;\n  if (isYes(s.json.active)) activeYes++;\n}\n\n// ---- deal_shared distribution (Aditya-owned rows) ----\nconst dealSharedValues = {};\nfor (const r of pipeRows) {\n  if (String(r.owner||'').trim() !== OWNER) continue;\n  const v = String(r.deal_shared == null ? '' : r.deal_shared).trim();\n  dealSharedValues[v || '(blank)'] = (dealSharedValues[v || '(blank)']||0)+1;\n}\n\n// ---- Full decision replay (EXACT fixed logic) ----\nconst decide = (r) => {\n  const ownerVal = String(r.owner || '').trim();\n  if (ownerVal === '' || VALID_OWNERS.indexOf(ownerVal) === -1) return { action:'error', reason:'OWNER_INVALID', stage:'' };\n  if (ownerVal !== OWNER) return { action:'skip', reason:'not-my-owner', stage:'' };\n  if (!blank(r.pause)) return { action:'skip', reason:'row-paused', stage:'' };\n  if (!blank(r.investor_response)) return { action:'skip', reason:'investor_response-set', stage:'' };\n  if (!blank(r.deal_status) && String(r.deal_status).trim().toLowerCase() !== 'open') return { action:'skip', reason:'deal_status-not-open', stage:'' };\n  if (isYes(r.meeting_scheduled) || !blank(r.meeting_date) || num(r.meetings_held) > 0 || !blank(r.last_meeting_date) || !blank(r.meeting_outcome) || num(r.committed_cr) > 0) return { action:'skip', reason:'meeting-stage', stage:'' };\n  const inv = investorByName[String(r.investor).trim()];\n  if (!inv) return { action:'error', reason:'investor-not-found', stage:'' };\n  if (isYes(inv.do_not_contact)) return { action:'skip', reason:'do-not-contact', stage:'' };\n  const st = startupByName[String(r.startup).trim()];\n  if (!st) return { action:'error', reason:'startup-not-found', stage:'' };\n  if (!isYes(st.active)) return { action:'error', reason:'startup-not-active', stage:'' };\n  if (blank(r.email)) return { action:'error', reason:'email-missing', stage:'' };\n  const varsMissing = blank(st.highlight_1) || blank(st.highlight_2) || blank(st.highlight_3) || blank(st.deck_link) || blank(st.sector) || blank(st.raise_inr_cr) || blank(inv.contact_person) || blank(inv.investor) || blank(st.memo_html);\n  if (varsMissing) return { action:'error', reason:'template-var-missing', stage:'' };\n  if (!isYes(r.deal_shared)) {\n    if (rotateBySendDay && String(st.send_day).trim().toLowerCase() !== todayWeekday.toLowerCase()) return { action:'skip', reason:'rotation-not-today', stage:'' };\n    return { action:'send', reason:'initial', stage:'INITIAL' };\n  }\n  const pd = parseDue(r.next_due);\n  if (!pd.ok) return { action:'error', reason:'DATE_PARSE_FAILED', stage:'' };\n  if (isYes(r.deal_shared) && !isYes(r.fu3_done) && !pd.val) return { action:'error', reason:'NEXT_DUE_MISSING', stage:'' };\n  if (!isYes(r.fu1_done) && due(pd.val)) return { action:'send', reason:'fu1', stage:'FU1' };\n  if (!isYes(r.fu2_done) && due(pd.val)) return { action:'send', reason:'fu2', stage:'FU2' };\n  if (!isYes(r.fu3_done) && due(pd.val)) return { action:'send', reason:'fu3', stage:'FU3' };\n  if (isYes(r.fu3_done)) return { action:'skip', reason:'fu3-complete', stage:'' };\n  return { action:'skip', reason:'nothing-due', stage:'' };\n};\n\nconst actionTally = {};\nconst stageTally = {};\nconst sendDeals = [];\nfor (const r of pipeRows) {\n  const d = decide(r);\n  actionTally[d.action] = (actionTally[d.action]||0)+1;\n  if (d.action === 'send') {\n    stageTally[d.stage] = (stageTally[d.stage]||0)+1;\n    sendDeals.push({ deal_id: r.deal_id, stage: d.stage, investor: r.investor, email: r.email, deal_shared: r.deal_shared, next_due: r.next_due });\n  }\n}\n\n// ---- Cap simulation (exactly as Apply daily caps) ----\nconst totalCap = parseInt(cfg.DAILY_TOTAL_CAP, 10) || 50;\nconst newCap = parseInt(cfg.DAILY_NEW_SENDS, 10) || 25;\nlet sentToday = 0;\nfor (const r of pipeRows) { if (String(r.owner).trim() === OWNER && String(r.last_contact).trim() === today) sentToday++; }\nconst followups = sendDeals.filter(s => s.stage !== 'INITIAL');\nconst initials = sendDeals.filter(s => s.stage === 'INITIAL');\nlet totalRemaining = Math.max(0, totalCap - sentToday);\nlet wouldSend = 0;\nfor (const f of followups) { if (totalRemaining<=0) break; wouldSend++; totalRemaining--; }\nlet newRemaining = newCap;\nfor (const n of initials) { if (totalRemaining<=0||newRemaining<=0) break; wouldSend++; totalRemaining--; newRemaining--; }\n\nreturn [{ json: {\n  today,\n  pipeline_rows_read: pipeRows.length,\n  Q1_pause_nonblank_count: pauseNonBlank,\n  Q1_pause_distinct_values: pauseValues,\n  Q2_startups_active_yes_count: activeYes,\n  Q2_startups_active_distinct_values: activeValues,\n  aditya_deal_shared_distribution: dealSharedValues,\n  decision_action_tally: actionTally,\n  decision_send_stage_tally: stageTally,\n  total_rows_the_engine_would_SEND_before_caps: sendDeals.length,\n  emails_that_WOULD_ACTUALLY_FIRE_this_run_after_caps: wouldSend,\n  cap_DAILY_NEW_SENDS: newCap,\n  cap_DAILY_TOTAL_CAP: totalCap,\n  already_sent_today: sentToday,\n  first_20_send_candidates: sendDeals.slice(0,20),\n} }];\n"
+      }
+    }
+  ],
+  "connections": {
+    "Run (press Execute)": {
+      "main": [
+        [
+          {
+            "node": "Read CONFIG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read CONFIG": {
+      "main": [
+        [
+          {
+            "node": "Build CONFIG object",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build CONFIG object": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Read STARTUPS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read STARTUPS": {
+      "main": [
+        [
+          {
+            "node": "Read INVESTORS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read INVESTORS": {
+      "main": [
+        [
+          {
+            "node": "Diagnose (read-only, no send)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": {},
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "5HUHsplDRaNBtJKA",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-01T08:21:59.374Z",
+      "updatedAt": "2026-09-01T08:21:59.374Z"
+    }
+  ],
+  "activeVersion": null
+}

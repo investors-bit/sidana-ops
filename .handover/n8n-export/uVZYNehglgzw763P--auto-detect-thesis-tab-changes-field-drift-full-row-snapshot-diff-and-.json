@@ -1,0 +1,971 @@
+{
+  "id": "uVZYNehglgzw763P",
+  "name": "AUTO — detect Thesis-tab changes (field drift + FULL-ROW snapshot diff) and flag for re-match (weekdays 18:45 IST)",
+  "description": null,
+  "active": true,
+  "activeVersionId": "60002f01-b60a-4654-a3f0-c59efcf04321",
+  "createdAt": "2026-09-08T07:29:51.585Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "60002f01-b60a-4654-a3f0-c59efcf04321",
+  "versionCounter": 15,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "trg1",
+      "name": "Weekdays 18:45 IST",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "45 18 * * 1-5"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "rd1",
+      "name": "Read Thesis correction",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        220,
+        -120
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1WOErvuYawblG-HkrK5In5YWtEiKKt_DeoVpmL5na6GU/edit"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Thesis correction"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "rd2",
+      "name": "Read INVESTORS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        440,
+        -60
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "INVESTORS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "rd3",
+      "name": "Read ERROR LOG",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "ERROR LOG"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cd1",
+      "name": "Detect changes",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// DETECT ONLY - this workflow never writes to INVESTORS.\n// Reason: a thesis row is not always a field copy. IAN and L'Oreal each describe TWO funds and\n// had to be split / restructured by hand; blindly copying the sheet text back would undo that.\n// Curated values also never equal the raw sheet text, so a writing job would rewrite and re-flag\n// the same rows every night forever. So: detect, flag once, and let the 19:00 re-match apply it.\nconst ALIAS = {\n  'piperserica': 'PiperSireca', 'ricebergvc': 'Riceberg Ventures', 'vertex': 'Vertex Ventures',\n  'sianacapital': 'Siana Capital', '247vc': '247 VC Tech Fund', 'swishinvc': 'Swishin Ventures',\n  'atomiccapital': 'Atomic Capital', 'cedarhillcapital': 'CedarHill Capital',\n  'rainmatterzerodha': 'Rainmatter by Zerodha', 'zerencapital': 'Zeren Capital',\n  'lorealventurecapital': \"L'Oreal Venture Capital\", 'a99vc': 'a99 VC'\n};\n// Firms deliberately split into several INVESTORS rows - do not try to map them back to one row.\nconst SPLIT = {\n  'ricebergvc': 'Riceberg - sheet text is a pass note; record already says foundational AI only (11 Sep)',\n  'thechennaiangels': 'Chennai Angels - sheet text is a pass on Body & Beyond, not a thesis (11 Sep)',\n  'araliventures': 'Arali - pass note (stopped B2B marketplaces); handled by dropping those deals (11 Sep)',\n  'dexterventures': 'Dexter - the user gave the real sector list on 12 Sep (B2B SaaS, AI, FinTech, Consumer, HealthTech); the sheet still says Sector Agnostic',\n  'equentis': 'Equentis - revenue bar (>= 8 Cr booked revenue / ARR, tech-enabled) applied as a rule by the user 11 Sep; the prose will never match a field',\n  'iangroup': 'IAN Group (split into Angel Fund + Alpha Fund)',\n  'elevationcapital': 'Elevation Capital - split 12 Sep into five partner rows (Shourya healthcare, Pranay consumer/EV/logistics, Shreedhar consumer tech/edtech, Lalit fintech, Akshat deeptech); never map the Thesis rows back to one row',\n  'lorealventurecapital': \"L'Oreal - record deliberately curated into two verticals; raw sheet text will never match\"\n};\n\nfunction s(v) { return String(v == null ? '' : v).trim(); }\nfunction norm(x) { return s(x).toLowerCase().replace(/[^a-z0-9]/g, ''); }\nfunction skip(v) { const t = s(v).toLowerCase(); return t === '' || t === 'same as previous'; }\n// Compare on MEANING, not characters. Without this, 'deep tech' vs 'Deep tech' and\n// '1 cr- 4cr' vs 'INR 1-4 Cr' raise flags every night, and a record that is more complete than\n// the sheet ('Nihal Shetty' vs 'Nihal') looks like a change when it is an improvement.\nfunction cmp(x) {\n  return s(x).toLowerCase()\n    .replace(/\\b(and|with|along|the|stages|stage|inr|cr|rs)\\b/g, ' ')\n    .replace(/[^a-z0-9]/g, '');\n}\nfunction toks(x) {\n  return s(x).toLowerCase().split(/[^a-z0-9]+/)\n    .filter(function (t) { return t.length > 2 && ['and','with','along','the','for','are','they','our','inr','cr','rs','stage','stages','focussed','focused','companies','building','size','cheque'].indexOf(t) < 0; });\n}\nfunction same(sheetVal, recVal) {\n  const a = cmp(sheetVal), b = cmp(recVal);\n  if (!a || !b) { return false; }\n  if (a === b || a.indexOf(b) >= 0 || b.indexOf(a) >= 0) { return true; }\n  // A curated record is a CONDENSED form of the sheet prose: if every meaningful word already\n  // present in the record also appears in the sheet text, nothing new has been said.\n  // 'Enterprise tech for BFSI' vs 'enterprise tech companies building for BFSI.' -> same.\n  // 'AI, Consumer, D2C, FinTech, SaaS' vs 'Sector agnostic' -> genuinely different.\n  const A = toks(sheetVal), B = toks(recVal);\n  if (B.length === 0) { return false; }\n  const inA = {};\n  for (const t of A) { inA[t] = true; }\n  return B.every(function (t) { return inA[t]; });\n}\n\nconst raw = $('Read Thesis correction').all().map(function (i) {\n  const o = i.json;\n  return Object.keys(o).filter(function (k) { return k !== 'row_number'; }).map(function (k) { return o[k]; });\n});\nconst inv = $('Read INVESTORS').all().map(function (i) { return i.json; });\nif (inv.length < 100) { throw new Error('ABORT: INVESTORS returned only ' + inv.length + ' rows'); }\nconst elog = $input.all().map(function (i) { return i.json; });\n\nlet P = null;\nfor (const r of raw) {\n  const idx = r.findIndex(function (c) { return s(c).toLowerCase() === 'sector'; });\n  if (idx > 0) { P = { firm: 0, contact: 1, email: 2, sector: idx, stage: idx + 1, cheque: idx + 2 }; break; }\n}\nif (!P) { throw new Error('ABORT: could not locate the Sector label row - Thesis tab layout changed'); }\n\nconst byNorm = {};\nfor (const r of inv) { byNorm[norm(r.investor)] = r; }\n\n// Only flag once: skip anything already open in ERROR LOG for the same investor.\nconst open = {};\nfor (const e of elog) {\n  // must cover BOTH flag types - NEW_INVESTOR_ON_THESIS_TAB does not start with 'THESIS'\nif (s(e.resolved) === '' && s(e.workflow) === 'THESIS-WATCH') { open[s(e.investor).toLowerCase()] = true; }\n}\n\nconst today = new Date().toISOString().slice(0, 10);\nconst out = [];\nfunction flag(investor, type, details) {\n  if (open[investor.toLowerCase()]) { return; }\n  open[investor.toLowerCase()] = true;\n  out.push({ json: { timestamp: today, workflow: 'THESIS-WATCH', deal_id: '', startup: '',\n                     investor: investor, error_type: type, details: details, resolved: '' } });\n}\n\nfor (const r of raw) {\n  const firm = s(r[P.firm]);\n  if (!firm || firm.toLowerCase() === 'firm name') { continue; }\n  const key = norm(firm);\n\n  if (SPLIT[key]) { continue; }   // already restructured by hand\n\n  // Exact, then alias, then prefix: the sheet often writes a shortened firm name\n  // ('DSG Consumer' for 'DSG Consumer Partners'). Without this it looks like a NEW investor\n  // and a re-match run would create a duplicate row for a firm that already exists.\n  let t = byNorm[key] || (ALIAS[key] ? byNorm[norm(ALIAS[key])] : null);\n  if (!t && key.length >= 6) {\n    const cand = Object.keys(byNorm).filter(function (n) { return n.indexOf(key) === 0 || key.indexOf(n) === 0; });\n    if (cand.length === 1) { t = byNorm[cand[0]]; }\n  }\n  if (!t) {\n    // Every firm on the corrections sheet already exists in INVESTORS (confirmed 2026-09-08).\n    // So a non-match is ALWAYS a naming problem, never a new investor. Creating a row here\n    // would duplicate an existing firm under a shortened name.\n    flag(firm, 'INVESTOR_NAME_NOT_MATCHED', 'Firm on the Thesis tab did not resolve to an INVESTORS row. It DOES exist - find the correct existing row and add an alias. Do NOT create a new investor row.');\n    continue;\n  }\n  if (s(t.do_not_contact).toLowerCase() === 'yes') { continue; }\n\n  const diffs = [];\n  const pairs = [['contact_person', r[P.contact]], ['email', r[P.email]],\n                 ['sector', r[P.sector]], ['stage', r[P.stage]], ['cheque_inr_cr', r[P.cheque]]];\n  for (const p of pairs) {\n    const k = p[0], v = s(p[1]);\n    if (skip(v)) { continue; }\n    if (same(v, t[k])) { continue; }\n    diffs.push(k + ': sheet=\"' + v.slice(0, 90) + '\" vs sheet_record=\"' + s(t[k]).slice(0, 60) + '\"');\n  }\n  if (diffs.length > 0) {\n    flag(s(t.investor), 'THESIS_CHANGE_PENDING', diffs.join(' | ').slice(0, 900));\n  }\n}\n\nif (out.length === 0) { return []; }\nif (out.length > 25) { throw new Error('ABORT: ' + out.length + ' flags exceeds guard of 25'); }\nreturn out;"
+      }
+    },
+    {
+      "id": "ap1",
+      "name": "Append ERROR LOG",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "position": [
+        1100,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "ERROR LOG"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "v2a",
+      "name": "GET thesis raw",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        880,
+        260
+      ],
+      "parameters": {
+        "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/1WOErvuYawblG-HkrK5In5YWtEiKKt_DeoVpmL5na6GU/values/' + encodeURIComponent(\"'Thesis correction'!A1:Z400\") }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "v2b",
+      "name": "GET snapshot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        1080,
+        260
+      ],
+      "parameters": {
+        "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/' + encodeURIComponent(\"'THESIS SNAPSHOT'!A1:D600\") }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "v2c",
+      "name": "Row diff",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1280,
+        260
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// FULL-ROW check (user 17 Sep): firms rewrite their thesis in place on the same row (e.g. Piper Serica),\n// in ANY column (sector, stage, cheque, geography, ARR, notes). Compare every Thesis-tab row with yesterday's\n// snapshot and flag each changed / new / removed row once; the snapshot is then rolled forward.\nfunction s(v) { return String(v == null ? '' : v).replace(/\\s+/g, ' ').trim(); }\nconst grid = $('GET thesis raw').first().json.values || [];\nif (grid.length < 5) { throw new Error('ABORT: Thesis tab read only ' + grid.length + ' rows'); }\nconst snap = (($('GET snapshot').first().json.values) || []).slice(1).filter(function (r) { return s(r[0]); });\nif (!snap.length) { throw new Error('ABORT: THESIS SNAPSHOT is empty - write a baseline first'); }\nconst today = new Date(Date.now() + 330 * 60000).toISOString().slice(0, 10);\nconst values = [['sheet_row', 'firm', 'row_text', 'snapshot_date']];\nconst cur = {}; let firm = '';\nfor (let i = 0; i < grid.length; i++) {\n  const cells = (grid[i] || []).map(s); while (cells.length && !cells[cells.length - 1]) { cells.pop(); }\n  if (!cells.length) { continue; }\n  if (cells[0]) { firm = cells[0]; }\n  const text = s(cells.join(' | ')).slice(0, 45000);\n  cur[String(i + 1)] = { firm: firm, text: text };\n  values.push([String(i + 1), firm, text, today]);\n}\nwhile (values.length < 600) { values.push(['', '', '', '']); }\nconst old = {}; snap.forEach(function (r) { old[s(r[0])] = { firm: s(r[1]), text: s(r[2]) }; });\nconst flags = [];\nfunction flag(firmName, type, details) { flags.push([today, 'THESIS-WATCH', '', '', firmName, type, details.slice(0, 1800), '']); }\nconst TODO = ' -> Re-check this firm: update its INVESTORS row AND its INVESTOR_CRITERIA row (sector codes incl. exclusions, business model, stage, cheque, ARR bar, geography). Refine broad words (e.g. consumer) from the fund website + portfolio. Mark resolved when done.';\nObject.keys(cur).forEach(function (k) {\n  if (!old[k]) { flag(cur[k].firm, 'THESIS_ROW_NEW', 'Thesis tab row ' + k + ' is new. NOW: ' + cur[k].text.slice(0, 900) + TODO); }\n  else if (old[k].text !== cur[k].text) { flag(cur[k].firm, 'THESIS_ROW_CHANGED', 'Thesis tab row ' + k + ' was edited. NOW: ' + cur[k].text.slice(0, 900) + ' | WAS: ' + old[k].text.slice(0, 500) + TODO); }\n});\nObject.keys(old).forEach(function (k) { if (!cur[k]) { flag(old[k].firm, 'THESIS_ROW_REMOVED', 'Thesis tab row ' + k + ' is now blank. WAS: ' + old[k].text.slice(0, 900) + ' -> check whether the firm moved rows or the correction was withdrawn.'); } });\nif (flags.length > 40) {\n  return [{ json: { ok: false, values: [], flags: [[today, 'THESIS-WATCH', '', '', 'Thesis correction tab', 'THESIS_TAB_LAYOUT_CHANGED', flags.length + ' rows differ from the snapshot (rows inserted, deleted or re-sorted?). Snapshot NOT rolled forward. Compare the tab by firm name by hand, apply real changes, then re-baseline THESIS SNAPSHOT.', '']] } }];\n}\nreturn [{ json: { ok: true, values: values, flags: flags } }];"
+      }
+    },
+    {
+      "id": "v2d",
+      "name": "Snapshot ok?",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1480,
+        160
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const j = $('Row diff').first().json; if (!j.ok) { return []; } return [{ json: { rows: j.values.length } }];"
+      }
+    },
+    {
+      "id": "v2e",
+      "name": "Write snapshot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1680,
+        160
+      ],
+      "parameters": {
+        "method": "PUT",
+        "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/' + encodeURIComponent(\"'THESIS SNAPSHOT'!A1:D600\") + '?valueInputOption=RAW' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ values: $('Row diff').first().json.values }) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "v2f",
+      "name": "Has row flags",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1480,
+        380
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const j = $('Row diff').first().json; if (!j.flags || !j.flags.length) { return []; } return [{ json: { flags: j.flags.length } }];"
+      }
+    },
+    {
+      "id": "v2g",
+      "name": "Append row flags",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1680,
+        380
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/' + encodeURIComponent(\"'ERROR LOG'!A1\") + ':append?valueInputOption=RAW&insertDataOption=INSERT_ROWS' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ values: $('Row diff').first().json.flags }) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Weekdays 18:45 IST": {
+      "main": [
+        [
+          {
+            "node": "Read Thesis correction",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Thesis correction": {
+      "main": [
+        [
+          {
+            "node": "Read INVESTORS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read INVESTORS": {
+      "main": [
+        [
+          {
+            "node": "Read ERROR LOG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read ERROR LOG": {
+      "main": [
+        [
+          {
+            "node": "Detect changes",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "GET thesis raw",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Detect changes": {
+      "main": [
+        [
+          {
+            "node": "Append ERROR LOG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET thesis raw": {
+      "main": [
+        [
+          {
+            "node": "GET snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET snapshot": {
+      "main": [
+        [
+          {
+            "node": "Row diff",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Row diff": {
+      "main": [
+        [
+          {
+            "node": "Snapshot ok?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Has row flags",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Snapshot ok?": {
+      "main": [
+        [
+          {
+            "node": "Write snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has row flags": {
+      "main": [
+        [
+          {
+            "node": "Append row flags",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Weekdays 18:45 IST": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "uVZYNehglgzw763P",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-08T07:29:51.589Z",
+      "updatedAt": "2026-09-08T07:29:51.589Z"
+    }
+  ],
+  "activeVersion": {
+    "versionId": "60002f01-b60a-4654-a3f0-c59efcf04321",
+    "workflowId": "uVZYNehglgzw763P",
+    "nodes": [
+      {
+        "id": "trg1",
+        "name": "Weekdays 18:45 IST",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.4,
+        "position": [
+          0,
+          0
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "45 18 * * 1-5"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "rd1",
+        "name": "Read Thesis correction",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.7,
+        "executeOnce": true,
+        "retryOnFail": true,
+        "maxTries": 5,
+        "waitBetweenTries": 5000,
+        "position": [
+          220,
+          -120
+        ],
+        "parameters": {
+          "resource": "sheet",
+          "operation": "read",
+          "documentId": {
+            "__rl": true,
+            "mode": "url",
+            "value": "https://docs.google.com/spreadsheets/d/1WOErvuYawblG-HkrK5In5YWtEiKKt_DeoVpmL5na6GU/edit"
+          },
+          "sheetName": {
+            "__rl": true,
+            "mode": "name",
+            "value": "Thesis correction"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "rd2",
+        "name": "Read INVESTORS",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.7,
+        "executeOnce": true,
+        "retryOnFail": true,
+        "maxTries": 5,
+        "waitBetweenTries": 5000,
+        "position": [
+          440,
+          -60
+        ],
+        "parameters": {
+          "resource": "sheet",
+          "operation": "read",
+          "documentId": {
+            "__rl": true,
+            "mode": "url",
+            "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+          },
+          "sheetName": {
+            "__rl": true,
+            "mode": "name",
+            "value": "INVESTORS"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "rd3",
+        "name": "Read ERROR LOG",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.7,
+        "executeOnce": true,
+        "alwaysOutputData": true,
+        "retryOnFail": true,
+        "maxTries": 5,
+        "waitBetweenTries": 5000,
+        "position": [
+          660,
+          0
+        ],
+        "parameters": {
+          "resource": "sheet",
+          "operation": "read",
+          "documentId": {
+            "__rl": true,
+            "mode": "url",
+            "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+          },
+          "sheetName": {
+            "__rl": true,
+            "mode": "name",
+            "value": "ERROR LOG"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "cd1",
+        "name": "Detect changes",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          880,
+          0
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "// DETECT ONLY - this workflow never writes to INVESTORS.\n// Reason: a thesis row is not always a field copy. IAN and L'Oreal each describe TWO funds and\n// had to be split / restructured by hand; blindly copying the sheet text back would undo that.\n// Curated values also never equal the raw sheet text, so a writing job would rewrite and re-flag\n// the same rows every night forever. So: detect, flag once, and let the 19:00 re-match apply it.\nconst ALIAS = {\n  'piperserica': 'PiperSireca', 'ricebergvc': 'Riceberg Ventures', 'vertex': 'Vertex Ventures',\n  'sianacapital': 'Siana Capital', '247vc': '247 VC Tech Fund', 'swishinvc': 'Swishin Ventures',\n  'atomiccapital': 'Atomic Capital', 'cedarhillcapital': 'CedarHill Capital',\n  'rainmatterzerodha': 'Rainmatter by Zerodha', 'zerencapital': 'Zeren Capital',\n  'lorealventurecapital': \"L'Oreal Venture Capital\", 'a99vc': 'a99 VC'\n};\n// Firms deliberately split into several INVESTORS rows - do not try to map them back to one row.\nconst SPLIT = {\n  'ricebergvc': 'Riceberg - sheet text is a pass note; record already says foundational AI only (11 Sep)',\n  'thechennaiangels': 'Chennai Angels - sheet text is a pass on Body & Beyond, not a thesis (11 Sep)',\n  'araliventures': 'Arali - pass note (stopped B2B marketplaces); handled by dropping those deals (11 Sep)',\n  'dexterventures': 'Dexter - the user gave the real sector list on 12 Sep (B2B SaaS, AI, FinTech, Consumer, HealthTech); the sheet still says Sector Agnostic',\n  'equentis': 'Equentis - revenue bar (>= 8 Cr booked revenue / ARR, tech-enabled) applied as a rule by the user 11 Sep; the prose will never match a field',\n  'iangroup': 'IAN Group (split into Angel Fund + Alpha Fund)',\n  'elevationcapital': 'Elevation Capital - split 12 Sep into five partner rows (Shourya healthcare, Pranay consumer/EV/logistics, Shreedhar consumer tech/edtech, Lalit fintech, Akshat deeptech); never map the Thesis rows back to one row',\n  'lorealventurecapital': \"L'Oreal - record deliberately curated into two verticals; raw sheet text will never match\"\n};\n\nfunction s(v) { return String(v == null ? '' : v).trim(); }\nfunction norm(x) { return s(x).toLowerCase().replace(/[^a-z0-9]/g, ''); }\nfunction skip(v) { const t = s(v).toLowerCase(); return t === '' || t === 'same as previous'; }\n// Compare on MEANING, not characters. Without this, 'deep tech' vs 'Deep tech' and\n// '1 cr- 4cr' vs 'INR 1-4 Cr' raise flags every night, and a record that is more complete than\n// the sheet ('Nihal Shetty' vs 'Nihal') looks like a change when it is an improvement.\nfunction cmp(x) {\n  return s(x).toLowerCase()\n    .replace(/\\b(and|with|along|the|stages|stage|inr|cr|rs)\\b/g, ' ')\n    .replace(/[^a-z0-9]/g, '');\n}\nfunction toks(x) {\n  return s(x).toLowerCase().split(/[^a-z0-9]+/)\n    .filter(function (t) { return t.length > 2 && ['and','with','along','the','for','are','they','our','inr','cr','rs','stage','stages','focussed','focused','companies','building','size','cheque'].indexOf(t) < 0; });\n}\nfunction same(sheetVal, recVal) {\n  const a = cmp(sheetVal), b = cmp(recVal);\n  if (!a || !b) { return false; }\n  if (a === b || a.indexOf(b) >= 0 || b.indexOf(a) >= 0) { return true; }\n  // A curated record is a CONDENSED form of the sheet prose: if every meaningful word already\n  // present in the record also appears in the sheet text, nothing new has been said.\n  // 'Enterprise tech for BFSI' vs 'enterprise tech companies building for BFSI.' -> same.\n  // 'AI, Consumer, D2C, FinTech, SaaS' vs 'Sector agnostic' -> genuinely different.\n  const A = toks(sheetVal), B = toks(recVal);\n  if (B.length === 0) { return false; }\n  const inA = {};\n  for (const t of A) { inA[t] = true; }\n  return B.every(function (t) { return inA[t]; });\n}\n\nconst raw = $('Read Thesis correction').all().map(function (i) {\n  const o = i.json;\n  return Object.keys(o).filter(function (k) { return k !== 'row_number'; }).map(function (k) { return o[k]; });\n});\nconst inv = $('Read INVESTORS').all().map(function (i) { return i.json; });\nif (inv.length < 100) { throw new Error('ABORT: INVESTORS returned only ' + inv.length + ' rows'); }\nconst elog = $input.all().map(function (i) { return i.json; });\n\nlet P = null;\nfor (const r of raw) {\n  const idx = r.findIndex(function (c) { return s(c).toLowerCase() === 'sector'; });\n  if (idx > 0) { P = { firm: 0, contact: 1, email: 2, sector: idx, stage: idx + 1, cheque: idx + 2 }; break; }\n}\nif (!P) { throw new Error('ABORT: could not locate the Sector label row - Thesis tab layout changed'); }\n\nconst byNorm = {};\nfor (const r of inv) { byNorm[norm(r.investor)] = r; }\n\n// Only flag once: skip anything already open in ERROR LOG for the same investor.\nconst open = {};\nfor (const e of elog) {\n  // must cover BOTH flag types - NEW_INVESTOR_ON_THESIS_TAB does not start with 'THESIS'\nif (s(e.resolved) === '' && s(e.workflow) === 'THESIS-WATCH') { open[s(e.investor).toLowerCase()] = true; }\n}\n\nconst today = new Date().toISOString().slice(0, 10);\nconst out = [];\nfunction flag(investor, type, details) {\n  if (open[investor.toLowerCase()]) { return; }\n  open[investor.toLowerCase()] = true;\n  out.push({ json: { timestamp: today, workflow: 'THESIS-WATCH', deal_id: '', startup: '',\n                     investor: investor, error_type: type, details: details, resolved: '' } });\n}\n\nfor (const r of raw) {\n  const firm = s(r[P.firm]);\n  if (!firm || firm.toLowerCase() === 'firm name') { continue; }\n  const key = norm(firm);\n\n  if (SPLIT[key]) { continue; }   // already restructured by hand\n\n  // Exact, then alias, then prefix: the sheet often writes a shortened firm name\n  // ('DSG Consumer' for 'DSG Consumer Partners'). Without this it looks like a NEW investor\n  // and a re-match run would create a duplicate row for a firm that already exists.\n  let t = byNorm[key] || (ALIAS[key] ? byNorm[norm(ALIAS[key])] : null);\n  if (!t && key.length >= 6) {\n    const cand = Object.keys(byNorm).filter(function (n) { return n.indexOf(key) === 0 || key.indexOf(n) === 0; });\n    if (cand.length === 1) { t = byNorm[cand[0]]; }\n  }\n  if (!t) {\n    // Every firm on the corrections sheet already exists in INVESTORS (confirmed 2026-09-08).\n    // So a non-match is ALWAYS a naming problem, never a new investor. Creating a row here\n    // would duplicate an existing firm under a shortened name.\n    flag(firm, 'INVESTOR_NAME_NOT_MATCHED', 'Firm on the Thesis tab did not resolve to an INVESTORS row. It DOES exist - find the correct existing row and add an alias. Do NOT create a new investor row.');\n    continue;\n  }\n  if (s(t.do_not_contact).toLowerCase() === 'yes') { continue; }\n\n  const diffs = [];\n  const pairs = [['contact_person', r[P.contact]], ['email', r[P.email]],\n                 ['sector', r[P.sector]], ['stage', r[P.stage]], ['cheque_inr_cr', r[P.cheque]]];\n  for (const p of pairs) {\n    const k = p[0], v = s(p[1]);\n    if (skip(v)) { continue; }\n    if (same(v, t[k])) { continue; }\n    diffs.push(k + ': sheet=\"' + v.slice(0, 90) + '\" vs sheet_record=\"' + s(t[k]).slice(0, 60) + '\"');\n  }\n  if (diffs.length > 0) {\n    flag(s(t.investor), 'THESIS_CHANGE_PENDING', diffs.join(' | ').slice(0, 900));\n  }\n}\n\nif (out.length === 0) { return []; }\nif (out.length > 25) { throw new Error('ABORT: ' + out.length + ' flags exceeds guard of 25'); }\nreturn out;"
+        }
+      },
+      {
+        "id": "ap1",
+        "name": "Append ERROR LOG",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.7,
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 5000,
+        "position": [
+          1100,
+          0
+        ],
+        "parameters": {
+          "resource": "sheet",
+          "operation": "append",
+          "documentId": {
+            "__rl": true,
+            "mode": "url",
+            "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+          },
+          "sheetName": {
+            "__rl": true,
+            "mode": "name",
+            "value": "ERROR LOG"
+          },
+          "columns": {
+            "mappingMode": "autoMapInputData",
+            "value": {},
+            "matchingColumns": [],
+            "schema": []
+          },
+          "options": {
+            "handlingExtraData": "ignoreIt"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "v2a",
+        "name": "GET thesis raw",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "executeOnce": true,
+        "retryOnFail": true,
+        "maxTries": 5,
+        "waitBetweenTries": 5000,
+        "position": [
+          880,
+          260
+        ],
+        "parameters": {
+          "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/1WOErvuYawblG-HkrK5In5YWtEiKKt_DeoVpmL5na6GU/values/' + encodeURIComponent(\"'Thesis correction'!A1:Z400\") }}",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleSheetsOAuth2Api",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "v2b",
+        "name": "GET snapshot",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "executeOnce": true,
+        "retryOnFail": true,
+        "maxTries": 5,
+        "waitBetweenTries": 5000,
+        "position": [
+          1080,
+          260
+        ],
+        "parameters": {
+          "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/' + encodeURIComponent(\"'THESIS SNAPSHOT'!A1:D600\") }}",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleSheetsOAuth2Api",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "v2c",
+        "name": "Row diff",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1280,
+          260
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "// FULL-ROW check (user 17 Sep): firms rewrite their thesis in place on the same row (e.g. Piper Serica),\n// in ANY column (sector, stage, cheque, geography, ARR, notes). Compare every Thesis-tab row with yesterday's\n// snapshot and flag each changed / new / removed row once; the snapshot is then rolled forward.\nfunction s(v) { return String(v == null ? '' : v).replace(/\\s+/g, ' ').trim(); }\nconst grid = $('GET thesis raw').first().json.values || [];\nif (grid.length < 5) { throw new Error('ABORT: Thesis tab read only ' + grid.length + ' rows'); }\nconst snap = (($('GET snapshot').first().json.values) || []).slice(1).filter(function (r) { return s(r[0]); });\nif (!snap.length) { throw new Error('ABORT: THESIS SNAPSHOT is empty - write a baseline first'); }\nconst today = new Date(Date.now() + 330 * 60000).toISOString().slice(0, 10);\nconst values = [['sheet_row', 'firm', 'row_text', 'snapshot_date']];\nconst cur = {}; let firm = '';\nfor (let i = 0; i < grid.length; i++) {\n  const cells = (grid[i] || []).map(s); while (cells.length && !cells[cells.length - 1]) { cells.pop(); }\n  if (!cells.length) { continue; }\n  if (cells[0]) { firm = cells[0]; }\n  const text = s(cells.join(' | ')).slice(0, 45000);\n  cur[String(i + 1)] = { firm: firm, text: text };\n  values.push([String(i + 1), firm, text, today]);\n}\nwhile (values.length < 600) { values.push(['', '', '', '']); }\nconst old = {}; snap.forEach(function (r) { old[s(r[0])] = { firm: s(r[1]), text: s(r[2]) }; });\nconst flags = [];\nfunction flag(firmName, type, details) { flags.push([today, 'THESIS-WATCH', '', '', firmName, type, details.slice(0, 1800), '']); }\nconst TODO = ' -> Re-check this firm: update its INVESTORS row AND its INVESTOR_CRITERIA row (sector codes incl. exclusions, business model, stage, cheque, ARR bar, geography). Refine broad words (e.g. consumer) from the fund website + portfolio. Mark resolved when done.';\nObject.keys(cur).forEach(function (k) {\n  if (!old[k]) { flag(cur[k].firm, 'THESIS_ROW_NEW', 'Thesis tab row ' + k + ' is new. NOW: ' + cur[k].text.slice(0, 900) + TODO); }\n  else if (old[k].text !== cur[k].text) { flag(cur[k].firm, 'THESIS_ROW_CHANGED', 'Thesis tab row ' + k + ' was edited. NOW: ' + cur[k].text.slice(0, 900) + ' | WAS: ' + old[k].text.slice(0, 500) + TODO); }\n});\nObject.keys(old).forEach(function (k) { if (!cur[k]) { flag(old[k].firm, 'THESIS_ROW_REMOVED', 'Thesis tab row ' + k + ' is now blank. WAS: ' + old[k].text.slice(0, 900) + ' -> check whether the firm moved rows or the correction was withdrawn.'); } });\nif (flags.length > 40) {\n  return [{ json: { ok: false, values: [], flags: [[today, 'THESIS-WATCH', '', '', 'Thesis correction tab', 'THESIS_TAB_LAYOUT_CHANGED', flags.length + ' rows differ from the snapshot (rows inserted, deleted or re-sorted?). Snapshot NOT rolled forward. Compare the tab by firm name by hand, apply real changes, then re-baseline THESIS SNAPSHOT.', '']] } }];\n}\nreturn [{ json: { ok: true, values: values, flags: flags } }];"
+        }
+      },
+      {
+        "id": "v2d",
+        "name": "Snapshot ok?",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1480,
+          160
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const j = $('Row diff').first().json; if (!j.ok) { return []; } return [{ json: { rows: j.values.length } }];"
+        }
+      },
+      {
+        "id": "v2e",
+        "name": "Write snapshot",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1680,
+          160
+        ],
+        "parameters": {
+          "method": "PUT",
+          "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/' + encodeURIComponent(\"'THESIS SNAPSHOT'!A1:D600\") + '?valueInputOption=RAW' }}",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleSheetsOAuth2Api",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ values: $('Row diff').first().json.values }) }}",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "v2f",
+        "name": "Has row flags",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1480,
+          380
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const j = $('Row diff').first().json; if (!j.flags || !j.flags.length) { return []; } return [{ json: { flags: j.flags.length } }];"
+        }
+      },
+      {
+        "id": "v2g",
+        "name": "Append row flags",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1680,
+          380
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/' + encodeURIComponent(\"'ERROR LOG'!A1\") + ':append?valueInputOption=RAW&insertDataOption=INSERT_ROWS' }}",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleSheetsOAuth2Api",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ values: $('Row diff').first().json.flags }) }}",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Weekdays 18:45 IST": {
+        "main": [
+          [
+            {
+              "node": "Read Thesis correction",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Read Thesis correction": {
+        "main": [
+          [
+            {
+              "node": "Read INVESTORS",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Read INVESTORS": {
+        "main": [
+          [
+            {
+              "node": "Read ERROR LOG",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Read ERROR LOG": {
+        "main": [
+          [
+            {
+              "node": "Detect changes",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "GET thesis raw",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Detect changes": {
+        "main": [
+          [
+            {
+              "node": "Append ERROR LOG",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "GET thesis raw": {
+        "main": [
+          [
+            {
+              "node": "GET snapshot",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "GET snapshot": {
+        "main": [
+          [
+            {
+              "node": "Row diff",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Row diff": {
+        "main": [
+          [
+            {
+              "node": "Snapshot ok?",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Has row flags",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Snapshot ok?": {
+        "main": [
+          [
+            {
+              "node": "Write snapshot",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Has row flags": {
+        "main": [
+          [
+            {
+              "node": "Append row flags",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "Sidana Ventures",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "createdAt": "2026-09-17T07:37:09.814Z",
+    "updatedAt": "2026-09-17T07:37:09.814Z",
+    "workflowPublishHistory": [
+      {
+        "id": 1333,
+        "workflowId": "uVZYNehglgzw763P",
+        "versionId": "60002f01-b60a-4654-a3f0-c59efcf04321",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-09-17T07:37:09.939Z"
+      }
+    ]
+  }
+}

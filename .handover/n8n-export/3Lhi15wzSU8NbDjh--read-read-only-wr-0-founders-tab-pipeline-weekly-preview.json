@@ -1,0 +1,210 @@
+{
+  "id": "3Lhi15wzSU8NbDjh",
+  "name": "READ (read-only) — WR-0 founders tab + PIPELINE weekly preview",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-10T10:51:04.778Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "0d42bdf2-7799-47b1-a383-e6d2065cafb0",
+  "versionCounter": 14,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "7d1f3c2a-5b8e-4f61-9a0d-wr0inspect01",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "wr0-inspect-7d1f3c2a",
+        "responseMode": "lastNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "h1",
+      "name": "GET tab list",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4?fields=sheets.properties(title,sheetId)",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "h2",
+      "name": "GET founders tab",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/'STARTUPS'!A1:Z200",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "r1",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "c1",
+      "name": "Summarise",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const s = (v) => String(v == null ? '' : v).trim();\nconst low = (v) => s(v).toLowerCase();\nconst FROM = '2026-09-01', TO = '2026-09-30';\nconst inMonth = (d) => { d = s(d); return /^\\d{4}-\\d{2}-\\d{2}$/.test(d) && d >= FROM && d <= TO; };\nconst isYes = (x) => low(x) === 'yes';\nconst monthNew = [], monthFu = [], lifetimeShared = [];\nlet fuCount = 0;\nfor (const it of $input.all()) {\n  const r = it.json;\n  if (low(r.startup) !== 'mindwox') continue;\n  const inv = s(r.investor);\n  if (isYes(r.deal_shared)) lifetimeShared.push(low(inv));\n  if (inMonth(r.date_shared)) monthNew.push({ investor: inv, date: s(r.date_shared) });\n  const fus = ['fu1_date', 'fu2_date', 'fu3_date'].filter((c) => inMonth(r[c])).map((c) => s(r[c]));\n  if (fus.length) { monthFu.push({ investor: inv, dates: fus }); fuCount += fus.length; }\n}\nmonthNew.sort((a, b) => a.date.localeCompare(b.date));\nreturn [{ json: { startup: 'MindWox', month: FROM + ' .. ' + TO, total_reached_till_date_unique: Array.from(new Set(lifetimeShared)).length, month_new_investors: monthNew.length, month_new_list: monthNew, month_followups_total: fuCount, month_followup_investors: monthFu.length, month_followup_list: monthFu } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "GET tab list",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET tab list": {
+      "main": [
+        [
+          {
+            "node": "GET founders tab",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET founders tab": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Summarise",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "3Lhi15wzSU8NbDjh",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-10T10:51:04.781Z",
+      "updatedAt": "2026-09-10T10:51:04.781Z"
+    }
+  ],
+  "activeVersion": null
+}

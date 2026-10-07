@@ -1,0 +1,166 @@
+{
+  "id": "RGiaAc3oNYUxloJm",
+  "name": "One-off ONB-STATE-READ (read-only) — ONBOARDING AQ:AV + LI_OUTREACH V:AA engine state (5 Oct)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-10-05T11:04:12.797Z",
+  "updatedAt": "2026-10-07T12:14:25.970Z",
+  "isArchived": false,
+  "versionId": "daa655a4-ce67-42b7-921f-93cca9946215",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "bbe6e5d4-201d-4401-a75f-dca05b4d2132",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "onb-state-read-7c31",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "rdo",
+      "name": "Read ONB",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/ONBOARDING!A1:AV900?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "rdl",
+      "name": "Read LI",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/LI_OUTREACH!A1:AA600?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "out",
+      "name": "Out",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function sh(n){var j={};try{j=$(n).first().json||{};}catch(e){return [];}return j.values||[];}\nfunction s(v){return String(v==null?'':v).trim();}\nvar out={};\n\nvar rows=sh('Read ONB');\nvar hdr=(rows[0]||[]).map(s);\nout.onb_header_full=hdr;\nout.onb_header_AQ_AV=hdr.slice(42,48);\nvar lc=hdr.map(function(x){return x.toLowerCase();});\nfunction col(n,f){var i=lc.indexOf(n);return i>=0?i:f;}\nvar C={status:col('status',4),firm:col('firm',5),contact:col('contact',6),email:col('email',8),sent:col('sent_date',27),thread:col('thread_id',28),rr:col('reply_received',29),oc:col('outcome',36)};\nout.onb_cols=C;\nvar onb=[];var stageCount={};\nfor(var i=1;i<rows.length;i++){\n  var r=rows[i]||[];\n  var stage=s(r[42]);\n  var rrv=s(r[C.rr]);\n  if(stage){stageCount[stage]=(stageCount[stage]||0)+1;}\n  if(!stage && !rrv && (i+1)!==18) continue;\n  onb.push({row:i+1,firm:s(r[C.firm]),contact:s(r[C.contact]),email:s(r[C.email]),status:s(r[C.status]),sent_date:s(r[C.sent]),thread_id:s(r[C.thread]),reply:rrv.slice(0,700),outcome:s(r[C.oc]).slice(0,200),stage:stage,meeting_asked_date:s(r[43]),manager_notified_date:s(r[44]),next_action:s(r[45]).slice(0,200),next_action_due:s(r[46]),engine_log:s(r[47]).slice(0,400)});\n}\nout.onb_data_rows=rows.length-1;\nout.onb_stageCount=stageCount;\nout.onb=onb;\n\nvar l=sh('Read LI');\nvar lh=(l[0]||[]).map(s);\nout.li_header_full=lh;\nout.li_header_V_AA=lh.slice(21,27);\nvar li=[];var liStage={};\nfor(var k=1;k<l.length;k++){\n  var q=l[k]||[];\n  var any=false;for(var z=0;z<q.length;z++){if(s(q[z])){any=true;break;}}\n  if(!any) continue;\n  var st=s(q[21]);\n  if(st){liStage[st]=(liStage[st]||0)+1;}\n  if(!st) continue;\n  li.push({row:k+1,vals:q.map(s).slice(0,27)});\n}\nout.li_data_rows=l.length-1;\nout.li_stageCount=liStage;\nout.li_with_stage=li;\n\nreturn [{json:out}];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Read ONB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read ONB": {
+      "main": [
+        [
+          {
+            "node": "Read LI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read LI": {
+      "main": [
+        [
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionTimeout": 300,
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "RGiaAc3oNYUxloJm",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-10-05T11:04:12.799Z",
+      "updatedAt": "2026-10-05T11:04:12.799Z"
+    }
+  ],
+  "activeVersion": null
+}

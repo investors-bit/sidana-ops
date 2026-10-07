@@ -1,0 +1,282 @@
+{
+  "id": "p9SMIu3X5veRhcEa",
+  "name": "One-off RW-5 — runway + gaps + strict headroom after full re-match",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-10T06:20:41.812Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "5447debe-2847-476f-b3a1-8744560e352d",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once 12:00 IST 10 Sep",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 12 10 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "r0",
+      "name": "Read Deal Tracker",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        220,
+        -200
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1WzrrPelm2HsJNXOUNIEOuRajp70CUY-RrzBOs9LENjs/edit"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1WzrrPelm2HsJNXOUNIEOuRajp70CUY-RrzBOs9LENjs/edit#gid=189973839"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "r1",
+      "name": "Read INVESTORS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        440,
+        -140
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "INVESTORS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "r2",
+      "name": "Read STARTUPS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        660,
+        -80
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "STARTUPS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "r3",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        880,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "c1",
+      "name": "Runway report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nfunction nz(x) { return s(x).toLowerCase().replace(/[^a-z0-9]/g, ''); }\n\nconst trk = $('Read Deal Tracker').all().map(function (i) { return i.json; });\nconst invRaw = $('Read INVESTORS').all().map(function (i) { return i.json; });\nconst stRaw = $('Read STARTUPS').all().map(function (i) { return i.json; });\nconst pipe = $input.all().map(function (i) { return i.json; });\nif (pipe.length < 500) { throw new Error('ABORT: PIPELINE only ' + pipe.length); }\nif (trk.length < 200) { throw new Error('ABORT: tracker only ' + trk.length + ' rows - truncated'); }\n\nconst TAGS = [\n  ['health', /health|medtech|bio|clinic|pharma|life science|wellness|fitness|diagnost|hospital|patient|doctor/],\n  ['fintech', /fintech|lending|insur|payment|banking|wealth|credit|financial|neobank/],\n  ['saas', /saas|b2b|enterprise|software|platform|api|devtool|cloud|workflow|automation/],\n  ['consumer', /consumer|d2c|b2c|retail|fmcg|food|beverage|fashion|beauty|apparel|coffee|restaurant|cafe|grocer|kitchen|snack|personal care/],\n  ['deeptech', /deeptech|deep tech|\\bai\\b|artificial intelligence|\\bml\\b|robot|iot|semiconductor|space|drone|quantum|computer vision|hardware/],\n  ['climate', /climate|clean|energy|solar|ev\\b|electric vehicle|sustain|green|water|waste|carbon|recycl/],\n  ['edtech', /edtech|education|learning|skill|training|exam|student|course/],\n  ['logistics', /logistic|supply chain|mobility|delivery|freight|shipping|transport|warehous/],\n  ['agritech', /agri|farm|agtech|crop/],\n  ['hrtech', /hrtech|\\bhr\\b|recruit|talent|hiring|staffing|workforce/],\n  ['proptech', /proptech|real estate|construction|coworking|interior|windoor|building/],\n  ['media', /media|gaming|content|entertainment|creator|social|dating|travel|music|video/]\n];\nfunction tagsOf(txt) { const t = s(txt).toLowerCase(); const o = {}; for (const p of TAGS) { if (p[1].test(t)) { o[p[0]] = 1; } } return Object.keys(o); }\nfunction startupStage(txt) {\n  const t = s(txt).toLowerCase();\n  if (/series b|growth|series c/.test(t)) { return 4; }\n  if (/series a/.test(t)) { return 3; }\n  if (/pilot|traction|early revenue|revenue|mvp|launched/.test(t)) { return 2; }\n  if (/\\bseed\\b/.test(t) && !/pre-?seed/.test(t)) { return 1; }\n  if (/pre-?seed|ideation|concept|idea|prototype/.test(t)) { return 0; }\n  return 1;\n}\nfunction investorBand(txt) {\n  const t = s(txt).toLowerCase(); const h = [];\n  if (/pre-?seed|preseed/.test(t)) { h.push(0); }\n  if (/\\bseed\\b/.test(t)) { h.push(1); }\n  if (/pilot|traction|early|pre-?series a|pre series a/.test(t)) { h.push(2); }\n  if (/series a/.test(t)) { h.push(3); }\n  if (/series b|series c|growth|late|pre-?ipo/.test(t)) { h.push(4); }\n  if (!h.length) { return null; }\n  return [Math.min.apply(null, h), Math.max.apply(null, h)];\n}\nfunction toCr(txt) {\n  const t = s(txt).replace(/,/g, ''); if (!t) { return null; }\n  let m = t.match(/(?:US\\$|\\$)\\s*([\\d.]+)\\s*M/i); if (m) { return parseFloat(m[1]) * 8.5; }\n  m = t.match(/(?:US\\$|\\$)\\s*([\\d.]+)\\s*K/i); if (m) { return parseFloat(m[1]) * 0.0085; }\n  m = t.match(/([\\d.]+)\\s*(?:-|to|–)\\s*[\\d.]+\\s*Cr/i); if (m) { return parseFloat(m[1]); }\n  m = t.match(/([\\d.]+)\\s*Cr/i); if (m) { return parseFloat(m[1]); }\n  m = t.match(/([\\d.]+)\\s*Lakh/i); if (m) { return parseFloat(m[1]) / 100; }\n  return null;\n}\nconst FLOOR_FIX = { a2dventures: 0.85, mintvc: 0.5, pipersireca: 1.0 };\nconst book = []; const seenInv = {};\nfor (const r of invRaw) {\n  const n = s(r.investor); if (!n) { continue; }\n  if (s(r.do_not_contact).toLowerCase() === 'yes') { continue; }\n  const k = nz(n); if (seenInv[k]) { continue; } seenInv[k] = 1;\n  let floor = toCr(r.cheque_inr_cr); if (FLOOR_FIX[k] !== undefined) { floor = FLOOR_FIX[k]; }\n  book.push({ key: k, agnostic: /agno/i.test(s(r.sector)), tags: tagsOf(r.sector), band: investorBand(r.stage), floor: floor });\n}\nconst cols = Object.keys(trk[0] || {}); let cInv = null; const cDeals = [];\nfor (const c of cols) { const l = c.toLowerCase();\n  if (!cInv && (l.indexOf('investor') >= 0 || l.indexOf('vc name') >= 0)) { cInv = c; }\n  if (l.indexOf('deals shared') >= 0 || l.indexOf('latest deal') >= 0 || l.indexOf('picked') >= 0) { cDeals.push(c); } }\nconst trkText = [];\nfor (const r of trk) { const iv = nz(r[cInv]); if (!iv) { continue; } let b = ''; for (const c of cDeals) { b += ' ' + s(r[c]); } trkText.push({ inv: iv, blob: nz(b) }); }\n\nfunction parseDate(v) {\n  const t = s(v); if (!t) { return null; }\n  let m = t.match(/^(\\d{4})-(\\d{2})-(\\d{2})/); if (m) { return new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])); }\n  m = t.match(/^(\\d{1,2})[\\/-](\\d{1,2})[\\/-](\\d{4})/); if (m) { return new Date(Date.UTC(+m[3], +m[2] - 1, +m[1])); }\n  const d = new Date(t); return isNaN(d.getTime()) ? null : d;\n}\nfunction iso(d) { return d.toISOString().slice(0, 10); }\n// weekdays strictly between a and b\nfunction weekdaysBetween(a, b) {\n  let n = 0; const d = new Date(a.getTime()); d.setUTCDate(d.getUTCDate() + 1);\n  while (d < b) { const w = d.getUTCDay(); if (w !== 0 && w !== 6) { n++; } d.setUTCDate(d.getUTCDate() + 1); }\n  return n;\n}\nconst TODAY = new Date(Date.UTC(2026, 8, 10));\n\nconst pairCount = {}; const byStartup = {}; let sent30All = 0;\nfor (const p of pipe) {\n  const k = nz(p.startup); if (!k) { continue; }\n  const key = k + '|' + nz(p.investor); pairCount[key] = (pairCount[key] || 0) + 1;\n  if (!byStartup[k]) { byStartup[k] = []; } byStartup[k].push(p);\n}\nlet dupPairs = 0; for (const key of Object.keys(pairCount)) { if (pairCount[key] > 1) { dupPairs++; } }\n\nconst rows = [];\nfor (const r of stRaw) {\n  const name = s(r.startup); if (!name || s(r.active).toLowerCase() !== 'yes') { continue; }\n  const k = nz(name); const mine = byStartup[k] || [];\n  let sent = 0, replied = 0, passed = 0, paused = 0, queued = 0, overdue = 0, sent30 = 0;\n  const future = {}; const paired = {};\n  for (const p of mine) {\n    paired[nz(p.investor)] = 1;\n    if (s(p.deal_shared).toLowerCase() === 'yes') {\n      sent++; const rr = s(p.investor_response).toLowerCase();\n      if (rr) { replied++; } if (rr === 'pass' || rr === 'passed') { passed++; }\n      const d = parseDate(p.date_shared); if (d && d <= TODAY && (TODAY - d) / 86400000 <= 30) { sent30++; }\n      continue;\n    }\n    if (s(p.pause).toLowerCase() === 'yes') { paused++; continue; }\n    queued++;\n    const nd = parseDate(p.next_due);\n    if (!nd || nd <= TODAY) { overdue++; } else { future[iso(nd)] = 1; }\n  }\n  sent30All += sent30;\n  for (const t of trkText) { if (k.length > 3 && t.blob.indexOf(k) >= 0) { paired[t.inv] = 1; } }\n\n  // strict headroom still left after the re-match (should be ~0)\n  const sTags = tagsOf(r.sector); const si = startupStage(r.stage); const raise = toCr(r.raise_inr_cr);\n  let untapped = 0, strictLeft = 0;\n  for (const b of book) {\n    if (paired[b.key]) { continue; } untapped++;\n    let ov = false; for (const t of b.tags) { if (sTags.indexOf(t) >= 0) { ov = true; break; } }\n    if (!(b.agnostic || ov)) { continue; }\n    if (b.band !== null && !(si >= b.band[0] && si <= b.band[1])) { continue; }\n    if (b.floor !== null && !(raise !== null && raise >= b.floor)) { continue; }\n    strictLeft++;\n  }\n\n  // scheduling gaps: idle weekdays from today to the first dated send, and between dated sends\n  const dates = Object.keys(future).sort().map(function (x) { return parseDate(x); });\n  let gapMax = 0, gapFrom = '', gapTo = '';\n  let prev = TODAY;\n  // overdue rows go out on the next morning's run, so they cover the first few weekdays\n  const overdueCover = Math.ceil(overdue / 2);\n  for (let i = 0; i < dates.length; i++) {\n    let g = weekdaysBetween(prev, dates[i]);\n    if (i === 0) { g = Math.max(0, g - overdueCover); }\n    if (g > gapMax) { gapMax = g; gapFrom = iso(prev); gapTo = iso(dates[i]); }\n    prev = dates[i];\n  }\n  const pace = sent30 / 22;\n  rows.push({ startup: name, owner: s(r.owner), queued: queued, overdue: overdue,\n    sent: sent, replied: replied, passed: passed, paused: paused, sent_last_30d: sent30,\n    pace_per_weekday: Math.round(pace * 100) / 100,\n    runway_weekdays: pace > 0 ? Math.round(queued / pace) : null,\n    first_due: dates.length ? iso(dates[0]) : '', last_due: dates.length ? iso(dates[dates.length - 1]) : '',\n    longest_gap_weekdays: gapMax, gap_from: gapFrom, gap_to: gapTo,\n    untapped: untapped, strict_left: strictLeft });\n}\nreturn [{ json: { generated: '2026-09-10', pipeline_rows: pipe.length, duplicate_pairs: dupPairs,\n  live_investors: book.length, active_startups: rows.length, tracker_rows: trk.length,\n  sent_last_30d_all: sent30All, rows: rows } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once 12:00 IST 10 Sep": {
+      "main": [
+        [
+          {
+            "node": "Read Deal Tracker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Deal Tracker": {
+      "main": [
+        [
+          {
+            "node": "Read INVESTORS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read INVESTORS": {
+      "main": [
+        [
+          {
+            "node": "Read STARTUPS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read STARTUPS": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Runway report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once 12:00 IST 10 Sep": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "p9SMIu3X5veRhcEa",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-10T06:20:41.813Z",
+      "updatedAt": "2026-09-10T06:20:41.813Z"
+    }
+  ],
+  "activeVersion": null
+}

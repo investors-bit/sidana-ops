@@ -1,0 +1,144 @@
+{
+  "id": "mYwia4xCbQAz6fcS",
+  "name": "READ (read-only) — BlueGreen Ventures existing PIPELINE rows",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-07T04:49:56.317Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "77a45eda-91f3-4e06-8ae8-f77fe6087502",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "trg1",
+      "name": "Run once 10:26 IST 7 Sep",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "26 10 7 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "rd1",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cd1",
+      "name": "BlueGreen rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nconst rows = $input.all().map(function (i) { return i.json; });\nif (rows.length < 500) { throw new Error('ABORT: PIPELINE returned only ' + rows.length + ' rows'); }\n\nconst mine = rows.filter(function (r) { return s(r.investor).toLowerCase().replace(/[^a-z]/g, '') === 'bluegreenventures'; });\n\nlet sent = 0, pending = 0, paused = 0;\nconst detail = mine.map(function (r) {\n  const isP = s(r.pause) !== '';\n  const sh = s(r.deal_shared).toLowerCase() === 'yes';\n  if (isP) { paused++; } else if (sh) { sent++; } else { pending++; }\n  return { deal_id: s(r.deal_id), startup: s(r.startup), owner: s(r.owner),\n           state: isP ? 'paused' : (sh ? 'sent' : 'pending'),\n           date_shared: s(r.date_shared), next_action: s(r.next_action),\n           next_due: s(r.next_due), investor_response: s(r.investor_response),\n           notes: s(r.notes) };\n});\ndetail.sort(function (a, b) { return a.deal_id < b.deal_id ? -1 : 1; });\n\nreturn [{ json: {\n  total_pipeline_rows: rows.length,\n  bluegreen_rows: mine.length,\n  sent: sent, pending: pending, paused: paused,\n  startups_sent: detail.filter(function (d) { return d.state === 'sent'; }).map(function (d) { return d.startup; }),\n  startups_pending: detail.filter(function (d) { return d.state === 'pending'; }).map(function (d) { return d.startup; }),\n  detail: detail\n}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once 10:26 IST 7 Sep": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "BlueGreen rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once 10:26 IST 7 Sep": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "mYwia4xCbQAz6fcS",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-07T04:49:56.320Z",
+      "updatedAt": "2026-09-07T04:49:56.320Z"
+    }
+  ],
+  "activeVersion": null
+}

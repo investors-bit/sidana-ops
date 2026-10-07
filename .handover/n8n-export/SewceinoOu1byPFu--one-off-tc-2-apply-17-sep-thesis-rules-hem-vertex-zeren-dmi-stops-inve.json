@@ -1,0 +1,246 @@
+{
+  "id": "SewceinoOu1byPFu",
+  "name": "One-off TC-2 — apply 17 Sep thesis rules: Hem / Vertex / Zeren / DMI stops + INVESTORS updates (user-approved)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-17T05:25:03.494Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "1e0039e0-c33a-4a35-b9a0-4f57a982aa0a",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once (set before activating)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "2 11 17 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "gp",
+      "name": "GET pilot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=PIPELINE!A1:AJ6000&ranges=INVESTORS!A1:Z400",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "pl",
+      "name": "Plan",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nfunction nz(x) { return s(x).toLowerCase().replace(/[^a-z0-9]/g, ''); }\nfunction col(i) { let n = i + 1, o = ''; while (n > 0) { const m = (n - 1) % 26; o = String.fromCharCode(65 + m) + o; n = Math.floor((n - 1) / 26); } return o; }\nconst v = $('GET pilot').first().json.valueRanges || [];\nconst pipe = (v[0] || {}).values || [], inv = (v[1] || {}).values || [];\nif (pipe.length < 5000 || inv.length < 200) { throw new Error('ABORT short read pipe ' + pipe.length + ' inv ' + inv.length); }\nconst ph = (pipe[0] || []).map(s); const P = {}; ph.forEach(function (h, i) { P[h] = i; });\n['deal_id','startup','investor','deal_shared','pause','next_action','match_type','notes','investor_response'].forEach(function (k) { if (P[k] === undefined) { throw new Error('ABORT PIPELINE missing ' + k); } });\nconst ih = (inv[0] || []).map(s); const I = {}; ih.forEach(function (h, i) { I[h] = i; });\n['investor','sector','stage','cheque_inr_cr'].forEach(function (k) { if (I[k] === undefined) { throw new Error('ABORT INVESTORS missing ' + k); } });\nconst D = '2026-09-17';\nconst HEM_ARR = 'Hem Angels thesis (17 Sep): ARR must be above INR 5 Cr';\nconst HEM_JAIN = 'Hem Angels excludes meat / seafood / alcohol startups (Jain community)';\nconst VTX = 'Vertex thesis: ARR must be at least US$3M (~INR 25.5 Cr)';\nconst ZER = 'Zeren thesis: must be revenue-generating';\nconst DMI_FNB = 'DMI Sparkle (user 17 Sep): pure-play consumer D2C only - F&B excluded';\nconst DMI_NC = 'DMI Sparkle (user 17 Sep): pure-play consumer D2C only - not a consumer brand';\n// [deal_id, startup, investor, kind (Q=queued stop, F=follow-up stop), reason]\nconst LIST = [\n ['D00288','Caffena Coffee','Hem Angels','Q',HEM_ARR+' (run-rate ~2 Cr)'], ['D00344','VOLD Energy','Hem Angels','Q',HEM_ARR+' (run-rate ~2.6 Cr)'], ['D00362','YUNO','Hem Angels','Q',HEM_ARR+' (ARR ~1.75 Cr)'], ['D00391','LearningPad','Hem Angels','Q',HEM_ARR+' (ARR ~US$250K)'], ['D01246','Chayan Karo','Hem Angels','Q',HEM_ARR+' (no revenue figure)'], ['D01322','Fydo','Hem Angels','Q',HEM_ARR+' (revenue ~0.56 Cr)'], ['D01405','Orbo AI','Hem Angels','Q',HEM_ARR+' (ARR ~US$256K)'], ['D02293','GroCliq','Hem Angels','Q',HEM_ARR+' (ARR ~US$450K)'], ['D02785','Glazia Windoors','Hem Angels','Q',HEM_ARR+' (revenue exactly 5 Cr, not above)'], ['D02882','My Soul','Hem Angels','Q',HEM_ARR+' (run-rate ~2.2 Cr)'], ['D03429','ServeAmigo','Hem Angels','Q',HEM_ARR+' (pre-revenue)'], ['D03701','AI Signal Labs','Hem Angels','Q',HEM_ARR+' (no revenue)'], ['D03766','MonitorExam','Hem Angels','Q',HEM_ARR+' (pre-revenue)'], ['D03821','bezgoFresh','Hem Angels','Q',HEM_JAIN+'; also '+HEM_ARR], ['D03961','MindWox','Hem Angels','Q',HEM_ARR+' (ARR ~2.3 Cr)'], ['D03990','Orbit AI','Hem Angels','Q',HEM_ARR+' (pre-revenue)'], ['D04037','SkillBytes','Hem Angels','Q',HEM_ARR+' (pre-revenue)'],\n ['D00134',\"Sugar's Daddy\",'Hem Angels','F',HEM_ARR+' (run-rate ~1.8 Cr)'], ['D00184','Luxova','Hem Angels','F',HEM_ARR+' (run-rate ~0.4 Cr)'], ['D03496','Tronix.AI','Hem Angels','F',HEM_ARR+' (pre-revenue)'], ['D03167','Washtro','Hem Angels','F',HEM_ARR+' (pre-revenue)'], ['D03561','Body & Beyond','Hem Angels','F',HEM_ARR+' (pre-launch)'], ['D03793','Fuski.AI','Hem Angels','F',HEM_ARR+' (MVP, no revenue)'],\n ['D00940','MentorCloud','Vertex Ventures','Q',VTX+' (ARR ~US$1.03M)'], ['D03969','SkillBytes','Vertex Ventures','Q',VTX+' (pre-revenue)'], ['D00138','LearningPad','Vertex Ventures','F',VTX+' (ARR ~US$250K)'], ['D03908','Orbit AI','Vertex Ventures','F',VTX+' (pre-revenue)'],\n ['D03889','AI Signal Labs','Zeren Capital','Q',ZER+' (no revenue)'], ['D04119','Orbit AI','Zeren Capital','Q',ZER+' (pre-revenue)'], ['D04135','SkillBytes','Zeren Capital','Q',ZER+' (pre-revenue)'], ['D03651','Vira Jal','Zeren Capital','F',ZER+' (pre-revenue)'],\n ['D05217','Healthy Master','DMI Sparkle Fund','Q',DMI_FNB], ['D03545','Spintly','DMI Sparkle Fund','Q',DMI_NC+' (IoT access control)'], ['D03584','MentorCloud','DMI Sparkle Fund','Q',DMI_NC+' (EdTech SaaS)'], ['D03600','Talent Recruit','DMI Sparkle Fund','Q',DMI_NC+' (HRTech SaaS)'], ['D03628','LearningPad','DMI Sparkle Fund','Q',DMI_NC+' (EdTech SaaS)'], ['D03637','Orbo AI','DMI Sparkle Fund','Q',DMI_NC+' (B2B beauty-tech SaaS, not a brand)'], ['D03687','SkillBytes','DMI Sparkle Fund','Q',DMI_NC+' (EdTech)'], ['D03723','MindWox','DMI Sparkle Fund','Q',DMI_NC+' (XR training platform)'],\n ['D03451','Bon Cuisine','DMI Sparkle Fund','F',DMI_FNB+' (B2B cafeteria / food)'], ['D03497','Ulai','DMI Sparkle Fund','F',DMI_NC+' (voice AI infra)'], ['D03517','EosNox','DMI Sparkle Fund','F',DMI_NC+' (HealthTech AI)'], ['D03559','AI Signal Labs','DMI Sparkle Fund','F',DMI_NC+' (AI data infra)'], ['D03636','Orbit AI','DMI Sparkle Fund','F',DMI_NC+' (EdTech)']\n];\nif (LIST.length !== 44) { throw new Error('ABORT list size ' + LIST.length); }\nconst byId = {};\nfor (let r = 1; r < pipe.length; r++) { const id = s((pipe[r] || [])[P.deal_id]); if (!id) { continue; } (byId[id] = byId[id] || []).push(r); }\nconst updates = [], applied = [], skipped = [];\nfor (const x of LIST) { const rows = byId[x[0]] || [];\n  if (rows.length !== 1) { throw new Error('ABORT ' + x[0] + ' resolves to ' + rows.length + ' rows'); }\n  const r = rows[0]; const row = pipe[r] || []; const rn = r + 1;\n  if (nz(row[P.startup]) !== nz(x[1]) || nz(row[P.investor]) !== nz(x[2])) { throw new Error('ABORT ' + x[0] + ' is ' + s(row[P.startup]) + ' x ' + s(row[P.investor])); }\n  const sent = /^yes$/i.test(s(row[P.deal_shared])); const paused = /^yes$/i.test(s(row[P.pause])); const resp = s(row[P.investor_response]);\n  const notes = s(row[P.notes]);\n  if (x[3] === 'Q') {\n    if (sent) { skipped.push([x[0], x[1], x[2], 'was queued in dry run but is now SENT - left alone']); continue; }\n    if (paused) { skipped.push([x[0], x[1], x[2], 'already paused']); continue; }\n    updates.push({ range: 'PIPELINE!' + col(P.pause) + rn, values: [['Yes']] });\n    updates.push({ range: 'PIPELINE!' + col(P.next_action) + rn, values: [['DROPPED - not per strategy']] });\n    updates.push({ range: 'PIPELINE!' + col(P.match_type) + rn, values: [['Not per strategy: ' + x[4]]] });\n    updates.push({ range: 'PIPELINE!' + col(P.notes) + rn, values: [[(notes ? notes + ' | ' : '') + 'DROPPED ' + D + ' - ' + x[4]]] });\n    applied.push([x[0], x[1], x[2], 'queued -> dropped']);\n  } else {\n    if (!sent) { skipped.push([x[0], x[1], x[2], 'expected sent, is not']); continue; }\n    if (resp) { skipped.push([x[0], x[1], x[2], 'investor responded (' + resp + ') - left alone']); continue; }\n    if (paused) { skipped.push([x[0], x[1], x[2], 'already paused']); continue; }\n    updates.push({ range: 'PIPELINE!' + col(P.pause) + rn, values: [['Yes']] });\n    updates.push({ range: 'PIPELINE!' + col(P.notes) + rn, values: [[(notes ? notes + ' | ' : '') + 'FOLLOW-UPS STOPPED ' + D + ' - ' + x[4]]] });\n    applied.push([x[0], x[1], x[2], 'sent -> follow-ups stopped']);\n  } }\n// INVESTORS field updates (exactly one row each)\nconst INV = [\n ['Hem Angels', { sector: 'Sector agnostic (prefers AI, Sustainable Tech, Deep Tech, Space Tech; D2C, Retail, Enterprise Tech considered) | ARR must be ABOVE INR 5 Cr | EXCLUDE meat, seafood, alcohol startups (Jain community) | also wants founders >51% equity, company <=10 yrs old, pre-money >INR 50 Cr (not checkable) - Thesis tab 17 Sep', stage: 'Pre-seed, Seed, Pre-Series A, Series A, Series B (no stage limit - ARR bar applies)', cheque_inr_cr: 'INR 0.25-20 Cr (sweet spot INR 1-5 Cr)' }],\n ['Vertex Ventures', { sector_append: ' | ARR must be at least US$3M (~INR 25.5 Cr) - Thesis tab' }],\n ['Zeren Capital', { sector: 'Sector agnostic | revenue-generating only, profitable or on a path to profitability - Thesis tab' }],\n ['DMI Sparkle Fund', { sector: 'Consumer brands - pure-play, mainly D2C | EXCLUDE F&B entirely; no consumer tech, SaaS, services or marketplaces (user 17 Sep)' }],\n ['Dexter Ventures', { stage: 'Pre-seed, Seed, Pre-Series A (select Pre-Series A - prefers maiden rounds, not bridge rounds) - user 17 Sep' }],\n ['Atomic Capital', { sector_append: ' | prefers ~INR 1 Cr MRR (a preference, not a hard bar - user 17 Sep)' }]\n];\nconst invApplied = [];\nfor (const x of INV) { const rows = []; for (let r = 1; r < inv.length; r++) { if (nz((inv[r] || [])[I.investor]) === nz(x[0])) { rows.push(r); } }\n  if (rows.length !== 1) { throw new Error('ABORT INVESTORS ' + x[0] + ' resolves to ' + rows.length + ' rows'); }\n  const r = rows[0]; const rn = r + 1; const row = inv[r] || []; const f = x[1];\n  if (f.sector_append) { const cur = s(row[I.sector]); if (cur.indexOf(f.sector_append.trim().slice(2, 30)) < 0) { updates.push({ range: 'INVESTORS!' + col(I.sector) + rn, values: [[cur + f.sector_append]] }); } }\n  ['sector', 'stage', 'cheque_inr_cr'].forEach(function (k) { if (f[k] !== undefined) { updates.push({ range: 'INVESTORS!' + col(I[k]) + rn, values: [[f[k]]] }); } });\n  invApplied.push([rn, x[0], 'was: ' + [s(row[I.stage]), s(row[I.cheque_inr_cr]), s(row[I.sector])].join(' | ').slice(0, 200)]); }\nif (updates.length > 200) { throw new Error('ABORT too many cell writes ' + updates.length); }\nreturn [{ json: { applied: applied, skipped: skipped, investors: invApplied, cell_writes: updates.length, updates: updates } }];"
+      }
+    },
+    {
+      "id": "wr",
+      "name": "Write",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ valueInputOption: 'RAW', data: $('Plan').first().json.updates }) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "ga",
+      "name": "GET after",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=PIPELINE!A1:AJ6000&ranges=INVESTORS!A1:Z400",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "vf",
+      "name": "Verify",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nconst plan = $('Plan').first().json;\nconst v = $input.first().json.valueRanges || [];\nconst pipe = (v[0] || {}).values || [], inv = (v[1] || {}).values || [];\nconst P = {}; (pipe[0] || []).map(s).forEach(function (h, i) { P[h] = i; });\nconst want = {}; plan.applied.forEach(function (a) { want[a[0]] = a[3]; });\nlet ok = 0; const bad = [];\nfor (let r = 1; r < pipe.length; r++) { const row = pipe[r] || []; const id = s(row[P.deal_id]); if (!want[id]) { continue; }\n  const good = /^yes$/i.test(s(row[P.pause])) && (want[id].indexOf('queued') < 0 || s(row[P.next_action]) === 'DROPPED - not per strategy');\n  if (good) { ok++; } else { bad.push([id, s(row[P.pause]), s(row[P.next_action])]); } }\nconst I = {}; (inv[0] || []).map(s).forEach(function (h, i) { I[h] = i; });\nconst invNow = plan.investors.map(function (x) { const row = inv[x[0] - 1] || []; return [x[1], s(row[I.stage]).slice(0, 80), s(row[I.cheque_inr_cr]), s(row[I.sector]).slice(0, 160)]; });\nreturn [{ json: { pipeline_rows_after: pipe.length, planned: plan.applied.length, verified_ok: ok, not_applied: bad, skipped: plan.skipped, investors_now: invNow, ok: ok === plan.applied.length && bad.length === 0 } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once (set before activating)": {
+      "main": [
+        [
+          {
+            "node": "GET pilot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET pilot": {
+      "main": [
+        [
+          {
+            "node": "Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Plan": {
+      "main": [
+        [
+          {
+            "node": "Write",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write": {
+      "main": [
+        [
+          {
+            "node": "GET after",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET after": {
+      "main": [
+        [
+          {
+            "node": "Verify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once (set before activating)": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "SewceinoOu1byPFu",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-17T05:25:03.497Z",
+      "updatedAt": "2026-09-17T05:25:03.497Z"
+    }
+  ],
+  "activeVersion": null
+}

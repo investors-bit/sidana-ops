@@ -1,0 +1,3241 @@
+{
+  "id": "ThiWDFPpKOu9iLnF",
+  "name": "ONB-1 — Investor Onboarding Send (5 mailboxes, 70/day)",
+  "description": null,
+  "active": true,
+  "activeVersionId": "c0f94390-f148-4dad-acc9-6fabcbee0e4a",
+  "createdAt": "2026-09-16T10:17:40.505Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "c0f94390-f148-4dad-acc9-6fabcbee0e4a",
+  "versionCounter": 19,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "a1000001-0000-4000-8000-000000000001",
+      "name": "Run (press Execute)",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "a1000001-0000-4000-8000-000000000002",
+      "name": "Weekdays 10:30 IST",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        500
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "30 10 * * 1-5"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "a1000001-0000-4000-8000-000000000003",
+      "name": "Read CONFIG",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        240,
+        400
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "CONFIG"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "a1000001-0000-4000-8000-000000000004",
+      "name": "Build CONFIG object",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        400
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const rows = $input.all();\nconst cfg = {};\nfor (const it of rows) {\n  const k = it.json.setting !== undefined ? it.json.setting : it.json.key;\n  if (k === undefined || k === null || String(k).trim() === '') continue;\n  cfg[String(k).trim()] = it.json.value;\n}\nreturn [{ json: cfg }];"
+      }
+    },
+    {
+      "id": "a1000001-0000-4000-8000-000000000005",
+      "name": "Not paused?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        720,
+        400
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "gp",
+              "leftValue": "={{ $json.GLOBAL_PAUSE }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "op",
+              "leftValue": "={{ $json.ONBOARDING_PAUSE }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "a1000001-0000-4000-8000-000000000006",
+      "name": "Read ONBOARDING",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        960,
+        300
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "id",
+          "value": "38341156"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "a1000001-0000-4000-8000-000000000007",
+      "name": "Read INVESTORS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        1200,
+        300
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "INVESTORS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "a1000001-0000-4000-8000-000000000008",
+      "name": "Pick today batch",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Picks the next QUEUED rows in priority order and assigns each to a mailbox.\n// Per-mailbox daily caps. Each investor belongs to exactly one mailbox (stable hash),\n// so the senders never collide and no row can be sent twice.\nconst cfg = $('Build CONFIG object').first().json;\nconst today = new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Kolkata' }).slice(0, 10);\nconst todaySerial = Math.floor((Date.UTC(+today.slice(0,4), +today.slice(5,7) - 1, +today.slice(8,10)) - Date.UTC(1899, 11, 30)) / 86400000);\nconst isToday = v => {\n  const s = String(v == null ? '' : v).trim();\n  if (!s) return false;\n  if (s.startsWith(today)) return true;\n  const n = Number(s);\n  return Number.isFinite(n) && Math.floor(n) === todaySerial;\n};\nconst numCfg = (k, d) => { const v = Number(cfg[k]); return Number.isFinite(v) && v > 0 ? v : d; };\n\n// name = the human the recipient sees in the signature. The body's opening line\n// is rewritten to match, so \"I am X from Sidana Ventures\" never contradicts the\n// signature block underneath it. (User instruction, 30 Sep 2026.)\nconst MAILBOXES = [\n  { id: 'mb5', addr: 'shradhaa@sidanaventures.com',  name: 'Shradhaa', cap: numCfg('ONBOARDING_CAP_MB5', 10), sig: 'Get Shradhaa signature' },\n  { id: 'mb4', addr: 'akansha@sidanaventures.com',   name: 'Akansha',  cap: numCfg('ONBOARDING_CAP_MB4', 10), sig: 'Get mb4 signature' },\n  { id: 'mb3', addr: 'investors@sidanaventures.com', name: 'Aditya',   cap: numCfg('ONBOARDING_CAP_MB3', 10), sig: 'Get mb3 signature' },\n  { id: 'mb2', addr: 'dealflow@sidanaventures.com',  name: 'Chaman',   cap: numCfg('ONBOARDING_CAP_MB2', 10), sig: 'Get mb2 signature' },\n  { id: 'mb6', addr: 'admin@sidanaventures.com',     name: 'Bhawna',   cap: numCfg('ONBOARDING_CAP_MB6', 30), sig: 'Get mb6 signature' }\n];\n\n// Gate on the company URL, not a job title - admin@ signs as \"Founder's Relations\".\nconst SIG_MARK = 'sidanaventures.com';\nconst disabled = [];\nfor (const m of MAILBOXES) {\n  let sig = '';\n  try {\n    const sendAs = ($(m.sig).first().json.sendAs) || [];\n    const me = sendAs.find(s => String(s.sendAsEmail || '').toLowerCase() === m.addr)\n            || sendAs.find(s => s.isDefault) || {};\n    sig = String(me.signature || '');\n  } catch (e) { sig = ''; }\n  m.signature = sig;\n  m.ok = sig.toLowerCase().includes(SIG_MARK);\n  if (!m.ok) disabled.push(m.id + ' (' + m.addr + ': no usable signature)');\n}\nconst ACTIVE = MAILBOXES.filter(m => m.ok);\nif (!ACTIVE.length) throw new Error('No mailbox has a usable Gmail signature - aborting run, nothing sent');\n\nconst TOTAL = ACTIVE.reduce((a, m) => a + m.cap, 0);\nlet acc = 0;\nfor (const m of ACTIVE) { m.lo = acc; m.hi = acc + m.cap; acc += m.cap; }\nconst slotOf = s => { let h = 2166136261; const t = String(s || '').toLowerCase();\n  for (let i = 0; i < t.length; i++) { h ^= t.charCodeAt(i); h = Math.imul(h, 16777619); }\n  return Math.abs(h) % TOTAL; };\nconst mbFor = email => { const s = slotOf(email); return ACTIVE.find(m => s >= m.lo && s < m.hi) || null; };\n\nfunction finalise(html, SIG, NAME) {\n  let h = String(html || '');\n  // The stored body is written in Shradhaa's voice. Rewrite the opening to the\n  // person whose signature will actually appear, or the reader sees one name in\n  // the text and a different one signed underneath.\n  h = h.replace(/I am Shradhaa\\b/g, 'I am ' + NAME);\n  if (!h.includes('rakeshsidana.org\">rakeshsidana.org</a> ') && !h.includes('LinkedIn</a> | ')) {\n    h = h.replace('LinkedIn</a>)', 'LinkedIn</a> | <a href=\"https://rakeshsidana.org\">rakeshsidana.org</a>)');\n  }\n  if (!h.includes('mail-sig')) {\n    h = h.replace(/<p>Best,<br>[A-Za-z' ]+<br>[\\s\\S]*?<\\/p>\\s*$/, '');\n    h = h + '<br><div>-- </div>' + SIG;\n  }\n  return h;\n}\n\nconst onb = $('Read ONBOARDING').all().map(i => i.json);\nconst inv = $('Read INVESTORS').all().map(i => i.json);\n\n// ---- BOUNCE BLOCKLIST -----------------------------------------------------\nconst blocked = new Set();\ntry {\n  for (const r of $('Read BOUNCES').all().map(i => i.json)) {\n    if (String(r.hard_or_soft || '').trim().toUpperCase() !== 'HARD') continue;\n    const a = String(r.bounced_address || '').trim().toLowerCase();\n    if (a) blocked.add(a);\n  }\n} catch (e) { /* BOUNCES not wired yet - fail open rather than stop the run */ }\n\nconst GENERIC = new Set(['gmail.com','yahoo.com','outlook.com','hotmail.com','icloud.com','live.com','protonmail.com','rediffmail.com','yahoo.co.in','me.com','aol.com']);\nconst bookEmails = new Set(); const bookDomains = new Set(); const bookNames = new Set();\nconst normName = s => String(s || '').toLowerCase().replace(/[^a-z ]/g, ' ').replace(/\\s+/g, ' ').trim();\nfor (const r of inv) {\n  for (const part of String(r.contact_person || '').split(/[,;&]| and /i)) {\n    const n = normName(part); if (n.split(' ').length >= 2) bookNames.add(n);\n  }\n  for (const f of ['email', 'cc']) {\n    const m = String(r[f] || '').toLowerCase().match(/[\\w.+-]+@[\\w-]+\\.[\\w.-]+/g) || [];\n    for (const e of m) { bookEmails.add(e); const d = e.split('@')[1]; if (!GENERIC.has(d)) bookDomains.add(d); }\n  }\n}\n\nconst remaining = {};\nfor (const m of ACTIVE) remaining[m.id] = m.cap;\nlet sentTodayTotal = 0;\nfor (const r of onb) {\n  if (!isToday(r.sent_date)) continue;\n  sentTodayTotal++;\n  const m = mbFor(String(r.email || '').trim().toLowerCase());\n  if (m) remaining[m.id] = Math.max(0, remaining[m.id] - 1);\n}\nconst used = new Set(onb.filter(r => String(r.sent_date || '').trim()).map(r => String(r.email || '').trim().toLowerCase()));\n\nconst EM = /^[^@\\s;,]+@[^@\\s;,]+\\.[a-z]{2,}$/i;\nconst rank = r => Number(r.send_order) || (1e6 + Number(r.rank)) || 1e9;\nconst cand = onb\n  .filter(r => String(r.status || '').trim().toUpperCase() === 'QUEUED' && !String(r.sent_date || '').trim())\n  .sort((a, b) => rank(a) - rank(b));\n\nconst out = []; const perMb = {}; let blockedHits = 0;\nfor (const r of cand) {\n  if (!Object.values(remaining).some(v => v > 0)) break;\n  const email = String(r.email || '').trim().toLowerCase();\n  const dom = email.split('@')[1] || '';\n  if (!EM.test(email)) continue;\n  if (blocked.has(email)) { blockedHits++; continue; }\n  const cs = String(r.contact_status || '').trim().toUpperCase();\n  if (cs === 'SITE_DEAD' || cs === 'BOUNCED') continue;\n  if (bookEmails.has(email) || (dom && !GENERIC.has(dom) && bookDomains.has(dom))) continue;\n  const cname = normName(r.contact);\n  if (cname.split(' ').length >= 2 && bookNames.has(cname)) continue;\n  if (used.has(email)) continue;\n  const raw = String(r.body_html || '');\n  if (!raw.includes('calendly.com/investors-sidanaventures/30min') || raw.includes('{{')) continue;\n  if (!String(r.subject || '').trim()) continue;\n  const m = mbFor(email);\n  if (!m || remaining[m.id] <= 0) continue;\n  const html = finalise(raw, m.signature, m.name);\n  if (!html.toLowerCase().includes(SIG_MARK)) continue;\n  out.push({ json: { rank: String(r.rank), firm: r.firm, to: email, subject: r.subject, html, mb: m.id, senderName: m.name } });\n  used.add(email); remaining[m.id]--; perMb[m.id] = (perMb[m.id] || 0) + 1;\n}\nif (!out.length) return [];\nout[0].json._plan = { totalPicked: out.length, perMailbox: perMb, alreadySentToday: sentTodayTotal,\n  blocklistSize: blocked.size, skippedAsBounced: blockedHits,\n  capsInUse: ACTIVE.map(m => m.id + ':' + m.cap).join(' '), disabledMailboxes: disabled };\nreturn out;"
+      }
+    },
+    {
+      "id": "a1000001-0000-4000-8000-000000000009",
+      "name": "Loop Over Sends",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1920,
+        300
+      ],
+      "parameters": {
+        "options": {}
+      }
+    },
+    {
+      "id": "a1000001-0000-4000-8000-000000000010",
+      "name": "Wait between sends",
+      "webhookId": "b7c1e2d3-4f5a-4b6c-8d7e-9f0a1b2c3d4e",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1920,
+        380
+      ],
+      "parameters": {
+        "resume": "timeInterval",
+        "amount": "={{ Number($('Build CONFIG object').first().json.ONBOARDING_GAP_SECONDS) || 90 }}",
+        "unit": "seconds"
+      }
+    },
+    {
+      "id": "a1000001-0000-4000-8000-000000000011",
+      "name": "Gmail: Send (Shradhaa)",
+      "webhookId": "c8d2f3e4-5a6b-4c7d-9e8f-0a1b2c3d4e5f",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "onError": "continueErrorOutput",
+      "position": [
+        2160,
+        380
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "={{ $json.to }}",
+        "subject": "={{ $json.subject }}",
+        "emailType": "html",
+        "message": "={{ $json.html }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "Shradhaa",
+          "ccList": "={{ $('Build CONFIG object').first().json.ONBOARDING_CC || 'rakesh@sidanaventures.com' }}"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "R5K61omYbU9oT5J8",
+          "name": "Gmail account 5"
+        }
+      }
+    },
+    {
+      "id": "a1000001-0000-4000-8000-000000000012",
+      "name": "Mark SENT",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2400,
+        280
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const src = $('Loop Over Sends').item.json;\nreturn { json: {\n  rank: src.rank,\n  status: 'SENT',\n  sent_date: new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Kolkata' }),\n  thread_id: $json.threadId || $json.id || ''\n} };"
+      }
+    },
+    {
+      "id": "a1000001-0000-4000-8000-000000000013",
+      "name": "Update ONBOARDING (sent)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "position": [
+        2640,
+        280
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "id",
+          "value": "38341156"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "rank"
+          ],
+          "schema": [
+            {
+              "id": "rank",
+              "displayName": "rank",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "a1000001-0000-4000-8000-000000000014",
+      "name": "Mark ERROR",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2400,
+        500
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const src = $('Loop Over Sends').item.json;\nconst err = $json.error ? ($json.error.message || JSON.stringify($json.error)) : 'unknown error';\nreturn { json: {\n  rank: src.rank,\n  status: 'SEND_ERROR',\n  notes: 'Send failed ' + new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Kolkata' }) + ': ' + String(err).slice(0, 200)\n} };"
+      }
+    },
+    {
+      "id": "a1000001-0000-4000-8000-000000000015",
+      "name": "Update ONBOARDING (error)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "position": [
+        2640,
+        500
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "id",
+          "value": "38341156"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "rank"
+          ],
+          "schema": [
+            {
+              "id": "rank",
+              "displayName": "rank",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "a1000001-0000-4000-8000-000000000016",
+      "name": "Run summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1920,
+        100
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// $('Mark SENT').all() only returns the LAST loop run, so counting it under-reports (logged 1 of 10\n// on 17 Sep). Count across every run index instead.\nfunction countAll(node) {\n  let total = 0;\n  for (let i = 0; i < 200; i++) {\n    try { const r = $(node).all(0, i); if (!r || !r.length) { if (i > 2) break; continue; } total += r.length; } catch (e) { break; }\n  }\n  return total;\n}\nconst sent = countAll('Mark SENT');\nconst failed = countAll('Mark ERROR');\nconst skipped = countAll('Mark SKIPPED');\nreturn [{ json: {\n  date: new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Kolkata' }),\n  workflow: 'ONB-1 Onboarding Send (Shradhaa)',\n  rows_read: $('Read ONBOARDING').all().length,\n  decided: $('Pick today batch').all().length,\n  sent: sent,\n  skipped: skipped + failed,\n  skip_reasons: [skipped ? skipped + ' skipped - prior contact found in a mailbox' : '', failed ? failed + ' send errors - see ONBOARDING status SEND_ERROR' : ''].filter(Boolean).join('; ')\n} }];"
+      }
+    },
+    {
+      "id": "a1000001-0000-4000-8000-000000000017",
+      "name": "Append RUN LOG",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "position": [
+        2160,
+        100
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "RUN LOG"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "a1000001-0000-4000-8000-000000000018",
+      "name": "Get Shradhaa signature",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "position": [
+        1440,
+        520
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://gmail.googleapis.com/gmail/v1/users/me/settings/sendAs",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "R5K61omYbU9oT5J8",
+          "name": "Gmail account 5"
+        }
+      }
+    },
+    {
+      "id": "2a6894df-1f98-45fd-a510-8ed87123bf2b",
+      "name": "Check mb5 (Shradhaa)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        2160,
+        620
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://gmail.googleapis.com/gmail/v1/users/me/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "=to:{{ ['gmail.com','yahoo.com','outlook.com','hotmail.com','icloud.com','live.com','protonmail.com','rediffmail.com','yahoo.co.in','me.com','aol.com'].includes($('Loop Over Sends').first().json.to.split('@')[1]) ? $('Loop Over Sends').first().json.to : $('Loop Over Sends').first().json.to.split('@')[1] }} OR from:{{ ['gmail.com','yahoo.com','outlook.com','hotmail.com','icloud.com','live.com','protonmail.com','rediffmail.com','yahoo.co.in','me.com','aol.com'].includes($('Loop Over Sends').first().json.to.split('@')[1]) ? $('Loop Over Sends').first().json.to : $('Loop Over Sends').first().json.to.split('@')[1] }}"
+            },
+            {
+              "name": "maxResults",
+              "value": "5"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "R5K61omYbU9oT5J8",
+          "name": "Gmail account 5"
+        }
+      }
+    },
+    {
+      "id": "d3ed012f-4025-40cf-8bf9-735420581f72",
+      "name": "Check mb4 (Akansha)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        2340,
+        620
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://gmail.googleapis.com/gmail/v1/users/me/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "=to:{{ ['gmail.com','yahoo.com','outlook.com','hotmail.com','icloud.com','live.com','protonmail.com','rediffmail.com','yahoo.co.in','me.com','aol.com'].includes($('Loop Over Sends').first().json.to.split('@')[1]) ? $('Loop Over Sends').first().json.to : $('Loop Over Sends').first().json.to.split('@')[1] }} OR from:{{ ['gmail.com','yahoo.com','outlook.com','hotmail.com','icloud.com','live.com','protonmail.com','rediffmail.com','yahoo.co.in','me.com','aol.com'].includes($('Loop Over Sends').first().json.to.split('@')[1]) ? $('Loop Over Sends').first().json.to : $('Loop Over Sends').first().json.to.split('@')[1] }}"
+            },
+            {
+              "name": "maxResults",
+              "value": "5"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "9IWD8mWqdARPXloL",
+          "name": "Gmail account 4"
+        }
+      }
+    },
+    {
+      "id": "9e542e2a-af0a-4147-b587-11efdec11dce",
+      "name": "Check mb3 (investors)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        2520,
+        620
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://gmail.googleapis.com/gmail/v1/users/me/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "=to:{{ ['gmail.com','yahoo.com','outlook.com','hotmail.com','icloud.com','live.com','protonmail.com','rediffmail.com','yahoo.co.in','me.com','aol.com'].includes($('Loop Over Sends').first().json.to.split('@')[1]) ? $('Loop Over Sends').first().json.to : $('Loop Over Sends').first().json.to.split('@')[1] }} OR from:{{ ['gmail.com','yahoo.com','outlook.com','hotmail.com','icloud.com','live.com','protonmail.com','rediffmail.com','yahoo.co.in','me.com','aol.com'].includes($('Loop Over Sends').first().json.to.split('@')[1]) ? $('Loop Over Sends').first().json.to : $('Loop Over Sends').first().json.to.split('@')[1] }}"
+            },
+            {
+              "name": "maxResults",
+              "value": "5"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mymSHTFVWtsI3Mh7",
+          "name": "Gmail account 3"
+        }
+      }
+    },
+    {
+      "id": "06550e69-d6b9-4ed7-b1d7-103009496d7b",
+      "name": "Check mb2 (dealflow)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        2700,
+        620
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://gmail.googleapis.com/gmail/v1/users/me/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "=to:{{ ['gmail.com','yahoo.com','outlook.com','hotmail.com','icloud.com','live.com','protonmail.com','rediffmail.com','yahoo.co.in','me.com','aol.com'].includes($('Loop Over Sends').first().json.to.split('@')[1]) ? $('Loop Over Sends').first().json.to : $('Loop Over Sends').first().json.to.split('@')[1] }} OR from:{{ ['gmail.com','yahoo.com','outlook.com','hotmail.com','icloud.com','live.com','protonmail.com','rediffmail.com','yahoo.co.in','me.com','aol.com'].includes($('Loop Over Sends').first().json.to.split('@')[1]) ? $('Loop Over Sends').first().json.to : $('Loop Over Sends').first().json.to.split('@')[1] }}"
+            },
+            {
+              "name": "maxResults",
+              "value": "5"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "hwEqMRn6IxzoYs1R",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "id": "84bc1131-0808-4c88-97b2-e13907a6ab85",
+      "name": "Decide prior contact",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2880,
+        620
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// The INVESTORS book records who we decided to KEEP, not who we have SPOKEN to. Chanakya,\n// Seafund and Avaana were each emailed cold while a live thread existed in a mailbox the\n// book knew nothing about. So ask the mailboxes, one query per address/domain - grouped OR\n// searches silently drop matches at Gmail's 50-result cap.\nconst src = $('Loop Over Sends').first().json;\nconst cnt = n => { try { return (($(n).first().json || {}).messages || []).length; } catch (e) { return 0; } };\nconst hits = { mb5: cnt('Check mb5 (Shradhaa)'), mb4: cnt('Check mb4 (Akansha)'), mb3: cnt('Check mb3 (investors)'), mb2: cnt('Check mb2 (dealflow)') };\nconst total = hits.mb5 + hits.mb4 + hits.mb3 + hits.mb2;\nreturn [{ json: Object.assign({}, src, { prior_hits: hits, prior_total: total, skip: total > 0 }) }];"
+      }
+    },
+    {
+      "id": "654e6a9f-6d70-454d-96a5-4fa3f9e1154f",
+      "name": "Prior contact?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3060,
+        620
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "pc",
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "137fcbb9-37a5-4ddf-992a-bfb63a832e77",
+      "name": "Mark SKIPPED",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3240,
+        520
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const h = $json.prior_hits || {};\nreturn { json: {\n  rank: String($json.rank),\n  status: 'SKIPPED_PRIOR_CONTACT',\n  review_note: 'Not sent ' + new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Kolkata' }) + ': existing mail with this address/domain - Shradhaa ' + (h.mb5 || 0) + ', Akansha ' + (h.mb4 || 0) + ', investors ' + (h.mb3 || 0) + ', dealflow ' + (h.mb2 || 0) + '. Read the thread before any approach.'\n} };"
+      }
+    },
+    {
+      "id": "eadec10b-cca6-4434-90c2-9d99adfe8228",
+      "name": "Update ONBOARDING (skipped)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "position": [
+        3420,
+        520
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "id",
+          "value": "38341156"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "rank"
+          ],
+          "schema": [
+            {
+              "id": "rank",
+              "displayName": "rank",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "1ffc73f1-ddd7-40d6-b401-d85781ca71c3",
+      "name": "Get mb4 signature",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "position": [
+        1440,
+        660
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://gmail.googleapis.com/gmail/v1/users/me/settings/sendAs",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "9IWD8mWqdARPXloL",
+          "name": "Gmail account 4"
+        }
+      }
+    },
+    {
+      "id": "d164b99b-7402-4ed7-9802-43ac84bc4ca2",
+      "name": "Get mb3 signature",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "position": [
+        1440,
+        800
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://gmail.googleapis.com/gmail/v1/users/me/settings/sendAs",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mymSHTFVWtsI3Mh7",
+          "name": "Gmail account 3"
+        }
+      }
+    },
+    {
+      "id": "3adf85f2-ff0d-42c7-9004-71735e014fe1",
+      "name": "Get mb2 signature",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "position": [
+        1440,
+        940
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://gmail.googleapis.com/gmail/v1/users/me/settings/sendAs",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "hwEqMRn6IxzoYs1R",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "id": "d7773bdf-29c9-4519-ba08-999d09e4b3e7",
+      "name": "Route by mailbox",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        2160,
+        260
+      ],
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "version": 2
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "leftValue": "={{ $json.mb }}",
+                    "rightValue": "mb5"
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "mb5"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "version": 2
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "leftValue": "={{ $json.mb }}",
+                    "rightValue": "mb4"
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "mb4"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "version": 2
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "leftValue": "={{ $json.mb }}",
+                    "rightValue": "mb3"
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "mb3"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "version": 2
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "leftValue": "={{ $json.mb }}",
+                    "rightValue": "mb2"
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "mb2"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "version": 2
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "leftValue": "={{ $json.mb }}",
+                    "rightValue": "mb6"
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "mb6"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "5973d914-5ff0-4d0b-a6ab-828ba5f33b38",
+      "name": "Gmail: Send (Akansha)",
+      "webhookId": "40aa4592-53f6-4665-b28a-e7da8000d573",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "onError": "continueErrorOutput",
+      "position": [
+        2400,
+        700
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "={{ $json.to }}",
+        "subject": "={{ $json.subject }}",
+        "emailType": "html",
+        "message": "={{ $json.html }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "Akansha",
+          "ccList": "={{ $('Build CONFIG object').first().json.ONBOARDING_CC || 'rakesh@sidanaventures.com' }}"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "9IWD8mWqdARPXloL",
+          "name": "Gmail account 4"
+        }
+      }
+    },
+    {
+      "id": "440cbe1e-45c7-42bf-8320-2e9e553f5dda",
+      "name": "Gmail: Send (investors)",
+      "webhookId": "86dbbdb3-be63-4fb7-b84f-ea48fc45b317",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "onError": "continueErrorOutput",
+      "position": [
+        2400,
+        840
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "={{ $json.to }}",
+        "subject": "={{ $json.subject }}",
+        "emailType": "html",
+        "message": "={{ $json.html }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "Aditya Mishra",
+          "ccList": "={{ $('Build CONFIG object').first().json.ONBOARDING_CC || 'rakesh@sidanaventures.com' }}"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mymSHTFVWtsI3Mh7",
+          "name": "Gmail account 3"
+        }
+      }
+    },
+    {
+      "id": "8f2cc313-cbbf-4a31-b96d-e95d99865ef8",
+      "name": "Gmail: Send (dealflow)",
+      "webhookId": "3e75a1a3-1f93-410c-b319-0f0afad97306",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "onError": "continueErrorOutput",
+      "position": [
+        2400,
+        980
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "={{ $json.to }}",
+        "subject": "={{ $json.subject }}",
+        "emailType": "html",
+        "message": "={{ $json.html }}",
+        "options": {
+          "appendAttribution": false,
+          "ccList": "={{ $('Build CONFIG object').first().json.ONBOARDING_CC || 'rakesh@sidanaventures.com' }}",
+          "senderName": "Chaman"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "hwEqMRn6IxzoYs1R",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "id": "bad9f55f-3646-4ffd-a99a-f1e6d3e192ff",
+      "name": "Get mb6 signature",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "position": [
+        1440,
+        1080
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://gmail.googleapis.com/gmail/v1/users/me/settings/sendAs",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "s4YYut2fC7u8aQWl",
+          "name": "Gmail account 6"
+        }
+      }
+    },
+    {
+      "id": "2cb04475-1ecb-4ee5-adae-d49353438520",
+      "name": "Gmail: Send (admin)",
+      "webhookId": "eb444e35-566c-45e9-9b16-1ca596a7a82f",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "onError": "continueErrorOutput",
+      "position": [
+        2400,
+        1120
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "={{ $json.to }}",
+        "subject": "={{ $json.subject }}",
+        "emailType": "html",
+        "message": "={{ $json.html }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "Bhawna",
+          "ccList": "={{ $('Build CONFIG object').first().json.ONBOARDING_CC || 'rakesh@sidanaventures.com' }}"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "s4YYut2fC7u8aQWl",
+          "name": "Gmail account 6"
+        }
+      }
+    },
+    {
+      "id": "2dd60195-f87b-462f-a499-3b4e63fdeb89",
+      "name": "Read BOUNCES",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        1200,
+        460
+      ],
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "BOUNCES",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Run (press Execute)": {
+      "main": [
+        [
+          {
+            "node": "Read CONFIG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Weekdays 10:30 IST": {
+      "main": [
+        [
+          {
+            "node": "Read CONFIG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read CONFIG": {
+      "main": [
+        [
+          {
+            "node": "Build CONFIG object",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build CONFIG object": {
+      "main": [
+        [
+          {
+            "node": "Not paused?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Not paused?": {
+      "main": [
+        [
+          {
+            "node": "Read ONBOARDING",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read ONBOARDING": {
+      "main": [
+        [
+          {
+            "node": "Read INVESTORS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick today batch": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Sends",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Sends": {
+      "main": [
+        [
+          {
+            "node": "Run summary",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Check mb5 (Shradhaa)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail: Send (Shradhaa)": {
+      "main": [
+        [
+          {
+            "node": "Mark SENT",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark ERROR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark SENT": {
+      "main": [
+        [
+          {
+            "node": "Update ONBOARDING (sent)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update ONBOARDING (sent)": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Sends",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark ERROR": {
+      "main": [
+        [
+          {
+            "node": "Update ONBOARDING (error)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update ONBOARDING (error)": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Sends",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run summary": {
+      "main": [
+        [
+          {
+            "node": "Append RUN LOG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check mb5 (Shradhaa)": {
+      "main": [
+        [
+          {
+            "node": "Check mb4 (Akansha)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check mb4 (Akansha)": {
+      "main": [
+        [
+          {
+            "node": "Check mb3 (investors)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check mb3 (investors)": {
+      "main": [
+        [
+          {
+            "node": "Check mb2 (dealflow)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check mb2 (dealflow)": {
+      "main": [
+        [
+          {
+            "node": "Decide prior contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Decide prior contact": {
+      "main": [
+        [
+          {
+            "node": "Prior contact?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prior contact?": {
+      "main": [
+        [
+          {
+            "node": "Mark SKIPPED",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait between sends",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark SKIPPED": {
+      "main": [
+        [
+          {
+            "node": "Update ONBOARDING (skipped)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update ONBOARDING (skipped)": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Sends",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Shradhaa signature": {
+      "main": [
+        [
+          {
+            "node": "Get mb4 signature",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get mb4 signature": {
+      "main": [
+        [
+          {
+            "node": "Get mb3 signature",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get mb3 signature": {
+      "main": [
+        [
+          {
+            "node": "Get mb2 signature",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait between sends": {
+      "main": [
+        [
+          {
+            "node": "Route by mailbox",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by mailbox": {
+      "main": [
+        [
+          {
+            "node": "Gmail: Send (Shradhaa)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Gmail: Send (Akansha)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Gmail: Send (investors)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Gmail: Send (dealflow)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Gmail: Send (admin)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail: Send (Akansha)": {
+      "main": [
+        [
+          {
+            "node": "Mark SENT",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark ERROR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail: Send (investors)": {
+      "main": [
+        [
+          {
+            "node": "Mark SENT",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark ERROR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail: Send (dealflow)": {
+      "main": [
+        [
+          {
+            "node": "Mark SENT",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark ERROR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get mb2 signature": {
+      "main": [
+        [
+          {
+            "node": "Get mb6 signature",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get mb6 signature": {
+      "main": [
+        [
+          {
+            "node": "Pick today batch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail: Send (admin)": {
+      "main": [
+        [
+          {
+            "node": "Mark SENT",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark ERROR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read INVESTORS": {
+      "main": [
+        [
+          {
+            "node": "Read BOUNCES",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read BOUNCES": {
+      "main": [
+        [
+          {
+            "node": "Get Shradhaa signature",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Weekdays 10:30 IST": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "ThiWDFPpKOu9iLnF",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-16T10:17:40.508Z",
+      "updatedAt": "2026-09-16T10:17:40.508Z"
+    }
+  ],
+  "activeVersion": {
+    "versionId": "c0f94390-f148-4dad-acc9-6fabcbee0e4a",
+    "workflowId": "ThiWDFPpKOu9iLnF",
+    "nodes": [
+      {
+        "id": "a1000001-0000-4000-8000-000000000001",
+        "name": "Run (press Execute)",
+        "type": "n8n-nodes-base.manualTrigger",
+        "typeVersion": 1,
+        "position": [
+          0,
+          300
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "a1000001-0000-4000-8000-000000000002",
+        "name": "Weekdays 10:30 IST",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.4,
+        "position": [
+          0,
+          500
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "30 10 * * 1-5"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "a1000001-0000-4000-8000-000000000003",
+        "name": "Read CONFIG",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.7,
+        "executeOnce": true,
+        "position": [
+          240,
+          400
+        ],
+        "parameters": {
+          "resource": "sheet",
+          "operation": "read",
+          "documentId": {
+            "__rl": true,
+            "mode": "url",
+            "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+          },
+          "sheetName": {
+            "__rl": true,
+            "mode": "name",
+            "value": "CONFIG"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "a1000001-0000-4000-8000-000000000004",
+        "name": "Build CONFIG object",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          480,
+          400
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const rows = $input.all();\nconst cfg = {};\nfor (const it of rows) {\n  const k = it.json.setting !== undefined ? it.json.setting : it.json.key;\n  if (k === undefined || k === null || String(k).trim() === '') continue;\n  cfg[String(k).trim()] = it.json.value;\n}\nreturn [{ json: cfg }];"
+        }
+      },
+      {
+        "id": "a1000001-0000-4000-8000-000000000005",
+        "name": "Not paused?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          720,
+          400
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "gp",
+                "leftValue": "={{ $json.GLOBAL_PAUSE }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "string",
+                  "operation": "empty",
+                  "singleValue": true
+                }
+              },
+              {
+                "id": "op",
+                "leftValue": "={{ $json.ONBOARDING_PAUSE }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "string",
+                  "operation": "empty",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          }
+        }
+      },
+      {
+        "id": "a1000001-0000-4000-8000-000000000006",
+        "name": "Read ONBOARDING",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.7,
+        "executeOnce": true,
+        "position": [
+          960,
+          300
+        ],
+        "parameters": {
+          "resource": "sheet",
+          "operation": "read",
+          "documentId": {
+            "__rl": true,
+            "mode": "url",
+            "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+          },
+          "sheetName": {
+            "__rl": true,
+            "mode": "id",
+            "value": "38341156"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "a1000001-0000-4000-8000-000000000007",
+        "name": "Read INVESTORS",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.7,
+        "executeOnce": true,
+        "position": [
+          1200,
+          300
+        ],
+        "parameters": {
+          "resource": "sheet",
+          "operation": "read",
+          "documentId": {
+            "__rl": true,
+            "mode": "url",
+            "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+          },
+          "sheetName": {
+            "__rl": true,
+            "mode": "name",
+            "value": "INVESTORS"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "a1000001-0000-4000-8000-000000000008",
+        "name": "Pick today batch",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1680,
+          300
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "// Picks the next QUEUED rows in priority order and assigns each to a mailbox.\n// Per-mailbox daily caps. Each investor belongs to exactly one mailbox (stable hash),\n// so the senders never collide and no row can be sent twice.\nconst cfg = $('Build CONFIG object').first().json;\nconst today = new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Kolkata' }).slice(0, 10);\nconst todaySerial = Math.floor((Date.UTC(+today.slice(0,4), +today.slice(5,7) - 1, +today.slice(8,10)) - Date.UTC(1899, 11, 30)) / 86400000);\nconst isToday = v => {\n  const s = String(v == null ? '' : v).trim();\n  if (!s) return false;\n  if (s.startsWith(today)) return true;\n  const n = Number(s);\n  return Number.isFinite(n) && Math.floor(n) === todaySerial;\n};\nconst numCfg = (k, d) => { const v = Number(cfg[k]); return Number.isFinite(v) && v > 0 ? v : d; };\n\n// name = the human the recipient sees in the signature. The body's opening line\n// is rewritten to match, so \"I am X from Sidana Ventures\" never contradicts the\n// signature block underneath it. (User instruction, 30 Sep 2026.)\nconst MAILBOXES = [\n  { id: 'mb5', addr: 'shradhaa@sidanaventures.com',  name: 'Shradhaa', cap: numCfg('ONBOARDING_CAP_MB5', 10), sig: 'Get Shradhaa signature' },\n  { id: 'mb4', addr: 'akansha@sidanaventures.com',   name: 'Akansha',  cap: numCfg('ONBOARDING_CAP_MB4', 10), sig: 'Get mb4 signature' },\n  { id: 'mb3', addr: 'investors@sidanaventures.com', name: 'Aditya',   cap: numCfg('ONBOARDING_CAP_MB3', 10), sig: 'Get mb3 signature' },\n  { id: 'mb2', addr: 'dealflow@sidanaventures.com',  name: 'Chaman',   cap: numCfg('ONBOARDING_CAP_MB2', 10), sig: 'Get mb2 signature' },\n  { id: 'mb6', addr: 'admin@sidanaventures.com',     name: 'Bhawna',   cap: numCfg('ONBOARDING_CAP_MB6', 30), sig: 'Get mb6 signature' }\n];\n\n// Gate on the company URL, not a job title - admin@ signs as \"Founder's Relations\".\nconst SIG_MARK = 'sidanaventures.com';\nconst disabled = [];\nfor (const m of MAILBOXES) {\n  let sig = '';\n  try {\n    const sendAs = ($(m.sig).first().json.sendAs) || [];\n    const me = sendAs.find(s => String(s.sendAsEmail || '').toLowerCase() === m.addr)\n            || sendAs.find(s => s.isDefault) || {};\n    sig = String(me.signature || '');\n  } catch (e) { sig = ''; }\n  m.signature = sig;\n  m.ok = sig.toLowerCase().includes(SIG_MARK);\n  if (!m.ok) disabled.push(m.id + ' (' + m.addr + ': no usable signature)');\n}\nconst ACTIVE = MAILBOXES.filter(m => m.ok);\nif (!ACTIVE.length) throw new Error('No mailbox has a usable Gmail signature - aborting run, nothing sent');\n\nconst TOTAL = ACTIVE.reduce((a, m) => a + m.cap, 0);\nlet acc = 0;\nfor (const m of ACTIVE) { m.lo = acc; m.hi = acc + m.cap; acc += m.cap; }\nconst slotOf = s => { let h = 2166136261; const t = String(s || '').toLowerCase();\n  for (let i = 0; i < t.length; i++) { h ^= t.charCodeAt(i); h = Math.imul(h, 16777619); }\n  return Math.abs(h) % TOTAL; };\nconst mbFor = email => { const s = slotOf(email); return ACTIVE.find(m => s >= m.lo && s < m.hi) || null; };\n\nfunction finalise(html, SIG, NAME) {\n  let h = String(html || '');\n  // The stored body is written in Shradhaa's voice. Rewrite the opening to the\n  // person whose signature will actually appear, or the reader sees one name in\n  // the text and a different one signed underneath.\n  h = h.replace(/I am Shradhaa\\b/g, 'I am ' + NAME);\n  if (!h.includes('rakeshsidana.org\">rakeshsidana.org</a> ') && !h.includes('LinkedIn</a> | ')) {\n    h = h.replace('LinkedIn</a>)', 'LinkedIn</a> | <a href=\"https://rakeshsidana.org\">rakeshsidana.org</a>)');\n  }\n  if (!h.includes('mail-sig')) {\n    h = h.replace(/<p>Best,<br>[A-Za-z' ]+<br>[\\s\\S]*?<\\/p>\\s*$/, '');\n    h = h + '<br><div>-- </div>' + SIG;\n  }\n  return h;\n}\n\nconst onb = $('Read ONBOARDING').all().map(i => i.json);\nconst inv = $('Read INVESTORS').all().map(i => i.json);\n\n// ---- BOUNCE BLOCKLIST -----------------------------------------------------\nconst blocked = new Set();\ntry {\n  for (const r of $('Read BOUNCES').all().map(i => i.json)) {\n    if (String(r.hard_or_soft || '').trim().toUpperCase() !== 'HARD') continue;\n    const a = String(r.bounced_address || '').trim().toLowerCase();\n    if (a) blocked.add(a);\n  }\n} catch (e) { /* BOUNCES not wired yet - fail open rather than stop the run */ }\n\nconst GENERIC = new Set(['gmail.com','yahoo.com','outlook.com','hotmail.com','icloud.com','live.com','protonmail.com','rediffmail.com','yahoo.co.in','me.com','aol.com']);\nconst bookEmails = new Set(); const bookDomains = new Set(); const bookNames = new Set();\nconst normName = s => String(s || '').toLowerCase().replace(/[^a-z ]/g, ' ').replace(/\\s+/g, ' ').trim();\nfor (const r of inv) {\n  for (const part of String(r.contact_person || '').split(/[,;&]| and /i)) {\n    const n = normName(part); if (n.split(' ').length >= 2) bookNames.add(n);\n  }\n  for (const f of ['email', 'cc']) {\n    const m = String(r[f] || '').toLowerCase().match(/[\\w.+-]+@[\\w-]+\\.[\\w.-]+/g) || [];\n    for (const e of m) { bookEmails.add(e); const d = e.split('@')[1]; if (!GENERIC.has(d)) bookDomains.add(d); }\n  }\n}\n\nconst remaining = {};\nfor (const m of ACTIVE) remaining[m.id] = m.cap;\nlet sentTodayTotal = 0;\nfor (const r of onb) {\n  if (!isToday(r.sent_date)) continue;\n  sentTodayTotal++;\n  const m = mbFor(String(r.email || '').trim().toLowerCase());\n  if (m) remaining[m.id] = Math.max(0, remaining[m.id] - 1);\n}\nconst used = new Set(onb.filter(r => String(r.sent_date || '').trim()).map(r => String(r.email || '').trim().toLowerCase()));\n\nconst EM = /^[^@\\s;,]+@[^@\\s;,]+\\.[a-z]{2,}$/i;\nconst rank = r => Number(r.send_order) || (1e6 + Number(r.rank)) || 1e9;\nconst cand = onb\n  .filter(r => String(r.status || '').trim().toUpperCase() === 'QUEUED' && !String(r.sent_date || '').trim())\n  .sort((a, b) => rank(a) - rank(b));\n\nconst out = []; const perMb = {}; let blockedHits = 0;\nfor (const r of cand) {\n  if (!Object.values(remaining).some(v => v > 0)) break;\n  const email = String(r.email || '').trim().toLowerCase();\n  const dom = email.split('@')[1] || '';\n  if (!EM.test(email)) continue;\n  if (blocked.has(email)) { blockedHits++; continue; }\n  const cs = String(r.contact_status || '').trim().toUpperCase();\n  if (cs === 'SITE_DEAD' || cs === 'BOUNCED') continue;\n  if (bookEmails.has(email) || (dom && !GENERIC.has(dom) && bookDomains.has(dom))) continue;\n  const cname = normName(r.contact);\n  if (cname.split(' ').length >= 2 && bookNames.has(cname)) continue;\n  if (used.has(email)) continue;\n  const raw = String(r.body_html || '');\n  if (!raw.includes('calendly.com/investors-sidanaventures/30min') || raw.includes('{{')) continue;\n  if (!String(r.subject || '').trim()) continue;\n  const m = mbFor(email);\n  if (!m || remaining[m.id] <= 0) continue;\n  const html = finalise(raw, m.signature, m.name);\n  if (!html.toLowerCase().includes(SIG_MARK)) continue;\n  out.push({ json: { rank: String(r.rank), firm: r.firm, to: email, subject: r.subject, html, mb: m.id, senderName: m.name } });\n  used.add(email); remaining[m.id]--; perMb[m.id] = (perMb[m.id] || 0) + 1;\n}\nif (!out.length) return [];\nout[0].json._plan = { totalPicked: out.length, perMailbox: perMb, alreadySentToday: sentTodayTotal,\n  blocklistSize: blocked.size, skippedAsBounced: blockedHits,\n  capsInUse: ACTIVE.map(m => m.id + ':' + m.cap).join(' '), disabledMailboxes: disabled };\nreturn out;"
+        }
+      },
+      {
+        "id": "a1000001-0000-4000-8000-000000000009",
+        "name": "Loop Over Sends",
+        "type": "n8n-nodes-base.splitInBatches",
+        "typeVersion": 3,
+        "position": [
+          1920,
+          300
+        ],
+        "parameters": {
+          "options": {}
+        }
+      },
+      {
+        "id": "a1000001-0000-4000-8000-000000000010",
+        "name": "Wait between sends",
+        "webhookId": "b7c1e2d3-4f5a-4b6c-8d7e-9f0a1b2c3d4e",
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          1920,
+          380
+        ],
+        "parameters": {
+          "resume": "timeInterval",
+          "amount": "={{ Number($('Build CONFIG object').first().json.ONBOARDING_GAP_SECONDS) || 90 }}",
+          "unit": "seconds"
+        }
+      },
+      {
+        "id": "a1000001-0000-4000-8000-000000000011",
+        "name": "Gmail: Send (Shradhaa)",
+        "webhookId": "c8d2f3e4-5a6b-4c7d-9e8f-0a1b2c3d4e5f",
+        "type": "n8n-nodes-base.gmail",
+        "typeVersion": 2.2,
+        "onError": "continueErrorOutput",
+        "position": [
+          2160,
+          380
+        ],
+        "parameters": {
+          "resource": "message",
+          "operation": "send",
+          "sendTo": "={{ $json.to }}",
+          "subject": "={{ $json.subject }}",
+          "emailType": "html",
+          "message": "={{ $json.html }}",
+          "options": {
+            "appendAttribution": false,
+            "senderName": "Shradhaa",
+            "ccList": "={{ $('Build CONFIG object').first().json.ONBOARDING_CC || 'rakesh@sidanaventures.com' }}"
+          }
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "R5K61omYbU9oT5J8",
+            "name": "Gmail account 5"
+          }
+        }
+      },
+      {
+        "id": "a1000001-0000-4000-8000-000000000012",
+        "name": "Mark SENT",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2400,
+          280
+        ],
+        "parameters": {
+          "mode": "runOnceForEachItem",
+          "jsCode": "const src = $('Loop Over Sends').item.json;\nreturn { json: {\n  rank: src.rank,\n  status: 'SENT',\n  sent_date: new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Kolkata' }),\n  thread_id: $json.threadId || $json.id || ''\n} };"
+        }
+      },
+      {
+        "id": "a1000001-0000-4000-8000-000000000013",
+        "name": "Update ONBOARDING (sent)",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.7,
+        "retryOnFail": true,
+        "position": [
+          2640,
+          280
+        ],
+        "parameters": {
+          "resource": "sheet",
+          "operation": "update",
+          "documentId": {
+            "__rl": true,
+            "mode": "url",
+            "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+          },
+          "sheetName": {
+            "__rl": true,
+            "mode": "id",
+            "value": "38341156"
+          },
+          "columns": {
+            "mappingMode": "autoMapInputData",
+            "value": {},
+            "matchingColumns": [
+              "rank"
+            ],
+            "schema": [
+              {
+                "id": "rank",
+                "displayName": "rank",
+                "required": false,
+                "defaultMatch": true,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              }
+            ]
+          },
+          "options": {
+            "handlingExtraData": "ignoreIt"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "a1000001-0000-4000-8000-000000000014",
+        "name": "Mark ERROR",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2400,
+          500
+        ],
+        "parameters": {
+          "mode": "runOnceForEachItem",
+          "jsCode": "const src = $('Loop Over Sends').item.json;\nconst err = $json.error ? ($json.error.message || JSON.stringify($json.error)) : 'unknown error';\nreturn { json: {\n  rank: src.rank,\n  status: 'SEND_ERROR',\n  notes: 'Send failed ' + new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Kolkata' }) + ': ' + String(err).slice(0, 200)\n} };"
+        }
+      },
+      {
+        "id": "a1000001-0000-4000-8000-000000000015",
+        "name": "Update ONBOARDING (error)",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.7,
+        "retryOnFail": true,
+        "position": [
+          2640,
+          500
+        ],
+        "parameters": {
+          "resource": "sheet",
+          "operation": "update",
+          "documentId": {
+            "__rl": true,
+            "mode": "url",
+            "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+          },
+          "sheetName": {
+            "__rl": true,
+            "mode": "id",
+            "value": "38341156"
+          },
+          "columns": {
+            "mappingMode": "autoMapInputData",
+            "value": {},
+            "matchingColumns": [
+              "rank"
+            ],
+            "schema": [
+              {
+                "id": "rank",
+                "displayName": "rank",
+                "required": false,
+                "defaultMatch": true,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              }
+            ]
+          },
+          "options": {
+            "handlingExtraData": "ignoreIt"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "a1000001-0000-4000-8000-000000000016",
+        "name": "Run summary",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1920,
+          100
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "// $('Mark SENT').all() only returns the LAST loop run, so counting it under-reports (logged 1 of 10\n// on 17 Sep). Count across every run index instead.\nfunction countAll(node) {\n  let total = 0;\n  for (let i = 0; i < 200; i++) {\n    try { const r = $(node).all(0, i); if (!r || !r.length) { if (i > 2) break; continue; } total += r.length; } catch (e) { break; }\n  }\n  return total;\n}\nconst sent = countAll('Mark SENT');\nconst failed = countAll('Mark ERROR');\nconst skipped = countAll('Mark SKIPPED');\nreturn [{ json: {\n  date: new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Kolkata' }),\n  workflow: 'ONB-1 Onboarding Send (Shradhaa)',\n  rows_read: $('Read ONBOARDING').all().length,\n  decided: $('Pick today batch').all().length,\n  sent: sent,\n  skipped: skipped + failed,\n  skip_reasons: [skipped ? skipped + ' skipped - prior contact found in a mailbox' : '', failed ? failed + ' send errors - see ONBOARDING status SEND_ERROR' : ''].filter(Boolean).join('; ')\n} }];"
+        }
+      },
+      {
+        "id": "a1000001-0000-4000-8000-000000000017",
+        "name": "Append RUN LOG",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.7,
+        "retryOnFail": true,
+        "position": [
+          2160,
+          100
+        ],
+        "parameters": {
+          "resource": "sheet",
+          "operation": "append",
+          "documentId": {
+            "__rl": true,
+            "mode": "url",
+            "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+          },
+          "sheetName": {
+            "__rl": true,
+            "mode": "name",
+            "value": "RUN LOG"
+          },
+          "columns": {
+            "mappingMode": "autoMapInputData",
+            "value": {},
+            "matchingColumns": [],
+            "schema": []
+          },
+          "options": {
+            "handlingExtraData": "ignoreIt"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "a1000001-0000-4000-8000-000000000018",
+        "name": "Get Shradhaa signature",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "executeOnce": true,
+        "position": [
+          1440,
+          520
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "https://gmail.googleapis.com/gmail/v1/users/me/settings/sendAs",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "gmailOAuth2",
+          "options": {}
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "R5K61omYbU9oT5J8",
+            "name": "Gmail account 5"
+          }
+        }
+      },
+      {
+        "id": "2a6894df-1f98-45fd-a510-8ed87123bf2b",
+        "name": "Check mb5 (Shradhaa)",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          2160,
+          620
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "https://gmail.googleapis.com/gmail/v1/users/me/messages",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "gmailOAuth2",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "q",
+                "value": "=to:{{ ['gmail.com','yahoo.com','outlook.com','hotmail.com','icloud.com','live.com','protonmail.com','rediffmail.com','yahoo.co.in','me.com','aol.com'].includes($('Loop Over Sends').first().json.to.split('@')[1]) ? $('Loop Over Sends').first().json.to : $('Loop Over Sends').first().json.to.split('@')[1] }} OR from:{{ ['gmail.com','yahoo.com','outlook.com','hotmail.com','icloud.com','live.com','protonmail.com','rediffmail.com','yahoo.co.in','me.com','aol.com'].includes($('Loop Over Sends').first().json.to.split('@')[1]) ? $('Loop Over Sends').first().json.to : $('Loop Over Sends').first().json.to.split('@')[1] }}"
+              },
+              {
+                "name": "maxResults",
+                "value": "5"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "R5K61omYbU9oT5J8",
+            "name": "Gmail account 5"
+          }
+        }
+      },
+      {
+        "id": "d3ed012f-4025-40cf-8bf9-735420581f72",
+        "name": "Check mb4 (Akansha)",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          2340,
+          620
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "https://gmail.googleapis.com/gmail/v1/users/me/messages",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "gmailOAuth2",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "q",
+                "value": "=to:{{ ['gmail.com','yahoo.com','outlook.com','hotmail.com','icloud.com','live.com','protonmail.com','rediffmail.com','yahoo.co.in','me.com','aol.com'].includes($('Loop Over Sends').first().json.to.split('@')[1]) ? $('Loop Over Sends').first().json.to : $('Loop Over Sends').first().json.to.split('@')[1] }} OR from:{{ ['gmail.com','yahoo.com','outlook.com','hotmail.com','icloud.com','live.com','protonmail.com','rediffmail.com','yahoo.co.in','me.com','aol.com'].includes($('Loop Over Sends').first().json.to.split('@')[1]) ? $('Loop Over Sends').first().json.to : $('Loop Over Sends').first().json.to.split('@')[1] }}"
+              },
+              {
+                "name": "maxResults",
+                "value": "5"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "9IWD8mWqdARPXloL",
+            "name": "Gmail account 4"
+          }
+        }
+      },
+      {
+        "id": "9e542e2a-af0a-4147-b587-11efdec11dce",
+        "name": "Check mb3 (investors)",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          2520,
+          620
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "https://gmail.googleapis.com/gmail/v1/users/me/messages",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "gmailOAuth2",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "q",
+                "value": "=to:{{ ['gmail.com','yahoo.com','outlook.com','hotmail.com','icloud.com','live.com','protonmail.com','rediffmail.com','yahoo.co.in','me.com','aol.com'].includes($('Loop Over Sends').first().json.to.split('@')[1]) ? $('Loop Over Sends').first().json.to : $('Loop Over Sends').first().json.to.split('@')[1] }} OR from:{{ ['gmail.com','yahoo.com','outlook.com','hotmail.com','icloud.com','live.com','protonmail.com','rediffmail.com','yahoo.co.in','me.com','aol.com'].includes($('Loop Over Sends').first().json.to.split('@')[1]) ? $('Loop Over Sends').first().json.to : $('Loop Over Sends').first().json.to.split('@')[1] }}"
+              },
+              {
+                "name": "maxResults",
+                "value": "5"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "mymSHTFVWtsI3Mh7",
+            "name": "Gmail account 3"
+          }
+        }
+      },
+      {
+        "id": "06550e69-d6b9-4ed7-b1d7-103009496d7b",
+        "name": "Check mb2 (dealflow)",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          2700,
+          620
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "https://gmail.googleapis.com/gmail/v1/users/me/messages",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "gmailOAuth2",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "q",
+                "value": "=to:{{ ['gmail.com','yahoo.com','outlook.com','hotmail.com','icloud.com','live.com','protonmail.com','rediffmail.com','yahoo.co.in','me.com','aol.com'].includes($('Loop Over Sends').first().json.to.split('@')[1]) ? $('Loop Over Sends').first().json.to : $('Loop Over Sends').first().json.to.split('@')[1] }} OR from:{{ ['gmail.com','yahoo.com','outlook.com','hotmail.com','icloud.com','live.com','protonmail.com','rediffmail.com','yahoo.co.in','me.com','aol.com'].includes($('Loop Over Sends').first().json.to.split('@')[1]) ? $('Loop Over Sends').first().json.to : $('Loop Over Sends').first().json.to.split('@')[1] }}"
+              },
+              {
+                "name": "maxResults",
+                "value": "5"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "hwEqMRn6IxzoYs1R",
+            "name": "Gmail account 2"
+          }
+        }
+      },
+      {
+        "id": "84bc1131-0808-4c88-97b2-e13907a6ab85",
+        "name": "Decide prior contact",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2880,
+          620
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "// The INVESTORS book records who we decided to KEEP, not who we have SPOKEN to. Chanakya,\n// Seafund and Avaana were each emailed cold while a live thread existed in a mailbox the\n// book knew nothing about. So ask the mailboxes, one query per address/domain - grouped OR\n// searches silently drop matches at Gmail's 50-result cap.\nconst src = $('Loop Over Sends').first().json;\nconst cnt = n => { try { return (($(n).first().json || {}).messages || []).length; } catch (e) { return 0; } };\nconst hits = { mb5: cnt('Check mb5 (Shradhaa)'), mb4: cnt('Check mb4 (Akansha)'), mb3: cnt('Check mb3 (investors)'), mb2: cnt('Check mb2 (dealflow)') };\nconst total = hits.mb5 + hits.mb4 + hits.mb3 + hits.mb2;\nreturn [{ json: Object.assign({}, src, { prior_hits: hits, prior_total: total, skip: total > 0 }) }];"
+        }
+      },
+      {
+        "id": "654e6a9f-6d70-454d-96a5-4fa3f9e1154f",
+        "name": "Prior contact?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          3060,
+          620
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "version": 2,
+              "leftValue": "",
+              "caseSensitive": true,
+              "typeValidation": "loose"
+            },
+            "conditions": [
+              {
+                "id": "pc",
+                "leftValue": "={{ $json.skip }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          }
+        }
+      },
+      {
+        "id": "137fcbb9-37a5-4ddf-992a-bfb63a832e77",
+        "name": "Mark SKIPPED",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3240,
+          520
+        ],
+        "parameters": {
+          "mode": "runOnceForEachItem",
+          "jsCode": "const h = $json.prior_hits || {};\nreturn { json: {\n  rank: String($json.rank),\n  status: 'SKIPPED_PRIOR_CONTACT',\n  review_note: 'Not sent ' + new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Kolkata' }) + ': existing mail with this address/domain - Shradhaa ' + (h.mb5 || 0) + ', Akansha ' + (h.mb4 || 0) + ', investors ' + (h.mb3 || 0) + ', dealflow ' + (h.mb2 || 0) + '. Read the thread before any approach.'\n} };"
+        }
+      },
+      {
+        "id": "eadec10b-cca6-4434-90c2-9d99adfe8228",
+        "name": "Update ONBOARDING (skipped)",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.7,
+        "retryOnFail": true,
+        "position": [
+          3420,
+          520
+        ],
+        "parameters": {
+          "resource": "sheet",
+          "operation": "update",
+          "documentId": {
+            "__rl": true,
+            "mode": "url",
+            "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+          },
+          "sheetName": {
+            "__rl": true,
+            "mode": "id",
+            "value": "38341156"
+          },
+          "columns": {
+            "mappingMode": "autoMapInputData",
+            "value": {},
+            "matchingColumns": [
+              "rank"
+            ],
+            "schema": [
+              {
+                "id": "rank",
+                "displayName": "rank",
+                "required": false,
+                "defaultMatch": true,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              }
+            ]
+          },
+          "options": {
+            "handlingExtraData": "ignoreIt"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "1ffc73f1-ddd7-40d6-b401-d85781ca71c3",
+        "name": "Get mb4 signature",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "executeOnce": true,
+        "position": [
+          1440,
+          660
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "https://gmail.googleapis.com/gmail/v1/users/me/settings/sendAs",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "gmailOAuth2",
+          "options": {}
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "9IWD8mWqdARPXloL",
+            "name": "Gmail account 4"
+          }
+        }
+      },
+      {
+        "id": "d164b99b-7402-4ed7-9802-43ac84bc4ca2",
+        "name": "Get mb3 signature",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "executeOnce": true,
+        "position": [
+          1440,
+          800
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "https://gmail.googleapis.com/gmail/v1/users/me/settings/sendAs",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "gmailOAuth2",
+          "options": {}
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "mymSHTFVWtsI3Mh7",
+            "name": "Gmail account 3"
+          }
+        }
+      },
+      {
+        "id": "3adf85f2-ff0d-42c7-9004-71735e014fe1",
+        "name": "Get mb2 signature",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "executeOnce": true,
+        "position": [
+          1440,
+          940
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "https://gmail.googleapis.com/gmail/v1/users/me/settings/sendAs",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "gmailOAuth2",
+          "options": {}
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "hwEqMRn6IxzoYs1R",
+            "name": "Gmail account 2"
+          }
+        }
+      },
+      {
+        "id": "d7773bdf-29c9-4519-ba08-999d09e4b3e7",
+        "name": "Route by mailbox",
+        "type": "n8n-nodes-base.switch",
+        "typeVersion": 3.2,
+        "position": [
+          2160,
+          260
+        ],
+        "parameters": {
+          "rules": {
+            "values": [
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "version": 2
+                  },
+                  "combinator": "and",
+                  "conditions": [
+                    {
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      },
+                      "leftValue": "={{ $json.mb }}",
+                      "rightValue": "mb5"
+                    }
+                  ]
+                },
+                "renameOutput": true,
+                "outputKey": "mb5"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "version": 2
+                  },
+                  "combinator": "and",
+                  "conditions": [
+                    {
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      },
+                      "leftValue": "={{ $json.mb }}",
+                      "rightValue": "mb4"
+                    }
+                  ]
+                },
+                "renameOutput": true,
+                "outputKey": "mb4"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "version": 2
+                  },
+                  "combinator": "and",
+                  "conditions": [
+                    {
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      },
+                      "leftValue": "={{ $json.mb }}",
+                      "rightValue": "mb3"
+                    }
+                  ]
+                },
+                "renameOutput": true,
+                "outputKey": "mb3"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "version": 2
+                  },
+                  "combinator": "and",
+                  "conditions": [
+                    {
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      },
+                      "leftValue": "={{ $json.mb }}",
+                      "rightValue": "mb2"
+                    }
+                  ]
+                },
+                "renameOutput": true,
+                "outputKey": "mb2"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "version": 2
+                  },
+                  "combinator": "and",
+                  "conditions": [
+                    {
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      },
+                      "leftValue": "={{ $json.mb }}",
+                      "rightValue": "mb6"
+                    }
+                  ]
+                },
+                "renameOutput": true,
+                "outputKey": "mb6"
+              }
+            ]
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "5973d914-5ff0-4d0b-a6ab-828ba5f33b38",
+        "name": "Gmail: Send (Akansha)",
+        "webhookId": "40aa4592-53f6-4665-b28a-e7da8000d573",
+        "type": "n8n-nodes-base.gmail",
+        "typeVersion": 2.2,
+        "onError": "continueErrorOutput",
+        "position": [
+          2400,
+          700
+        ],
+        "parameters": {
+          "resource": "message",
+          "operation": "send",
+          "sendTo": "={{ $json.to }}",
+          "subject": "={{ $json.subject }}",
+          "emailType": "html",
+          "message": "={{ $json.html }}",
+          "options": {
+            "appendAttribution": false,
+            "senderName": "Akansha",
+            "ccList": "={{ $('Build CONFIG object').first().json.ONBOARDING_CC || 'rakesh@sidanaventures.com' }}"
+          }
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "9IWD8mWqdARPXloL",
+            "name": "Gmail account 4"
+          }
+        }
+      },
+      {
+        "id": "440cbe1e-45c7-42bf-8320-2e9e553f5dda",
+        "name": "Gmail: Send (investors)",
+        "webhookId": "86dbbdb3-be63-4fb7-b84f-ea48fc45b317",
+        "type": "n8n-nodes-base.gmail",
+        "typeVersion": 2.2,
+        "onError": "continueErrorOutput",
+        "position": [
+          2400,
+          840
+        ],
+        "parameters": {
+          "resource": "message",
+          "operation": "send",
+          "sendTo": "={{ $json.to }}",
+          "subject": "={{ $json.subject }}",
+          "emailType": "html",
+          "message": "={{ $json.html }}",
+          "options": {
+            "appendAttribution": false,
+            "senderName": "Aditya Mishra",
+            "ccList": "={{ $('Build CONFIG object').first().json.ONBOARDING_CC || 'rakesh@sidanaventures.com' }}"
+          }
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "mymSHTFVWtsI3Mh7",
+            "name": "Gmail account 3"
+          }
+        }
+      },
+      {
+        "id": "8f2cc313-cbbf-4a31-b96d-e95d99865ef8",
+        "name": "Gmail: Send (dealflow)",
+        "webhookId": "3e75a1a3-1f93-410c-b319-0f0afad97306",
+        "type": "n8n-nodes-base.gmail",
+        "typeVersion": 2.2,
+        "onError": "continueErrorOutput",
+        "position": [
+          2400,
+          980
+        ],
+        "parameters": {
+          "resource": "message",
+          "operation": "send",
+          "sendTo": "={{ $json.to }}",
+          "subject": "={{ $json.subject }}",
+          "emailType": "html",
+          "message": "={{ $json.html }}",
+          "options": {
+            "appendAttribution": false,
+            "ccList": "={{ $('Build CONFIG object').first().json.ONBOARDING_CC || 'rakesh@sidanaventures.com' }}",
+            "senderName": "Chaman"
+          }
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "hwEqMRn6IxzoYs1R",
+            "name": "Gmail account 2"
+          }
+        }
+      },
+      {
+        "id": "bad9f55f-3646-4ffd-a99a-f1e6d3e192ff",
+        "name": "Get mb6 signature",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "executeOnce": true,
+        "position": [
+          1440,
+          1080
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "https://gmail.googleapis.com/gmail/v1/users/me/settings/sendAs",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "gmailOAuth2",
+          "options": {}
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "s4YYut2fC7u8aQWl",
+            "name": "Gmail account 6"
+          }
+        }
+      },
+      {
+        "id": "2cb04475-1ecb-4ee5-adae-d49353438520",
+        "name": "Gmail: Send (admin)",
+        "webhookId": "eb444e35-566c-45e9-9b16-1ca596a7a82f",
+        "type": "n8n-nodes-base.gmail",
+        "typeVersion": 2.2,
+        "onError": "continueErrorOutput",
+        "position": [
+          2400,
+          1120
+        ],
+        "parameters": {
+          "resource": "message",
+          "operation": "send",
+          "sendTo": "={{ $json.to }}",
+          "subject": "={{ $json.subject }}",
+          "emailType": "html",
+          "message": "={{ $json.html }}",
+          "options": {
+            "appendAttribution": false,
+            "senderName": "Bhawna",
+            "ccList": "={{ $('Build CONFIG object').first().json.ONBOARDING_CC || 'rakesh@sidanaventures.com' }}"
+          }
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "s4YYut2fC7u8aQWl",
+            "name": "Gmail account 6"
+          }
+        }
+      },
+      {
+        "id": "2dd60195-f87b-462f-a499-3b4e63fdeb89",
+        "name": "Read BOUNCES",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.5,
+        "executeOnce": true,
+        "alwaysOutputData": true,
+        "onError": "continueRegularOutput",
+        "position": [
+          1200,
+          460
+        ],
+        "parameters": {
+          "documentId": {
+            "__rl": true,
+            "value": "1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4",
+            "mode": "id"
+          },
+          "sheetName": {
+            "__rl": true,
+            "value": "BOUNCES",
+            "mode": "name"
+          },
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Run (press Execute)": {
+        "main": [
+          [
+            {
+              "node": "Read CONFIG",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Weekdays 10:30 IST": {
+        "main": [
+          [
+            {
+              "node": "Read CONFIG",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Read CONFIG": {
+        "main": [
+          [
+            {
+              "node": "Build CONFIG object",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build CONFIG object": {
+        "main": [
+          [
+            {
+              "node": "Not paused?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Not paused?": {
+        "main": [
+          [
+            {
+              "node": "Read ONBOARDING",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Read ONBOARDING": {
+        "main": [
+          [
+            {
+              "node": "Read INVESTORS",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Pick today batch": {
+        "main": [
+          [
+            {
+              "node": "Loop Over Sends",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Loop Over Sends": {
+        "main": [
+          [
+            {
+              "node": "Run summary",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Check mb5 (Shradhaa)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Gmail: Send (Shradhaa)": {
+        "main": [
+          [
+            {
+              "node": "Mark SENT",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Mark ERROR",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Mark SENT": {
+        "main": [
+          [
+            {
+              "node": "Update ONBOARDING (sent)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Update ONBOARDING (sent)": {
+        "main": [
+          [
+            {
+              "node": "Loop Over Sends",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Mark ERROR": {
+        "main": [
+          [
+            {
+              "node": "Update ONBOARDING (error)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Update ONBOARDING (error)": {
+        "main": [
+          [
+            {
+              "node": "Loop Over Sends",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Run summary": {
+        "main": [
+          [
+            {
+              "node": "Append RUN LOG",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Check mb5 (Shradhaa)": {
+        "main": [
+          [
+            {
+              "node": "Check mb4 (Akansha)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Check mb4 (Akansha)": {
+        "main": [
+          [
+            {
+              "node": "Check mb3 (investors)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Check mb3 (investors)": {
+        "main": [
+          [
+            {
+              "node": "Check mb2 (dealflow)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Check mb2 (dealflow)": {
+        "main": [
+          [
+            {
+              "node": "Decide prior contact",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Decide prior contact": {
+        "main": [
+          [
+            {
+              "node": "Prior contact?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prior contact?": {
+        "main": [
+          [
+            {
+              "node": "Mark SKIPPED",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Wait between sends",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Mark SKIPPED": {
+        "main": [
+          [
+            {
+              "node": "Update ONBOARDING (skipped)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Update ONBOARDING (skipped)": {
+        "main": [
+          [
+            {
+              "node": "Loop Over Sends",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get Shradhaa signature": {
+        "main": [
+          [
+            {
+              "node": "Get mb4 signature",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get mb4 signature": {
+        "main": [
+          [
+            {
+              "node": "Get mb3 signature",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get mb3 signature": {
+        "main": [
+          [
+            {
+              "node": "Get mb2 signature",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Wait between sends": {
+        "main": [
+          [
+            {
+              "node": "Route by mailbox",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Route by mailbox": {
+        "main": [
+          [
+            {
+              "node": "Gmail: Send (Shradhaa)",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Gmail: Send (Akansha)",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Gmail: Send (investors)",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Gmail: Send (dealflow)",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Gmail: Send (admin)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Gmail: Send (Akansha)": {
+        "main": [
+          [
+            {
+              "node": "Mark SENT",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Mark ERROR",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Gmail: Send (investors)": {
+        "main": [
+          [
+            {
+              "node": "Mark SENT",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Mark ERROR",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Gmail: Send (dealflow)": {
+        "main": [
+          [
+            {
+              "node": "Mark SENT",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Mark ERROR",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get mb2 signature": {
+        "main": [
+          [
+            {
+              "node": "Get mb6 signature",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get mb6 signature": {
+        "main": [
+          [
+            {
+              "node": "Pick today batch",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Gmail: Send (admin)": {
+        "main": [
+          [
+            {
+              "node": "Mark SENT",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Mark ERROR",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Read INVESTORS": {
+        "main": [
+          [
+            {
+              "node": "Read BOUNCES",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Read BOUNCES": {
+        "main": [
+          [
+            {
+              "node": "Get Shradhaa signature",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "Sidana Ventures",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "createdAt": "2026-09-30T10:09:07.625Z",
+    "updatedAt": "2026-09-30T10:09:07.625Z",
+    "workflowPublishHistory": [
+      {
+        "id": 9465,
+        "workflowId": "ThiWDFPpKOu9iLnF",
+        "versionId": "c0f94390-f148-4dad-acc9-6fabcbee0e4a",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-09-30T10:09:07.747Z"
+      },
+      {
+        "id": 11784,
+        "workflowId": "ThiWDFPpKOu9iLnF",
+        "versionId": "c0f94390-f148-4dad-acc9-6fabcbee0e4a",
+        "event": "deactivated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-10-05T10:08:13.634Z"
+      },
+      {
+        "id": 11785,
+        "workflowId": "ThiWDFPpKOu9iLnF",
+        "versionId": "c0f94390-f148-4dad-acc9-6fabcbee0e4a",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-10-05T10:08:13.635Z"
+      },
+      {
+        "id": 11786,
+        "workflowId": "ThiWDFPpKOu9iLnF",
+        "versionId": "c0f94390-f148-4dad-acc9-6fabcbee0e4a",
+        "event": "deactivated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-10-05T10:08:14.231Z"
+      },
+      {
+        "id": 11859,
+        "workflowId": "ThiWDFPpKOu9iLnF",
+        "versionId": "c0f94390-f148-4dad-acc9-6fabcbee0e4a",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-10-05T10:46:06.425Z"
+      }
+    ]
+  }
+}

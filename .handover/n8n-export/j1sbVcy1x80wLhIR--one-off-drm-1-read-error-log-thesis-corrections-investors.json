@@ -1,0 +1,228 @@
+{
+  "id": "j1sbVcy1x80wLhIR",
+  "name": "One-off DRM-1 — read ERROR LOG + Thesis corrections + INVESTORS",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-09T13:31:31.570Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "0694d511-2dfa-49d1-9766-cbf380a4286c",
+  "versionCounter": 4,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "trg1",
+      "name": "Run once",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "rd1",
+      "name": "Read ERROR LOG",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        220,
+        -160
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "ERROR LOG"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "rd2",
+      "name": "Read Thesis correction",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        440,
+        -80
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1WOErvuYawblG-HkrK5In5YWtEiKKt_DeoVpmL5na6GU/edit"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Thesis correction"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "rd3",
+      "name": "Read INVESTORS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "INVESTORS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cd1",
+      "name": "Gather",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v){return String(v==null?'':v).trim();}\nfunction norm(x){return s(x).toLowerCase().replace(/[^a-z0-9]/g,'');}\nconst el=$('Read ERROR LOG').all().map(i=>i.json);\nconst rawTh=$('Read Thesis correction').all().map(i=>{const o=i.json;return Object.keys(o).filter(k=>k!=='row_number').map(k=>o[k]);});\nconst inv=$input.all().map(i=>i.json);\nif(inv.length<100){throw new Error('ABORT: INVESTORS only '+inv.length+' rows');}\n\nconst open=el.filter(r=>s(r.workflow).toUpperCase().indexOf('THESIS')>=0 && s(r.resolved)==='');\nconst openRows=open.map(r=>({row_number:r.row_number,timestamp:s(r.timestamp),workflow:s(r.workflow),investor:s(r.investor),error_type:s(r.error_type),details:s(r.details).slice(0,300)}));\n\nlet P=null;\nfor(const r of rawTh){const idx=r.findIndex(c=>s(c).toLowerCase()==='sector');if(idx>0){P={firm:0,contact:1,email:2,sector:idx,stage:idx+1,cheque:idx+2,geo:idx+3,arr:idx+4};break;}}\nif(!P){throw new Error('ABORT: could not locate Sector label row');}\nconst thesis=[];\nfor(const r of rawTh){const firm=s(r[P.firm]);if(!firm||firm.toLowerCase()==='firm name')continue;thesis.push({firm:firm,contact:s(r[P.contact]),email:s(r[P.email]),sector:s(r[P.sector]),stage:s(r[P.stage]),cheque:s(r[P.cheque]),geo:s(r[P.geo]),arr:s(r[P.arr])});}\n\nconst invNames=inv.map(r=>s(r.investor));\nconst invCols=Object.keys(inv[0]||{});\nconst flagged={};\nfor(const f of openRows){const k=norm(f.investor);const hits=inv.filter(r=>norm(r.investor)===k||(k.length>4&&norm(r.investor).indexOf(k)>=0)||(k.length>4&&k.indexOf(norm(r.investor))>=0));flagged[f.investor]=hits.map(h=>({row_number:h.row_number,investor:s(h.investor),sector:s(h.sector),stage:s(h.stage),cheque:s(h.cheque_inr_cr),geo:s(h.geography),email:s(h.email),owner:s(h.owner),dnc:s(h.do_not_contact)}));}\n\nreturn [{json:{error_log_rows:el.length,investors_rows:inv.length,investor_columns:invCols,open_thesis_flags:openRows,thesis_corrections:thesis,flagged_investor_records:flagged,all_investor_names:invNames}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once": {
+      "main": [
+        [
+          {
+            "node": "Read ERROR LOG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read ERROR LOG": {
+      "main": [
+        [
+          {
+            "node": "Read Thesis correction",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Thesis correction": {
+      "main": [
+        [
+          {
+            "node": "Read INVESTORS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read INVESTORS": {
+      "main": [
+        [
+          {
+            "node": "Gather",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "j1sbVcy1x80wLhIR",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-09T13:31:31.573Z",
+      "updatedAt": "2026-09-09T13:31:31.573Z"
+    }
+  ],
+  "activeVersion": null
+}

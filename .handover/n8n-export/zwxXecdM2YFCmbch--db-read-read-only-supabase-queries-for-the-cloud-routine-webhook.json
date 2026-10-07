@@ -1,0 +1,286 @@
+{
+  "id": "zwxXecdM2YFCmbch",
+  "name": "DB-READ — read-only Supabase queries for the cloud routine (webhook)",
+  "description": null,
+  "active": true,
+  "activeVersionId": "1f4af2af-8499-4ff9-9d5f-bac685d94909",
+  "createdAt": "2026-10-05T06:25:14.337Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "1f4af2af-8499-4ff9-9d5f-bac685d94909",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "f52c5307-6b5c-4a00-ad0b-2f69a0d0d78d",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-db-read-6f2a9e",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "gate",
+      "name": "Gate",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Read-only window onto Supabase for the cloud routine.\n//\n// The routine cannot hold the service key: that key bypasses every RLS policy\n// in the schema and belongs in n8n alone (Aditya's rule). So the key stays\n// here and the routine asks by NAME for one of a fixed set of queries. It\n// cannot compose SQL, cannot name a table, and cannot write anything.\nconst b = $('Webhook').first().json.body || {};\nif (b.secret !== 'sv-dbread-2026-10-05-R4nK') { throw new Error('bad secret'); }\n\nconst s = (v) => String(v == null ? '' : v).replace(/[^A-Za-z0-9 .,&@:+_\\-]/g, '').slice(0, 120);\nconst n = (v, d, max) => { const x = parseInt(v, 10); return isFinite(x) && x > 0 ? Math.min(x, max) : d; };\n\n// Each entry is a complete PostgREST query. Only the marked values are\n// caller-supplied, and every one is sanitised above.\nconst Q = {\n  // Threads where an investor spoke last and nobody has answered.\n  owed_replies: () =>\n    'v_owed_replies?select=startup,investor,gist,kind,days_waiting,last_in,owner_name'\n    + '&order=days_waiting.desc&limit=' + n(b.limit, 50, 200),\n\n  // Recent inbound mail from investors, newest first.\n  recent_inbound: () =>\n    'mail_log?select=sent_at,from_email,subject,reply_gist,reply_kind,startup_id,investor_id'\n    + '&direction=eq.in&investor_id=not.is.null'\n    + '&sent_at=gte.' + encodeURIComponent(new Date(Date.now() - n(b.hours, 24, 168) * 3600000).toISOString())\n    + '&order=sent_at.desc&limit=' + n(b.limit, 100, 400),\n\n  // Everything said on one startup, both directions.\n  startup_mail: () =>\n    'mail_log?select=sent_at,direction,from_email,to_emails,subject,reply_gist,reply_kind,investor_id'\n    + '&startup_id=eq.' + n(b.startup_id, 0, 99999)\n    + '&order=sent_at.desc&limit=' + n(b.limit, 100, 400),\n\n  // Meetings in a window, for the stage machine to place rows in time.\n  meetings: () =>\n    'meetings?select=scheduled_at,is_second,held,meet_link,in_book,startup_id,investor_id,startup_name,investor_name,notes'\n    + '&superseded_by=is.null'\n    + '&scheduled_at=gte.' + encodeURIComponent(new Date(Date.now() - n(b.days_back, 2, 30) * 86400000).toISOString())\n    + '&scheduled_at=lte.' + encodeURIComponent(new Date(Date.now() + n(b.days_fwd, 14, 90) * 86400000).toISOString())\n    + '&order=scheduled_at.asc&limit=' + n(b.limit, 200, 500),\n\n  startups: () => 'startups?select=id,name,sector,stage,bucket,owner_name,status,ask_as_written&order=name.asc&limit=200',\n  investors: () => 'investors?select=id,name,contact_person,email,status,sectors,stage_pref,cheque_as_written&order=name.asc&limit=400',\n  heartbeat: () => 'task_heartbeat?select=task,last_run_at,note&task=eq.' + s(b.task || 'dealflow-state-machine'),\n};\n\nconst want = String(b.query || '');\nif (!Q[want]) { throw new Error('unknown query. allowed: ' + Object.keys(Q).join(', ')); }\nreturn [{ json: { path: Q[want](), query: want } }];"
+      }
+    },
+    {
+      "id": "get",
+      "name": "Fetch",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "=https://elwaquzawoscotlojtnv.supabase.co/rest/v1/{{ $json.path }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "ntQxeHO20ZUMASMg",
+          "name": "Supabase service"
+        }
+      }
+    },
+    {
+      "id": "out",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ query: $('Gate').first().json.query, count: $input.all().length, rows: $input.all().map(i => i.json) }) }}",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Gate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gate": {
+      "main": [
+        [
+          {
+            "node": "Fetch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "none",
+    "executionTimeout": 120,
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "zwxXecdM2YFCmbch",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-10-05T06:25:14.340Z",
+      "updatedAt": "2026-10-05T06:25:14.340Z"
+    }
+  ],
+  "activeVersion": {
+    "versionId": "1f4af2af-8499-4ff9-9d5f-bac685d94909",
+    "workflowId": "zwxXecdM2YFCmbch",
+    "nodes": [
+      {
+        "id": "wh",
+        "name": "Webhook",
+        "webhookId": "f52c5307-6b5c-4a00-ad0b-2f69a0d0d78d",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          0
+        ],
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "sidana-db-read-6f2a9e",
+          "responseMode": "responseNode",
+          "options": {}
+        }
+      },
+      {
+        "id": "gate",
+        "name": "Gate",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          220,
+          0
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "// Read-only window onto Supabase for the cloud routine.\n//\n// The routine cannot hold the service key: that key bypasses every RLS policy\n// in the schema and belongs in n8n alone (Aditya's rule). So the key stays\n// here and the routine asks by NAME for one of a fixed set of queries. It\n// cannot compose SQL, cannot name a table, and cannot write anything.\nconst b = $('Webhook').first().json.body || {};\nif (b.secret !== 'sv-dbread-2026-10-05-R4nK') { throw new Error('bad secret'); }\n\nconst s = (v) => String(v == null ? '' : v).replace(/[^A-Za-z0-9 .,&@:+_\\-]/g, '').slice(0, 120);\nconst n = (v, d, max) => { const x = parseInt(v, 10); return isFinite(x) && x > 0 ? Math.min(x, max) : d; };\n\n// Each entry is a complete PostgREST query. Only the marked values are\n// caller-supplied, and every one is sanitised above.\nconst Q = {\n  // Threads where an investor spoke last and nobody has answered.\n  owed_replies: () =>\n    'v_owed_replies?select=startup,investor,gist,kind,days_waiting,last_in,owner_name'\n    + '&order=days_waiting.desc&limit=' + n(b.limit, 50, 200),\n\n  // Recent inbound mail from investors, newest first.\n  recent_inbound: () =>\n    'mail_log?select=sent_at,from_email,subject,reply_gist,reply_kind,startup_id,investor_id'\n    + '&direction=eq.in&investor_id=not.is.null'\n    + '&sent_at=gte.' + encodeURIComponent(new Date(Date.now() - n(b.hours, 24, 168) * 3600000).toISOString())\n    + '&order=sent_at.desc&limit=' + n(b.limit, 100, 400),\n\n  // Everything said on one startup, both directions.\n  startup_mail: () =>\n    'mail_log?select=sent_at,direction,from_email,to_emails,subject,reply_gist,reply_kind,investor_id'\n    + '&startup_id=eq.' + n(b.startup_id, 0, 99999)\n    + '&order=sent_at.desc&limit=' + n(b.limit, 100, 400),\n\n  // Meetings in a window, for the stage machine to place rows in time.\n  meetings: () =>\n    'meetings?select=scheduled_at,is_second,held,meet_link,in_book,startup_id,investor_id,startup_name,investor_name,notes'\n    + '&superseded_by=is.null'\n    + '&scheduled_at=gte.' + encodeURIComponent(new Date(Date.now() - n(b.days_back, 2, 30) * 86400000).toISOString())\n    + '&scheduled_at=lte.' + encodeURIComponent(new Date(Date.now() + n(b.days_fwd, 14, 90) * 86400000).toISOString())\n    + '&order=scheduled_at.asc&limit=' + n(b.limit, 200, 500),\n\n  startups: () => 'startups?select=id,name,sector,stage,bucket,owner_name,status,ask_as_written&order=name.asc&limit=200',\n  investors: () => 'investors?select=id,name,contact_person,email,status,sectors,stage_pref,cheque_as_written&order=name.asc&limit=400',\n  heartbeat: () => 'task_heartbeat?select=task,last_run_at,note&task=eq.' + s(b.task || 'dealflow-state-machine'),\n};\n\nconst want = String(b.query || '');\nif (!Q[want]) { throw new Error('unknown query. allowed: ' + Object.keys(Q).join(', ')); }\nreturn [{ json: { path: Q[want](), query: want } }];"
+        }
+      },
+      {
+        "id": "get",
+        "name": "Fetch",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          440,
+          0
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "=https://elwaquzawoscotlojtnv.supabase.co/rest/v1/{{ $json.path }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpCustomAuth",
+          "options": {
+            "timeout": 60000
+          }
+        },
+        "credentials": {
+          "httpCustomAuth": {
+            "id": "ntQxeHO20ZUMASMg",
+            "name": "Supabase service"
+          }
+        }
+      },
+      {
+        "id": "out",
+        "name": "Respond",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          660,
+          0
+        ],
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ JSON.stringify({ query: $('Gate').first().json.query, count: $input.all().length, rows: $input.all().map(i => i.json) }) }}",
+          "options": {}
+        }
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Gate",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Gate": {
+        "main": [
+          [
+            {
+              "node": "Fetch",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch": {
+        "main": [
+          [
+            {
+              "node": "Respond",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "Sidana Ventures",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "createdAt": "2026-10-05T06:26:27.719Z",
+    "updatedAt": "2026-10-05T06:26:27.719Z",
+    "workflowPublishHistory": [
+      {
+        "id": 11470,
+        "workflowId": "zwxXecdM2YFCmbch",
+        "versionId": "1f4af2af-8499-4ff9-9d5f-bac685d94909",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-10-05T06:26:27.859Z"
+      }
+    ]
+  }
+}

@@ -1,0 +1,464 @@
+{
+  "id": "D77M44hCt4fiB341",
+  "name": "LI-OUTREACH-WRITE — guarded cell updates + append for LI_OUTREACH (webhook, owned by linkedin-outreach-cycle)",
+  "description": null,
+  "active": true,
+  "activeVersionId": "3d763289-376e-47b5-9b83-6d0f44a40d89",
+  "createdAt": "2026-09-29T12:23:01.058Z",
+  "updatedAt": "2026-10-07T06:32:55.896Z",
+  "isArchived": false,
+  "versionId": "3d763289-376e-47b5-9b83-6d0f44a40d89",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "9189e5fd-c426-45c5-be92-3b31cadfaaec",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-li-outreach-write-7d2b9e",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "p",
+      "name": "Prep",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b=$input.first().json.body||{};\nif(b.secret!=='sv-mail-2026-09-17-Kq7'){throw new Error('bad secret');}\nconst SH='1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4';\nconst ex=Object.keys(b.expect||{});\nconst url=ex.length?('https://sheets.googleapis.com/v4/spreadsheets/'+SH+'/values:batchGet?'+ex.map(r=>'ranges='+encodeURIComponent(r)).join('&')):'';\nreturn [{json:{url:url, hasExpect: ex.length>0}}];"
+      }
+    },
+    {
+      "id": "g",
+      "name": "Get",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "url": "={{ $json.hasExpect ? $json.url : 'https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/LI_OUTREACH!A1' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "v",
+      "name": "Validate",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b=$('Webhook').first().json.body;\nconst ex=Object.keys(b.expect||{});\nif(ex.length){\n  const vr=$input.first().json.valueRanges||[];\n  ex.forEach((r,i)=>{\n    const got=String((((vr[i]||{}).values||[[]])[0]||[])[0]||'').trim();\n    if(got!==String(b.expect[r]).trim()){throw new Error('GUARD FAIL '+r+': expected \"'+b.expect[r]+'\" but found \"'+got+'\"');}\n  });\n}\nconst data=(b.set||[]).map(s=>({range:s.range,values:[[s.value]]}));\nif(!data.length){throw new Error('nothing to set');}\nreturn [{json:{body:{valueInputOption:'RAW',data:data}}}];"
+      }
+    },
+    {
+      "id": "w",
+      "name": "Write",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "o",
+      "name": "Out",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const j=$input.first().json;return [{json:{ok:true, updated:(j.responses||[]).map(r=>r.updatedRange)}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Prep",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep": {
+      "main": [
+        [
+          {
+            "node": "Get",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get": {
+      "main": [
+        [
+          {
+            "node": "Validate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate": {
+      "main": [
+        [
+          {
+            "node": "Write",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write": {
+      "main": [
+        [
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataSuccessExecution": "none",
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "D77M44hCt4fiB341",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-29T12:23:01.060Z",
+      "updatedAt": "2026-09-29T12:23:01.060Z"
+    }
+  ],
+  "activeVersion": {
+    "versionId": "3d763289-376e-47b5-9b83-6d0f44a40d89",
+    "workflowId": "D77M44hCt4fiB341",
+    "nodes": [
+      {
+        "id": "wh",
+        "name": "Webhook",
+        "webhookId": "9189e5fd-c426-45c5-be92-3b31cadfaaec",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          0
+        ],
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "sidana-li-outreach-write-7d2b9e",
+          "responseMode": "lastNode",
+          "responseData": "firstEntryJson",
+          "options": {}
+        }
+      },
+      {
+        "id": "p",
+        "name": "Prep",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          200,
+          0
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const b=$input.first().json.body||{};\nif(b.secret!=='sv-mail-2026-09-17-Kq7'){throw new Error('bad secret');}\nconst SH='1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4';\nconst ex=Object.keys(b.expect||{});\nconst url=ex.length?('https://sheets.googleapis.com/v4/spreadsheets/'+SH+'/values:batchGet?'+ex.map(r=>'ranges='+encodeURIComponent(r)).join('&')):'';\nreturn [{json:{url:url, hasExpect: ex.length>0}}];"
+        }
+      },
+      {
+        "id": "g",
+        "name": "Get",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          400,
+          0
+        ],
+        "parameters": {
+          "url": "={{ $json.hasExpect ? $json.url : 'https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/LI_OUTREACH!A1' }}",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleSheetsOAuth2Api",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "v",
+        "name": "Validate",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          600,
+          0
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const b=$('Webhook').first().json.body;\nconst ex=Object.keys(b.expect||{});\nif(ex.length){\n  const vr=$input.first().json.valueRanges||[];\n  ex.forEach((r,i)=>{\n    const got=String((((vr[i]||{}).values||[[]])[0]||[])[0]||'').trim();\n    if(got!==String(b.expect[r]).trim()){throw new Error('GUARD FAIL '+r+': expected \"'+b.expect[r]+'\" but found \"'+got+'\"');}\n  });\n}\nconst data=(b.set||[]).map(s=>({range:s.range,values:[[s.value]]}));\nif(!data.length){throw new Error('nothing to set');}\nreturn [{json:{body:{valueInputOption:'RAW',data:data}}}];"
+        }
+      },
+      {
+        "id": "w",
+        "name": "Write",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          800,
+          0
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdate",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleSheetsOAuth2Api",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json.body) }}",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "o",
+        "name": "Out",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1000,
+          0
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const j=$input.first().json;return [{json:{ok:true, updated:(j.responses||[]).map(r=>r.updatedRange)}}];"
+        }
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Prep",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prep": {
+        "main": [
+          [
+            {
+              "node": "Get",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get": {
+        "main": [
+          [
+            {
+              "node": "Validate",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Validate": {
+        "main": [
+          [
+            {
+              "node": "Write",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Write": {
+        "main": [
+          [
+            {
+              "node": "Out",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "Sidana Ventures",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "createdAt": "2026-09-29T12:23:01.061Z",
+    "updatedAt": "2026-09-29T12:23:01.061Z",
+    "workflowPublishHistory": [
+      {
+        "id": 8808,
+        "workflowId": "D77M44hCt4fiB341",
+        "versionId": "3d763289-376e-47b5-9b83-6d0f44a40d89",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-09-29T12:23:05.788Z"
+      },
+      {
+        "id": 12598,
+        "workflowId": "D77M44hCt4fiB341",
+        "versionId": "3d763289-376e-47b5-9b83-6d0f44a40d89",
+        "event": "deactivated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-10-07T06:08:44.357Z"
+      },
+      {
+        "id": 12599,
+        "workflowId": "D77M44hCt4fiB341",
+        "versionId": "3d763289-376e-47b5-9b83-6d0f44a40d89",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-10-07T06:08:44.358Z"
+      },
+      {
+        "id": 12600,
+        "workflowId": "D77M44hCt4fiB341",
+        "versionId": "3d763289-376e-47b5-9b83-6d0f44a40d89",
+        "event": "deactivated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-10-07T06:08:44.873Z"
+      },
+      {
+        "id": 12601,
+        "workflowId": "D77M44hCt4fiB341",
+        "versionId": "3d763289-376e-47b5-9b83-6d0f44a40d89",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-10-07T06:08:44.874Z"
+      },
+      {
+        "id": 12602,
+        "workflowId": "D77M44hCt4fiB341",
+        "versionId": "3d763289-376e-47b5-9b83-6d0f44a40d89",
+        "event": "deactivated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-10-07T06:10:02.745Z"
+      },
+      {
+        "id": 12603,
+        "workflowId": "D77M44hCt4fiB341",
+        "versionId": "3d763289-376e-47b5-9b83-6d0f44a40d89",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-10-07T06:10:02.746Z"
+      },
+      {
+        "id": 12604,
+        "workflowId": "D77M44hCt4fiB341",
+        "versionId": "3d763289-376e-47b5-9b83-6d0f44a40d89",
+        "event": "deactivated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-10-07T06:10:03.216Z"
+      },
+      {
+        "id": 12631,
+        "workflowId": "D77M44hCt4fiB341",
+        "versionId": "3d763289-376e-47b5-9b83-6d0f44a40d89",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-10-07T06:32:56.438Z"
+      }
+    ]
+  }
+}

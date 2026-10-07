@@ -1,0 +1,367 @@
+{
+  "id": "qjXBZpolaz5VIaeQ",
+  "name": "One-off NEWINV-ANGEL — Angel Investors tab: home-services / laundry angels (29 Sep)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-29T10:47:59.441Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "00759080-db96-4872-b168-bc07593f0f36",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "c4a7e2d9-3b1f-4c8e-9d20-6f5a1b7e3c94",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-newinv-angel-5f2b9c",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "mt",
+      "name": "Meta",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1Dgs-58U9fIDQst5Na3jby48unemyewUbDvta0enOW0U?fields=sheets.properties",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "rv",
+      "name": "Values",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1Dgs-58U9fIDQst5Na3jby48unemyewUbDvta0enOW0U/values/%27Angel%20Investors%20%27%21A1%3AO700",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cp",
+      "name": "Compute",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const body = $('Webhook').first().json.body || {};\nif (body.secret !== 'angel-29sep-Wq4xT8') throw new Error('bad secret');\nconst dry = body.dry !== false;\nconst sheets = ($('Meta').first().json.sheets || []).map(s => s.properties);\nconst tab = sheets.find(p => String(p.title) === 'Angel Investors ');\nif (!tab) throw new Error('ABORT: no \"Angel Investors \" tab; titles: ' + sheets.map(p => JSON.stringify(p.title)).join(', '));\nconst sid = tab.sheetId;\nconst V = $input.first().json.values || [];\nconst g = (r, c) => (V[r-1] && V[r-1][c] != null) ? String(V[r-1][c]).trim() : '';\nif (g(1,1).toLowerCase() !== 'name of investor' || g(1,3).toLowerCase() !== 'owner') throw new Error('ABORT: header changed: ' + (V[0]||[]).join(' | '));\nlet last = 0; for (let r = 2; r <= V.length; r++) if (g(r,1)) last = r;\nlet lastSn = 0; for (let r = 2; r <= last; r++) if (/^\\d+$/.test(g(r,0))) lastSn = Math.max(lastSn, +g(r,0));\nconst base = s => s.toLowerCase().replace(/\\(.*?\\)/g, '').replace(/[^a-z ]/g, ' ').replace(/\\s+/g, ' ').trim();\nconst existing = new Map(); for (let r = 2; r <= last; r++) if (g(r,1)) existing.set(base(g(r,1)), r);\nconst A = [\n ['Ankit Bhati (Ola)', 'Angel in LaundryMate pre-Series A (May 2023). Holds LaundryMate, a laundry competitor to Washtro: headline traction only in a first meeting.'],\n ['Deepak Goyal (BCG)', 'Angel in LaundryMate pre-Series A (May 2023); BCG managing partner. Holds a laundry competitor: headline traction only in a first meeting.'],\n ['Karan Singh (Trilegal)', 'Angel in LaundryMate pre-Series A (May 2023); Trilegal cofounder. Holds a laundry competitor: headline traction only in a first meeting.'],\n ['Sankalp Saxena (Nutanix India)', 'Angel in LaundryMate pre-Series A (May 2023); Nutanix India MD. Holds a laundry competitor: headline traction only in a first meeting.'],\n ['Abhinay Choudhari (LaundryMate)', 'Founder of LaundryMate, ex-BigBasket cofounder. Competitor founder: approach for advice or intros, not investment.'],\n ['Kunal Bahl (Titan Capital)', 'Backed UrbanClap at seed (2015). Titan Capital cheques US$300-500K. Published pitch address info@titancapital.vc.'],\n ['Rohit Bansal (Titan Capital)', 'Backed UrbanClap at seed (2015). Titan Capital cheques US$300-500K. Published pitch address info@titancapital.vc.'],\n ['Archana Priyadarshini (PointOne Capital)', 'Angel in Broomees (domestic-help platform) seed, c. 2022; GP at PointOne Capital.'],\n ['Puneet Deora (Deoras Group)', 'Angel in Broomees (domestic-help platform) seed, c. 2022; MD, Deoras Group.'],\n ['Vidit Aatrey (Meesho)', 'Angel in Snabbit Series A (Jan 2025). Holds Snabbit (quick home services): possible conflict.'],\n ['Sanjeev Barnwal (Meesho)', 'Angel in Snabbit Series A (Jan 2025). Holds Snabbit (quick home services): possible conflict.'],\n ['Gaurav Munjal (Unacademy)', 'Angel in Snabbit Series A (Jan 2025). Holds Snabbit (quick home services): possible conflict.'],\n ['Niraj Singh (Spinny)', 'Angel in Snabbit Series A (Jan 2025). Holds Snabbit (quick home services): possible conflict.'],\n ['Abhiraj Singh Bhal (Urban Company)', 'Urban Company cofounder; active pre-seed angel (Frex, Dec 2025). Urban Company runs InstaHelp: likely conflicted.'],\n ['Varun Khaitan (Urban Company)', 'Urban Company cofounder; active pre-seed angel (Frex, Dec 2025). Urban Company runs InstaHelp: likely conflicted.'],\n ['Raghav Chandra (Urban Company)', 'Urban Company cofounder; active pre-seed angel (Frex, Dec 2025). Urban Company runs InstaHelp: likely conflicted.'],\n ['Yashish Dahiya (PB Fintech)', 'Angel in Hulp seed (Aug 2026), a household concierge that includes laundry. Holds Hulp: adjacent competitor.'],\n ['Abhishek Goyal (Tracxn)', 'Angel in Slikk seed (Mar 2025), 60-minute fashion delivery. Adjacent category.'],\n ['Abhinav Pathak (Perpule)', 'Angel in Slikk seed (Mar 2025), 60-minute fashion delivery. Adjacent category.'],\n ['Madhav Tandan', 'Angel in Slikk seed (Mar 2025), 60-minute fashion delivery. Check the LinkedIn profile before connecting.'],\n ['Saurabh Gupta (DST Global)', 'Angel in Slikk seed (Mar 2025). Common name: confirm DST Global on the profile before connecting.'],\n ['Puru Gupta (Proteus Partners)', 'Operator-investor; Ecosys (laundry pods) pre-Series A, Sep 2026. Laundry product, not a service.'],\n ['Sreejith Moolayil (Proteus Partners)', 'Operator-investor; Ecosys (laundry pods) pre-Series A, Sep 2026. Laundry product, not a service.']\n];\nconst skipped = [], add = [];\nfor (const a of A) { const k = base(a[0]); if (existing.has(k)) skipped.push(a[0] + ' (already row ' + existing.get(k) + ': ' + g(existing.get(k),1) + ')'); else add.push(a); }\nconst first = last + 1, end = last + add.length;\nfor (let r = first; r <= end; r++) for (let c = 0; c <= 10; c++) if (g(r,c)) throw new Error('ABORT: ' + 'ABCDEFGHIJK'[c] + r + ' not empty: ' + g(r,c));\nconst data = add.map((a, i) => ({ range: \"'Angel Investors '!A\" + (first+i) + ':D' + (first+i), values: [[lastSn + 1 + i, a[0], null, 'Chaman']] }));\nconst fmt = add.length ? [\n  { copyPaste: { source: { sheetId: sid, startRowIndex: last-1, endRowIndex: last, startColumnIndex: 0, endColumnIndex: 11 }, destination: { sheetId: sid, startRowIndex: first-1, endRowIndex: end, startColumnIndex: 0, endColumnIndex: 11 }, pasteType: 'PASTE_FORMAT' } },\n  { updateCells: { start: { sheetId: sid, rowIndex: first-1, columnIndex: 1 }, rows: add.map(a => ({ values: [{ note: a[1] + ' Source: Washtro prospect research, 29 Sep (SidanaWork/angel/washtro-prospects-29sep.md).' }] })), fields: 'note' } }\n] : [];\nif (body.inspect) return [{ json: { inspect: true, tab: tab.title, sheetId: sid, rows: V.length, last, lastSn, lastRow: V[last-1], tail: V.slice(Math.max(0,last-4), last).map(r => (r||[]).slice(0,11).join(' | ')), skipped, toAdd: add.length } }];\nreturn [{ json: { dry, sheetId: sid, last, lastSn, first, end, skipped, toAdd: add.length, valuesBody: { valueInputOption: 'RAW', data }, fmtBody: { requests: fmt }, readRange: \"'Angel Investors '!A\" + first + ':K' + end, preview: data.map(d => d.range.replace(\"'Angel Investors '!\", '') + ' ' + d.values[0].map(x => x == null ? '-' : x).join(' | ')) } }];"
+      }
+    },
+    {
+      "id": "if",
+      "name": "Dry?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "d1",
+              "leftValue": "={{ $json.dry !== false }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "od",
+      "name": "Out dry",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        -150
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const c = $('Compute').first().json; if (c.inspect) return [{ json: c }]; return [{ json: { dry: true, last: c.last, lastSn: c.lastSn, rows: c.first + '-' + c.end, toAdd: c.toAdd, skipped: c.skipped, preview: c.preview } }];"
+      }
+    },
+    {
+      "id": "wv",
+      "name": "Write values",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1000,
+        100
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1Dgs-58U9fIDQst5Na3jby48unemyewUbDvta0enOW0U/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.valuesBody) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "wf",
+      "name": "Write format",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        100
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1Dgs-58U9fIDQst5Na3jby48unemyewUbDvta0enOW0U:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($('Compute').first().json.fmtBody) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "rb",
+      "name": "Read back",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1400,
+        100
+      ],
+      "parameters": {
+        "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/1Dgs-58U9fIDQst5Na3jby48unemyewUbDvta0enOW0U/values/' + encodeURIComponent($('Compute').first().json.readRange) }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "ov",
+      "name": "Out verify",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        100
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const c = $('Compute').first().json; const w = $('Write values').first().json; const f = $('Write format').first().json; return [{ json: { dry: false, rows: c.first + '-' + c.end, updatedCells: w.totalUpdatedCells, formatReplies: (f.replies || []).length, skipped: c.skipped, readback: ($input.first().json.values || []).map(r => (r || []).join(' | ')) } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Meta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Meta": {
+      "main": [
+        [
+          {
+            "node": "Values",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Values": {
+      "main": [
+        [
+          {
+            "node": "Compute",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute": {
+      "main": [
+        [
+          {
+            "node": "Dry?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dry?": {
+      "main": [
+        [
+          {
+            "node": "Out dry",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Write values",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write values": {
+      "main": [
+        [
+          {
+            "node": "Write format",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write format": {
+      "main": [
+        [
+          {
+            "node": "Read back",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read back": {
+      "main": [
+        [
+          {
+            "node": "Out verify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "qjXBZpolaz5VIaeQ",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-29T10:47:59.443Z",
+      "updatedAt": "2026-09-29T10:47:59.443Z"
+    }
+  ],
+  "activeVersion": null
+}

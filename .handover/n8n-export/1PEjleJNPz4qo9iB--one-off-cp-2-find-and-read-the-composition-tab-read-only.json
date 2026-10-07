@@ -1,0 +1,274 @@
+{
+  "id": "1PEjleJNPz4qo9iB",
+  "name": "One-off CP-2 — find and read the Composition tab (read only)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-11T16:33:43.019Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "b92f0c70-6667-4cf2-afbd-9c2a3a0e0543",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once (set before activating)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "13 22 11 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "m1",
+      "name": "GET pilot tabs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4?fields=sheets.properties(sheetId,title,gridProperties)",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "m2",
+      "name": "GET corrections tabs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "continueOnFail": true,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1WOErvuYawblG-HkrK5In5YWtEiKKt_DeoVpmL5na6GU?fields=sheets.properties(sheetId,title,gridProperties)",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cf",
+      "name": "Pick composition tab",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const p = ($('GET pilot tabs').first().json.sheets || []).map(function (x) { return x.properties; });\nconst c = ($('GET corrections tabs').first().json.sheets || []).map(function (x) { return x.properties; });\nconst out = [];\nfor (const t of p) { if (/compos/i.test(t.title)) { out.push({ json: { book: 'pilot', id: '1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4', tab: t.title } }); } }\nfor (const t of c) { if (/compos/i.test(t.title)) { out.push({ json: { book: 'corrections', id: '1WOErvuYawblG-HkrK5In5YWtEiKKt_DeoVpmL5na6GU', tab: t.title } }); } }\nif (!out.length) { out.push({ json: { book: 'none', id: '', tab: '' } }); }\nreturn out;"
+      }
+    },
+    {
+      "id": "rv",
+      "name": "GET tab values",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "continueOnFail": true,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "url": "={{ $json.id ? 'https://sheets.googleapis.com/v4/spreadsheets/' + $json.id + '/values/' + encodeURIComponent(\"'\" + $json.tab + \"'\") : 'https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/CONFIG!A1:A1' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cc",
+      "name": "Collect",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const picks = $('Pick composition tab').all().map(function (i) { return i.json; });\nconst vals = $input.all().map(function (i) { return i.json; });\nconst p = ($('GET pilot tabs').first().json.sheets || []).map(function (x) { return x.properties.title + ' (' + ((x.properties.gridProperties || {}).rowCount || '?') + ' rows)'; });\nconst c = ($('GET corrections tabs').first().json.sheets || []).map(function (x) { return x.properties.title; });\nconst iv = $('GET INVESTORS names').first().json.values || [];\nreturn [{ json: { investors_header: iv[0] || [], investors: iv.slice(1), pilot_tabs: p, corrections_tabs: c, found: picks.map(function (k, i) { return { book: k.book, tab: k.tab, rows: ((vals[i] || {}).values || []).length, values: (vals[i] || {}).values || [] }; }) } }];"
+      }
+    },
+    {
+      "id": "iv",
+      "name": "GET INVESTORS names",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        500,
+        150
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/INVESTORS!A1:J400",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Run once (set before activating)": {
+      "main": [
+        [
+          {
+            "node": "GET pilot tabs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET pilot tabs": {
+      "main": [
+        [
+          {
+            "node": "GET corrections tabs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick composition tab": {
+      "main": [
+        [
+          {
+            "node": "GET tab values",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET tab values": {
+      "main": [
+        [
+          {
+            "node": "Collect",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET corrections tabs": {
+      "main": [
+        [
+          {
+            "node": "GET INVESTORS names",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET INVESTORS names": {
+      "main": [
+        [
+          {
+            "node": "Pick composition tab",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once (set before activating)": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "1PEjleJNPz4qo9iB",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-11T16:33:43.020Z",
+      "updatedAt": "2026-09-11T16:33:43.020Z"
+    }
+  ],
+  "activeVersion": null
+}

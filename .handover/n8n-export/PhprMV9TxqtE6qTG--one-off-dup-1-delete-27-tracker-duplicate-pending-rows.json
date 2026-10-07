@@ -1,0 +1,188 @@
+{
+  "id": "PhprMV9TxqtE6qTG",
+  "name": "One-off DUP-1 — delete 27 tracker-duplicate pending rows",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-09T05:11:57.723Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "97de0abd-6f2b-44ba-bda8-fd4c65fc6dc9",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "trg1",
+      "name": "Run once 10:50 IST 9 Sep",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "50 10 9 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "rd1",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cd1",
+      "name": "Resolve rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Pairs the FULL Deal Tracker (247 rows, read via Sheets API) shows as already shared.\n// The earlier Drive export truncated at row 117, which is how these got into PIPELINE.\nconst T = ['D00942','D00946','D01028','D01125','D02025','D02897','D02902','D02920','D02932','D02947','D02950','D02960','D02964','D02970','D02981','D02988','D03000','D03001','D03003','D03004','D03007','D03011','D03031','D03063','D03064','D03065','D03067'];\nfunction s(v) { return String(v == null ? '' : v).trim(); }\nconst rows = $input.all().map(function (i) { return i.json; });\nif (rows.length < 500) { throw new Error('ABORT: PIPELINE returned only ' + rows.length + ' rows'); }\nconst out = [];\nfor (const t of T) {\n  const h = rows.filter(function (r) { return s(r.deal_id) === t; });\n  if (h.length !== 1) { throw new Error('ABORT: expected 1 row for ' + t + ', found ' + h.length); }\n  if (s(h[0].deal_shared).toLowerCase() === 'yes') { throw new Error('ABORT: ' + t + ' already sent - refusing to delete'); }\n  if (!h[0].row_number) { throw new Error('ABORT: no row_number for ' + t); }\n  out.push({ json: { row_number: Number(h[0].row_number), deal_id: t, investor: s(h[0].investor), startup: s(h[0].startup) } });\n}\nif (out.length !== T.length) { throw new Error('ABORT: resolved ' + out.length + ' of ' + T.length); }\nout.sort(function (a, b) { return b.json.row_number - a.json.row_number; });\nfor (let i = 1; i < out.length; i++) { if (out[i].json.row_number === out[i-1].json.row_number) { throw new Error('ABORT: duplicate row_number'); } }\nreturn out;"
+      }
+    },
+    {
+      "id": "dl1",
+      "name": "Delete duplicates",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "delete",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        },
+        "toDelete": "rows",
+        "startIndex": "={{ $json.row_number }}",
+        "numberToDelete": 1
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Run once 10:50 IST 9 Sep": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Resolve rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve rows": {
+      "main": [
+        [
+          {
+            "node": "Delete duplicates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once 10:50 IST 9 Sep": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "PhprMV9TxqtE6qTG",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-09T05:11:57.725Z",
+      "updatedAt": "2026-09-09T05:11:57.725Z"
+    }
+  ],
+  "activeVersion": null
+}

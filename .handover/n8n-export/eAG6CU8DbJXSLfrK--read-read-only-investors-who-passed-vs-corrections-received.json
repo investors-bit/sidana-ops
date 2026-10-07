@@ -1,0 +1,228 @@
+{
+  "id": "eAG6CU8DbJXSLfrK",
+  "name": "READ (read-only) — investors who passed vs corrections received",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-09T08:06:56.971Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "fae7b54c-0be1-4117-a6a7-9fca1e7ee84f",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "trg1",
+      "name": "Run once 13:44 IST 9 Sep",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "44 13 9 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "rdT",
+      "name": "Read Thesis correction",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        220,
+        -160
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1WOErvuYawblG-HkrK5In5YWtEiKKt_DeoVpmL5na6GU/edit"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Thesis correction"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "rdM",
+      "name": "Read Mail correction",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        440,
+        -100
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1WOErvuYawblG-HkrK5In5YWtEiKKt_DeoVpmL5na6GU/edit"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Mail correction"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "rd1",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cd1",
+      "name": "Passed vs corrected",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nfunction nz(x) { return s(x).toLowerCase().replace(/[^a-z0-9]/g, ''); }\n\nconst pipe = $input.all().map(function (i) { return i.json; });\nif (pipe.length < 500) { throw new Error('ABORT: PIPELINE returned only ' + pipe.length + ' rows'); }\n\n// firms that appear anywhere on the corrections sheet\nconst corrected = {};\nfor (const r of $('Read Thesis correction').all()) {\n  const v = Object.values(r.json).filter(function (x) { return typeof x === 'string'; });\n  if (v.length > 1 && s(v[1])) { corrected[nz(v[1])] = s(v[1]); }\n}\nfor (const r of $('Read Mail correction').all()) {\n  const f = s(r.json['Firm name']);\n  if (f) { corrected[nz(f)] = f; }\n}\n\n// what a 'pass' looks like in this data\nconst respVals = {};\nconst passed = {};\nlet passRows = 0;\nfor (const r of pipe) {\n  const resp = s(r.investor_response);\n  const reason = s(r.pass_reason);\n  const status = s(r.deal_status);\n  if (resp) { respVals[resp] = (respVals[resp] || 0) + 1; }\n  const isPass = /pass|not relevant|not interested|decline|no fit|reject/i.test(resp + ' ' + reason + ' ' + status);\n  if (!isPass) { continue; }\n  passRows++;\n  const inv = s(r.investor);\n  if (!inv) { continue; }\n  if (!passed[inv]) { passed[inv] = { investor: inv, deals: 0 }; }\n  passed[inv].deals++;\n}\n\nconst list = Object.keys(passed).map(function (k) {\n  const nk = nz(k);\n  let hit = corrected[nk] || null;\n  if (!hit) {\n    for (const c of Object.keys(corrected)) {\n      if (c.length > 5 && (c.indexOf(nk) === 0 || nk.indexOf(c) === 0)) { hit = corrected[c]; break; }\n    }\n  }\n  return { investor: k, passed_deals: passed[k].deals, correction_received: hit ? 'YES (' + hit + ')' : 'no' };\n});\nlist.sort(function (a, b) { return b.passed_deals - a.passed_deals; });\n\nconst withC = list.filter(function (x) { return x.correction_received !== 'no'; });\nreturn [{ json: {\n  pass_rows: passRows,\n  unique_investors_who_passed: list.length,\n  of_those_with_a_correction: withC.length,\n  pct: list.length ? Math.round(withC.length / list.length * 1000) / 10 : 0,\n  firms_on_corrections_sheet: Object.keys(corrected).length,\n  investor_response_values_seen: respVals,\n  detail: list\n}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once 13:44 IST 9 Sep": {
+      "main": [
+        [
+          {
+            "node": "Read Thesis correction",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Thesis correction": {
+      "main": [
+        [
+          {
+            "node": "Read Mail correction",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Mail correction": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Passed vs corrected",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once 13:44 IST 9 Sep": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "eAG6CU8DbJXSLfrK",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-09T08:06:56.974Z",
+      "updatedAt": "2026-09-09T08:06:56.974Z"
+    }
+  ],
+  "activeVersion": null
+}

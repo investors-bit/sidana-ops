@@ -1,0 +1,153 @@
+{
+  "id": "Gkc662bRUD0nIYOL",
+  "name": "FF-LOOKUP — light index of fireflies_transcripts, no transcript bodies (webhook, one-off)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-24T10:17:59.819Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "b42fe513-74b2-4b48-948f-157b90d57f52",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "21c767ff-ca82-4196-96cd-31df03898c47",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-ff-lookup-2e9b7c4d51",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "gate",
+      "name": "Gate",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        180,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b=$input.first().json.body||{};if(b.secret!=='sv-mail-2026-09-17-Kq7'){throw new Error('bad secret');}\nreturn [{json:{q:String(b.q||''),full:!!b.full,ff_id:String(b.ff_id||'')}}];"
+      }
+    },
+    {
+      "id": "get",
+      "name": "Get rows",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        380,
+        0
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "fvpArliLTLLXfxm0"
+        },
+        "filters": {
+          "conditions": []
+        },
+        "options": {},
+        "returnAll": true
+      }
+    },
+    {
+      "id": "shape",
+      "name": "Shape",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        580,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const g=$('Gate').first().json;const q=g.q.toLowerCase();\nconst all=$input.all().map(i=>i.json).filter(r=>r&&r.ff_id);\nif(g.ff_id){const one=all.find(r=>String(r.ff_id)===g.ff_id);if(!one){throw new Error('no such ff_id');}\n return [{json:{ff_id:one.ff_id,title:one.title,meeting_date:one.meeting_date,duration_min:one.duration_min,attendees:one.attendees,overview:one.overview,action_items:one.action_items,keywords:one.keywords,ff_url:one.ff_url,transcript:g.full?one.transcript:undefined,transcript_chars:one.transcript_chars}}];}\nlet rows=all;\nif(q){rows=all.filter(r=>((r.title||'')+' '+(r.startup_guess||'')+' '+(r.investor_guess||'')+' '+(r.attendees||'')).toLowerCase().includes(q));}\nrows.sort((a,b)=>String(b.meeting_date||'').localeCompare(String(a.meeting_date||'')));\nconst light=rows.map(r=>({ff_id:r.ff_id,date:String(r.meeting_date||'').slice(0,10),title:r.title,startup:r.startup_guess,investor:r.investor_guess,mins:r.duration_min,chars:r.transcript_chars,has_overview:!!(r.overview&&r.overview.length>10)}));\nreturn [{json:{total_in_table:all.length,matched:light.length,rows:light}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Gate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gate": {
+      "main": [
+        [
+          {
+            "node": "Get rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get rows": {
+      "main": [
+        [
+          {
+            "node": "Shape",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataSuccessExecution": "none",
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "Gkc662bRUD0nIYOL",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-24T10:17:59.821Z",
+      "updatedAt": "2026-09-24T10:17:59.821Z"
+    }
+  ],
+  "activeVersion": null
+}

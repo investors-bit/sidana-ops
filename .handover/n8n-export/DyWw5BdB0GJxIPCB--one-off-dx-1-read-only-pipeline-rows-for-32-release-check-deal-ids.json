@@ -1,0 +1,151 @@
+{
+  "id": "DyWw5BdB0GJxIPCB",
+  "name": "One-off DX-1 — read-only: PIPELINE rows for 32 release-check deal IDs",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-11T11:14:16.825Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "44d00c45-9262-4584-a365-44eac2235ba6",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once (set before activating)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "50 16 11 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "r3",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "c1",
+      "name": "Inspect",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nfunction nz(x) { return s(x).toLowerCase().replace(/[^a-z0-9]/g, ''); }\nconst IDS = ['D04170','D03610','D03395','D03503','D03558','D03859','D03662','D03469','D03671','D04221','D03312','D04044','D03477','D04113','D04155','D03860','D03711','D03956','D04224','D03925','D04168','D04074','D04178','D03868','D04129','D03457','D03906','D03366','D03297','D04096','D03425','D03650'];\nconst want = new Set(IDS);\nconst pipe = $input.all().map(function (i) { return i.json; });\nconst idCount = {}; for (const p of pipe) { const id = s(p.deal_id); if (id) { idCount[id] = (idCount[id] || 0) + 1; } }\nconst dupIds = Object.keys(idCount).filter(function (k) { return idCount[k] > 1; });\nconst rows = pipe.filter(function (p) { return want.has(s(p.deal_id)); }).map(function (p) {\n  return { row: p.row_number, deal_id: s(p.deal_id), startup: s(p.startup), investor: s(p.investor), email: s(p.email), deal_shared: s(p.deal_shared), pause: s(p.pause), next_action: s(p.next_action), next_due: s(p.next_due), match_type: s(p.match_type), notes_tail: s(p.notes).slice(-110) }; });\n// same startup|investor pair appearing more than once among these\nconst pairCount = {}; for (const p of pipe) { const k = nz(p.startup) + '|' + nz(p.investor); pairCount[k] = (pairCount[k] || 0) + 1; }\nfor (const r of rows) { r.pair_rows_in_pipeline = pairCount[nz(r.startup) + '|' + nz(r.investor)] || 0; r.id_rows_in_pipeline = idCount[r.deal_id]; }\nreturn [{ json: { pipeline_rows: pipe.length, duplicated_deal_ids_total: dupIds.length, flagged_ids_found_rows: rows.length, rows: rows } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once (set before activating)": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Inspect",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once (set before activating)": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "DyWw5BdB0GJxIPCB",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-11T11:14:16.827Z",
+      "updatedAt": "2026-09-11T11:14:16.827Z"
+    }
+  ],
+  "activeVersion": null
+}

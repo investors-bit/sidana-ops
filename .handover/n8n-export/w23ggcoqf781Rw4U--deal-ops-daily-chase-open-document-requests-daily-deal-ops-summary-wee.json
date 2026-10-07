@@ -1,0 +1,742 @@
+{
+  "id": "w23ggcoqf781Rw4U",
+  "name": "DEAL-OPS-DAILY — chase open document requests + daily deal-ops summary (weekdays 10:00 IST)",
+  "description": null,
+  "active": true,
+  "activeVersionId": "9b0d0fe6-3346-41fe-b1c0-79fb697352c2",
+  "createdAt": "2026-09-23T15:08:42.844Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "9b0d0fe6-3346-41fe-b1c0-79fb697352c2",
+  "versionCounter": 9,
+  "sourceWorkflowId": null,
+  "triggerCount": 2,
+  "nodes": [
+    {
+      "id": "cron",
+      "name": "Cron",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -400,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 10 * * 1-5"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mc",
+      "name": "Mode cron",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -200,
+        -100
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return [{json:{dry:false,src:'cron'}}];"
+      }
+    },
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "76d6b33c-eca5-4eb5-bc1c-3570f0b62288",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -400,
+        160
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-dealops-run-5e1c8b3f92",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "mh",
+      "name": "Mode hook",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -200,
+        160
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b=$input.first().json.body||{};if(b.secret!=='sv-mail-2026-09-17-Kq7'){throw new Error('bad secret');}return [{json:{dry:b.dry!==false,src:'hook'}}];"
+      }
+    },
+    {
+      "id": "rd",
+      "name": "Read DEAL_OPS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        40,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/DEAL_OPS!A2:U500",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "pl",
+      "name": "Plan",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "let dry=false;try{dry=$('Mode hook').first().json.dry;}catch(e){dry=false;}\nconst rows=$('Read DEAL_OPS').first().json.values||[];\nconst OWN={aditya:'investors@sidanaventures.com',chaman:'dealflow@sidanaventures.com',akansha:'akansha@sidanaventures.com',shradha:'shradhaa@sidanaventures.com',shradhaa:'shradhaa@sidanaventures.com'};\nconst IST=5.5*3600000;const n=new Date(Date.now()+IST);const t0=Date.UTC(n.getUTCFullYear(),n.getUTCMonth(),n.getUTCDate());\nconst todayStr=new Date(t0).toISOString().slice(0,10);\nconst age=s=>{const d=Date.parse(String(s||'').slice(0,10));return isNaN(d)?null:Math.round((t0-d)/86400000);};\nconst LADDER=[2,5,7,14];\nconst esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');\nconst W='<div dir=\"ltr\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:small;color:#222222\">';\nconst SP='<div><br></div>';\nconst due=[],open=[],review=[],stuck=[];\n// --- Investors who replied and have heard nothing since (Aditya 25 Sep: each desk handles the replies for its own startups; hot deals stay with him) ---\n// These rows carry NO next_due, because senders A-D skip any row with investor_response set. Nothing keyed on overdue can ever find them.\nconst pv=$('Read PIPELINE').first().json.values||[];\nconst PH=(pv[0]||[]).map(x=>String(x).trim());const PI={};PH.forEach((h,i)=>{PI[h]=i;});\nconst pg=(r,k)=>{const i=PI[k];if(i===undefined){throw new Error('PIPELINE column missing: '+k+' - widen the Read PIPELINE range');}return String(r[i]||'').trim();};\nconst HOT=['spintly','boncuisine','eosnox','hyrgpt','talentrecruit','hoora','clikd','mindwox','mentorcloud','roadathena','learningpad'];\nconst nzs=s=>String(s||'').toLowerCase().replace(/[^a-z0-9]/g,'');\nconst PASSRE=/^(pass|passed|not active|no |declin|reject|closed|dropped|bounced|not relevant|not interested)/i;\nconst silentDesk={};const silentHot=[];\nfor(let i=1;i<pv.length;i++){const r=pv[i]||[];\n const resp=pg(r,'investor_response');if(!resp)continue;\n if(/^yes$/i.test(pg(r,'pause')))continue;\n if(PASSRE.test(resp)||PASSRE.test(pg(r,'deal_status')))continue;\n const md=pg(r,'meeting_date');if(md&&Date.parse(md)>=t0)continue;\n const rec={startup:pg(r,'startup'),investor:pg(r,'investor'),owner:pg(r,'owner')||'unassigned',resp:resp,days:age(pg(r,'date_shared'))};\n if(HOT.indexOf(nzs(rec.startup))>=0){silentHot.push(rec);}\n else{(silentDesk[rec.owner]=silentDesk[rec.owner]||[]).push(rec);}\n}\nconst byDays=(a,b)=>(b.days||0)-(a.days||0);\nsilentHot.sort(byDays);Object.keys(silentDesk).forEach(k=>silentDesk[k].sort(byDays));\nconst silentTotal=silentHot.length+Object.keys(silentDesk).reduce((n,k)=>n+silentDesk[k].length,0);\nconst sline=x=>'<li><b>'+esc(x.startup)+'</b> x '+esc(x.investor)+' - shared '+(x.days===null?'?':x.days)+'d ago - \"'+esc(String(x.resp).slice(0,90))+'\"</li>';\nlet silentHtml='<div><b>Engaged investors the automation can no longer follow up ('+silentTotal+')</b></div>'+\n '<div style=\"color:#666666\">Senders A-D skip any row whose investor_response is set, permanently, and these rows carry no next_due - so nothing keyed on overdue will ever surface them. <b>This is a candidate list, not proof that nobody has written.</b> Humans reply outside the automation and PIPELINE does not record it: last_contact only captures what the workflows did, not hand-sent mail, so it is stale the same way meetings_held is. <b>Check the investor thread in the mailbox before contacting anyone here</b> - on 25 Sep two rows that looked 17 and 18 days cold turned out to be 8 days, with Aditya personally mid-conversation. The day count below is age since the deal was shared, NOT length of silence.</div>';\nObject.keys(silentDesk).sort().forEach(k=>{silentHtml+='<div style=\"margin-top:6px\"><b>'+esc(k)+'</b> ('+silentDesk[k].length+')</div><ul>'+silentDesk[k].map(sline).join('')+'</ul>';});\nif(silentHot.length){silentHtml+='<div style=\"margin-top:6px\"><b>Hot deals - Aditya handles these himself, desks must not pick them up</b> ('+silentHot.length+')</div><ul>'+silentHot.map(sline).join('')+'</ul>';}\nif(!silentTotal){silentHtml+='<div style=\"color:#666666\">none</div>';}\nrows.forEach((r,i)=>{const g=k=>String(r[k]||'').trim();if(!g(0))return;const sheetRow=i+2;\n const type=g(2),status=g(12),match=g(11),owner=g(4);\n const rec={row:sheetRow,id:g(0),type:type,startup:g(3),owner:owner,investor:g(5),inv_email:g(6),item:g(10),thread:g(8),asked:g(9),chases:parseInt(g(13)||'0',10)||0,cond:g(17),days:age(g(9))};\n if(status==='NEEDS_REVIEW'){review.push(rec);return;}\n if(type!=='DOC_REQUEST'||status!=='OPEN')return;\n if(match!=='STRONG'){review.push(rec);return;}\n open.push(rec);\n if(String(r[14]||'').trim()===todayStr)return;\n const d=rec.days===null?0:rec.days;const nx=LADDER[rec.chases];\n if(nx===undefined){stuck.push(rec);return;}\n if(d>=nx)due.push(rec);\n});\nconst out=[];\ndue.forEach(x=>{const to=OWN[String(x.owner).toLowerCase()]||'investors@sidanaventures.com';\n const link=x.thread?('https://mail.google.com/mail/u/0/#all/'+x.thread):'';\n const html=W+'<div>Hi '+esc(x.owner||'team')+',</div>'+SP+\n '<div>'+esc(x.investor)+' asked for <b>'+esc(x.item)+'</b> on '+esc(x.asked)+' for <b>'+esc(x.startup)+'</b>. That is '+(x.days===null?'?':x.days)+' days open and I cannot see it going out in the thread yet.</div>'+SP+\n '<div>Please send it to '+esc(x.inv_email||x.investor)+'. Once it is in the thread this closes by itself - you do not need to reply to me.</div>'+\n (link?SP+'<div><a href=\"'+link+'\">Open the thread</a></div>':'')+SP+\n '<div style=\"color:#666666\">'+esc(x.id)+' | chaser '+(x.chases+1)+' of 4 | Sidana deal ops</div></div>';\n out.push({json:{kind:'chase',row:x.row,id:x.id,chases:x.chases+1,to:to,subject:'Pending: '+x.item+' for '+x.startup+' ('+x.investor+', '+(x.days===null?'?':x.days)+' days)',html:html}});});\nif(open.length||review.length||stuck.length||silentTotal){\n const li=a=>a.length?('<ul>'+a.map(x=>'<li>'+esc(x.startup)+' x '+esc(x.investor)+' - '+esc(x.item||x.cond)+' ('+esc(x.owner)+(x.days===null?'':', '+x.days+'d')+')</li>').join('')+'</ul>'):'<div style=\"color:#666666\">none</div>';\n const html=W+'<div>Deal ops, '+todayStr+'</div>'+SP+\n '<div><b>Open document requests ('+open.length+')</b></div>'+li(open)+SP+\n '<div><b>Chasers sent today ('+due.length+')</b></div>'+li(due)+SP+\n '<div><b>Needs a decision ('+review.length+')</b> - weak matches and investor triggers. Nothing was chased for these.</div>'+li(review)+SP+\n '<div><b>Four chasers and still open ('+stuck.length+')</b></div>'+li(stuck)+SP+silentHtml+'</div>';\n out.push({json:{kind:'summary',to:'investors@sidanaventures.com',subject:'Deal ops '+todayStr+': '+open.length+' open, '+due.length+' chased, '+review.length+' to decide, '+silentTotal+' awaiting a reply from us',html:html}});}\nif(dry){throw new Error('DRY OK | rows='+rows.length+' open='+open.length+' due='+due.length+' review='+review.length+' stuck='+stuck.length+' emails='+out.length+' silent='+silentTotal+' hdr='+PH.slice(0,30).join(',')+' | '+out.map(o=>o.json.kind+'->'+o.json.to).join(', '));}\nreturn out;"
+      }
+    },
+    {
+      "id": "gm",
+      "name": "Send",
+      "webhookId": "79d6137c-b000-4cd0-a680-4db007e05a35",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        480,
+        0
+      ],
+      "parameters": {
+        "sendTo": "={{ $json.to }}",
+        "subject": "={{ $json.subject }}",
+        "emailType": "html",
+        "message": "={{ $json.html }}",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mymSHTFVWtsI3Mh7",
+          "name": "Gmail account 3"
+        }
+      }
+    },
+    {
+      "id": "wb",
+      "name": "Build writeback",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        700,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const IST=5.5*3600000;const n=new Date(Date.now()+IST);const today=new Date(Date.UTC(n.getUTCFullYear(),n.getUTCMonth(),n.getUTCDate())).toISOString().slice(0,10);\nconst plan=$('Plan').all().map(i=>i.json).filter(x=>x.kind==='chase');\nconst data=[];plan.forEach(x=>{data.push({range:'DEAL_OPS!N'+x.row,values:[[x.chases]]});data.push({range:'DEAL_OPS!O'+x.row,values:[[today]]});});\nreturn [{json:{count:plan.length,body:{valueInputOption:'RAW',data:data}}}];"
+      }
+    },
+    {
+      "id": "up",
+      "name": "Write chases",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        920,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "out",
+      "name": "Out",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1140,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const p=$('Plan').all().map(i=>i.json);const w=$('Build writeback').first().json;const r=$input.first().json;\nreturn [{json:{emails_sent:p.length,chasers:p.filter(x=>x.kind==='chase').length,summary:p.some(x=>x.kind==='summary'),rows_updated:(r&&r.totalUpdatedCells)||0,writeback_rows:w.count}}];"
+      }
+    },
+    {
+      "id": "rp",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        150,
+        140
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/PIPELINE!A1:AL7000",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Cron": {
+      "main": [
+        [
+          {
+            "node": "Mode cron",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mode cron": {
+      "main": [
+        [
+          {
+            "node": "Read DEAL_OPS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Mode hook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mode hook": {
+      "main": [
+        [
+          {
+            "node": "Read DEAL_OPS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Plan": {
+      "main": [
+        [
+          {
+            "node": "Send",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send": {
+      "main": [
+        [
+          {
+            "node": "Build writeback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build writeback": {
+      "main": [
+        [
+          {
+            "node": "Write chases",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write chases": {
+      "main": [
+        [
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read DEAL_OPS": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Cron": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "w23ggcoqf781Rw4U",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-23T15:08:42.846Z",
+      "updatedAt": "2026-09-23T15:08:42.846Z"
+    }
+  ],
+  "activeVersion": {
+    "versionId": "9b0d0fe6-3346-41fe-b1c0-79fb697352c2",
+    "workflowId": "w23ggcoqf781Rw4U",
+    "nodes": [
+      {
+        "id": "cron",
+        "name": "Cron",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          -400,
+          0
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "0 10 * * 1-5"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "mc",
+        "name": "Mode cron",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -200,
+          -100
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "return [{json:{dry:false,src:'cron'}}];"
+        }
+      },
+      {
+        "id": "wh",
+        "name": "Webhook",
+        "webhookId": "76d6b33c-eca5-4eb5-bc1c-3570f0b62288",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          -400,
+          160
+        ],
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "sidana-dealops-run-5e1c8b3f92",
+          "responseMode": "lastNode",
+          "responseData": "firstEntryJson",
+          "options": {}
+        }
+      },
+      {
+        "id": "mh",
+        "name": "Mode hook",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -200,
+          160
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const b=$input.first().json.body||{};if(b.secret!=='sv-mail-2026-09-17-Kq7'){throw new Error('bad secret');}return [{json:{dry:b.dry!==false,src:'hook'}}];"
+        }
+      },
+      {
+        "id": "rd",
+        "name": "Read DEAL_OPS",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          40,
+          0
+        ],
+        "parameters": {
+          "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/DEAL_OPS!A2:U500",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleSheetsOAuth2Api",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "pl",
+        "name": "Plan",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          260,
+          0
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "let dry=false;try{dry=$('Mode hook').first().json.dry;}catch(e){dry=false;}\nconst rows=$('Read DEAL_OPS').first().json.values||[];\nconst OWN={aditya:'investors@sidanaventures.com',chaman:'dealflow@sidanaventures.com',akansha:'akansha@sidanaventures.com',shradha:'shradhaa@sidanaventures.com',shradhaa:'shradhaa@sidanaventures.com'};\nconst IST=5.5*3600000;const n=new Date(Date.now()+IST);const t0=Date.UTC(n.getUTCFullYear(),n.getUTCMonth(),n.getUTCDate());\nconst todayStr=new Date(t0).toISOString().slice(0,10);\nconst age=s=>{const d=Date.parse(String(s||'').slice(0,10));return isNaN(d)?null:Math.round((t0-d)/86400000);};\nconst LADDER=[2,5,7,14];\nconst esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');\nconst W='<div dir=\"ltr\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:small;color:#222222\">';\nconst SP='<div><br></div>';\nconst due=[],open=[],review=[],stuck=[];\n// --- Investors who replied and have heard nothing since (Aditya 25 Sep: each desk handles the replies for its own startups; hot deals stay with him) ---\n// These rows carry NO next_due, because senders A-D skip any row with investor_response set. Nothing keyed on overdue can ever find them.\nconst pv=$('Read PIPELINE').first().json.values||[];\nconst PH=(pv[0]||[]).map(x=>String(x).trim());const PI={};PH.forEach((h,i)=>{PI[h]=i;});\nconst pg=(r,k)=>{const i=PI[k];if(i===undefined){throw new Error('PIPELINE column missing: '+k+' - widen the Read PIPELINE range');}return String(r[i]||'').trim();};\nconst HOT=['spintly','boncuisine','eosnox','hyrgpt','talentrecruit','hoora','clikd','mindwox','mentorcloud','roadathena','learningpad'];\nconst nzs=s=>String(s||'').toLowerCase().replace(/[^a-z0-9]/g,'');\nconst PASSRE=/^(pass|passed|not active|no |declin|reject|closed|dropped|bounced|not relevant|not interested)/i;\nconst silentDesk={};const silentHot=[];\nfor(let i=1;i<pv.length;i++){const r=pv[i]||[];\n const resp=pg(r,'investor_response');if(!resp)continue;\n if(/^yes$/i.test(pg(r,'pause')))continue;\n if(PASSRE.test(resp)||PASSRE.test(pg(r,'deal_status')))continue;\n const md=pg(r,'meeting_date');if(md&&Date.parse(md)>=t0)continue;\n const rec={startup:pg(r,'startup'),investor:pg(r,'investor'),owner:pg(r,'owner')||'unassigned',resp:resp,days:age(pg(r,'date_shared'))};\n if(HOT.indexOf(nzs(rec.startup))>=0){silentHot.push(rec);}\n else{(silentDesk[rec.owner]=silentDesk[rec.owner]||[]).push(rec);}\n}\nconst byDays=(a,b)=>(b.days||0)-(a.days||0);\nsilentHot.sort(byDays);Object.keys(silentDesk).forEach(k=>silentDesk[k].sort(byDays));\nconst silentTotal=silentHot.length+Object.keys(silentDesk).reduce((n,k)=>n+silentDesk[k].length,0);\nconst sline=x=>'<li><b>'+esc(x.startup)+'</b> x '+esc(x.investor)+' - shared '+(x.days===null?'?':x.days)+'d ago - \"'+esc(String(x.resp).slice(0,90))+'\"</li>';\nlet silentHtml='<div><b>Engaged investors the automation can no longer follow up ('+silentTotal+')</b></div>'+\n '<div style=\"color:#666666\">Senders A-D skip any row whose investor_response is set, permanently, and these rows carry no next_due - so nothing keyed on overdue will ever surface them. <b>This is a candidate list, not proof that nobody has written.</b> Humans reply outside the automation and PIPELINE does not record it: last_contact only captures what the workflows did, not hand-sent mail, so it is stale the same way meetings_held is. <b>Check the investor thread in the mailbox before contacting anyone here</b> - on 25 Sep two rows that looked 17 and 18 days cold turned out to be 8 days, with Aditya personally mid-conversation. The day count below is age since the deal was shared, NOT length of silence.</div>';\nObject.keys(silentDesk).sort().forEach(k=>{silentHtml+='<div style=\"margin-top:6px\"><b>'+esc(k)+'</b> ('+silentDesk[k].length+')</div><ul>'+silentDesk[k].map(sline).join('')+'</ul>';});\nif(silentHot.length){silentHtml+='<div style=\"margin-top:6px\"><b>Hot deals - Aditya handles these himself, desks must not pick them up</b> ('+silentHot.length+')</div><ul>'+silentHot.map(sline).join('')+'</ul>';}\nif(!silentTotal){silentHtml+='<div style=\"color:#666666\">none</div>';}\nrows.forEach((r,i)=>{const g=k=>String(r[k]||'').trim();if(!g(0))return;const sheetRow=i+2;\n const type=g(2),status=g(12),match=g(11),owner=g(4);\n const rec={row:sheetRow,id:g(0),type:type,startup:g(3),owner:owner,investor:g(5),inv_email:g(6),item:g(10),thread:g(8),asked:g(9),chases:parseInt(g(13)||'0',10)||0,cond:g(17),days:age(g(9))};\n if(status==='NEEDS_REVIEW'){review.push(rec);return;}\n if(type!=='DOC_REQUEST'||status!=='OPEN')return;\n if(match!=='STRONG'){review.push(rec);return;}\n open.push(rec);\n if(String(r[14]||'').trim()===todayStr)return;\n const d=rec.days===null?0:rec.days;const nx=LADDER[rec.chases];\n if(nx===undefined){stuck.push(rec);return;}\n if(d>=nx)due.push(rec);\n});\nconst out=[];\ndue.forEach(x=>{const to=OWN[String(x.owner).toLowerCase()]||'investors@sidanaventures.com';\n const link=x.thread?('https://mail.google.com/mail/u/0/#all/'+x.thread):'';\n const html=W+'<div>Hi '+esc(x.owner||'team')+',</div>'+SP+\n '<div>'+esc(x.investor)+' asked for <b>'+esc(x.item)+'</b> on '+esc(x.asked)+' for <b>'+esc(x.startup)+'</b>. That is '+(x.days===null?'?':x.days)+' days open and I cannot see it going out in the thread yet.</div>'+SP+\n '<div>Please send it to '+esc(x.inv_email||x.investor)+'. Once it is in the thread this closes by itself - you do not need to reply to me.</div>'+\n (link?SP+'<div><a href=\"'+link+'\">Open the thread</a></div>':'')+SP+\n '<div style=\"color:#666666\">'+esc(x.id)+' | chaser '+(x.chases+1)+' of 4 | Sidana deal ops</div></div>';\n out.push({json:{kind:'chase',row:x.row,id:x.id,chases:x.chases+1,to:to,subject:'Pending: '+x.item+' for '+x.startup+' ('+x.investor+', '+(x.days===null?'?':x.days)+' days)',html:html}});});\nif(open.length||review.length||stuck.length||silentTotal){\n const li=a=>a.length?('<ul>'+a.map(x=>'<li>'+esc(x.startup)+' x '+esc(x.investor)+' - '+esc(x.item||x.cond)+' ('+esc(x.owner)+(x.days===null?'':', '+x.days+'d')+')</li>').join('')+'</ul>'):'<div style=\"color:#666666\">none</div>';\n const html=W+'<div>Deal ops, '+todayStr+'</div>'+SP+\n '<div><b>Open document requests ('+open.length+')</b></div>'+li(open)+SP+\n '<div><b>Chasers sent today ('+due.length+')</b></div>'+li(due)+SP+\n '<div><b>Needs a decision ('+review.length+')</b> - weak matches and investor triggers. Nothing was chased for these.</div>'+li(review)+SP+\n '<div><b>Four chasers and still open ('+stuck.length+')</b></div>'+li(stuck)+SP+silentHtml+'</div>';\n out.push({json:{kind:'summary',to:'investors@sidanaventures.com',subject:'Deal ops '+todayStr+': '+open.length+' open, '+due.length+' chased, '+review.length+' to decide, '+silentTotal+' awaiting a reply from us',html:html}});}\nif(dry){throw new Error('DRY OK | rows='+rows.length+' open='+open.length+' due='+due.length+' review='+review.length+' stuck='+stuck.length+' emails='+out.length+' silent='+silentTotal+' hdr='+PH.slice(0,30).join(',')+' | '+out.map(o=>o.json.kind+'->'+o.json.to).join(', '));}\nreturn out;"
+        }
+      },
+      {
+        "id": "gm",
+        "name": "Send",
+        "webhookId": "79d6137c-b000-4cd0-a680-4db007e05a35",
+        "type": "n8n-nodes-base.gmail",
+        "typeVersion": 2.1,
+        "position": [
+          480,
+          0
+        ],
+        "parameters": {
+          "sendTo": "={{ $json.to }}",
+          "subject": "={{ $json.subject }}",
+          "emailType": "html",
+          "message": "={{ $json.html }}",
+          "options": {}
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "mymSHTFVWtsI3Mh7",
+            "name": "Gmail account 3"
+          }
+        }
+      },
+      {
+        "id": "wb",
+        "name": "Build writeback",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          700,
+          0
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const IST=5.5*3600000;const n=new Date(Date.now()+IST);const today=new Date(Date.UTC(n.getUTCFullYear(),n.getUTCMonth(),n.getUTCDate())).toISOString().slice(0,10);\nconst plan=$('Plan').all().map(i=>i.json).filter(x=>x.kind==='chase');\nconst data=[];plan.forEach(x=>{data.push({range:'DEAL_OPS!N'+x.row,values:[[x.chases]]});data.push({range:'DEAL_OPS!O'+x.row,values:[[today]]});});\nreturn [{json:{count:plan.length,body:{valueInputOption:'RAW',data:data}}}];"
+        }
+      },
+      {
+        "id": "up",
+        "name": "Write chases",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          920,
+          0
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdate",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleSheetsOAuth2Api",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json.body) }}",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "out",
+        "name": "Out",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1140,
+          0
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const p=$('Plan').all().map(i=>i.json);const w=$('Build writeback').first().json;const r=$input.first().json;\nreturn [{json:{emails_sent:p.length,chasers:p.filter(x=>x.kind==='chase').length,summary:p.some(x=>x.kind==='summary'),rows_updated:(r&&r.totalUpdatedCells)||0,writeback_rows:w.count}}];"
+        }
+      },
+      {
+        "id": "rp",
+        "name": "Read PIPELINE",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          150,
+          140
+        ],
+        "parameters": {
+          "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/PIPELINE!A1:AL7000",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleSheetsOAuth2Api",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Cron": {
+        "main": [
+          [
+            {
+              "node": "Mode cron",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Mode cron": {
+        "main": [
+          [
+            {
+              "node": "Read DEAL_OPS",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Mode hook",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Mode hook": {
+        "main": [
+          [
+            {
+              "node": "Read DEAL_OPS",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Plan": {
+        "main": [
+          [
+            {
+              "node": "Send",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Send": {
+        "main": [
+          [
+            {
+              "node": "Build writeback",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build writeback": {
+        "main": [
+          [
+            {
+              "node": "Write chases",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Write chases": {
+        "main": [
+          [
+            {
+              "node": "Out",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Read DEAL_OPS": {
+        "main": [
+          [
+            {
+              "node": "Read PIPELINE",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Read PIPELINE": {
+        "main": [
+          [
+            {
+              "node": "Plan",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "Sidana Ventures",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "createdAt": "2026-09-25T05:59:05.879Z",
+    "updatedAt": "2026-09-25T05:59:05.879Z",
+    "workflowPublishHistory": [
+      {
+        "id": 4953,
+        "workflowId": "w23ggcoqf781Rw4U",
+        "versionId": "9b0d0fe6-3346-41fe-b1c0-79fb697352c2",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-09-25T05:59:05.993Z"
+      },
+      {
+        "id": 11811,
+        "workflowId": "w23ggcoqf781Rw4U",
+        "versionId": "9b0d0fe6-3346-41fe-b1c0-79fb697352c2",
+        "event": "deactivated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-10-05T10:09:13.853Z"
+      },
+      {
+        "id": 11812,
+        "workflowId": "w23ggcoqf781Rw4U",
+        "versionId": "9b0d0fe6-3346-41fe-b1c0-79fb697352c2",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-10-05T10:09:13.854Z"
+      },
+      {
+        "id": 11813,
+        "workflowId": "w23ggcoqf781Rw4U",
+        "versionId": "9b0d0fe6-3346-41fe-b1c0-79fb697352c2",
+        "event": "deactivated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-10-05T10:09:14.369Z"
+      },
+      {
+        "id": 11867,
+        "workflowId": "w23ggcoqf781Rw4U",
+        "versionId": "9b0d0fe6-3346-41fe-b1c0-79fb697352c2",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-10-05T10:47:28.820Z"
+      }
+    ]
+  }
+}

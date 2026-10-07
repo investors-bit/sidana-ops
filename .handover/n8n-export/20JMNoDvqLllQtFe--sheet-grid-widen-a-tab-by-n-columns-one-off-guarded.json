@@ -1,0 +1,226 @@
+{
+  "id": "20JMNoDvqLllQtFe",
+  "name": "SHEET-GRID — widen a tab by N columns (one-off, guarded)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-10-01T07:26:27.999Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "ed90fd99-2c10-498e-ad65-64bab41ba42c",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "a7ae6265-0087-4d74-a785-5b0ff08a9f74",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-sheet-grid-8d4b2f",
+        "responseMode": "lastNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "pr",
+      "name": "Prep",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b=$input.first().json.body||{};\nif(b.secret!=='sv-mail-2026-09-17-Kq7'){throw new Error('bad secret');}\nif(!b.tab){throw new Error('missing tab');}\nconst n=parseInt(b.add_columns,10);\nif(!(n>0&&n<=20)){throw new Error('add_columns must be 1..20');}\nreturn [{json:{tab:b.tab,n:n,sheet:b.sheet||'1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4'}}];"
+      }
+    },
+    {
+      "id": "gm",
+      "name": "Get meta",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/' + $json.sheet + '?fields=sheets.properties' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "bd",
+      "name": "Build",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const p=$('Prep').first().json;\nconst res=$input.first().json;\nif(res.statusCode!==200){throw new Error('meta read failed: '+res.statusCode+' '+JSON.stringify(res.body).slice(0,200));}\nconst sheets=(res.body.sheets||[]).map(function(s){return s.properties;});\nconst t=sheets.filter(function(s){return String(s.title)===String(p.tab);})[0];\nif(!t){throw new Error('tab not found: '+p.tab+' | have: '+sheets.map(function(s){return s.title;}).join(', '));}\nconst before=t.gridProperties.columnCount;\nreturn [{json:{url:'https://sheets.googleapis.com/v4/spreadsheets/'+p.sheet+':batchUpdate',\n  tab:p.tab, sheetId:t.sheetId, columns_before:before, columns_after:before+p.n,\n  body:{requests:[{appendDimension:{sheetId:t.sheetId,dimension:'COLUMNS',length:p.n}}]}}}];"
+      }
+    },
+    {
+      "id": "wr",
+      "name": "Widen",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.url }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "ot",
+      "name": "Out",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b=$('Build').first().json;\nconst r=$input.first().json;\nreturn [{json:{tab:b.tab, sheetId:b.sheetId, columns_before:b.columns_before, columns_after:b.columns_after, status:r.statusCode, ok:(r.statusCode>=200&&r.statusCode<300), error:(r.statusCode>=300?JSON.stringify(r.body).slice(0,300):null)}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Prep",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep": {
+      "main": [
+        [
+          {
+            "node": "Get meta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get meta": {
+      "main": [
+        [
+          {
+            "node": "Build",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build": {
+      "main": [
+        [
+          {
+            "node": "Widen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Widen": {
+      "main": [
+        [
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "20JMNoDvqLllQtFe",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-10-01T07:26:28.002Z",
+      "updatedAt": "2026-10-01T07:26:28.002Z"
+    }
+  ],
+  "activeVersion": null
+}

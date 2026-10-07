@@ -1,0 +1,147 @@
+{
+  "id": "KIomcePOm57RLwim",
+  "name": "One-off VR-1 — verify investor cap after re-date (read only)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-10T15:03:12.784Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "f5febf4e-bfdb-4e7f-bddb-f1cea98cef1b",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once 20:40 IST 10 Sep",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "40 20 10 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "r3",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "c1",
+      "name": "Verify cap",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nfunction nz(x) { return s(x).toLowerCase().replace(/[^a-z0-9@.]/g, ''); }\nconst pipe = $input.all().map(function (i) { return i.json; });\nfunction parseDate(v) { const t = s(v); if (!t) { return null; }\n  let m = t.match(/^(\\d{4})-(\\d{2})-(\\d{2})/); if (m) { return m[1] + '-' + m[2] + '-' + m[3]; }\n  m = t.match(/^(\\d{1,2})[\\/-](\\d{1,2})[\\/-](\\d{2,4})/); if (m) { let y = +m[3]; if (y < 100) { y += 2000; } return y + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[1]).slice(-2); }\n  const d = new Date(t); return isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10); }\nfunction who(p) { const e = s(p.email).split(/[,;\\s]+/)[0].toLowerCase(); return e ? e : 'name:' + nz(p.investor); }\nfunction weekKey(ds) { const d = new Date(ds + 'T00:00:00Z'); const w = d.getUTCDay(); d.setUTCDate(d.getUTCDate() - (w === 0 ? 6 : w - 1)); return d.toISOString().slice(0, 10); }\nconst TODAY = '2026-09-10';\nconst iw = {}, idd = {}, od = {}; let queued = 0, weekend = 0, pastDated = 0, undated = 0;\nfor (const p of pipe) {\n  const sent = s(p.deal_shared).toLowerCase() === 'yes';\n  if (sent) { const d = parseDate(p.date_shared); if (d && d >= '2026-09-07' && d <= TODAY) { const k = who(p) + '|2026-09-07'; iw[k] = (iw[k] || 0) + 1; } continue; }\n  if (s(p.pause).toLowerCase() === 'yes') { continue; }\n  queued++;\n  const d = parseDate(p.next_due); if (!d) { undated++; continue; }\n  if (d <= TODAY) { pastDated++; }\n  const w = new Date(d + 'T00:00:00Z').getUTCDay(); if (w === 0 || w === 6) { weekend++; }\n  const a = who(p) + '|' + weekKey(d); iw[a] = (iw[a] || 0) + 1;\n  const b = who(p) + '|' + d; idd[b] = (idd[b] || 0) + 1;\n  const c = s(p.owner) + '|' + d; od[c] = (od[c] || 0) + 1;\n}\nlet overWeek = 0, maxWeek = 0, maxDay = 0, maxOwner = 0, overWeekFuture = 0; let worst = '';\nfor (const k of Object.keys(iw)) { if (iw[k] > maxWeek) { maxWeek = iw[k]; worst = k; } if (iw[k] > 5) { overWeek++; if (k.split('|')[1] !== '2026-09-07') { overWeekFuture++; } } }\nfor (const k of Object.keys(idd)) { if (idd[k] > maxDay) { maxDay = idd[k]; } }\nfor (const k of Object.keys(od)) { if (od[k] > maxOwner) { maxOwner = od[k]; } }\nreturn [{ json: { pipeline_rows: pipe.length, queued: queued, undated: undated, dated_today_or_earlier: pastDated, on_weekends: weekend,\n  inbox_weeks_over_5: overWeek, of_which_future_weeks: overWeekFuture, max_per_inbox_week: maxWeek, worst: worst,\n  max_per_inbox_day: maxDay, max_per_mailbox_day: maxOwner } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once 20:40 IST 10 Sep": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Verify cap",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once 20:40 IST 10 Sep": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "KIomcePOm57RLwim",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-10T15:03:12.787Z",
+      "updatedAt": "2026-09-10T15:03:12.787Z"
+    }
+  ],
+  "activeVersion": null
+}

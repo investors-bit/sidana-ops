@@ -1,0 +1,172 @@
+{
+  "id": "Y2nyKyUYO42mwTbA",
+  "name": "One-off TS-TEST (read-only) — dry test of the Thesis row-diff against the snapshot (17 Sep)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-17T07:26:50.647Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "b2101066-869b-4ad4-bcb2-5d36cb23ebe9",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "4 13 17 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "v2a",
+      "name": "GET thesis raw",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/1WOErvuYawblG-HkrK5In5YWtEiKKt_DeoVpmL5na6GU/values/' + encodeURIComponent(\"'Thesis correction'!A1:Z400\") }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "v2b",
+      "name": "GET snapshot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/' + encodeURIComponent(\"'THESIS SNAPSHOT'!A1:D600\") }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "v2c",
+      "name": "Row diff",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).replace(/\\s+/g, ' ').trim(); }\nconst grid = $('GET thesis raw').first().json.values || [];\nconst snap = (($('GET snapshot').first().json.values) || []).slice(1).filter(function (r) { return s(r[0]); });\nconst cur = {}; let firm = '';\nfor (let i = 0; i < grid.length; i++) { const cells = (grid[i] || []).map(s); while (cells.length && !cells[cells.length - 1]) { cells.pop(); } if (!cells.length) { continue; } if (cells[0]) { firm = cells[0]; } cur[String(i + 1)] = { firm: firm, text: cells.join(' | ').slice(0, 45000) }; }\nconst old = {}; snap.forEach(function (r) { old[s(r[0])] = { firm: s(r[1]), text: s(r[2]) }; });\nconst changed = Object.keys(cur).filter(function (k) { return old[k] && old[k].text !== cur[k].text; }).map(function (k) { return k + ' ' + cur[k].firm; });\nconst added = Object.keys(cur).filter(function (k) { return !old[k]; });\nconst removed = Object.keys(old).filter(function (k) { return !cur[k]; });\nreturn [{ json: { thesis_rows: Object.keys(cur).length, snapshot_rows: snap.length, changed: changed, new_rows: added, removed_rows: removed, detail: Object.keys(cur).filter(function (k) { return !old[k] || old[k].text !== cur[k].text; }).map(function (k) { return { row: k, now: cur[k].text.slice(0, 700), was: old[k] ? old[k].text.slice(0, 700) : '' }; }) } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once": {
+      "main": [
+        [
+          {
+            "node": "GET thesis raw",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET thesis raw": {
+      "main": [
+        [
+          {
+            "node": "GET snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET snapshot": {
+      "main": [
+        [
+          {
+            "node": "Row diff",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataSuccessExecution": "all",
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "Y2nyKyUYO42mwTbA",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-17T07:26:50.649Z",
+      "updatedAt": "2026-09-17T07:26:50.649Z"
+    }
+  ],
+  "activeVersion": null
+}

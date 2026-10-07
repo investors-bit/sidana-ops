@@ -1,0 +1,229 @@
+{
+  "id": "MtdtZDWa4YnoJP0z",
+  "name": "CAL-PATCH-MB4 — patch an event on Akansha's calendar (clone of CAL-PATCH, akansha@ credential)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-30T12:54:00.411Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "acc5deaf-2fbc-45b3-bf8a-17f58a39b213",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "b1dd98be-f43a-4d6f-b935-704dba2a667e",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-cal-patch-mb4-3d8f2a7e15",
+        "responseMode": "lastNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "pr",
+      "name": "Prep",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b=$input.first().json.body||{};\nif(b.secret!=='sv-mail-2026-09-17-Kq7'){throw new Error('bad secret');}\nif(!b.event_id){throw new Error('missing event_id');}\nreturn [{json:{b:b,url:'https://www.googleapis.com/calendar/v3/calendars/primary/events/'+b.event_id}}];"
+      }
+    },
+    {
+      "id": "gt",
+      "name": "Get",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleCalendarOAuth2Api",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "SUalv0ssD9ruGnuS",
+          "name": "Google Calendar account 2"
+        }
+      }
+    },
+    {
+      "id": "mg",
+      "name": "Merge",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const p=$('Prep').first().json;const b=p.b;const ev=$input.first().json;\nif(!ev||!ev.id){throw new Error('event not found on this calendar: '+JSON.stringify(ev).slice(0,300));}\nconst cur=(ev.attendees||[]).map(function(a){return String(a.email).toLowerCase();});\nconst add=(b.add_attendees||[]).map(function(e){return String(e).trim().toLowerCase();});\nconst rm=(b.remove_attendees||[]).map(function(e){return String(e).trim().toLowerCase();});\nconst list=[].concat(cur,add).filter(function(e,i,arr){return arr.indexOf(e)===i&&rm.indexOf(e)<0;});\nconst patch={};\nif(b.cancel===true){patch.status='cancelled';}\nelse{\nif(add.length||rm.length){patch.attendees=list.map(function(e){return {email:e};});}\nif(b.start){patch.start={dateTime:b.start,timeZone:'Asia/Kolkata'};}\nif(b.end){patch.end={dateTime:b.end,timeZone:'Asia/Kolkata'};}\nif(b.summary){patch.summary=b.summary;}\nif(b.description){patch.description=b.description;}\n}\nif(!Object.keys(patch).length){throw new Error('nothing to change');}\nif(b.expect_summary&&String(ev.summary||'')!==String(b.expect_summary)){throw new Error('REFUSING: summary is \"'+ev.summary+'\", expected \"'+b.expect_summary+'\"');}\nif(b.dry!==false){throw new Error('DRY OK | '+ev.summary+' | now '+((ev.start||{}).dateTime||'')+' | meet '+(ev.hangoutLink||'-')+' | attendees now: '+cur.join(', ')+' | patch='+JSON.stringify(patch));}\nreturn [{json:{url:p.url,patch:patch,was:ev.summary}}];"
+      }
+    },
+    {
+      "id": "pt",
+      "name": "Patch",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $json.url }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleCalendarOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "sendUpdates",
+              "value": "all"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.patch) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "SUalv0ssD9ruGnuS",
+          "name": "Google Calendar account 2"
+        }
+      }
+    },
+    {
+      "id": "ot",
+      "name": "Out",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const e=$input.first().json;\nreturn [{json:{id:e.id,summary:e.summary,start:e.start,end:e.end,meet:e.hangoutLink||'',attendees:(e.attendees||[]).map(function(a){return a.email;})}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Prep",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep": {
+      "main": [
+        [
+          {
+            "node": "Get",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Patch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Patch": {
+      "main": [
+        [
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "MtdtZDWa4YnoJP0z",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-30T12:54:00.414Z",
+      "updatedAt": "2026-09-30T12:54:00.414Z"
+    }
+  ],
+  "activeVersion": null
+}

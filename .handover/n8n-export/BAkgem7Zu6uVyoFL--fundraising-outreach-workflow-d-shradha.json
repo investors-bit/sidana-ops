@@ -1,0 +1,3702 @@
+{
+  "id": "BAkgem7Zu6uVyoFL",
+  "name": "Fundraising Outreach — Workflow D (Shradha)",
+  "description": null,
+  "active": true,
+  "activeVersionId": "cd4652a8-c4fb-4d83-92d2-249977116ac3",
+  "createdAt": "2026-09-01T16:33:35.838Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "cd4652a8-c4fb-4d83-92d2-249977116ac3",
+  "versionCounter": 19,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "7cab9c45-5a50-4d09-b4d2-7ddf3b060007",
+      "name": "Run (press Execute)",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        672
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "37213cdb-1acf-45aa-86cb-9b6e6fd0796f",
+      "name": "Read CONFIG",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        224,
+        768
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "CONFIG"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "c339af27-d55f-4f59-b8d3-421732ee6690",
+      "name": "Build CONFIG object",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        768
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const rows = $input.all();\nconst cfg = {};\nfor (const it of rows) {\n  const k = it.json.setting !== undefined ? it.json.setting : it.json.key;\n  if (k === undefined || k === null || String(k).trim() === '') continue;\n  cfg[String(k).trim()] = it.json.value;\n}\ncfg.OWNER_NAME = 'Shradha';\ncfg.SENDER_NAME = 'Shradha';\nreturn [{ json: cfg }];"
+      }
+    },
+    {
+      "id": "0509df03-c8ca-4420-8dbe-97f9e093fed9",
+      "name": "GLOBAL_PAUSE blank?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        672,
+        768
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "gp",
+              "leftValue": "={{ $json.GLOBAL_PAUSE }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "31a8b672-dcc3-4c07-8be8-328064c4a089",
+      "name": "Read TEMPLATES",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        896,
+        672
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "TEMPLATES"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "624b8df6-23ef-4a89-9e92-a3b95aa7c37c",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        1120,
+        672
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "owner",
+              "lookupValue": "={{ $('Build CONFIG object').first().json.OWNER_NAME }}"
+            },
+            {
+              "lookupColumn": "owner",
+              "lookupValue": ""
+            }
+          ]
+        },
+        "combineFilters": "OR"
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "a1f25e09-3ff1-483b-878e-b28be963d356",
+      "name": "Read STARTUPS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        1344,
+        672
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "STARTUPS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "bb3db287-3cc9-4682-9aa6-8ab72123ae1d",
+      "name": "Read INVESTORS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        1568,
+        672
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "INVESTORS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "a4d1d886-70cc-4e60-be66-9750a7c9b66a",
+      "name": "Read ERROR LOG",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "position": [
+        1792,
+        672
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "ERROR LOG"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "154c1388-510e-44a0-9277-f355f300279e",
+      "name": "Init run state (reset lock)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2016,
+        672
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nstaticData.contactedThisRun = [];\nstaticData.runLog = [];\nreturn $('Read PIPELINE').all();"
+      }
+    },
+    {
+      "id": "614e9bc0-7be1-47cd-b7fc-20c47b2e39e5",
+      "name": "Decide ONE action per row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        672
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const cfg = $('Build CONFIG object').first().json;\nconst OWNER = cfg.OWNER_NAME;\nconst VALID_OWNERS = Object.keys(cfg).filter((k) => /^OWNER_[A-Z]$/.test(k)).map((k) => String(cfg[k]).trim()).filter((v) => v !== '');\nconst tz = cfg.TIMEZONE || 'Asia/Kolkata';\nconst nowTz = DateTime.now().setZone(tz);\nconst today = nowTz.toISODate();\nconst todayWeekday = nowTz.toFormat('cccc');\nconst rotateBySendDay = String(cfg.ROTATE_BY_SEND_DAY || '').trim().toLowerCase() === 'yes';\n\nconst startupByName = {};\nfor (const s of $('Read STARTUPS').all()) { startupByName[String(s.json.startup).trim()] = s.json; }\nconst investorByName = {};\nfor (const v of $('Read INVESTORS').all()) { investorByName[String(v.json.investor).trim()] = v.json; }\n\nconst blank = (x) => x === undefined || x === null || String(x).trim() === '';\nconst isYes = (x) => String(x).trim().toLowerCase() === 'yes';\nconst num = (x) => { const n = parseFloat(String(x).replace(/[^0-9.\\-]/g, '')); return isNaN(n) ? 0 : n; };\nconst isoRe = /^\\d{4}-\\d{2}-\\d{2}$/;\nconst parseDue = (x) => {\n  if (blank(x)) return { ok: true, val: null };\n  const str = String(x).trim();\n  if (!isoRe.test(str)) return { ok: false, val: null };\n  const d = DateTime.fromISO(str, { zone: tz });\n  if (!d.isValid) return { ok: false, val: null };\n  return { ok: true, val: str };\n};\nconst due = (val) => val !== null && val <= today;\n\nconst out = [];\nfor (const item of $input.all()) {\n  const r = item.json;\n  const base = {\n    deal_id: r.deal_id, startup: r.startup, investor: r.investor, owner: r.owner,\n    email: r.email, cc: r.cc, thread_id: r.thread_id, message_id: r.message_id, channel: r.channel,\n  };\n  const push = (action, reason, stage) => out.push({ json: Object.assign({}, base, { action, reason, stage: stage || '' }) });\n\n  const ownerVal = String(r.owner || '').trim();\n  if (ownerVal === '' || VALID_OWNERS.indexOf(ownerVal) === -1) { push('error', \"OWNER_INVALID: owner '\" + ownerVal + \"' not found in CONFIG\", ''); continue; }\n  if (ownerVal !== OWNER) { push('skip', 'not-my-owner', ''); continue; }\n\n  if (!blank(r.pause)) { push('skip', 'row-paused', ''); continue; }\n  if (!blank(r.investor_response)) { push('skip', 'investor_response-set', ''); continue; }\n  if (!blank(r.deal_status) && String(r.deal_status).trim().toLowerCase() !== 'open') { push('skip', 'deal_status-not-open', ''); continue; }\n  if (isYes(r.meeting_scheduled) || !blank(r.meeting_date) || num(r.meetings_held) > 0 || !blank(r.last_meeting_date) || !blank(r.meeting_outcome) || num(r.committed_cr) > 0) {\n    push('skip', 'meeting-stage', ''); continue;\n  }\n  const inv = investorByName[String(r.investor).trim()];\n  if (!inv) { push('error', 'investor-not-found', ''); continue; }\n  if (isYes(inv.do_not_contact)) { push('skip', 'do-not-contact', ''); continue; }\n  const st = startupByName[String(r.startup).trim()];\n  if (!st) { push('error', 'startup-not-found', ''); continue; }\n  if (!isYes(st.active)) { push('error', 'startup-not-active', ''); continue; }\n  if (blank(r.email)) { push('error', 'email-missing', ''); continue; }\n  const varsMissing = blank(st.highlight_1) || blank(st.highlight_2) || blank(st.highlight_3) || blank(st.deck_link) || blank(st.sector) || blank(st.raise_inr_cr) || blank(inv.contact_person) || blank(inv.investor) || blank(st.memo_html);\n  if (varsMissing) { push('error', 'template-var-missing', ''); continue; }\n\n  if (!isYes(r.deal_shared)) {\n    const pd = parseDue(r.next_due);\n    if (!pd.ok) { push('error', 'DATE_PARSE_FAILED', ''); continue; }\n    if (!pd.val) { push('error', 'NEXT_DUE_MISSING', ''); continue; }\n    if (!due(pd.val)) { push('skip', 'initial-not-due', ''); continue; }\n    if (rotateBySendDay && String(st.send_day).trim().toLowerCase() !== todayWeekday.toLowerCase()) {\n      push('skip', 'rotation-not-today', ''); continue;\n    }\n    push('send', 'initial', 'INITIAL'); continue;\n  }\n  const pd = parseDue(r.next_due);\n  if (!pd.ok) { push('error', 'DATE_PARSE_FAILED', ''); continue; }\n  if (isYes(r.deal_shared) && !isYes(r.fu3_done) && !pd.val) { push('error', 'NEXT_DUE_MISSING', ''); continue; }\n  if (!isYes(r.fu1_done) && due(pd.val)) { push('send', 'fu1', 'FU1'); continue; }\n  if (!isYes(r.fu2_done) && due(pd.val)) { push('send', 'fu2', 'FU2'); continue; }\n  if (!isYes(r.fu3_done) && due(pd.val)) { push('send', 'fu3', 'FU3'); continue; }\n  if (isYes(r.fu3_done)) { push('skip', 'fu3-complete', ''); continue; }\n  push('skip', 'nothing-due', '');\n}\nreturn out;"
+      }
+    },
+    {
+      "id": "c31a134f-ed53-4209-a480-ec7189fa854d",
+      "name": "Apply daily caps (per calendar day)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2464,
+        480
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const cfg = $('Build CONFIG object').first().json;\nconst OWNER = cfg.OWNER_NAME;\nconst tz = cfg.TIMEZONE || 'Asia/Kolkata';\nconst today = DateTime.now().setZone(tz).toISODate();\nconst totalCap = parseInt(cfg.DAILY_TOTAL_CAP, 10) || 50;\nconst newCap = parseInt(cfg.DAILY_NEW_SENDS, 10) || 25;\n\nlet sentToday = 0;\nfor (const p of $('Read PIPELINE').all()) {\n  const row = p.json;\n  if (String(row.owner).trim() === OWNER && String(row.last_contact).trim() === today) sentToday++;\n}\n\nconst followups = [];\nconst initials = [];\nfor (const it of $input.all()) {\n  if (it.json.action !== 'send') continue;\n  if (it.json.stage === 'INITIAL') initials.push(it); else followups.push(it);\n}\n\n// PRIORITY rows (notes contain 'PRIORITY', e.g. Train Rex push 18 Sep) take the new-send slots first; order is otherwise unchanged.\nconst PRI = {};\nfor (const p of $('Read PIPELINE').all()) { if (/PRIORITY/.test(String(p.json.notes || ''))) PRI[String(p.json.deal_id).trim()] = 1; }\n// HOT deals (user 22 Sep, Q4 close push) also go first - new shares AND follow-ups.\nconst HOT = ['spintly', 'boncuisine', 'eosnox', 'hyrgpt', 'talentrecruit', 'hoora', 'clikd', 'mindwox', 'mentorcloud', 'roadathena', 'learningpad'];\nfor (const p of $('Read PIPELINE').all()) { if (HOT.indexOf(String(p.json.startup || '').toLowerCase().replace(/[^a-z0-9]/g, '')) >= 0) PRI[String(p.json.deal_id).trim()] = 1; }\ninitials.sort((a, b) => (PRI[String(b.json.deal_id).trim()] ? 1 : 0) - (PRI[String(a.json.deal_id).trim()] ? 1 : 0));\nfollowups.sort((a, b) => (PRI[String(b.json.deal_id).trim()] ? 1 : 0) - (PRI[String(a.json.deal_id).trim()] ? 1 : 0));\n\nlet totalRemaining = totalCap - sentToday;\nif (totalRemaining < 0) totalRemaining = 0;\n\n// New deals claim their slots first (bounded by DAILY_NEW_SENDS), then follow-ups take the rest.\nconst pickNew = [];\nlet newRemaining = newCap;\nfor (const n of initials) {\n  if (totalRemaining <= 0 || newRemaining <= 0) break;\n  pickNew.push(n); totalRemaining--; newRemaining--;\n}\nconst pickFu = [];\nfor (const f of followups) {\n  if (totalRemaining <= 0) break;\n  pickFu.push(f); totalRemaining--;\n}\n\n// Interleave proportionally so neither kind sits at the tail: if a run is cut short\n// it loses a slice of both, not every new deal (see 11/14/15 Sep 2026).\nconst out = [];\nconst nN = pickNew.length, nF = pickFu.length;\nlet ai = 0, bi = 0;\nwhile (ai < nN || bi < nF) {\n  if (ai < nN && (bi >= nF || ai * nF <= bi * nN)) { out.push(pickNew[ai++]); }\n  else { out.push(pickFu[bi++]); }\n}\nreturn out;"
+      }
+    },
+    {
+      "id": "54107a0c-213b-4339-b787-6218adf00778",
+      "name": "Run summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2912,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nconst log = Array.isArray(staticData.runLog) ? staticData.runLog : [];\nconst cfg = $('Build CONFIG object').first().json;\nconst tz = cfg.TIMEZONE || 'Asia/Kolkata';\nconst today = DateTime.now().setZone(tz).toISODate();\n\nlet sends = 0;\nfor (const l of log) { if (String(l.result).indexOf('SEND ') === 0) sends++; }\n\nconst decided = $('Decide ONE action per row').all();\nconst rowsRead = $('Read PIPELINE').all().length;\n\nconst skipCounts = {};\nlet skipped = 0;\nfor (const d of decided) {\n  if (d.json.action === 'skip') { skipped++; const rsn = d.json.reason || 'unknown'; skipCounts[rsn] = (skipCounts[rsn] || 0) + 1; }\n}\nfor (const l of log) {\n  if (l.result === 'SKIP investor-locked-this-run') { skipped++; skipCounts['investor-locked-this-run'] = (skipCounts['investor-locked-this-run'] || 0) + 1; }\n  else if (l.result === 'SKIP investor-locked-sheet') { skipped++; skipCounts['investor-locked-sheet'] = (skipCounts['investor-locked-sheet'] || 0) + 1; }\n}\nconst skipReasons = Object.keys(skipCounts).map((k) => k + ':' + skipCounts[k]).join(', ');\n\nreturn [{ json: {\n  date: today,\n  workflow: 'D',\n  rows_read: rowsRead,\n  decided: decided.length,\n  sent: sends,\n  skipped: skipped,\n  skip_reasons: skipReasons,\n} }];"
+      }
+    },
+    {
+      "id": "19852bda-bfc8-45fb-9cab-a525f81bbe23",
+      "name": "Append RUN LOG",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "position": [
+        3136,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "RUN LOG"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "date",
+              "displayName": "date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "workflow",
+              "displayName": "workflow",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "rows_read",
+              "displayName": "rows_read",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "decided",
+              "displayName": "decided",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "sent",
+              "displayName": "sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "skipped",
+              "displayName": "skipped",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "skip_reasons",
+              "displayName": "skip_reasons",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        },
+        "options": {
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "1111fe93-785b-4384-bdcd-9df19517e7bf",
+      "name": "Wait SEND_GAP_SECONDS",
+      "webhookId": "028f6f3d-7835-4da5-872d-7d911b40309e",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2912,
+        192
+      ],
+      "parameters": {
+        "resume": "timeInterval",
+        "amount": "={{ $('Build CONFIG object').first().json.SEND_GAP_SECONDS }}",
+        "unit": "seconds"
+      }
+    },
+    {
+      "id": "3b9c66f9-08b0-4d0c-8d1f-c9a394088758",
+      "name": "Lock re-check",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3136,
+        192
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const cfg = $('Build CONFIG object').first().json;\nconst tz = cfg.TIMEZONE || 'Asia/Kolkata';\nconst parsedLock = parseInt(cfg.INVESTOR_LOCK_DAYS, 10);\nconst lockDays = isNaN(parsedLock) ? 7 : parsedLock;\nconst today = DateTime.now().setZone(tz);\n\nconst staticData = $getWorkflowStaticData('global');\nif (!Array.isArray(staticData.contactedThisRun)) staticData.contactedThisRun = [];\nif (!Array.isArray(staticData.runLog)) staticData.runLog = [];\n\nconst r = $json;\nconst investorName = String(r.investor).trim();\nconst blank = (x) => x === undefined || x === null || String(x).trim() === '';\nconst isoRe = /^\\d{4}-\\d{2}-\\d{2}$/;\n\nlet inv = null;\nfor (const v of $('Read INVESTORS').all()) { if (String(v.json.investor).trim() === investorName) { inv = v.json; break; } }\n\nif (lockDays > 0) {\n  if (staticData.contactedThisRun.indexOf(investorName) !== -1) {\n    staticData.runLog.push({ deal_id: r.deal_id, result: 'SKIP investor-locked-this-run', investor: investorName });\n    return { json: Object.assign({}, r, { would_send: false, skip_reason: 'investor-locked-this-run' }) };\n  }\n  if (inv && !blank(inv.last_contacted_any) && isoRe.test(String(inv.last_contacted_any).trim())) {\n    const d = DateTime.fromISO(String(inv.last_contacted_any).trim(), { zone: tz });\n    if (d.isValid) {\n      const diff = today.startOf('day').diff(d.startOf('day'), 'days').days;\n      if (diff < lockDays) {\n        staticData.runLog.push({ deal_id: r.deal_id, result: 'SKIP investor-locked-sheet', investor: investorName });\n        return { json: Object.assign({}, r, { would_send: false, skip_reason: 'investor-locked-sheet', locked_since: String(inv.last_contacted_any).trim() }) };\n      }\n    }\n  }\n}\nreturn { json: Object.assign({}, r, { would_send: true }) };"
+      }
+    },
+    {
+      "id": "b5f61256-9ed1-4646-bc01-da7f1f364ef1",
+      "name": "Passes lock?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3360,
+        192
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ws",
+              "leftValue": "={{ $json.would_send }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "e9db842b-c127-4b54-ad99-9e0c53d68954",
+      "name": "Build email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3584,
+        192
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const cfg = $('Build CONFIG object').first().json;\nconst r = $json;\nconst stage = r.stage; // INITIAL | FU1 | FU2 | FU3\n\nlet st = null;\nfor (const s of $('Read STARTUPS').all()) { if (String(s.json.startup).trim() === String(r.startup).trim()) { st = s.json; break; } }\nlet inv = null;\nfor (const v of $('Read INVESTORS').all()) { if (String(v.json.investor).trim() === String(r.investor).trim()) { inv = v.json; break; } }\n\n// ROUTING rows get the routing variant of the INITIAL template only; follow-ups stay on FU1/FU2/FU3.\nconst isRouting = String(r.channel || '').toUpperCase() === 'ROUTING';\nconst tid = (stage === 'INITIAL' && isRouting) ? 'INITIAL_ROUTING' : stage;\n\nlet tpl = null;\nfor (const t of $('Read TEMPLATES').all()) { if (String(t.json.template_id).trim() === tid) { tpl = t.json; break; } }\nif (!tpl) throw new Error('Template not found for stage ' + tid);\n\nconst tokens = {\n  '{{InvestorName}}': inv.investor,\n  '{{ContactPerson}}': inv.contact_person,\n  '{{StartupName}}': st.startup,\n  '{{Sector}}': st.sector,\n  '{{FundraiseAmount}}': st.raise_inr_cr,\n  '{{Revenue}}': st.revenue,\n  '{{Highlight1}}': st.highlight_1,\n  '{{Highlight2}}': st.highlight_2,\n  '{{Highlight3}}': st.highlight_3,\n  '{{DeckLink}}': st.deck_link,\n  '{{SenderName}}': cfg.SENDER_NAME,\n};\nconst fill = (s) => {\n  let out = String(s == null ? '' : s);\n  for (const k in tokens) { out = out.split(k).join(String(tokens[k] == null ? '' : tokens[k])); }\n  return out;\n};\nlet subject = fill(tpl.subject);\nconst body0 = fill(tpl.body);\nlet memoHtml = (st.memo_html == null ? '' : String(st.memo_html));\n\n// ---- RAISE REMOVAL (user rules 2026-09-15 and 2026-09-16) ----\n// (a) pre-revenue startups: the raise is removed from subject + memo for EVERY investor type (from 17 Sep).\n// (b) 13 angels x 27 startups: additionally strips pre-revenue wording and other companies' funding lines.\n// Applied at SEND TIME only; the memo stored in STARTUPS is never modified.\n// Removes text only and keeps every HTML tag so the layout survives. Never throws: if the cleaner errors,\n// unbalances tags or still finds raise text, the memo falls back to name + sector + highlights.\n// 1 Oct 2026: ServeAmigo REMOVED from the list (was 16, now 15). Aditya: \"serve amigo message me they booked 5 lakhs\n// reveneu in september so they are not pre reveneu anymore... fix serve amigo with raise amount\".\n// It booked INR 5 lakh in Sep 2026, so STARTUPS/STARTUP_PROFILE now read Early Revenue and it must show its ask again.\n// Dropping it from _ALL16 also drops it from _HIDE27, which is correct: angels should see the raise too now.\nconst _nz = function (x) { return String(x == null ? '' : x).toLowerCase().replace(/[^a-z0-9]/g, ''); };\nconst _ANGELS = {};\n['Gautam Kapur','Ignacio','Ishan Singh','Jonathan Solamon','Alex Alpert','Devesh','Mandeep Singh','Ankit','Vivasvan','Mohit','Gautham Krishnan','Sayan Ghosh','Michele'].forEach(function (x) { _ANGELS[_nz(x)] = 1; });\nconst _ALL16 = {};\n['Body & Beyond','Outlanders','Koncite','Washtro','Fire Armor','Tronix.AI','Springbase.ai','Formverse','MonitorExam','Pixelence','Fuski.AI','Vilva AI','SkillBytes','Orbit AI','Vira Jal'].forEach(function (x) { _ALL16[_nz(x)] = 1; });\nconst _HIDE27 = Object.assign({}, _ALL16);\n['Opulytics','Train Rex','Xproguard','Indie Stori','Appli','Luxova','AI Signal Labs','Desi Machines','Doffair','bezgoFresh','Chayan Karo'].forEach(function (x) { _HIDE27[_nz(x)] = 1; });\nconst _mode = (_ANGELS[_nz(inv.investor)] && _HIDE27[_nz(st.startup)]) ? 'angel' : (_ALL16[_nz(st.startup)] ? 'all' : '');\nif (_mode) {\n  let _R = null;\n  try { _R = (function () {\nconst AMT = String.raw`(?:(?:₹|\\brs\\.?|\\binr|\\busd|us\\$|\\$|€|\\beur|£)\\s*\\d[\\d.,]*(?:\\s*(?:cr\\b|crores?\\b|lakhs?\\b|lacs?\\b|l\\b|mn\\b|m\\b|million\\b|k\\b|bn\\b|billion\\b))?|\\d[\\d.,]*\\s*(?:cr\\b|crores?\\b|lakhs?\\b|lacs?\\b|mn\\b|million\\b|bn\\b|billion\\b)|\\d[\\d.,]*(?:m|k|l)\\b)`;\nconst KW = String.raw`(?:\\brais(?:e|es|ing)\\b|\\bfund\\s*-?\\s*rais(?:e|es|ing)\\b|\\bfundrais(?:e|es|ing)\\b|\\b(?:fund|funds|funding|investment|capital)\\s*(?:ask|sought|required|requirement|needed)\\b|\\bthe\\s+ask\\b|\\bask\\s*[:\\-–—]|\\basking\\s+for\\b|\\bseeking\\b|\\b(?:round|raise|ticket|cheque|check)\\s*size\\b|\\bminimum\\s+(?:ticket|cheque|check)\\b|\\b(?:current|this|proposed|ongoing)\\s+round\\b)`;\nconst AMT1 = new RegExp(AMT, 'i');\nconst OWN_A = new RegExp(KW + '[^.<|]{0,60}?' + AMT, 'i');\nconst OWN_B = /(?:\\brais(?:e|es|ing)\\b|\\bfund(?:ing)?\\s*ask\\b)[^.<|]{0,15}?\\d/i;\nconst AMT_ROUND = new RegExp(AMT + String.raw`[^.<|]{0,30}?\\b(?:round|raise|fundraise|ask)\\b`, 'i');\nconst CTX_B = new RegExp(String.raw`\\b(?:raised|raises|secured|closed|bagged|landed)\\b[^.<|]{0,60}?` + AMT, 'i');\nconst RAISEREF = /\\b(?:the|this|our)\\s+raise\\s+(?:is|will|would)\\b|\\b(?:funding|funds|capital|proceeds)\\s+(?:raised\\s+)?(?:will|would|shall)\\s+be\\s+(?:used|deployed|allocated|utili[sz]ed)\\b|\\buse\\s+of\\s+(?:funds|proceeds)\\b|\\b(?:this|the\\s+current)\\s+round\\s+is\\s+(?:intended|meant|designed)\\b/i;\nconst PAST = /\\braised\\b|\\bclosed\\b|\\bsecured\\b|\\bled by\\b|\\bbacked by\\b|\\bfunded by\\b/i;\nconst PRE = /pre-?\\s*revenue|pre-?\\s*launch|pre-?\\s*monetis|pre-?\\s*monetiz/i;\nconst HEAD = /^(?:the\\s+)?(?:funding\\s+ask|fund\\s*ask|ask|investment\\s+ask|fundrais(?:e|ing)(?:\\s+details)?|funding\\s+round|current\\s+round|round(?:\\s+details|\\s+size)?|raise|raising|deal\\s+terms)\\s*[:\\-–—]?$/i;\nconst URLISH = /https?:\\/\\/|www\\.|^\\s*(?:website|web|site|press|linkedin)\\s*:/i;\nconst ROUNDLINE = /runway|valuation|pre-?money|post-?money|deployment|use\\s+of\\s+(?:funds|proceeds)|allocation|dilution|\\bsafe\\b|convertible|instrument|ticket|cheque|\\bround\\b|\\braise\\b|\\braising\\b/i;\nconst PAREN = /\\s*\\([^()]*pre-?\\s*(?:revenue|launch|monetis|monetiz)[^()]*\\)/i;\nconst SPLIT_SRC = String.raw`(?<=[.!?])(?<!\\b(?:Rs|RS|rs|No|no|vs|Vs|Pvt|PVT|Ltd|LTD|Inc|approx|Approx|Dr|Mr|Ms|Mrs|St|Co|etc|e\\.g|i\\.e)\\.)\\s+(?=[^a-z\\s])`;\nconst BLOCKTAG = /^<\\/?(?:div|p|li|ul|ol|h[1-6]|table|tbody|thead|tr|td|th|section|blockquote|hr|br)\\b/i;\nconst ENT = {nbsp:' ',amp:'&',bull:'•',rsquo:'’',lsquo:'‘',rdquo:'”',ldquo:'“',quot:'“',apos:'’',mdash:'—',ndash:'–',hellip:'…',lt:'‹',gt:'›',middot:'·',rarr:'→',times:'×',deg:'°',trade:'™',reg:'®',copy:'©',euro:'€',pound:'£',rupee:'₹'};\nfunction classify(x) { if (OWN_A.test(x) || OWN_B.test(x) || RAISEREF.test(x)) { return 'own'; } if (AMT_ROUND.test(x)) { return PAST.test(x) ? 'context' : 'own'; } if (CTX_B.test(x)) { return 'context'; } return null; }\nfunction kill(x, mode) { const c = classify(x); if (c === 'own') { return true; } return mode === 'angel' && (c === 'context' || PRE.test(x)); }\nfunction build(html) { const P = [], S = [], E = []; const n = html.length; let i = 0;\n while (i < n) { const ch = html[i];\n  if (ch === '<') { const j = html.indexOf('>', i); if (j >= 0) { if (BLOCKTAG.test(html.slice(i, j + 1))) { P.push('\\n'); S.push(i); E.push(j + 1); } i = j + 1; continue; } }\n  if (ch === '&') { const m = /^&(#\\d{1,7}|#x[0-9a-f]{1,6}|[a-z]{2,10});/i.exec(html.slice(i, i + 14)); if (m) { const k = m[1]; let d; if (k[0] === '#') { const cp = (k[1] === 'x' || k[1] === 'X') ? parseInt(k.slice(2), 16) : parseInt(k.slice(1), 10); try { d = String.fromCodePoint(cp); } catch (e) { d = ' '; } } else { d = ENT[k.toLowerCase()]; if (d === undefined) { d = ' '; } } for (let q = 0; q < d.length; q++) { P.push(d[q]); S.push(i); E.push(i + m[0].length); } i += m[0].length; continue; } }\n  P.push(/\\s/.test(ch) ? ' ' : ch); S.push(i); E.push(i + 1); i++; }\n return { t: P.join(''), S: S, E: E }; }\nfunction lines(t) { const out = []; let ls = 0;\n for (let k = 0; k <= t.length; k++) { if (k === t.length || t[k] === '\\n') { if (k > ls) { out.push({ s: ls, e: k }); } ls = k + 1; } }\n for (const L of out) { L.segs = []; const lt = t.slice(L.s, L.e); const re = /\\s*\\|\\s*/g; let last = 0, m;\n  while ((m = re.exec(lt)) !== null) { L.segs.push({ s: L.s + last, e: L.s + m.index, sepEnd: L.s + m.index + m[0].length }); last = m.index + m[0].length; }\n  L.segs.push({ s: L.s + last, e: L.e, sepEnd: L.e });\n  for (const G of L.segs) { G.sents = []; const gt = t.slice(G.s, G.e); const sp = new RegExp(SPLIT_SRC, 'g'); let p = 0, x;\n   while ((x = sp.exec(gt)) !== null) { G.sents.push({ s: G.s + p, e: G.s + x.index, next: G.s + x.index + x[0].length }); p = x.index + x[0].length; }\n   G.sents.push({ s: G.s + p, e: G.e, next: G.e }); } }\n return out; }\nfunction headingLike(x) { return x.length <= 40 && /[a-z]/i.test(x) && !/[.!?;,|]/.test(x) && !/:\\s*\\S/.test(x) && !AMT1.test(x); }\nfunction analyse(html, mode) { const B = build(html); const t = B.t; const L = lines(t); const removed = []; const R = [];\n const lt = L.map(function (o) { return t.slice(o.s, o.e).trim(); });\n const gone = L.map(function () { return false; });\n const heads = [];\n for (let a = 0; a < L.length; a++) { if (!lt[a] || !HEAD.test(lt[a])) { continue; } const sect = [];\n  for (let b = a + 1; b < L.length; b++) { if (!lt[b]) { continue; } if (headingLike(lt[b])) { break; } sect.push(b); }\n  heads.push({ a: a, sect: sect });\n  for (const c of sect) { if (URLISH.test(lt[c])) { continue; } if (AMT1.test(lt[c]) || ROUNDLINE.test(lt[c])) { gone[c] = true; removed.push(lt[a] + ' => ' + lt[c].slice(0, 200)); } } }\n for (let a = 0; a < L.length; a++) { if (!lt[a] || gone[a]) { continue; } const segs = L[a].segs; let any = false;\n  for (const G of segs) { let hasText = false, allKill = true;\n   for (const X of G.sents) { const raw = t.slice(X.s, X.e); const x = raw.trim(); if (!x) { continue; } hasText = true;\n    if (!kill(x, mode)) { allKill = false; continue; }\n    if (mode === 'angel' && classify(x) === null) { const pm = PAREN.exec(raw); if (pm) { const rest = raw.slice(0, pm.index) + raw.slice(pm.index + pm[0].length); if (rest.trim() && !PRE.test(rest)) { R.push([X.s + pm.index, X.s + pm.index + pm[0].length]); any = true; allKill = false; removed.push('phrase: ' + pm[0].trim()); continue; } } }\n    X.gone = true; any = true; removed.push(x.slice(0, 240)); }\n   G.hasText = hasText; G.gone = hasText && allKill; }\n  if (!any) { continue; }\n  const withText = segs.filter(function (G) { return G.hasText; });\n  if (withText.every(function (G) { return G.gone; })) { gone[a] = true; continue; }\n  for (let gi = 0; gi < segs.length; gi++) { const G = segs[gi]; if (!G.hasText) { continue; }\n   if (G.gone) { let prevKept = false; for (let k = 0; k < gi; k++) { if (segs[k].hasText && !segs[k].gone) { prevKept = true; } } R.push(prevKept ? [segs[gi - 1].e, G.e] : [G.s, G.sepEnd]); continue; }\n   for (const X of G.sents) { if (X.gone) { R.push([X.s, X.next]); } } } }\n for (const h of heads) { if (gone[h.a]) { continue; } const nu = h.sect.filter(function (c) { return !URLISH.test(lt[c]); }); if (nu.length && nu.every(function (c) { return gone[c]; })) { gone[h.a] = true; removed.push('heading: ' + lt[h.a]); } }\n for (let a = 0; a < L.length; a++) { if (gone[a]) { R.push([L[a].s, L[a].e]); } }\n return { B: B, R: R, removed: removed }; }\nfunction tidy(h) { let prev = null, k = 0;\n while (h !== prev && k < 10) { prev = h; k++;\n  h = h.replace(/<(li|p|div|h[1-6]|td|th|b|strong|em|i|u|span|a|font|small)\\b[^>]*>(?:\\s|&nbsp;|<br\\s*\\/?>|⁣)*⁣(?:\\s|&nbsp;|<br\\s*\\/?>|⁣)*<\\/\\1>/gi, '⁣');\n  h = h.replace(/<(ul|ol|tr|tbody|table)\\b[^>]*>(?:\\s|⁣)*⁣(?:\\s|⁣)*<\\/\\1>/gi, '⁣');\n  h = h.replace(/(<hr\\b[^>]*>)(?:\\s|⁣)*⁣(?:\\s|⁣)*<hr\\b[^>]*>/gi, '$1');\n  h = h.replace(/(<br\\s*\\/?>)(?:\\s|⁣)*⁣(?:\\s|⁣)*<br\\s*\\/?>/gi, '$1'); }\n h = h.replace(/<hr\\b[^>]*>(?:\\s|⁣)*⁣(?:\\s|⁣)*$/i, '');\n h = h.replace(/^(?:\\s|⁣)*⁣(?:\\s|⁣)*<hr\\b[^>]*>/i, '');\n return h.replace(/⁣/g, ''); }\nfunction apply(html, B, R) { const hr = [];\n for (const r of R) { let a = r[0], b = r[1]; while (a < b && B.t[a] === '\\n') { a++; } while (b > a && B.t[b - 1] === '\\n') { b--; } if (b <= a) { continue; } hr.push([B.S[a], B.E[b - 1]]); }\n hr.sort(function (x, y) { return x[0] - y[0]; });\n const m = []; for (const r of hr) { if (m.length && r[0] <= m[m.length - 1][1]) { m[m.length - 1][1] = Math.max(m[m.length - 1][1], r[1]); } else { m.push([r[0], r[1]]); } }\n let out = html; for (let k = m.length - 1; k >= 0; k--) { const sl = out.slice(m[k][0], m[k][1]); const tags = (sl.match(/<[^>]*>/g) || []).join(''); out = out.slice(0, m[k][0]) + '⁣' + tags + '⁣' + out.slice(m[k][1]); }\n return tidy(out); }\nfunction bal(h) { return ['div','p','li','ul','ol','b','strong','em','span','a','table','tr','td','h1','h2','h3','h4','h5','h6'].map(function (tg) { return (h.match(new RegExp(String.raw`<${tg}\\b`, 'gi')) || []).length - (h.match(new RegExp(String.raw`<\\/${tg}>`, 'gi')) || []).length; }).join(','); }\nfunction clean(html, mode) { const src = String(html == null ? '' : html); const A = analyse(src, mode); if (!A.R.length) { return { html: src, removed: A.removed, residual: [], balanced: true, changed: false }; } const out = apply(src, A.B, A.R); return { html: out, removed: A.removed, residual: analyse(out, mode).removed, balanced: bal(out) === bal(src), changed: out !== src }; }\nfunction subjOk(x, mode) { return !kill(x, mode) && !/\\brais(?:e|es|ing)\\b/i.test(x); }\nfunction plain(html) { return build(String(html == null ? '' : html)).t.replace(/\\s*\\n[\\s\\n]*/g, ' ▮ ').replace(/ {2,}/g, ' ').trim(); }\nreturn { clean: clean, subjOk: subjOk, kill: kill, plain: plain };\n})(); } catch (e) { _R = null; }\n  const _crude = /rais(?:e|ed|es|ing)|fund(?:ing)?\\s*ask|\\bask\\b|\\bround\\b|pre-?\\s*revenue|pre-?\\s*launch|pre-?\\s*monetis|pre-?\\s*monetiz/i;\n  subject = String(subject).replace(/\\s*\\|\\s*Rais(?:e|es|ing)\\b[^|]*$/i, '').trim();\n  if (_R ? !_R.subjOk(subject, _mode) : _crude.test(subject)) { subject = st.startup + ' | ' + String(st.sector == null ? '' : st.sector).split('|')[0].trim(); }\n  let _ok = false;\n  if (_R) { try { const _c = _R.clean(memoHtml, _mode); if (_c.balanced && !_c.residual.length) { memoHtml = _c.html; _ok = true; } } catch (e) { _ok = false; } }\n  if (!_ok) {\n    const _esc = function (x) { return String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };\n    const _hs = [st.highlight_1, st.highlight_2, st.highlight_3].map(function (x) { return String(x == null ? '' : x).trim(); }).filter(function (x) { return x && !_crude.test(x); });\n    memoHtml = '<div style=\"font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.65;color:#222222;\">'\n      + '<div style=\"font-weight:700;color:#000000;margin:0 0 6px 0;\">' + _esc(st.startup) + '</div>'\n      + '<div style=\"margin:0 0 12px 0;\">' + _esc(String(st.sector == null ? '' : st.sector).split('|')[0].trim()) + '</div>'\n      + '<ul style=\"margin:0 0 14px 0;padding-left:20px;\">' + _hs.map(function (h) { return '<li style=\"margin:0 0 6px 0;\">' + _esc(h) + '</li>'; }).join('') + '</ul></div>';\n  }\n}\nconst body = String(body0).split('{{MemoBody}}').join('%%MEMOBODY_SLOT%%');\nif (/\\{\\{[^}]+\\}\\}/.test(subject) || /\\{\\{[^}]+\\}\\}/.test(body)) {\n  throw new Error('Unresolved template token for deal ' + r.deal_id);\n}\n\nconst ownerNames = { Aditya: \"Aditya Mishra\", Chaman: \"Chaman Yadav\", Akansha: \"Akansha\", Shradha: \"Shradha\" };\nconst senderFull = ownerNames[String(cfg.SENDER_NAME).trim()] || cfg.SENDER_NAME;\nconst logoUrl = \"https://drive.google.com/uc?export=view&id=1iLMGooCx6B8bmYJxlYMdNg0YhdSoFAFi\";\nconst bodyHtml0 = String(body).split(String.fromCharCode(10)).join(\"<br>\");\nconst bodyHtml = bodyHtml0.split('%%MEMOBODY_SLOT%%').join(\"<div style='height:18px;'></div>\" + memoHtml + \"<div style='height:18px;'></div>\");\nconst sig = \"<br>--<br>\" + \"<img src='\" + logoUrl + \"' alt='Sidana Ventures' width='120' style='display:block;margin-bottom:8px;border:0;'>\" + \"<div style='font-family:Arial,sans-serif;font-size:13px;color:#333333;line-height:1.4;'>\" + \"<span style='font-weight:bold;color:#1a5fb4;'>\" + senderFull + \"</span><br>\" + \"Investor Relations<br>\" + \"<span style='font-weight:bold;'>SIDANA VENTURES LLP</span><br>\" + \"424A Tower B3, Spaze iTech Park, Sector 49, Sohna Road<br>\" + \"Gurgaon, Haryana 122022<br>\" + \"+91 87965 31802<br>\" + \"<a href='https://www.sidanaventures.com' style='color:#1a5fb4;'>www.sidanaventures.com</a>\" + \"</div>\";\nconst html = \"<div style='font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.65;color:#222222;max-width:640px;'>\" + bodyHtml + \"</div>\" + sig;\n\n// ---- DASH GUARD (Aditya, 30 Sep 2026: no dashes in any email, anywhere) ----\n// Runs LAST, after every substitution. Only U+2013 and U+2014, never the hyphen U+002D.\n// Cleans rather than refuses so one bad memo cannot halt the run, then asserts.\nconst _dashFix = function (s) {\n  var x = String(s == null ? '' : s).replace(/&mdash;/gi, '—').replace(/&ndash;/gi, '–');\n  x = x.replace(/\\s+[–—]\\s+/g, ', ');\n  x = x.replace(/[–—]/g, '-');\n  return x;\n};\nsubject = _dashFix(subject);\nconst bodyND = _dashFix(body);\nconst htmlND = _dashFix(html);\nconst _BAD = /[–—]|&mdash;|&ndash;/i;\nif (_BAD.test(subject) || _BAD.test(htmlND)) {\n  throw new Error('DASH FOUND IN OUTBOUND EMAIL after cleaning, refusing to send. deal ' + r.deal_id);\n}\n\nreturn { json: Object.assign({}, r, {\n  to: r.email,\n  cc: r.cc || '',\n  subject,\n  body: bodyND,\n  html: htmlND,\n  threadId: r.thread_id || '',\n  replyMessageId: r.message_id || '',\n}) };"
+      }
+    },
+    {
+      "id": "fea555be-a708-44b3-bf2e-23684f654af5",
+      "name": "Existing thread?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3808,
+        192
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "th",
+              "leftValue": "={{ $json.replyMessageId }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "60c3cc39-3e15-4480-87df-9c89a8029bd4",
+      "name": "Gmail: Reply (threaded)",
+      "webhookId": "db58fd5f-4764-45b5-91f0-50a69db877b4",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "onError": "continueErrorOutput",
+      "position": [
+        4032,
+        128
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "reply",
+        "messageId": "={{ $json.replyMessageId }}",
+        "emailType": "html",
+        "message": "={{ $json.html }}",
+        "options": {
+          "ccList": "={{ $json.cc }}",
+          "appendAttribution": false
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "R5K61omYbU9oT5J8",
+          "name": "Gmail account 5"
+        }
+      }
+    },
+    {
+      "id": "d163dc1b-bcb7-480d-9eed-eb1cc1868f45",
+      "name": "Compute PIPELINE write-back",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4256,
+        176
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const cfg = $('Build CONFIG object').first().json;\nconst tz = cfg.TIMEZONE || 'Asia/Kolkata';\nconst now = DateTime.now().setZone(tz);\nconst today = now.toISODate();\nconst fu1 = parseInt(cfg.FU1_DAYS, 10); const FU1 = isNaN(fu1) ? 4 : fu1;\nconst fu2 = parseInt(cfg.FU2_DAYS, 10); const FU2 = isNaN(fu2) ? 7 : fu2;\nconst fu3 = parseInt(cfg.FU3_DAYS, 10); const FU3 = isNaN(fu3) ? 9 : fu3;\n\nconst resp = $json;\nconst be = $('Build email').item.json;\nconst stage = be.stage;\nconst gmailId = resp.id || '';\nconst gmailThread = resp.threadId || '';\n\nconst row = { deal_id: be.deal_id, last_contact: today };\nif (stage === 'INITIAL') {\n  row.deal_shared = 'Yes';\n  row.date_shared = today;\n  row.channel = 'Email';\n  row.thread_id = gmailThread;\n  row.message_id = gmailId;\n  row.next_action = 'Follow-up 1';\n  row.next_due = now.plus({ days: FU1 }).toISODate();\n} else if (stage === 'FU1') {\n  row.fu1_done = 'Yes';\n  row.fu1_date = today;\n  row.next_action = 'Follow-up 2';\n  row.next_due = now.plus({ days: FU2 }).toISODate();\n} else if (stage === 'FU2') {\n  row.fu2_done = 'Yes';\n  row.fu2_date = today;\n  row.next_action = 'Follow-up 3';\n  row.next_due = now.plus({ days: FU3 }).toISODate();\n} else if (stage === 'FU3') {\n  row.fu3_done = 'Yes';\n  row.fu3_date = today;\n  row.next_action = 'Await investor revert';\n  row.next_due = '';\n}\n\nconst staticData = $getWorkflowStaticData('global');\nif (!Array.isArray(staticData.runLog)) staticData.runLog = [];\nstaticData.runLog.push({ deal_id: be.deal_id, result: 'SEND ' + stage, investor: be.investor, startup: be.startup });\n// Claim the within-run investor lock AFTER a successful send (2.7).\nif (!Array.isArray(staticData.contactedThisRun)) staticData.contactedThisRun = [];\nconst investorName = String(be.investor).trim();\nif (staticData.contactedThisRun.indexOf(investorName) === -1) staticData.contactedThisRun.push(investorName);\n\nreturn { json: row };"
+      }
+    },
+    {
+      "id": "f325476a-bba8-4006-b8dd-79a005b8216f",
+      "name": "Update PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "onError": "continueErrorOutput",
+      "position": [
+        4480,
+        176
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "deal_id"
+          ],
+          "schema": [
+            {
+              "id": "deal_id",
+              "displayName": "deal_id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {
+          "handlingExtraData": "error"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "6293d537-99c1-4731-a5f6-d426e2725aa9",
+      "name": "Update INVESTORS lock",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "onError": "continueErrorOutput",
+      "position": [
+        4704,
+        96
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "INVESTORS"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "investor": "={{ $('Build email').item.json.investor }}",
+            "last_contacted_any": "={{ $now.setZone($('Build CONFIG object').first().json.TIMEZONE || 'Asia/Kolkata').toFormat('yyyy-MM-dd') }}",
+            "contacted_by": "={{ $('Build CONFIG object').first().json.OWNER_NAME }}"
+          },
+          "matchingColumns": [
+            "investor"
+          ],
+          "schema": [
+            {
+              "id": "investor",
+              "displayName": "investor",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "last_contacted_any",
+              "displayName": "last_contacted_any",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "contacted_by",
+              "displayName": "contacted_by",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "0494c630-f1ad-4673-a29d-60a2c051cc0d",
+      "name": "Loop Over Sends (batch 1)",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        2688,
+        480
+      ],
+      "parameters": {
+        "batchSize": 1
+      }
+    },
+    {
+      "id": "fea31367-83e1-4298-af98-98d23002a825",
+      "name": "Build send-failure log",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4256,
+        368
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const cfg = $('Build CONFIG object').first().json;\nconst tz = cfg.TIMEZONE || 'Asia/Kolkata';\nconst today = DateTime.now().setZone(tz).toISODate();\nconst be = $('Build email').item.json;\nconst err = $json;\nconst staticData = $getWorkflowStaticData('global');\nif (!Array.isArray(staticData.runLog)) staticData.runLog = [];\nstaticData.runLog.push({ deal_id: be.deal_id, result: 'SEND_FAILED', investor: be.investor });\nreturn { json: {\n  timestamp: today,\n  workflow: 'D',\n  deal_id: be.deal_id,\n  startup: be.startup,\n  investor: be.investor,\n  error_type: 'SEND_FAILED',\n  details: String((err && (err.error || err.message)) || 'Gmail send failed'),\n  resolved: '',\n} };"
+      }
+    },
+    {
+      "id": "33f5ad07-587e-4e16-9388-9fa529539956",
+      "name": "Append ERROR LOG (send)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        4480,
+        368
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "ERROR LOG"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "workflow",
+              "displayName": "workflow",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "deal_id",
+              "displayName": "deal_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "startup",
+              "displayName": "startup",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "investor",
+              "displayName": "investor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "error_type",
+              "displayName": "error_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "details",
+              "displayName": "details",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "resolved",
+              "displayName": "resolved",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        },
+        "options": {
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "91026690-39c1-414f-9a45-910d6c0d95d8",
+      "name": "Build write-back failure log",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4928,
+        176
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const cfg = $('Build CONFIG object').first().json;\nconst tz = cfg.TIMEZONE || 'Asia/Kolkata';\nconst today = DateTime.now().setZone(tz).toISODate();\nconst be = $('Build email').item.json;\nconst err = $json;\nreturn { json: {\n  timestamp: today,\n  workflow: 'D',\n  deal_id: be.deal_id,\n  startup: be.startup,\n  investor: be.investor,\n  error_type: 'WRITEBACK_FAILED',\n  details: String((err && (err.error || err.message)) || 'Google Sheets write-back failed'),\n  resolved: '',\n} };"
+      }
+    },
+    {
+      "id": "f09b5beb-b99c-479d-b250-686562dc0e05",
+      "name": "Append ERROR LOG (write-back)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        5152,
+        176
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "ERROR LOG"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "workflow",
+              "displayName": "workflow",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "deal_id",
+              "displayName": "deal_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "startup",
+              "displayName": "startup",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "investor",
+              "displayName": "investor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "error_type",
+              "displayName": "error_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "details",
+              "displayName": "details",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "resolved",
+              "displayName": "resolved",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        },
+        "options": {
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "0d21563d-c5d2-4861-9097-c2e6e8a357b4",
+      "name": "Gmail: Send (new)",
+      "webhookId": "579679af-b247-4ee3-93d2-d62c905c6a63",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "onError": "continueErrorOutput",
+      "position": [
+        4032,
+        416
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "={{ $json.to }}",
+        "subject": "={{ $json.subject }}",
+        "emailType": "html",
+        "message": "={{ $json.html }}",
+        "options": {
+          "ccList": "={{ $json.cc }}",
+          "appendAttribution": false
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "R5K61omYbU9oT5J8",
+          "name": "Gmail account 5"
+        }
+      }
+    },
+    {
+      "id": "1f4f7c43-9fca-43ff-8a74-f836954e40a4",
+      "name": "Dedup decision errors",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2464,
+        672
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const cfg = $('Build CONFIG object').first().json;\nconst tz = cfg.TIMEZONE || 'Asia/Kolkata';\nconst today = DateTime.now().setZone(tz).toISODate();\nconst wf = 'D';\n\nconst existing = {};\nfor (const e of $('Read ERROR LOG').all()) {\n  const j = e.json;\n  if (String(j.resolved || '').trim() !== '') continue;\n  existing[String(j.deal_id).trim() + '|' + String(j.error_type).trim()] = true;\n}\n\nconst seen = {};\nconst out = [];\nfor (const it of $input.all()) {\n  const j = it.json;\n  if (j.action !== 'error') continue;\n  const key = String(j.deal_id).trim() + '|' + String(j.reason).trim();\n  if (existing[key] || seen[key]) continue;\n  seen[key] = true;\n  out.push({ json: {\n    timestamp: today,\n    workflow: wf,\n    deal_id: j.deal_id,\n    startup: j.startup,\n    investor: j.investor,\n    error_type: j.reason,\n    details: 'Decision-stage error: ' + j.reason,\n    resolved: '',\n  }});\n}\nreturn out;"
+      }
+    },
+    {
+      "id": "0652f7c5-040a-409c-ad64-08431213e068",
+      "name": "Append ERROR LOG (decision)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "position": [
+        2688,
+        672
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "ERROR LOG"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "workflow",
+              "displayName": "workflow",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "deal_id",
+              "displayName": "deal_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "startup",
+              "displayName": "startup",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "investor",
+              "displayName": "investor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "error_type",
+              "displayName": "error_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "details",
+              "displayName": "details",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "resolved",
+              "displayName": "resolved",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        },
+        "options": {
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "03f36b92-85f4-4422-933c-b3f6da7cc98e",
+      "name": "Run aborted (GLOBAL_PAUSE)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        864
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return [{ json: { aborted: true, reason: 'GLOBAL_PAUSE set in CONFIG — entire run stops' } }];"
+      }
+    },
+    {
+      "id": "51291917-1b52-4cfe-93b0-b871a2b4e27a",
+      "name": "Weekdays 09:00 IST",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        864
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * 1-5"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "shr1",
+      "name": "Build share row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "onError": "continueRegularOutput",
+      "position": [
+        4480,
+        -600
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// One row per send, for the `shares` table. Added 30 Sep 2026.\n// Parallel to the PIPELINE write-back; every node continues on error so a\n// Supabase problem can never break a send.\nconst be = $('Build email').item.json;\nconst cfg = $('Build CONFIG object').first().json;\nconst stage = String(be.stage || '');\nconst fuNo = stage === 'FU1' ? 1 : (stage === 'FU2' ? 2 : (stage === 'FU3' ? 3 : null));\n\n// `Decide ONE action per row` builds a whitelist `base` object that omits\n// match_type, so it never reaches Build email. Read it back from the PIPELINE\n// row by deal_id rather than widening that node on four live senders.\nlet raw = '';\ntry {\n  const did = String(be.deal_id || '').trim();\n  for (const p of $('Read PIPELINE').all()) {\n    if (String(p.json.deal_id || '').trim() === did) { raw = String(p.json.match_type || ''); break; }\n  }\n} catch (e) { raw = ''; }\n\n// The sheet holds prose, not enum codes. Order matters: the stage-off label\n// also contains the word sector, so it has to be tested first.\nlet type = null;\nif (/stage\\s+(?:one\\s+step\\s+)?off/i.test(raw)) { type = 'stage_off'; }\nelse if (/^\\s*exact\\s+match/i.test(raw)) { type = 'strict'; }\nelse if (/sector\\s*\\+\\s*cheque\\s+match/i.test(raw)) { type = 'sector_only'; }\nelse if (/minimum\\s+cheque|fails\\s+cheque/i.test(raw)) { type = 'below_min_cheque'; }\n\nreturn { json: {\n  startup: String(be.startup || '').trim(),\n  investor: String(be.investor || '').trim(),\n  mailbox: String(cfg.SENDER_NAME || '').trim() || null,\n  type: type,\n  match_type_raw: raw,\n  is_followup: stage !== 'INITIAL',\n  followup_no: fuNo\n} };"
+      }
+    },
+    {
+      "id": "shr2",
+      "name": "Find startup id",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        4700,
+        -600
+      ],
+      "parameters": {
+        "url": "=https://elwaquzawoscotlojtnv.supabase.co/rest/v1/startups?select=id&limit=1&name=eq.{{ encodeURIComponent($json.startup) }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "options": {
+          "timeout": 20000,
+          "response": {
+            "response": {
+              "neverError": true,
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "ntQxeHO20ZUMASMg",
+          "name": "Supabase service"
+        }
+      }
+    },
+    {
+      "id": "shr3",
+      "name": "Find investor id",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        4920,
+        -600
+      ],
+      "parameters": {
+        "url": "=https://elwaquzawoscotlojtnv.supabase.co/rest/v1/investors?select=id&limit=1&name=eq.{{ encodeURIComponent($('Build share row').item.json.investor) }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "options": {
+          "timeout": 20000,
+          "response": {
+            "response": {
+              "neverError": true,
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "ntQxeHO20ZUMASMg",
+          "name": "Supabase service"
+        }
+      }
+    },
+    {
+      "id": "shr4",
+      "name": "Record share",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        5140,
+        -600
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://elwaquzawoscotlojtnv.supabase.co/rest/v1/shares",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ startup_id: (($('Find startup id').item.json.body||[])[0]||{}).id, investor_id: (($json.body||[])[0]||{}).id, sent_at: new Date().toISOString(), mailbox: $('Build share row').item.json.mailbox, type: $('Build share row').item.json.type, is_followup: $('Build share row').item.json.is_followup, followup_no: $('Build share row').item.json.followup_no }) }}",
+        "options": {
+          "timeout": 20000,
+          "response": {
+            "response": {
+              "neverError": true,
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "ntQxeHO20ZUMASMg",
+          "name": "Supabase service"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Run (press Execute)": {
+      "main": [
+        [
+          {
+            "node": "Read CONFIG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read CONFIG": {
+      "main": [
+        [
+          {
+            "node": "Build CONFIG object",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build CONFIG object": {
+      "main": [
+        [
+          {
+            "node": "GLOBAL_PAUSE blank?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GLOBAL_PAUSE blank?": {
+      "main": [
+        [
+          {
+            "node": "Read TEMPLATES",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Run aborted (GLOBAL_PAUSE)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read TEMPLATES": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Read STARTUPS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read STARTUPS": {
+      "main": [
+        [
+          {
+            "node": "Read INVESTORS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read INVESTORS": {
+      "main": [
+        [
+          {
+            "node": "Read ERROR LOG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read ERROR LOG": {
+      "main": [
+        [
+          {
+            "node": "Init run state (reset lock)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Init run state (reset lock)": {
+      "main": [
+        [
+          {
+            "node": "Decide ONE action per row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Decide ONE action per row": {
+      "main": [
+        [
+          {
+            "node": "Apply daily caps (per calendar day)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Dedup decision errors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apply daily caps (per calendar day)": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Sends (batch 1)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run summary": {
+      "main": [
+        [
+          {
+            "node": "Append RUN LOG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait SEND_GAP_SECONDS": {
+      "main": [
+        [
+          {
+            "node": "Lock re-check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lock re-check": {
+      "main": [
+        [
+          {
+            "node": "Passes lock?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Passes lock?": {
+      "main": [
+        [
+          {
+            "node": "Build email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop Over Sends (batch 1)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build email": {
+      "main": [
+        [
+          {
+            "node": "Existing thread?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Existing thread?": {
+      "main": [
+        [
+          {
+            "node": "Gmail: Reply (threaded)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Gmail: Send (new)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail: Reply (threaded)": {
+      "main": [
+        [
+          {
+            "node": "Compute PIPELINE write-back",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build send-failure log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute PIPELINE write-back": {
+      "main": [
+        [
+          {
+            "node": "Update PIPELINE",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Build share row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Update INVESTORS lock",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build write-back failure log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update INVESTORS lock": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Sends (batch 1)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build write-back failure log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Sends (batch 1)": {
+      "main": [
+        [
+          {
+            "node": "Run summary",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait SEND_GAP_SECONDS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build send-failure log": {
+      "main": [
+        [
+          {
+            "node": "Append ERROR LOG (send)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append ERROR LOG (send)": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Sends (batch 1)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build write-back failure log": {
+      "main": [
+        [
+          {
+            "node": "Append ERROR LOG (write-back)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail: Send (new)": {
+      "main": [
+        [
+          {
+            "node": "Compute PIPELINE write-back",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build send-failure log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dedup decision errors": {
+      "main": [
+        [
+          {
+            "node": "Append ERROR LOG (decision)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Weekdays 09:00 IST": {
+      "main": [
+        [
+          {
+            "node": "Read CONFIG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append ERROR LOG (write-back)": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Sends (batch 1)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build share row": {
+      "main": [
+        [
+          {
+            "node": "Find startup id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find startup id": {
+      "main": [
+        [
+          {
+            "node": "Find investor id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find investor id": {
+      "main": [
+        [
+          {
+            "node": "Record share",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [
+    {
+      "id": "601d5e11-8a3d-41bc-9643-6b8038048ea1",
+      "name": "Read sheet tabs",
+      "description": "Read the single source of truth: TEMPLATES, PIPELINE, STARTUPS, INVESTORS, ERROR LOG.",
+      "nodeIds": [
+        "31a8b672-dcc3-4c07-8be8-328064c4a089",
+        "624b8df6-23ef-4a89-9e92-a3b95aa7c37c",
+        "a1f25e09-3ff1-483b-878e-b28be963d356",
+        "bb3db287-3cc9-4682-9aa6-8ab72123ae1d",
+        "a4d1d886-70cc-4e60-be66-9750a7c9b66a"
+      ]
+    },
+    {
+      "id": "b13a9216-9aaf-41dc-a447-81f6d7079060",
+      "name": "Errors",
+      "description": "Deduplicate decision-stage errors against ERROR LOG and append new ones.",
+      "nodeIds": [
+        "1f4f7c43-9fca-43ff-8a74-f836954e40a4",
+        "0652f7c5-040a-409c-ad64-08431213e068"
+      ]
+    },
+    {
+      "id": "c1362fc4-390d-42b8-8494-9718a9f64148",
+      "name": "Summary",
+      "description": "Summarise sends / skips / failures for the run and append a RUN LOG row.",
+      "nodeIds": [
+        "54107a0c-213b-4339-b787-6218adf00778",
+        "19852bda-bfc8-45fb-9cab-a525f81bbe23"
+      ]
+    }
+  ],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Schedule (disabled — enable later, stagger :00/:20/:40)": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    },
+    "global": {
+      "contactedThisRun": [
+        "SucSEED Ventures",
+        "Incubate Fund",
+        "Antler",
+        "Tykheblock Ventures",
+        "Ankit",
+        "Jonathan Solamon",
+        "Dynamis Ventures",
+        "Sarcha Advisors Family",
+        "Michele",
+        "Moringa Ventures",
+        "Marwari Catalysts",
+        "888 VC",
+        "Jungle Ventures"
+      ],
+      "runLog": [
+        {
+          "deal_id": "D01093",
+          "result": "SEND INITIAL",
+          "investor": "SucSEED Ventures",
+          "startup": "SureChain"
+        },
+        {
+          "deal_id": "D00974",
+          "result": "SEND FU1",
+          "investor": "Incubate Fund",
+          "startup": "SureChain"
+        },
+        {
+          "deal_id": "D06181",
+          "result": "SEND FU1",
+          "investor": "Antler",
+          "startup": "Ulai"
+        },
+        {
+          "deal_id": "D01096",
+          "result": "SEND INITIAL",
+          "investor": "Tykheblock Ventures",
+          "startup": "SureChain"
+        },
+        {
+          "deal_id": "D04794",
+          "result": "SEND FU1",
+          "investor": "Ankit",
+          "startup": "Fydo"
+        },
+        {
+          "deal_id": "D05736",
+          "result": "SEND FU1",
+          "investor": "Jonathan Solamon",
+          "startup": "Ulai"
+        },
+        {
+          "deal_id": "D01310",
+          "result": "SEND INITIAL",
+          "investor": "Dynamis Ventures",
+          "startup": "ServeAmigo"
+        },
+        {
+          "deal_id": "D05857",
+          "result": "SEND FU1",
+          "investor": "Sarcha Advisors Family",
+          "startup": "AI Signal Labs"
+        },
+        {
+          "deal_id": "D04720",
+          "result": "SEND INITIAL",
+          "investor": "Michele",
+          "startup": "AI Signal Labs"
+        },
+        {
+          "deal_id": "D06806",
+          "result": "SEND FU1",
+          "investor": "Moringa Ventures",
+          "startup": "Orbit AI"
+        },
+        {
+          "deal_id": "D06898",
+          "result": "SEND FU1",
+          "investor": "Marwari Catalysts",
+          "startup": "Outlanders"
+        },
+        {
+          "deal_id": "D06988",
+          "result": "SEND INITIAL",
+          "investor": "888 VC",
+          "startup": "AI Signal Labs"
+        },
+        {
+          "deal_id": "D07214",
+          "result": "SEND FU1",
+          "investor": "Jungle Ventures",
+          "startup": "AI Signal Labs"
+        }
+      ]
+    },
+    "node:Weekdays 09:00 IST": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "BAkgem7Zu6uVyoFL",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-01T16:33:35.840Z",
+      "updatedAt": "2026-09-01T16:33:35.840Z"
+    }
+  ],
+  "activeVersion": {
+    "versionId": "cd4652a8-c4fb-4d83-92d2-249977116ac3",
+    "workflowId": "BAkgem7Zu6uVyoFL",
+    "nodes": [
+      {
+        "id": "7cab9c45-5a50-4d09-b4d2-7ddf3b060007",
+        "name": "Run (press Execute)",
+        "type": "n8n-nodes-base.manualTrigger",
+        "typeVersion": 1,
+        "position": [
+          0,
+          672
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "37213cdb-1acf-45aa-86cb-9b6e6fd0796f",
+        "name": "Read CONFIG",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.7,
+        "executeOnce": true,
+        "position": [
+          224,
+          768
+        ],
+        "parameters": {
+          "resource": "sheet",
+          "operation": "read",
+          "documentId": {
+            "__rl": true,
+            "mode": "url",
+            "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+          },
+          "sheetName": {
+            "__rl": true,
+            "mode": "name",
+            "value": "CONFIG"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "c339af27-d55f-4f59-b8d3-421732ee6690",
+        "name": "Build CONFIG object",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          448,
+          768
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const rows = $input.all();\nconst cfg = {};\nfor (const it of rows) {\n  const k = it.json.setting !== undefined ? it.json.setting : it.json.key;\n  if (k === undefined || k === null || String(k).trim() === '') continue;\n  cfg[String(k).trim()] = it.json.value;\n}\ncfg.OWNER_NAME = 'Shradha';\ncfg.SENDER_NAME = 'Shradha';\nreturn [{ json: cfg }];"
+        }
+      },
+      {
+        "id": "0509df03-c8ca-4420-8dbe-97f9e093fed9",
+        "name": "GLOBAL_PAUSE blank?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          672,
+          768
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "gp",
+                "leftValue": "={{ $json.GLOBAL_PAUSE }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "string",
+                  "operation": "empty",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          }
+        }
+      },
+      {
+        "id": "31a8b672-dcc3-4c07-8be8-328064c4a089",
+        "name": "Read TEMPLATES",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.7,
+        "executeOnce": true,
+        "position": [
+          896,
+          672
+        ],
+        "parameters": {
+          "resource": "sheet",
+          "operation": "read",
+          "documentId": {
+            "__rl": true,
+            "mode": "url",
+            "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+          },
+          "sheetName": {
+            "__rl": true,
+            "mode": "name",
+            "value": "TEMPLATES"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "624b8df6-23ef-4a89-9e92-a3b95aa7c37c",
+        "name": "Read PIPELINE",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.7,
+        "executeOnce": true,
+        "position": [
+          1120,
+          672
+        ],
+        "parameters": {
+          "resource": "sheet",
+          "operation": "read",
+          "documentId": {
+            "__rl": true,
+            "mode": "url",
+            "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+          },
+          "sheetName": {
+            "__rl": true,
+            "mode": "name",
+            "value": "PIPELINE"
+          },
+          "filtersUI": {
+            "values": [
+              {
+                "lookupColumn": "owner",
+                "lookupValue": "={{ $('Build CONFIG object').first().json.OWNER_NAME }}"
+              },
+              {
+                "lookupColumn": "owner",
+                "lookupValue": ""
+              }
+            ]
+          },
+          "combineFilters": "OR"
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "a1f25e09-3ff1-483b-878e-b28be963d356",
+        "name": "Read STARTUPS",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.7,
+        "executeOnce": true,
+        "position": [
+          1344,
+          672
+        ],
+        "parameters": {
+          "resource": "sheet",
+          "operation": "read",
+          "documentId": {
+            "__rl": true,
+            "mode": "url",
+            "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+          },
+          "sheetName": {
+            "__rl": true,
+            "mode": "name",
+            "value": "STARTUPS"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "bb3db287-3cc9-4682-9aa6-8ab72123ae1d",
+        "name": "Read INVESTORS",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.7,
+        "executeOnce": true,
+        "position": [
+          1568,
+          672
+        ],
+        "parameters": {
+          "resource": "sheet",
+          "operation": "read",
+          "documentId": {
+            "__rl": true,
+            "mode": "url",
+            "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+          },
+          "sheetName": {
+            "__rl": true,
+            "mode": "name",
+            "value": "INVESTORS"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "a4d1d886-70cc-4e60-be66-9750a7c9b66a",
+        "name": "Read ERROR LOG",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.7,
+        "executeOnce": true,
+        "alwaysOutputData": true,
+        "position": [
+          1792,
+          672
+        ],
+        "parameters": {
+          "resource": "sheet",
+          "operation": "read",
+          "documentId": {
+            "__rl": true,
+            "mode": "url",
+            "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+          },
+          "sheetName": {
+            "__rl": true,
+            "mode": "name",
+            "value": "ERROR LOG"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "154c1388-510e-44a0-9277-f355f300279e",
+        "name": "Init run state (reset lock)",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2016,
+          672
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const staticData = $getWorkflowStaticData('global');\nstaticData.contactedThisRun = [];\nstaticData.runLog = [];\nreturn $('Read PIPELINE').all();"
+        }
+      },
+      {
+        "id": "614e9bc0-7be1-47cd-b7fc-20c47b2e39e5",
+        "name": "Decide ONE action per row",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2240,
+          672
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const cfg = $('Build CONFIG object').first().json;\nconst OWNER = cfg.OWNER_NAME;\nconst VALID_OWNERS = Object.keys(cfg).filter((k) => /^OWNER_[A-Z]$/.test(k)).map((k) => String(cfg[k]).trim()).filter((v) => v !== '');\nconst tz = cfg.TIMEZONE || 'Asia/Kolkata';\nconst nowTz = DateTime.now().setZone(tz);\nconst today = nowTz.toISODate();\nconst todayWeekday = nowTz.toFormat('cccc');\nconst rotateBySendDay = String(cfg.ROTATE_BY_SEND_DAY || '').trim().toLowerCase() === 'yes';\n\nconst startupByName = {};\nfor (const s of $('Read STARTUPS').all()) { startupByName[String(s.json.startup).trim()] = s.json; }\nconst investorByName = {};\nfor (const v of $('Read INVESTORS').all()) { investorByName[String(v.json.investor).trim()] = v.json; }\n\nconst blank = (x) => x === undefined || x === null || String(x).trim() === '';\nconst isYes = (x) => String(x).trim().toLowerCase() === 'yes';\nconst num = (x) => { const n = parseFloat(String(x).replace(/[^0-9.\\-]/g, '')); return isNaN(n) ? 0 : n; };\nconst isoRe = /^\\d{4}-\\d{2}-\\d{2}$/;\nconst parseDue = (x) => {\n  if (blank(x)) return { ok: true, val: null };\n  const str = String(x).trim();\n  if (!isoRe.test(str)) return { ok: false, val: null };\n  const d = DateTime.fromISO(str, { zone: tz });\n  if (!d.isValid) return { ok: false, val: null };\n  return { ok: true, val: str };\n};\nconst due = (val) => val !== null && val <= today;\n\nconst out = [];\nfor (const item of $input.all()) {\n  const r = item.json;\n  const base = {\n    deal_id: r.deal_id, startup: r.startup, investor: r.investor, owner: r.owner,\n    email: r.email, cc: r.cc, thread_id: r.thread_id, message_id: r.message_id, channel: r.channel,\n  };\n  const push = (action, reason, stage) => out.push({ json: Object.assign({}, base, { action, reason, stage: stage || '' }) });\n\n  const ownerVal = String(r.owner || '').trim();\n  if (ownerVal === '' || VALID_OWNERS.indexOf(ownerVal) === -1) { push('error', \"OWNER_INVALID: owner '\" + ownerVal + \"' not found in CONFIG\", ''); continue; }\n  if (ownerVal !== OWNER) { push('skip', 'not-my-owner', ''); continue; }\n\n  if (!blank(r.pause)) { push('skip', 'row-paused', ''); continue; }\n  if (!blank(r.investor_response)) { push('skip', 'investor_response-set', ''); continue; }\n  if (!blank(r.deal_status) && String(r.deal_status).trim().toLowerCase() !== 'open') { push('skip', 'deal_status-not-open', ''); continue; }\n  if (isYes(r.meeting_scheduled) || !blank(r.meeting_date) || num(r.meetings_held) > 0 || !blank(r.last_meeting_date) || !blank(r.meeting_outcome) || num(r.committed_cr) > 0) {\n    push('skip', 'meeting-stage', ''); continue;\n  }\n  const inv = investorByName[String(r.investor).trim()];\n  if (!inv) { push('error', 'investor-not-found', ''); continue; }\n  if (isYes(inv.do_not_contact)) { push('skip', 'do-not-contact', ''); continue; }\n  const st = startupByName[String(r.startup).trim()];\n  if (!st) { push('error', 'startup-not-found', ''); continue; }\n  if (!isYes(st.active)) { push('error', 'startup-not-active', ''); continue; }\n  if (blank(r.email)) { push('error', 'email-missing', ''); continue; }\n  const varsMissing = blank(st.highlight_1) || blank(st.highlight_2) || blank(st.highlight_3) || blank(st.deck_link) || blank(st.sector) || blank(st.raise_inr_cr) || blank(inv.contact_person) || blank(inv.investor) || blank(st.memo_html);\n  if (varsMissing) { push('error', 'template-var-missing', ''); continue; }\n\n  if (!isYes(r.deal_shared)) {\n    const pd = parseDue(r.next_due);\n    if (!pd.ok) { push('error', 'DATE_PARSE_FAILED', ''); continue; }\n    if (!pd.val) { push('error', 'NEXT_DUE_MISSING', ''); continue; }\n    if (!due(pd.val)) { push('skip', 'initial-not-due', ''); continue; }\n    if (rotateBySendDay && String(st.send_day).trim().toLowerCase() !== todayWeekday.toLowerCase()) {\n      push('skip', 'rotation-not-today', ''); continue;\n    }\n    push('send', 'initial', 'INITIAL'); continue;\n  }\n  const pd = parseDue(r.next_due);\n  if (!pd.ok) { push('error', 'DATE_PARSE_FAILED', ''); continue; }\n  if (isYes(r.deal_shared) && !isYes(r.fu3_done) && !pd.val) { push('error', 'NEXT_DUE_MISSING', ''); continue; }\n  if (!isYes(r.fu1_done) && due(pd.val)) { push('send', 'fu1', 'FU1'); continue; }\n  if (!isYes(r.fu2_done) && due(pd.val)) { push('send', 'fu2', 'FU2'); continue; }\n  if (!isYes(r.fu3_done) && due(pd.val)) { push('send', 'fu3', 'FU3'); continue; }\n  if (isYes(r.fu3_done)) { push('skip', 'fu3-complete', ''); continue; }\n  push('skip', 'nothing-due', '');\n}\nreturn out;"
+        }
+      },
+      {
+        "id": "c31a134f-ed53-4209-a480-ec7189fa854d",
+        "name": "Apply daily caps (per calendar day)",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2464,
+          480
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const cfg = $('Build CONFIG object').first().json;\nconst OWNER = cfg.OWNER_NAME;\nconst tz = cfg.TIMEZONE || 'Asia/Kolkata';\nconst today = DateTime.now().setZone(tz).toISODate();\nconst totalCap = parseInt(cfg.DAILY_TOTAL_CAP, 10) || 50;\nconst newCap = parseInt(cfg.DAILY_NEW_SENDS, 10) || 25;\n\nlet sentToday = 0;\nfor (const p of $('Read PIPELINE').all()) {\n  const row = p.json;\n  if (String(row.owner).trim() === OWNER && String(row.last_contact).trim() === today) sentToday++;\n}\n\nconst followups = [];\nconst initials = [];\nfor (const it of $input.all()) {\n  if (it.json.action !== 'send') continue;\n  if (it.json.stage === 'INITIAL') initials.push(it); else followups.push(it);\n}\n\n// PRIORITY rows (notes contain 'PRIORITY', e.g. Train Rex push 18 Sep) take the new-send slots first; order is otherwise unchanged.\nconst PRI = {};\nfor (const p of $('Read PIPELINE').all()) { if (/PRIORITY/.test(String(p.json.notes || ''))) PRI[String(p.json.deal_id).trim()] = 1; }\n// HOT deals (user 22 Sep, Q4 close push) also go first - new shares AND follow-ups.\nconst HOT = ['spintly', 'boncuisine', 'eosnox', 'hyrgpt', 'talentrecruit', 'hoora', 'clikd', 'mindwox', 'mentorcloud', 'roadathena', 'learningpad'];\nfor (const p of $('Read PIPELINE').all()) { if (HOT.indexOf(String(p.json.startup || '').toLowerCase().replace(/[^a-z0-9]/g, '')) >= 0) PRI[String(p.json.deal_id).trim()] = 1; }\ninitials.sort((a, b) => (PRI[String(b.json.deal_id).trim()] ? 1 : 0) - (PRI[String(a.json.deal_id).trim()] ? 1 : 0));\nfollowups.sort((a, b) => (PRI[String(b.json.deal_id).trim()] ? 1 : 0) - (PRI[String(a.json.deal_id).trim()] ? 1 : 0));\n\nlet totalRemaining = totalCap - sentToday;\nif (totalRemaining < 0) totalRemaining = 0;\n\n// New deals claim their slots first (bounded by DAILY_NEW_SENDS), then follow-ups take the rest.\nconst pickNew = [];\nlet newRemaining = newCap;\nfor (const n of initials) {\n  if (totalRemaining <= 0 || newRemaining <= 0) break;\n  pickNew.push(n); totalRemaining--; newRemaining--;\n}\nconst pickFu = [];\nfor (const f of followups) {\n  if (totalRemaining <= 0) break;\n  pickFu.push(f); totalRemaining--;\n}\n\n// Interleave proportionally so neither kind sits at the tail: if a run is cut short\n// it loses a slice of both, not every new deal (see 11/14/15 Sep 2026).\nconst out = [];\nconst nN = pickNew.length, nF = pickFu.length;\nlet ai = 0, bi = 0;\nwhile (ai < nN || bi < nF) {\n  if (ai < nN && (bi >= nF || ai * nF <= bi * nN)) { out.push(pickNew[ai++]); }\n  else { out.push(pickFu[bi++]); }\n}\nreturn out;"
+        }
+      },
+      {
+        "id": "54107a0c-213b-4339-b787-6218adf00778",
+        "name": "Run summary",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2912,
+          0
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const staticData = $getWorkflowStaticData('global');\nconst log = Array.isArray(staticData.runLog) ? staticData.runLog : [];\nconst cfg = $('Build CONFIG object').first().json;\nconst tz = cfg.TIMEZONE || 'Asia/Kolkata';\nconst today = DateTime.now().setZone(tz).toISODate();\n\nlet sends = 0;\nfor (const l of log) { if (String(l.result).indexOf('SEND ') === 0) sends++; }\n\nconst decided = $('Decide ONE action per row').all();\nconst rowsRead = $('Read PIPELINE').all().length;\n\nconst skipCounts = {};\nlet skipped = 0;\nfor (const d of decided) {\n  if (d.json.action === 'skip') { skipped++; const rsn = d.json.reason || 'unknown'; skipCounts[rsn] = (skipCounts[rsn] || 0) + 1; }\n}\nfor (const l of log) {\n  if (l.result === 'SKIP investor-locked-this-run') { skipped++; skipCounts['investor-locked-this-run'] = (skipCounts['investor-locked-this-run'] || 0) + 1; }\n  else if (l.result === 'SKIP investor-locked-sheet') { skipped++; skipCounts['investor-locked-sheet'] = (skipCounts['investor-locked-sheet'] || 0) + 1; }\n}\nconst skipReasons = Object.keys(skipCounts).map((k) => k + ':' + skipCounts[k]).join(', ');\n\nreturn [{ json: {\n  date: today,\n  workflow: 'D',\n  rows_read: rowsRead,\n  decided: decided.length,\n  sent: sends,\n  skipped: skipped,\n  skip_reasons: skipReasons,\n} }];"
+        }
+      },
+      {
+        "id": "19852bda-bfc8-45fb-9cab-a525f81bbe23",
+        "name": "Append RUN LOG",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.7,
+        "retryOnFail": true,
+        "position": [
+          3136,
+          0
+        ],
+        "parameters": {
+          "resource": "sheet",
+          "operation": "append",
+          "documentId": {
+            "__rl": true,
+            "mode": "url",
+            "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+          },
+          "sheetName": {
+            "__rl": true,
+            "mode": "name",
+            "value": "RUN LOG"
+          },
+          "columns": {
+            "mappingMode": "autoMapInputData",
+            "value": {},
+            "matchingColumns": [],
+            "schema": [
+              {
+                "id": "date",
+                "displayName": "date",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "workflow",
+                "displayName": "workflow",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "rows_read",
+                "displayName": "rows_read",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "decided",
+                "displayName": "decided",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "sent",
+                "displayName": "sent",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "skipped",
+                "displayName": "skipped",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "skip_reasons",
+                "displayName": "skip_reasons",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              }
+            ]
+          },
+          "options": {
+            "handlingExtraData": "ignoreIt"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "1111fe93-785b-4384-bdcd-9df19517e7bf",
+        "name": "Wait SEND_GAP_SECONDS",
+        "webhookId": "028f6f3d-7835-4da5-872d-7d911b40309e",
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          2912,
+          192
+        ],
+        "parameters": {
+          "resume": "timeInterval",
+          "amount": "={{ $('Build CONFIG object').first().json.SEND_GAP_SECONDS }}",
+          "unit": "seconds"
+        }
+      },
+      {
+        "id": "3b9c66f9-08b0-4d0c-8d1f-c9a394088758",
+        "name": "Lock re-check",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3136,
+          192
+        ],
+        "parameters": {
+          "mode": "runOnceForEachItem",
+          "jsCode": "const cfg = $('Build CONFIG object').first().json;\nconst tz = cfg.TIMEZONE || 'Asia/Kolkata';\nconst parsedLock = parseInt(cfg.INVESTOR_LOCK_DAYS, 10);\nconst lockDays = isNaN(parsedLock) ? 7 : parsedLock;\nconst today = DateTime.now().setZone(tz);\n\nconst staticData = $getWorkflowStaticData('global');\nif (!Array.isArray(staticData.contactedThisRun)) staticData.contactedThisRun = [];\nif (!Array.isArray(staticData.runLog)) staticData.runLog = [];\n\nconst r = $json;\nconst investorName = String(r.investor).trim();\nconst blank = (x) => x === undefined || x === null || String(x).trim() === '';\nconst isoRe = /^\\d{4}-\\d{2}-\\d{2}$/;\n\nlet inv = null;\nfor (const v of $('Read INVESTORS').all()) { if (String(v.json.investor).trim() === investorName) { inv = v.json; break; } }\n\nif (lockDays > 0) {\n  if (staticData.contactedThisRun.indexOf(investorName) !== -1) {\n    staticData.runLog.push({ deal_id: r.deal_id, result: 'SKIP investor-locked-this-run', investor: investorName });\n    return { json: Object.assign({}, r, { would_send: false, skip_reason: 'investor-locked-this-run' }) };\n  }\n  if (inv && !blank(inv.last_contacted_any) && isoRe.test(String(inv.last_contacted_any).trim())) {\n    const d = DateTime.fromISO(String(inv.last_contacted_any).trim(), { zone: tz });\n    if (d.isValid) {\n      const diff = today.startOf('day').diff(d.startOf('day'), 'days').days;\n      if (diff < lockDays) {\n        staticData.runLog.push({ deal_id: r.deal_id, result: 'SKIP investor-locked-sheet', investor: investorName });\n        return { json: Object.assign({}, r, { would_send: false, skip_reason: 'investor-locked-sheet', locked_since: String(inv.last_contacted_any).trim() }) };\n      }\n    }\n  }\n}\nreturn { json: Object.assign({}, r, { would_send: true }) };"
+        }
+      },
+      {
+        "id": "b5f61256-9ed1-4646-bc01-da7f1f364ef1",
+        "name": "Passes lock?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          3360,
+          192
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "ws",
+                "leftValue": "={{ $json.would_send }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          }
+        }
+      },
+      {
+        "id": "e9db842b-c127-4b54-ad99-9e0c53d68954",
+        "name": "Build email",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3584,
+          192
+        ],
+        "parameters": {
+          "mode": "runOnceForEachItem",
+          "jsCode": "const cfg = $('Build CONFIG object').first().json;\nconst r = $json;\nconst stage = r.stage; // INITIAL | FU1 | FU2 | FU3\n\nlet st = null;\nfor (const s of $('Read STARTUPS').all()) { if (String(s.json.startup).trim() === String(r.startup).trim()) { st = s.json; break; } }\nlet inv = null;\nfor (const v of $('Read INVESTORS').all()) { if (String(v.json.investor).trim() === String(r.investor).trim()) { inv = v.json; break; } }\n\n// ROUTING rows get the routing variant of the INITIAL template only; follow-ups stay on FU1/FU2/FU3.\nconst isRouting = String(r.channel || '').toUpperCase() === 'ROUTING';\nconst tid = (stage === 'INITIAL' && isRouting) ? 'INITIAL_ROUTING' : stage;\n\nlet tpl = null;\nfor (const t of $('Read TEMPLATES').all()) { if (String(t.json.template_id).trim() === tid) { tpl = t.json; break; } }\nif (!tpl) throw new Error('Template not found for stage ' + tid);\n\nconst tokens = {\n  '{{InvestorName}}': inv.investor,\n  '{{ContactPerson}}': inv.contact_person,\n  '{{StartupName}}': st.startup,\n  '{{Sector}}': st.sector,\n  '{{FundraiseAmount}}': st.raise_inr_cr,\n  '{{Revenue}}': st.revenue,\n  '{{Highlight1}}': st.highlight_1,\n  '{{Highlight2}}': st.highlight_2,\n  '{{Highlight3}}': st.highlight_3,\n  '{{DeckLink}}': st.deck_link,\n  '{{SenderName}}': cfg.SENDER_NAME,\n};\nconst fill = (s) => {\n  let out = String(s == null ? '' : s);\n  for (const k in tokens) { out = out.split(k).join(String(tokens[k] == null ? '' : tokens[k])); }\n  return out;\n};\nlet subject = fill(tpl.subject);\nconst body0 = fill(tpl.body);\nlet memoHtml = (st.memo_html == null ? '' : String(st.memo_html));\n\n// ---- RAISE REMOVAL (user rules 2026-09-15 and 2026-09-16) ----\n// (a) pre-revenue startups: the raise is removed from subject + memo for EVERY investor type (from 17 Sep).\n// (b) 13 angels x 27 startups: additionally strips pre-revenue wording and other companies' funding lines.\n// Applied at SEND TIME only; the memo stored in STARTUPS is never modified.\n// Removes text only and keeps every HTML tag so the layout survives. Never throws: if the cleaner errors,\n// unbalances tags or still finds raise text, the memo falls back to name + sector + highlights.\n// 1 Oct 2026: ServeAmigo REMOVED from the list (was 16, now 15). Aditya: \"serve amigo message me they booked 5 lakhs\n// reveneu in september so they are not pre reveneu anymore... fix serve amigo with raise amount\".\n// It booked INR 5 lakh in Sep 2026, so STARTUPS/STARTUP_PROFILE now read Early Revenue and it must show its ask again.\n// Dropping it from _ALL16 also drops it from _HIDE27, which is correct: angels should see the raise too now.\nconst _nz = function (x) { return String(x == null ? '' : x).toLowerCase().replace(/[^a-z0-9]/g, ''); };\nconst _ANGELS = {};\n['Gautam Kapur','Ignacio','Ishan Singh','Jonathan Solamon','Alex Alpert','Devesh','Mandeep Singh','Ankit','Vivasvan','Mohit','Gautham Krishnan','Sayan Ghosh','Michele'].forEach(function (x) { _ANGELS[_nz(x)] = 1; });\nconst _ALL16 = {};\n['Body & Beyond','Outlanders','Koncite','Washtro','Fire Armor','Tronix.AI','Springbase.ai','Formverse','MonitorExam','Pixelence','Fuski.AI','Vilva AI','SkillBytes','Orbit AI','Vira Jal'].forEach(function (x) { _ALL16[_nz(x)] = 1; });\nconst _HIDE27 = Object.assign({}, _ALL16);\n['Opulytics','Train Rex','Xproguard','Indie Stori','Appli','Luxova','AI Signal Labs','Desi Machines','Doffair','bezgoFresh','Chayan Karo'].forEach(function (x) { _HIDE27[_nz(x)] = 1; });\nconst _mode = (_ANGELS[_nz(inv.investor)] && _HIDE27[_nz(st.startup)]) ? 'angel' : (_ALL16[_nz(st.startup)] ? 'all' : '');\nif (_mode) {\n  let _R = null;\n  try { _R = (function () {\nconst AMT = String.raw`(?:(?:₹|\\brs\\.?|\\binr|\\busd|us\\$|\\$|€|\\beur|£)\\s*\\d[\\d.,]*(?:\\s*(?:cr\\b|crores?\\b|lakhs?\\b|lacs?\\b|l\\b|mn\\b|m\\b|million\\b|k\\b|bn\\b|billion\\b))?|\\d[\\d.,]*\\s*(?:cr\\b|crores?\\b|lakhs?\\b|lacs?\\b|mn\\b|million\\b|bn\\b|billion\\b)|\\d[\\d.,]*(?:m|k|l)\\b)`;\nconst KW = String.raw`(?:\\brais(?:e|es|ing)\\b|\\bfund\\s*-?\\s*rais(?:e|es|ing)\\b|\\bfundrais(?:e|es|ing)\\b|\\b(?:fund|funds|funding|investment|capital)\\s*(?:ask|sought|required|requirement|needed)\\b|\\bthe\\s+ask\\b|\\bask\\s*[:\\-–—]|\\basking\\s+for\\b|\\bseeking\\b|\\b(?:round|raise|ticket|cheque|check)\\s*size\\b|\\bminimum\\s+(?:ticket|cheque|check)\\b|\\b(?:current|this|proposed|ongoing)\\s+round\\b)`;\nconst AMT1 = new RegExp(AMT, 'i');\nconst OWN_A = new RegExp(KW + '[^.<|]{0,60}?' + AMT, 'i');\nconst OWN_B = /(?:\\brais(?:e|es|ing)\\b|\\bfund(?:ing)?\\s*ask\\b)[^.<|]{0,15}?\\d/i;\nconst AMT_ROUND = new RegExp(AMT + String.raw`[^.<|]{0,30}?\\b(?:round|raise|fundraise|ask)\\b`, 'i');\nconst CTX_B = new RegExp(String.raw`\\b(?:raised|raises|secured|closed|bagged|landed)\\b[^.<|]{0,60}?` + AMT, 'i');\nconst RAISEREF = /\\b(?:the|this|our)\\s+raise\\s+(?:is|will|would)\\b|\\b(?:funding|funds|capital|proceeds)\\s+(?:raised\\s+)?(?:will|would|shall)\\s+be\\s+(?:used|deployed|allocated|utili[sz]ed)\\b|\\buse\\s+of\\s+(?:funds|proceeds)\\b|\\b(?:this|the\\s+current)\\s+round\\s+is\\s+(?:intended|meant|designed)\\b/i;\nconst PAST = /\\braised\\b|\\bclosed\\b|\\bsecured\\b|\\bled by\\b|\\bbacked by\\b|\\bfunded by\\b/i;\nconst PRE = /pre-?\\s*revenue|pre-?\\s*launch|pre-?\\s*monetis|pre-?\\s*monetiz/i;\nconst HEAD = /^(?:the\\s+)?(?:funding\\s+ask|fund\\s*ask|ask|investment\\s+ask|fundrais(?:e|ing)(?:\\s+details)?|funding\\s+round|current\\s+round|round(?:\\s+details|\\s+size)?|raise|raising|deal\\s+terms)\\s*[:\\-–—]?$/i;\nconst URLISH = /https?:\\/\\/|www\\.|^\\s*(?:website|web|site|press|linkedin)\\s*:/i;\nconst ROUNDLINE = /runway|valuation|pre-?money|post-?money|deployment|use\\s+of\\s+(?:funds|proceeds)|allocation|dilution|\\bsafe\\b|convertible|instrument|ticket|cheque|\\bround\\b|\\braise\\b|\\braising\\b/i;\nconst PAREN = /\\s*\\([^()]*pre-?\\s*(?:revenue|launch|monetis|monetiz)[^()]*\\)/i;\nconst SPLIT_SRC = String.raw`(?<=[.!?])(?<!\\b(?:Rs|RS|rs|No|no|vs|Vs|Pvt|PVT|Ltd|LTD|Inc|approx|Approx|Dr|Mr|Ms|Mrs|St|Co|etc|e\\.g|i\\.e)\\.)\\s+(?=[^a-z\\s])`;\nconst BLOCKTAG = /^<\\/?(?:div|p|li|ul|ol|h[1-6]|table|tbody|thead|tr|td|th|section|blockquote|hr|br)\\b/i;\nconst ENT = {nbsp:' ',amp:'&',bull:'•',rsquo:'’',lsquo:'‘',rdquo:'”',ldquo:'“',quot:'“',apos:'’',mdash:'—',ndash:'–',hellip:'…',lt:'‹',gt:'›',middot:'·',rarr:'→',times:'×',deg:'°',trade:'™',reg:'®',copy:'©',euro:'€',pound:'£',rupee:'₹'};\nfunction classify(x) { if (OWN_A.test(x) || OWN_B.test(x) || RAISEREF.test(x)) { return 'own'; } if (AMT_ROUND.test(x)) { return PAST.test(x) ? 'context' : 'own'; } if (CTX_B.test(x)) { return 'context'; } return null; }\nfunction kill(x, mode) { const c = classify(x); if (c === 'own') { return true; } return mode === 'angel' && (c === 'context' || PRE.test(x)); }\nfunction build(html) { const P = [], S = [], E = []; const n = html.length; let i = 0;\n while (i < n) { const ch = html[i];\n  if (ch === '<') { const j = html.indexOf('>', i); if (j >= 0) { if (BLOCKTAG.test(html.slice(i, j + 1))) { P.push('\\n'); S.push(i); E.push(j + 1); } i = j + 1; continue; } }\n  if (ch === '&') { const m = /^&(#\\d{1,7}|#x[0-9a-f]{1,6}|[a-z]{2,10});/i.exec(html.slice(i, i + 14)); if (m) { const k = m[1]; let d; if (k[0] === '#') { const cp = (k[1] === 'x' || k[1] === 'X') ? parseInt(k.slice(2), 16) : parseInt(k.slice(1), 10); try { d = String.fromCodePoint(cp); } catch (e) { d = ' '; } } else { d = ENT[k.toLowerCase()]; if (d === undefined) { d = ' '; } } for (let q = 0; q < d.length; q++) { P.push(d[q]); S.push(i); E.push(i + m[0].length); } i += m[0].length; continue; } }\n  P.push(/\\s/.test(ch) ? ' ' : ch); S.push(i); E.push(i + 1); i++; }\n return { t: P.join(''), S: S, E: E }; }\nfunction lines(t) { const out = []; let ls = 0;\n for (let k = 0; k <= t.length; k++) { if (k === t.length || t[k] === '\\n') { if (k > ls) { out.push({ s: ls, e: k }); } ls = k + 1; } }\n for (const L of out) { L.segs = []; const lt = t.slice(L.s, L.e); const re = /\\s*\\|\\s*/g; let last = 0, m;\n  while ((m = re.exec(lt)) !== null) { L.segs.push({ s: L.s + last, e: L.s + m.index, sepEnd: L.s + m.index + m[0].length }); last = m.index + m[0].length; }\n  L.segs.push({ s: L.s + last, e: L.e, sepEnd: L.e });\n  for (const G of L.segs) { G.sents = []; const gt = t.slice(G.s, G.e); const sp = new RegExp(SPLIT_SRC, 'g'); let p = 0, x;\n   while ((x = sp.exec(gt)) !== null) { G.sents.push({ s: G.s + p, e: G.s + x.index, next: G.s + x.index + x[0].length }); p = x.index + x[0].length; }\n   G.sents.push({ s: G.s + p, e: G.e, next: G.e }); } }\n return out; }\nfunction headingLike(x) { return x.length <= 40 && /[a-z]/i.test(x) && !/[.!?;,|]/.test(x) && !/:\\s*\\S/.test(x) && !AMT1.test(x); }\nfunction analyse(html, mode) { const B = build(html); const t = B.t; const L = lines(t); const removed = []; const R = [];\n const lt = L.map(function (o) { return t.slice(o.s, o.e).trim(); });\n const gone = L.map(function () { return false; });\n const heads = [];\n for (let a = 0; a < L.length; a++) { if (!lt[a] || !HEAD.test(lt[a])) { continue; } const sect = [];\n  for (let b = a + 1; b < L.length; b++) { if (!lt[b]) { continue; } if (headingLike(lt[b])) { break; } sect.push(b); }\n  heads.push({ a: a, sect: sect });\n  for (const c of sect) { if (URLISH.test(lt[c])) { continue; } if (AMT1.test(lt[c]) || ROUNDLINE.test(lt[c])) { gone[c] = true; removed.push(lt[a] + ' => ' + lt[c].slice(0, 200)); } } }\n for (let a = 0; a < L.length; a++) { if (!lt[a] || gone[a]) { continue; } const segs = L[a].segs; let any = false;\n  for (const G of segs) { let hasText = false, allKill = true;\n   for (const X of G.sents) { const raw = t.slice(X.s, X.e); const x = raw.trim(); if (!x) { continue; } hasText = true;\n    if (!kill(x, mode)) { allKill = false; continue; }\n    if (mode === 'angel' && classify(x) === null) { const pm = PAREN.exec(raw); if (pm) { const rest = raw.slice(0, pm.index) + raw.slice(pm.index + pm[0].length); if (rest.trim() && !PRE.test(rest)) { R.push([X.s + pm.index, X.s + pm.index + pm[0].length]); any = true; allKill = false; removed.push('phrase: ' + pm[0].trim()); continue; } } }\n    X.gone = true; any = true; removed.push(x.slice(0, 240)); }\n   G.hasText = hasText; G.gone = hasText && allKill; }\n  if (!any) { continue; }\n  const withText = segs.filter(function (G) { return G.hasText; });\n  if (withText.every(function (G) { return G.gone; })) { gone[a] = true; continue; }\n  for (let gi = 0; gi < segs.length; gi++) { const G = segs[gi]; if (!G.hasText) { continue; }\n   if (G.gone) { let prevKept = false; for (let k = 0; k < gi; k++) { if (segs[k].hasText && !segs[k].gone) { prevKept = true; } } R.push(prevKept ? [segs[gi - 1].e, G.e] : [G.s, G.sepEnd]); continue; }\n   for (const X of G.sents) { if (X.gone) { R.push([X.s, X.next]); } } } }\n for (const h of heads) { if (gone[h.a]) { continue; } const nu = h.sect.filter(function (c) { return !URLISH.test(lt[c]); }); if (nu.length && nu.every(function (c) { return gone[c]; })) { gone[h.a] = true; removed.push('heading: ' + lt[h.a]); } }\n for (let a = 0; a < L.length; a++) { if (gone[a]) { R.push([L[a].s, L[a].e]); } }\n return { B: B, R: R, removed: removed }; }\nfunction tidy(h) { let prev = null, k = 0;\n while (h !== prev && k < 10) { prev = h; k++;\n  h = h.replace(/<(li|p|div|h[1-6]|td|th|b|strong|em|i|u|span|a|font|small)\\b[^>]*>(?:\\s|&nbsp;|<br\\s*\\/?>|⁣)*⁣(?:\\s|&nbsp;|<br\\s*\\/?>|⁣)*<\\/\\1>/gi, '⁣');\n  h = h.replace(/<(ul|ol|tr|tbody|table)\\b[^>]*>(?:\\s|⁣)*⁣(?:\\s|⁣)*<\\/\\1>/gi, '⁣');\n  h = h.replace(/(<hr\\b[^>]*>)(?:\\s|⁣)*⁣(?:\\s|⁣)*<hr\\b[^>]*>/gi, '$1');\n  h = h.replace(/(<br\\s*\\/?>)(?:\\s|⁣)*⁣(?:\\s|⁣)*<br\\s*\\/?>/gi, '$1'); }\n h = h.replace(/<hr\\b[^>]*>(?:\\s|⁣)*⁣(?:\\s|⁣)*$/i, '');\n h = h.replace(/^(?:\\s|⁣)*⁣(?:\\s|⁣)*<hr\\b[^>]*>/i, '');\n return h.replace(/⁣/g, ''); }\nfunction apply(html, B, R) { const hr = [];\n for (const r of R) { let a = r[0], b = r[1]; while (a < b && B.t[a] === '\\n') { a++; } while (b > a && B.t[b - 1] === '\\n') { b--; } if (b <= a) { continue; } hr.push([B.S[a], B.E[b - 1]]); }\n hr.sort(function (x, y) { return x[0] - y[0]; });\n const m = []; for (const r of hr) { if (m.length && r[0] <= m[m.length - 1][1]) { m[m.length - 1][1] = Math.max(m[m.length - 1][1], r[1]); } else { m.push([r[0], r[1]]); } }\n let out = html; for (let k = m.length - 1; k >= 0; k--) { const sl = out.slice(m[k][0], m[k][1]); const tags = (sl.match(/<[^>]*>/g) || []).join(''); out = out.slice(0, m[k][0]) + '⁣' + tags + '⁣' + out.slice(m[k][1]); }\n return tidy(out); }\nfunction bal(h) { return ['div','p','li','ul','ol','b','strong','em','span','a','table','tr','td','h1','h2','h3','h4','h5','h6'].map(function (tg) { return (h.match(new RegExp(String.raw`<${tg}\\b`, 'gi')) || []).length - (h.match(new RegExp(String.raw`<\\/${tg}>`, 'gi')) || []).length; }).join(','); }\nfunction clean(html, mode) { const src = String(html == null ? '' : html); const A = analyse(src, mode); if (!A.R.length) { return { html: src, removed: A.removed, residual: [], balanced: true, changed: false }; } const out = apply(src, A.B, A.R); return { html: out, removed: A.removed, residual: analyse(out, mode).removed, balanced: bal(out) === bal(src), changed: out !== src }; }\nfunction subjOk(x, mode) { return !kill(x, mode) && !/\\brais(?:e|es|ing)\\b/i.test(x); }\nfunction plain(html) { return build(String(html == null ? '' : html)).t.replace(/\\s*\\n[\\s\\n]*/g, ' ▮ ').replace(/ {2,}/g, ' ').trim(); }\nreturn { clean: clean, subjOk: subjOk, kill: kill, plain: plain };\n})(); } catch (e) { _R = null; }\n  const _crude = /rais(?:e|ed|es|ing)|fund(?:ing)?\\s*ask|\\bask\\b|\\bround\\b|pre-?\\s*revenue|pre-?\\s*launch|pre-?\\s*monetis|pre-?\\s*monetiz/i;\n  subject = String(subject).replace(/\\s*\\|\\s*Rais(?:e|es|ing)\\b[^|]*$/i, '').trim();\n  if (_R ? !_R.subjOk(subject, _mode) : _crude.test(subject)) { subject = st.startup + ' | ' + String(st.sector == null ? '' : st.sector).split('|')[0].trim(); }\n  let _ok = false;\n  if (_R) { try { const _c = _R.clean(memoHtml, _mode); if (_c.balanced && !_c.residual.length) { memoHtml = _c.html; _ok = true; } } catch (e) { _ok = false; } }\n  if (!_ok) {\n    const _esc = function (x) { return String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };\n    const _hs = [st.highlight_1, st.highlight_2, st.highlight_3].map(function (x) { return String(x == null ? '' : x).trim(); }).filter(function (x) { return x && !_crude.test(x); });\n    memoHtml = '<div style=\"font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.65;color:#222222;\">'\n      + '<div style=\"font-weight:700;color:#000000;margin:0 0 6px 0;\">' + _esc(st.startup) + '</div>'\n      + '<div style=\"margin:0 0 12px 0;\">' + _esc(String(st.sector == null ? '' : st.sector).split('|')[0].trim()) + '</div>'\n      + '<ul style=\"margin:0 0 14px 0;padding-left:20px;\">' + _hs.map(function (h) { return '<li style=\"margin:0 0 6px 0;\">' + _esc(h) + '</li>'; }).join('') + '</ul></div>';\n  }\n}\nconst body = String(body0).split('{{MemoBody}}').join('%%MEMOBODY_SLOT%%');\nif (/\\{\\{[^}]+\\}\\}/.test(subject) || /\\{\\{[^}]+\\}\\}/.test(body)) {\n  throw new Error('Unresolved template token for deal ' + r.deal_id);\n}\n\nconst ownerNames = { Aditya: \"Aditya Mishra\", Chaman: \"Chaman Yadav\", Akansha: \"Akansha\", Shradha: \"Shradha\" };\nconst senderFull = ownerNames[String(cfg.SENDER_NAME).trim()] || cfg.SENDER_NAME;\nconst logoUrl = \"https://drive.google.com/uc?export=view&id=1iLMGooCx6B8bmYJxlYMdNg0YhdSoFAFi\";\nconst bodyHtml0 = String(body).split(String.fromCharCode(10)).join(\"<br>\");\nconst bodyHtml = bodyHtml0.split('%%MEMOBODY_SLOT%%').join(\"<div style='height:18px;'></div>\" + memoHtml + \"<div style='height:18px;'></div>\");\nconst sig = \"<br>--<br>\" + \"<img src='\" + logoUrl + \"' alt='Sidana Ventures' width='120' style='display:block;margin-bottom:8px;border:0;'>\" + \"<div style='font-family:Arial,sans-serif;font-size:13px;color:#333333;line-height:1.4;'>\" + \"<span style='font-weight:bold;color:#1a5fb4;'>\" + senderFull + \"</span><br>\" + \"Investor Relations<br>\" + \"<span style='font-weight:bold;'>SIDANA VENTURES LLP</span><br>\" + \"424A Tower B3, Spaze iTech Park, Sector 49, Sohna Road<br>\" + \"Gurgaon, Haryana 122022<br>\" + \"+91 87965 31802<br>\" + \"<a href='https://www.sidanaventures.com' style='color:#1a5fb4;'>www.sidanaventures.com</a>\" + \"</div>\";\nconst html = \"<div style='font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.65;color:#222222;max-width:640px;'>\" + bodyHtml + \"</div>\" + sig;\n\n// ---- DASH GUARD (Aditya, 30 Sep 2026: no dashes in any email, anywhere) ----\n// Runs LAST, after every substitution. Only U+2013 and U+2014, never the hyphen U+002D.\n// Cleans rather than refuses so one bad memo cannot halt the run, then asserts.\nconst _dashFix = function (s) {\n  var x = String(s == null ? '' : s).replace(/&mdash;/gi, '—').replace(/&ndash;/gi, '–');\n  x = x.replace(/\\s+[–—]\\s+/g, ', ');\n  x = x.replace(/[–—]/g, '-');\n  return x;\n};\nsubject = _dashFix(subject);\nconst bodyND = _dashFix(body);\nconst htmlND = _dashFix(html);\nconst _BAD = /[–—]|&mdash;|&ndash;/i;\nif (_BAD.test(subject) || _BAD.test(htmlND)) {\n  throw new Error('DASH FOUND IN OUTBOUND EMAIL after cleaning, refusing to send. deal ' + r.deal_id);\n}\n\nreturn { json: Object.assign({}, r, {\n  to: r.email,\n  cc: r.cc || '',\n  subject,\n  body: bodyND,\n  html: htmlND,\n  threadId: r.thread_id || '',\n  replyMessageId: r.message_id || '',\n}) };"
+        }
+      },
+      {
+        "id": "fea555be-a708-44b3-bf2e-23684f654af5",
+        "name": "Existing thread?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          3808,
+          192
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "th",
+                "leftValue": "={{ $json.replyMessageId }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "string",
+                  "operation": "notEmpty",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          }
+        }
+      },
+      {
+        "id": "60c3cc39-3e15-4480-87df-9c89a8029bd4",
+        "name": "Gmail: Reply (threaded)",
+        "webhookId": "db58fd5f-4764-45b5-91f0-50a69db877b4",
+        "type": "n8n-nodes-base.gmail",
+        "typeVersion": 2.2,
+        "onError": "continueErrorOutput",
+        "position": [
+          4032,
+          128
+        ],
+        "parameters": {
+          "resource": "message",
+          "operation": "reply",
+          "messageId": "={{ $json.replyMessageId }}",
+          "emailType": "html",
+          "message": "={{ $json.html }}",
+          "options": {
+            "ccList": "={{ $json.cc }}",
+            "appendAttribution": false
+          }
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "R5K61omYbU9oT5J8",
+            "name": "Gmail account 5"
+          }
+        }
+      },
+      {
+        "id": "d163dc1b-bcb7-480d-9eed-eb1cc1868f45",
+        "name": "Compute PIPELINE write-back",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          4256,
+          176
+        ],
+        "parameters": {
+          "mode": "runOnceForEachItem",
+          "jsCode": "const cfg = $('Build CONFIG object').first().json;\nconst tz = cfg.TIMEZONE || 'Asia/Kolkata';\nconst now = DateTime.now().setZone(tz);\nconst today = now.toISODate();\nconst fu1 = parseInt(cfg.FU1_DAYS, 10); const FU1 = isNaN(fu1) ? 4 : fu1;\nconst fu2 = parseInt(cfg.FU2_DAYS, 10); const FU2 = isNaN(fu2) ? 7 : fu2;\nconst fu3 = parseInt(cfg.FU3_DAYS, 10); const FU3 = isNaN(fu3) ? 9 : fu3;\n\nconst resp = $json;\nconst be = $('Build email').item.json;\nconst stage = be.stage;\nconst gmailId = resp.id || '';\nconst gmailThread = resp.threadId || '';\n\nconst row = { deal_id: be.deal_id, last_contact: today };\nif (stage === 'INITIAL') {\n  row.deal_shared = 'Yes';\n  row.date_shared = today;\n  row.channel = 'Email';\n  row.thread_id = gmailThread;\n  row.message_id = gmailId;\n  row.next_action = 'Follow-up 1';\n  row.next_due = now.plus({ days: FU1 }).toISODate();\n} else if (stage === 'FU1') {\n  row.fu1_done = 'Yes';\n  row.fu1_date = today;\n  row.next_action = 'Follow-up 2';\n  row.next_due = now.plus({ days: FU2 }).toISODate();\n} else if (stage === 'FU2') {\n  row.fu2_done = 'Yes';\n  row.fu2_date = today;\n  row.next_action = 'Follow-up 3';\n  row.next_due = now.plus({ days: FU3 }).toISODate();\n} else if (stage === 'FU3') {\n  row.fu3_done = 'Yes';\n  row.fu3_date = today;\n  row.next_action = 'Await investor revert';\n  row.next_due = '';\n}\n\nconst staticData = $getWorkflowStaticData('global');\nif (!Array.isArray(staticData.runLog)) staticData.runLog = [];\nstaticData.runLog.push({ deal_id: be.deal_id, result: 'SEND ' + stage, investor: be.investor, startup: be.startup });\n// Claim the within-run investor lock AFTER a successful send (2.7).\nif (!Array.isArray(staticData.contactedThisRun)) staticData.contactedThisRun = [];\nconst investorName = String(be.investor).trim();\nif (staticData.contactedThisRun.indexOf(investorName) === -1) staticData.contactedThisRun.push(investorName);\n\nreturn { json: row };"
+        }
+      },
+      {
+        "id": "f325476a-bba8-4006-b8dd-79a005b8216f",
+        "name": "Update PIPELINE",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.7,
+        "retryOnFail": true,
+        "onError": "continueErrorOutput",
+        "position": [
+          4480,
+          176
+        ],
+        "parameters": {
+          "resource": "sheet",
+          "operation": "update",
+          "documentId": {
+            "__rl": true,
+            "mode": "url",
+            "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+          },
+          "sheetName": {
+            "__rl": true,
+            "mode": "name",
+            "value": "PIPELINE"
+          },
+          "columns": {
+            "mappingMode": "autoMapInputData",
+            "value": {},
+            "matchingColumns": [
+              "deal_id"
+            ],
+            "schema": [
+              {
+                "id": "deal_id",
+                "displayName": "deal_id",
+                "required": false,
+                "defaultMatch": true,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              }
+            ]
+          },
+          "options": {
+            "handlingExtraData": "error"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "6293d537-99c1-4731-a5f6-d426e2725aa9",
+        "name": "Update INVESTORS lock",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.7,
+        "retryOnFail": true,
+        "onError": "continueErrorOutput",
+        "position": [
+          4704,
+          96
+        ],
+        "parameters": {
+          "resource": "sheet",
+          "operation": "update",
+          "documentId": {
+            "__rl": true,
+            "mode": "url",
+            "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+          },
+          "sheetName": {
+            "__rl": true,
+            "mode": "name",
+            "value": "INVESTORS"
+          },
+          "columns": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "investor": "={{ $('Build email').item.json.investor }}",
+              "last_contacted_any": "={{ $now.setZone($('Build CONFIG object').first().json.TIMEZONE || 'Asia/Kolkata').toFormat('yyyy-MM-dd') }}",
+              "contacted_by": "={{ $('Build CONFIG object').first().json.OWNER_NAME }}"
+            },
+            "matchingColumns": [
+              "investor"
+            ],
+            "schema": [
+              {
+                "id": "investor",
+                "displayName": "investor",
+                "required": false,
+                "defaultMatch": true,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "last_contacted_any",
+                "displayName": "last_contacted_any",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "contacted_by",
+                "displayName": "contacted_by",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              }
+            ]
+          },
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "0494c630-f1ad-4673-a29d-60a2c051cc0d",
+        "name": "Loop Over Sends (batch 1)",
+        "type": "n8n-nodes-base.splitInBatches",
+        "typeVersion": 3,
+        "position": [
+          2688,
+          480
+        ],
+        "parameters": {
+          "batchSize": 1
+        }
+      },
+      {
+        "id": "fea31367-83e1-4298-af98-98d23002a825",
+        "name": "Build send-failure log",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          4256,
+          368
+        ],
+        "parameters": {
+          "mode": "runOnceForEachItem",
+          "jsCode": "const cfg = $('Build CONFIG object').first().json;\nconst tz = cfg.TIMEZONE || 'Asia/Kolkata';\nconst today = DateTime.now().setZone(tz).toISODate();\nconst be = $('Build email').item.json;\nconst err = $json;\nconst staticData = $getWorkflowStaticData('global');\nif (!Array.isArray(staticData.runLog)) staticData.runLog = [];\nstaticData.runLog.push({ deal_id: be.deal_id, result: 'SEND_FAILED', investor: be.investor });\nreturn { json: {\n  timestamp: today,\n  workflow: 'D',\n  deal_id: be.deal_id,\n  startup: be.startup,\n  investor: be.investor,\n  error_type: 'SEND_FAILED',\n  details: String((err && (err.error || err.message)) || 'Gmail send failed'),\n  resolved: '',\n} };"
+        }
+      },
+      {
+        "id": "33f5ad07-587e-4e16-9388-9fa529539956",
+        "name": "Append ERROR LOG (send)",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.7,
+        "retryOnFail": true,
+        "onError": "continueRegularOutput",
+        "position": [
+          4480,
+          368
+        ],
+        "parameters": {
+          "resource": "sheet",
+          "operation": "append",
+          "documentId": {
+            "__rl": true,
+            "mode": "url",
+            "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+          },
+          "sheetName": {
+            "__rl": true,
+            "mode": "name",
+            "value": "ERROR LOG"
+          },
+          "columns": {
+            "mappingMode": "autoMapInputData",
+            "value": {},
+            "matchingColumns": [],
+            "schema": [
+              {
+                "id": "timestamp",
+                "displayName": "timestamp",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "workflow",
+                "displayName": "workflow",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "deal_id",
+                "displayName": "deal_id",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "startup",
+                "displayName": "startup",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "investor",
+                "displayName": "investor",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "error_type",
+                "displayName": "error_type",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "details",
+                "displayName": "details",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "resolved",
+                "displayName": "resolved",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              }
+            ]
+          },
+          "options": {
+            "handlingExtraData": "ignoreIt"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "91026690-39c1-414f-9a45-910d6c0d95d8",
+        "name": "Build write-back failure log",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          4928,
+          176
+        ],
+        "parameters": {
+          "mode": "runOnceForEachItem",
+          "jsCode": "const cfg = $('Build CONFIG object').first().json;\nconst tz = cfg.TIMEZONE || 'Asia/Kolkata';\nconst today = DateTime.now().setZone(tz).toISODate();\nconst be = $('Build email').item.json;\nconst err = $json;\nreturn { json: {\n  timestamp: today,\n  workflow: 'D',\n  deal_id: be.deal_id,\n  startup: be.startup,\n  investor: be.investor,\n  error_type: 'WRITEBACK_FAILED',\n  details: String((err && (err.error || err.message)) || 'Google Sheets write-back failed'),\n  resolved: '',\n} };"
+        }
+      },
+      {
+        "id": "f09b5beb-b99c-479d-b250-686562dc0e05",
+        "name": "Append ERROR LOG (write-back)",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.7,
+        "retryOnFail": true,
+        "onError": "continueRegularOutput",
+        "position": [
+          5152,
+          176
+        ],
+        "parameters": {
+          "resource": "sheet",
+          "operation": "append",
+          "documentId": {
+            "__rl": true,
+            "mode": "url",
+            "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+          },
+          "sheetName": {
+            "__rl": true,
+            "mode": "name",
+            "value": "ERROR LOG"
+          },
+          "columns": {
+            "mappingMode": "autoMapInputData",
+            "value": {},
+            "matchingColumns": [],
+            "schema": [
+              {
+                "id": "timestamp",
+                "displayName": "timestamp",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "workflow",
+                "displayName": "workflow",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "deal_id",
+                "displayName": "deal_id",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "startup",
+                "displayName": "startup",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "investor",
+                "displayName": "investor",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "error_type",
+                "displayName": "error_type",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "details",
+                "displayName": "details",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "resolved",
+                "displayName": "resolved",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              }
+            ]
+          },
+          "options": {
+            "handlingExtraData": "ignoreIt"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "0d21563d-c5d2-4861-9097-c2e6e8a357b4",
+        "name": "Gmail: Send (new)",
+        "webhookId": "579679af-b247-4ee3-93d2-d62c905c6a63",
+        "type": "n8n-nodes-base.gmail",
+        "typeVersion": 2.2,
+        "onError": "continueErrorOutput",
+        "position": [
+          4032,
+          416
+        ],
+        "parameters": {
+          "resource": "message",
+          "operation": "send",
+          "sendTo": "={{ $json.to }}",
+          "subject": "={{ $json.subject }}",
+          "emailType": "html",
+          "message": "={{ $json.html }}",
+          "options": {
+            "ccList": "={{ $json.cc }}",
+            "appendAttribution": false
+          }
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "R5K61omYbU9oT5J8",
+            "name": "Gmail account 5"
+          }
+        }
+      },
+      {
+        "id": "1f4f7c43-9fca-43ff-8a74-f836954e40a4",
+        "name": "Dedup decision errors",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2464,
+          672
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const cfg = $('Build CONFIG object').first().json;\nconst tz = cfg.TIMEZONE || 'Asia/Kolkata';\nconst today = DateTime.now().setZone(tz).toISODate();\nconst wf = 'D';\n\nconst existing = {};\nfor (const e of $('Read ERROR LOG').all()) {\n  const j = e.json;\n  if (String(j.resolved || '').trim() !== '') continue;\n  existing[String(j.deal_id).trim() + '|' + String(j.error_type).trim()] = true;\n}\n\nconst seen = {};\nconst out = [];\nfor (const it of $input.all()) {\n  const j = it.json;\n  if (j.action !== 'error') continue;\n  const key = String(j.deal_id).trim() + '|' + String(j.reason).trim();\n  if (existing[key] || seen[key]) continue;\n  seen[key] = true;\n  out.push({ json: {\n    timestamp: today,\n    workflow: wf,\n    deal_id: j.deal_id,\n    startup: j.startup,\n    investor: j.investor,\n    error_type: j.reason,\n    details: 'Decision-stage error: ' + j.reason,\n    resolved: '',\n  }});\n}\nreturn out;"
+        }
+      },
+      {
+        "id": "0652f7c5-040a-409c-ad64-08431213e068",
+        "name": "Append ERROR LOG (decision)",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.7,
+        "retryOnFail": true,
+        "position": [
+          2688,
+          672
+        ],
+        "parameters": {
+          "resource": "sheet",
+          "operation": "append",
+          "documentId": {
+            "__rl": true,
+            "mode": "url",
+            "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+          },
+          "sheetName": {
+            "__rl": true,
+            "mode": "name",
+            "value": "ERROR LOG"
+          },
+          "columns": {
+            "mappingMode": "autoMapInputData",
+            "value": {},
+            "matchingColumns": [],
+            "schema": [
+              {
+                "id": "timestamp",
+                "displayName": "timestamp",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "workflow",
+                "displayName": "workflow",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "deal_id",
+                "displayName": "deal_id",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "startup",
+                "displayName": "startup",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "investor",
+                "displayName": "investor",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "error_type",
+                "displayName": "error_type",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "details",
+                "displayName": "details",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "resolved",
+                "displayName": "resolved",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              }
+            ]
+          },
+          "options": {
+            "handlingExtraData": "ignoreIt"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "03f36b92-85f4-4422-933c-b3f6da7cc98e",
+        "name": "Run aborted (GLOBAL_PAUSE)",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          896,
+          864
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "return [{ json: { aborted: true, reason: 'GLOBAL_PAUSE set in CONFIG — entire run stops' } }];"
+        }
+      },
+      {
+        "id": "51291917-1b52-4cfe-93b0-b871a2b4e27a",
+        "name": "Weekdays 09:00 IST",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.4,
+        "position": [
+          0,
+          864
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "0 9 * * 1-5"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "shr1",
+        "name": "Build share row",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "onError": "continueRegularOutput",
+        "position": [
+          4480,
+          -600
+        ],
+        "parameters": {
+          "mode": "runOnceForEachItem",
+          "jsCode": "// One row per send, for the `shares` table. Added 30 Sep 2026.\n// Parallel to the PIPELINE write-back; every node continues on error so a\n// Supabase problem can never break a send.\nconst be = $('Build email').item.json;\nconst cfg = $('Build CONFIG object').first().json;\nconst stage = String(be.stage || '');\nconst fuNo = stage === 'FU1' ? 1 : (stage === 'FU2' ? 2 : (stage === 'FU3' ? 3 : null));\n\n// `Decide ONE action per row` builds a whitelist `base` object that omits\n// match_type, so it never reaches Build email. Read it back from the PIPELINE\n// row by deal_id rather than widening that node on four live senders.\nlet raw = '';\ntry {\n  const did = String(be.deal_id || '').trim();\n  for (const p of $('Read PIPELINE').all()) {\n    if (String(p.json.deal_id || '').trim() === did) { raw = String(p.json.match_type || ''); break; }\n  }\n} catch (e) { raw = ''; }\n\n// The sheet holds prose, not enum codes. Order matters: the stage-off label\n// also contains the word sector, so it has to be tested first.\nlet type = null;\nif (/stage\\s+(?:one\\s+step\\s+)?off/i.test(raw)) { type = 'stage_off'; }\nelse if (/^\\s*exact\\s+match/i.test(raw)) { type = 'strict'; }\nelse if (/sector\\s*\\+\\s*cheque\\s+match/i.test(raw)) { type = 'sector_only'; }\nelse if (/minimum\\s+cheque|fails\\s+cheque/i.test(raw)) { type = 'below_min_cheque'; }\n\nreturn { json: {\n  startup: String(be.startup || '').trim(),\n  investor: String(be.investor || '').trim(),\n  mailbox: String(cfg.SENDER_NAME || '').trim() || null,\n  type: type,\n  match_type_raw: raw,\n  is_followup: stage !== 'INITIAL',\n  followup_no: fuNo\n} };"
+        }
+      },
+      {
+        "id": "shr2",
+        "name": "Find startup id",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          4700,
+          -600
+        ],
+        "parameters": {
+          "url": "=https://elwaquzawoscotlojtnv.supabase.co/rest/v1/startups?select=id&limit=1&name=eq.{{ encodeURIComponent($json.startup) }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpCustomAuth",
+          "options": {
+            "timeout": 20000,
+            "response": {
+              "response": {
+                "neverError": true,
+                "fullResponse": true
+              }
+            }
+          }
+        },
+        "credentials": {
+          "httpCustomAuth": {
+            "id": "ntQxeHO20ZUMASMg",
+            "name": "Supabase service"
+          }
+        }
+      },
+      {
+        "id": "shr3",
+        "name": "Find investor id",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          4920,
+          -600
+        ],
+        "parameters": {
+          "url": "=https://elwaquzawoscotlojtnv.supabase.co/rest/v1/investors?select=id&limit=1&name=eq.{{ encodeURIComponent($('Build share row').item.json.investor) }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpCustomAuth",
+          "options": {
+            "timeout": 20000,
+            "response": {
+              "response": {
+                "neverError": true,
+                "fullResponse": true
+              }
+            }
+          }
+        },
+        "credentials": {
+          "httpCustomAuth": {
+            "id": "ntQxeHO20ZUMASMg",
+            "name": "Supabase service"
+          }
+        }
+      },
+      {
+        "id": "shr4",
+        "name": "Record share",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          5140,
+          -600
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://elwaquzawoscotlojtnv.supabase.co/rest/v1/shares",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpCustomAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Prefer",
+                "value": "return=minimal"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ startup_id: (($('Find startup id').item.json.body||[])[0]||{}).id, investor_id: (($json.body||[])[0]||{}).id, sent_at: new Date().toISOString(), mailbox: $('Build share row').item.json.mailbox, type: $('Build share row').item.json.type, is_followup: $('Build share row').item.json.is_followup, followup_no: $('Build share row').item.json.followup_no }) }}",
+          "options": {
+            "timeout": 20000,
+            "response": {
+              "response": {
+                "neverError": true,
+                "fullResponse": true
+              }
+            }
+          }
+        },
+        "credentials": {
+          "httpCustomAuth": {
+            "id": "ntQxeHO20ZUMASMg",
+            "name": "Supabase service"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Run (press Execute)": {
+        "main": [
+          [
+            {
+              "node": "Read CONFIG",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Read CONFIG": {
+        "main": [
+          [
+            {
+              "node": "Build CONFIG object",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build CONFIG object": {
+        "main": [
+          [
+            {
+              "node": "GLOBAL_PAUSE blank?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "GLOBAL_PAUSE blank?": {
+        "main": [
+          [
+            {
+              "node": "Read TEMPLATES",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Run aborted (GLOBAL_PAUSE)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Read TEMPLATES": {
+        "main": [
+          [
+            {
+              "node": "Read PIPELINE",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Read PIPELINE": {
+        "main": [
+          [
+            {
+              "node": "Read STARTUPS",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Read STARTUPS": {
+        "main": [
+          [
+            {
+              "node": "Read INVESTORS",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Read INVESTORS": {
+        "main": [
+          [
+            {
+              "node": "Read ERROR LOG",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Read ERROR LOG": {
+        "main": [
+          [
+            {
+              "node": "Init run state (reset lock)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Init run state (reset lock)": {
+        "main": [
+          [
+            {
+              "node": "Decide ONE action per row",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Decide ONE action per row": {
+        "main": [
+          [
+            {
+              "node": "Apply daily caps (per calendar day)",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Dedup decision errors",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Apply daily caps (per calendar day)": {
+        "main": [
+          [
+            {
+              "node": "Loop Over Sends (batch 1)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Run summary": {
+        "main": [
+          [
+            {
+              "node": "Append RUN LOG",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Wait SEND_GAP_SECONDS": {
+        "main": [
+          [
+            {
+              "node": "Lock re-check",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Lock re-check": {
+        "main": [
+          [
+            {
+              "node": "Passes lock?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Passes lock?": {
+        "main": [
+          [
+            {
+              "node": "Build email",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Loop Over Sends (batch 1)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build email": {
+        "main": [
+          [
+            {
+              "node": "Existing thread?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Existing thread?": {
+        "main": [
+          [
+            {
+              "node": "Gmail: Reply (threaded)",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Gmail: Send (new)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Gmail: Reply (threaded)": {
+        "main": [
+          [
+            {
+              "node": "Compute PIPELINE write-back",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Build send-failure log",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Compute PIPELINE write-back": {
+        "main": [
+          [
+            {
+              "node": "Update PIPELINE",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Build share row",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Update PIPELINE": {
+        "main": [
+          [
+            {
+              "node": "Update INVESTORS lock",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Build write-back failure log",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Update INVESTORS lock": {
+        "main": [
+          [
+            {
+              "node": "Loop Over Sends (batch 1)",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Build write-back failure log",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Loop Over Sends (batch 1)": {
+        "main": [
+          [
+            {
+              "node": "Run summary",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Wait SEND_GAP_SECONDS",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build send-failure log": {
+        "main": [
+          [
+            {
+              "node": "Append ERROR LOG (send)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Append ERROR LOG (send)": {
+        "main": [
+          [
+            {
+              "node": "Loop Over Sends (batch 1)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build write-back failure log": {
+        "main": [
+          [
+            {
+              "node": "Append ERROR LOG (write-back)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Gmail: Send (new)": {
+        "main": [
+          [
+            {
+              "node": "Compute PIPELINE write-back",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Build send-failure log",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Dedup decision errors": {
+        "main": [
+          [
+            {
+              "node": "Append ERROR LOG (decision)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Weekdays 09:00 IST": {
+        "main": [
+          [
+            {
+              "node": "Read CONFIG",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Append ERROR LOG (write-back)": {
+        "main": [
+          [
+            {
+              "node": "Loop Over Sends (batch 1)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build share row": {
+        "main": [
+          [
+            {
+              "node": "Find startup id",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Find startup id": {
+        "main": [
+          [
+            {
+              "node": "Find investor id",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Find investor id": {
+        "main": [
+          [
+            {
+              "node": "Record share",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [
+      {
+        "id": "601d5e11-8a3d-41bc-9643-6b8038048ea1",
+        "name": "Read sheet tabs",
+        "description": "Read the single source of truth: TEMPLATES, PIPELINE, STARTUPS, INVESTORS, ERROR LOG.",
+        "nodeIds": [
+          "31a8b672-dcc3-4c07-8be8-328064c4a089",
+          "624b8df6-23ef-4a89-9e92-a3b95aa7c37c",
+          "a1f25e09-3ff1-483b-878e-b28be963d356",
+          "bb3db287-3cc9-4682-9aa6-8ab72123ae1d",
+          "a4d1d886-70cc-4e60-be66-9750a7c9b66a"
+        ]
+      },
+      {
+        "id": "b13a9216-9aaf-41dc-a447-81f6d7079060",
+        "name": "Errors",
+        "description": "Deduplicate decision-stage errors against ERROR LOG and append new ones.",
+        "nodeIds": [
+          "1f4f7c43-9fca-43ff-8a74-f836954e40a4",
+          "0652f7c5-040a-409c-ad64-08431213e068"
+        ]
+      },
+      {
+        "id": "c1362fc4-390d-42b8-8494-9718a9f64148",
+        "name": "Summary",
+        "description": "Summarise sends / skips / failures for the run and append a RUN LOG row.",
+        "nodeIds": [
+          "54107a0c-213b-4339-b787-6218adf00778",
+          "19852bda-bfc8-45fb-9cab-a525f81bbe23"
+        ]
+      }
+    ],
+    "authors": "Sidana Ventures",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "createdAt": "2026-10-01T10:00:03.221Z",
+    "updatedAt": "2026-10-01T10:00:03.221Z",
+    "workflowPublishHistory": [
+      {
+        "id": 10583,
+        "workflowId": "BAkgem7Zu6uVyoFL",
+        "versionId": "cd4652a8-c4fb-4d83-92d2-249977116ac3",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-10-01T10:00:03.465Z"
+      },
+      {
+        "id": 11797,
+        "workflowId": "BAkgem7Zu6uVyoFL",
+        "versionId": "cd4652a8-c4fb-4d83-92d2-249977116ac3",
+        "event": "deactivated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-10-05T10:08:36.811Z"
+      },
+      {
+        "id": 11798,
+        "workflowId": "BAkgem7Zu6uVyoFL",
+        "versionId": "cd4652a8-c4fb-4d83-92d2-249977116ac3",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-10-05T10:08:36.812Z"
+      },
+      {
+        "id": 11799,
+        "workflowId": "BAkgem7Zu6uVyoFL",
+        "versionId": "cd4652a8-c4fb-4d83-92d2-249977116ac3",
+        "event": "deactivated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-10-05T10:08:37.384Z"
+      },
+      {
+        "id": 11863,
+        "workflowId": "BAkgem7Zu6uVyoFL",
+        "versionId": "cd4652a8-c4fb-4d83-92d2-249977116ac3",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-10-05T10:46:46.126Z"
+      }
+    ]
+  }
+}

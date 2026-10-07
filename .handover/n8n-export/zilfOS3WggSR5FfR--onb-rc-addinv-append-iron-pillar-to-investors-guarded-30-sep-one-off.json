@@ -1,0 +1,291 @@
+{
+  "id": "zilfOS3WggSR5FfR",
+  "name": "ONB-RC-ADDINV — append Iron Pillar to INVESTORS, guarded (30 Sep, one-off)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-30T11:42:47.543Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "9ef0bb8e-ba46-4b84-967b-6360eeb742ad",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "31b26494-d7d2-4e0c-9b9e-f8e4f703545b",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "onb-rc-addinv-30sep",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "rd",
+      "name": "Read",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=INVESTORS%21A1%3AJ400&valueRenderOption=FORMATTED_VALUE",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cp",
+      "name": "Compute",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const body=$('Webhook').first().json.body||{};\nif(body.secret!=='sv-mail-2026-09-17-Kq7')throw new Error('bad secret');\nconst dry=body.dry!==false;\nconst R=$input.first().json.valueRanges||[];\nconst inv=((R[0]||{}).values)||[];\nconst g=(r,i)=>(r&&r[i]!=null)?String(r[i]).trim():'';\nconst nz=x=>String(x||'').toLowerCase().replace(/[^a-z0-9]/g,'');\nconst has=r=>r&&r.some(c=>String(c||'').trim()!=='');\nif(inv.length<250)throw new Error('ABORT: INVESTORS read only '+inv.length+' rows');\n\nconst ROW=['Iron Pillar','Ashok Ananthakrishnan','ashok@ironpillarfund.com','','B2B product: physical AI, semiconductors, energy, bio manufacturing, enterprise B2B (his words, 30 Sep 2026)','Growth (tracks companies from early stage)','INR 100 Cr minimum (no upper bound stated)','2026-09-30','Bhawna',''];\nconst KEY='ironpillar';\nconst EM='ashok@ironpillarfund.com';\nconst DOM='ironpillarfund.com';\n\nconst problems=[];\ninv.forEach((r,i)=>{if(i===0)return;const e=(g(r,2)+' '+g(r,3)).toLowerCase();\n if(e.indexOf(EM)>=0||e.indexOf('@'+DOM)>=0||nz(g(r,0)).indexOf(KEY)>=0)problems.push('already in INVESTORS row '+(i+1)+': '+g(r,0)+' / '+g(r,2));});\nif(problems.length)throw new Error('ABORT dedupe: '+problems.join('; '));\n\nlet last=0;inv.forEach((r,i)=>{if(has(r))last=i+1;});\nconst target=last+1;\nif(has(inv[target-1]))throw new Error('ABORT: INVESTORS row '+target+' is not empty');\nif(target<296||target>340)throw new Error('ABORT: target row '+target+' outside the expected 296-340 window');\n\nconst data=[{range:'INVESTORS!A'+target+':J'+target,values:[ROW]}];\nreturn [{json:{dry,lastDataRow:last,targetRow:target,row:ROW,cells:ROW.length,body:{valueInputOption:'RAW',data}}}];"
+      }
+    },
+    {
+      "id": "ifd",
+      "name": "Dry?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "version": 2,
+            "typeValidation": "loose"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "c1",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "leftValue": "={{ $json.dry }}"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "od",
+      "name": "Out dry",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        820,
+        -140
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const j=$input.first().json;return [{json:{mode:'DRY',lastDataRow:j.lastDataRow,targetRow:j.targetRow,row:j.row,rangesWouldWrite:j.body.data.map(d=>d.range)}}];"
+      }
+    },
+    {
+      "id": "wr",
+      "name": "Write",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        820,
+        120
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "rb",
+      "name": "Read back",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1040,
+        120
+      ],
+      "parameters": {
+        "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/INVESTORS!A' + $('Compute').first().json.targetRow + ':J' + $('Compute').first().json.targetRow + '?valueRenderOption=FORMATTED_VALUE' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "ov",
+      "name": "Out verify",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1260,
+        120
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const c=$('Compute').first().json;let w={};try{w=$('Write').first().json||{};}catch(e){}\nconst rb=$input.first().json||{};const got=((rb.values||[])[0])||[];\nconst ok=String(got[0]||'')==='Iron Pillar'&&String(got[2]||'')==='ashok@ironpillarfund.com';\nreturn [{json:{mode:'WRITE',targetRow:c.targetRow,cellsUpdated:w.totalUpdatedCells||0,readBack:got,persisted:ok}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read": {
+      "main": [
+        [
+          {
+            "node": "Compute",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute": {
+      "main": [
+        [
+          {
+            "node": "Dry?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dry?": {
+      "main": [
+        [
+          {
+            "node": "Out dry",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Write",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write": {
+      "main": [
+        [
+          {
+            "node": "Read back",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read back": {
+      "main": [
+        [
+          {
+            "node": "Out verify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "zilfOS3WggSR5FfR",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-30T11:42:47.544Z",
+      "updatedAt": "2026-09-30T11:42:47.544Z"
+    }
+  ],
+  "activeVersion": null
+}

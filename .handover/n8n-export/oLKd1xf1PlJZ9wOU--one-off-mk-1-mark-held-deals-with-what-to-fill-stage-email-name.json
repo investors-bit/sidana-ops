@@ -1,0 +1,270 @@
+{
+  "id": "oLKd1xf1PlJZ9wOU",
+  "name": "One-off MK-1 — mark held deals with what to fill (stage / email / name)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-10T18:36:23.010Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "55d854b7-16d2-4338-9a86-f9c7e88a7b49",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once (set before activating)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "11 0 11 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "h0",
+      "name": "GET header",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/PIPELINE!1:1",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "r1",
+      "name": "Read INVESTORS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "INVESTORS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "r3",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "c1",
+      "name": "Plan marks",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nfunction nz(x) { return s(x).toLowerCase().replace(/[^a-z0-9]/g, ''); }\nconst hdr = (($('GET header').first().json.values || [[]])[0] || []).map(s);\nconst cA = hdr.indexOf('next_action'), cP = hdr.indexOf('pause'), cN = hdr.indexOf('notes');\nif (cA < 0 || cP < 0 || cN < 0) { throw new Error('ABORT: next_action/pause/notes column missing: ' + JSON.stringify(hdr)); }\nfunction colLetter(i) { let n = i + 1, out = ''; while (n > 0) { const m = (n - 1) % 26; out = String.fromCharCode(65 + m) + out; n = Math.floor((n - 1) / 26); } return out; }\nconst LA = colLetter(cA), LP = colLetter(cP), LN = colLetter(cN);\nconst invRaw = $('Read INVESTORS').all().map(function (i) { return i.json; });\nconst pipe = $input.all().map(function (i) { return i.json; });\nif (pipe.length < 500) { throw new Error('ABORT: PIPELINE only ' + pipe.length); }\n\n// investor facts, merged across duplicate rows of the same name\nconst inv = {};\nfor (const r of invRaw) { const n = s(r.investor); if (!n) { continue; } const k = nz(n);\n  if (!inv[k]) { inv[k] = { name: n, stage: false, email: false, dnc: false, contact: s(r.contact_person), emailText: '', rows: [] }; }\n  const x = inv[k]; x.rows.push(r.row_number);\n  if (s(r.stage)) { x.stage = true; } if (s(r.email)) { x.email = true; x.emailText = x.emailText || s(r.email); }\n  if (s(r.do_not_contact).toLowerCase() === 'yes') { x.dnc = true; } }\n\nconst A_STAGE = 'HOLD - fill investor stage in INVESTORS';\nconst A_EMAIL = 'HOLD - add investor email in INVESTORS';\nconst A_BOTH = 'HOLD - fill investor stage AND email in INVESTORS';\nconst A_NAME = 'HOLD - investor name not in INVESTORS (fix the name)';\nconst data = []; const counts = { stage: 0, email: 0, both: 0, name: 0, newly_paused_no_email: 0, already_marked: 0 };\nconst perInv = {};\nfunction note(k, label) { if (!perInv[k]) { perInv[k] = { label: label, held: 0, startups: {} }; } return perInv[k]; }\nfor (const p of pipe) {\n  if (s(p.deal_shared).toLowerCase() === 'yes') { continue; }               // never touch sent rows\n  const paused = s(p.pause).toLowerCase() === 'yes';\n  const notes = s(p.notes); const k = nz(p.investor); const x = inv[k];\n  let action = null; let pauseNow = false; let addNote = '';\n  if (paused && notes.indexOf('ON HOLD 2026-09-10 - investor stage missing') >= 0) {\n    action = (x && !x.email && !s(p.email)) ? A_BOTH : A_STAGE;\n  } else if (paused && notes.indexOf('investor name not found') >= 0) {\n    action = A_NAME;\n  } else if (!paused && !s(p.email)) {\n    // queued with no address: it cannot send - hold it and say why\n    action = (x && !x.stage) ? A_BOTH : A_EMAIL; pauseNow = true; addNote = 'ON HOLD 2026-09-11 - investor email missing';\n  }\n  if (!action) { continue; }\n  if (s(p.next_action) === action && !pauseNow) { counts.already_marked++; continue; }\n  if (!p.row_number) { throw new Error('ABORT: row without row_number'); }\n  data.push({ range: 'PIPELINE!' + LA + p.row_number, values: [[action]] });\n  if (pauseNow) { counts.newly_paused_no_email++;\n    data.push({ range: 'PIPELINE!' + LP + p.row_number, values: [['Yes']] });\n    data.push({ range: 'PIPELINE!' + LN + p.row_number, values: [[(notes ? notes + ' | ' : '') + addNote]] }); }\n  if (action === A_STAGE) { counts.stage++; } else if (action === A_EMAIL) { counts.email++; } else if (action === A_BOTH) { counts.both++; } else { counts.name++; }\n  const key = action === A_NAME ? ('name:' + s(p.investor)) : k;\n  const e = note(key, action); e.held++; e.startups[s(p.startup)] = 1;\n}\nif (data.length > 3000) { throw new Error('ABORT: ' + data.length + ' cell writes exceeds guard'); }\nif (!data.length) { throw new Error('NOTHING TO DO: every held row is already marked'); }\n\n// the to-fill lists\nconst stageList = [], emailList = [], nameList = [];\nfor (const k of Object.keys(inv)) { const x = inv[k]; if (x.dnc) { continue; }\n  const e = perInv[k]; const held = e ? e.held : 0; const sts = e ? Object.keys(e.startups).length : 0;\n  if (!x.stage) { stageList.push([x.name, x.contact, x.emailText, x.email ? 'yes' : 'MISSING', held, sts, x.rows.join(',')]); }\n  if (!x.email) { emailList.push([x.name, x.contact, x.stage ? 'yes' : 'MISSING', held, sts, x.rows.join(',')]); } }\nfor (const key of Object.keys(perInv)) { if (key.indexOf('name:') === 0) { nameList.push([key.slice(5), perInv[key].held, Object.keys(perInv[key].startups).join(', ')]); } }\nstageList.sort(function (a, b) { return b[4] - a[4] || a[0].localeCompare(b[0]); });\nemailList.sort(function (a, b) { return b[3] - a[3] || a[0].localeCompare(b[0]); });\nnameList.sort(function (a, b) { return b[1] - a[1]; });\nreturn [{ json: { columns: { next_action: LA, pause: LP, notes: LN }, counts: counts, cell_writes: data.length,\n  stage_cols: ['investor', 'contact', 'email', 'has_email', 'deals_on_hold', 'startups_waiting', 'INVESTORS_rows'], stage_missing: stageList,\n  email_cols: ['investor', 'contact', 'has_stage', 'deals_on_hold', 'startups_waiting', 'INVESTORS_rows'], email_missing: emailList,\n  name_cols: ['investor_name_in_PIPELINE', 'deals_on_hold', 'startups'], name_not_found: nameList,\n  data: data } }];"
+      }
+    },
+    {
+      "id": "hw",
+      "name": "Write marks (batch)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "position": [
+        1100,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ valueInputOption: 'RAW', data: $json.data }) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Run once (set before activating)": {
+      "main": [
+        [
+          {
+            "node": "GET header",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET header": {
+      "main": [
+        [
+          {
+            "node": "Read INVESTORS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read INVESTORS": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Plan marks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Plan marks": {
+      "main": [
+        [
+          {
+            "node": "Write marks (batch)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once (set before activating)": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "oLKd1xf1PlJZ9wOU",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-10T18:36:23.013Z",
+      "updatedAt": "2026-09-10T18:36:23.013Z"
+    }
+  ],
+  "activeVersion": null
+}

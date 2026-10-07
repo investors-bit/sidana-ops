@@ -1,0 +1,293 @@
+{
+  "id": "VPJoYaVLQUNeiz6N",
+  "name": "One-off ADD-INV — append LinkedIn investors to INVESTORS + CRITERIA (last: 8i Ventures 25 Sep)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-24T10:11:06.404Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "80582ce5-cb01-408a-b35f-44659011f92e",
+  "versionCounter": 8,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "7c3e1a52-4b8d-4f0e-9a61-2d5b8e4c7f13",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-add4-linkedin-vc-6e2b9d",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "rd",
+      "name": "Read",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=INVESTORS%21A1%3AJ320&ranges=INVESTOR_CRITERIA%21A1%3AZ330&ranges=ONBOARDING%21A1%3AZ800",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cp",
+      "name": "Compute",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const body = $('Webhook').first().json.body || {};\nif (body.secret !== 'sv-mail-2026-09-17-Kq7') throw new Error('bad secret');\nconst dry = body.dry !== false;\nconst R = $input.first().json.valueRanges || [];\nconst pick = (n) => (R.find(x => String(x.range||'').indexOf(n) === 0) || {}).values || [];\nconst inv = pick('INVESTORS!');\nconst crit = pick('INVESTOR_CRITERIA!');\nconst onb = pick('ONBOARDING!');\nconst g = (row,i) => (row && row[i] != null) ? String(row[i]).trim() : '';\nconst nz = (x) => String(x||'').toLowerCase().replace(/[^a-z0-9]/g,'');\nconst has = (r) => r && r.some(c => String(c||'').trim() !== '');\nif (inv.length < 250) throw new Error('ABORT: INVESTORS read only ' + inv.length + ' rows');\n\nconst ADD_OLD = [\n {inv:['Tenity','Guillermo Forteza','guillermo.forteza@tenity.com','','Fintech (asked for pre-seed/seed fintech in Europe)','Pre-seed, Seed','','2026-05-01','Shradha',''],\n  key:'tenity', st:'HOLD', si:'FINTECH_CONSUMER, FINTECH_INFRA', lo:'PRE_SEED', hi:'SEED', geo:'EUROPE',\n  rr:'Added 24 Sep 2026 from LinkedIn (user OK). HOLD: Guillermo asked specifically for European pre-seed/seed fintech; the engine does not enforce geography_scope, so Indian deals would go out of mandate. Activate only if Tenity confirms India interest (note: Tenity co-invested in an Indian pre-seed healthtech round alongside Kalaari).',\n  th:'Tenity (Swiss fintech investor/accelerator). Guillermo Forteza, Investment Director, replied to Shradhaa on LinkedIn asking for pre-seed and seed fintech deals in Europe, and offered to set up a call.'},\n {inv:['Relentless VC','Nikheel Kamble','nikheel@relentless.ventures','','Early-stage B2B SaaS (India-for-US), Fintech','Early stage','','2026-04-01','Shradha',''],\n  key:'relentless', st:'ACTIVE', si:'SAAS_ENTERPRISE, FINTECH_INFRA, FINTECH_CONSUMER', lo:'', hi:'', geo:'INDIA',\n  rr:'Added 24 Sep 2026 from LinkedIn (user OK). Stage band and cheque not yet stated.',\n  th:'Relentless VC. Nikheel Kamble, Partner, set out his thesis to Shradhaa on LinkedIn - early-stage B2B SaaS built in India for the US market, and fintech - and asked for relevant deals to be shared if anything fits.'},\n {inv:['Sathguru Catalysers','Esha Gangwar','eshag@sathguru.com','','Agritech, Foodtech, Healthtech','','','2025-11-25','Shradha',''],\n  key:'sathguru', st:'ACTIVE', si:'AGRITECH, FNB_PACKAGED_FOOD, HEALTHTECH_DIGITAL', lo:'', hi:'', geo:'INDIA',\n  rr:'Added 24 Sep 2026 from LinkedIn (user OK). Stage and cheque not yet stated. Other Sathguru contacts in LinkedIn connections (GP Arvind Modi, GP Venu Gopal Chintada, Shikhaa Munglani) are not in the sheet.',\n  th:'Sathguru Catalysers (Sathguru Catalyser Fund). Esha Gangwar, Investment Associate, shared the fund sector focus with Shradhaa on LinkedIn - agri-tech, food-tech and healthtech - and invited relevant opportunities.'},\n {inv:['Skybound Venture Capital','Natalie Dayan','natalie@skybound.vc','','Deeptech, Healthtech, VR','','','2026-08-01','Shradha',''],\n  key:'skybound', st:'ACTIVE', si:'HEALTHTECH_DIGITAL, XR_IMMERSIVE', lo:'', hi:'', geo:'',\n  rr:'Added 24 Sep 2026 from LinkedIn (user OK). Stage, cheque and geography not yet stated. Deeptech has no sector code, so only healthtech and VR/XR are matched.',\n  th:'Skybound Venture Capital. Natalie Dayan, Associate, asked Shradhaa on LinkedIn for introductions to founders in deeptech, health tech and VR.'}\n];\n\nconst ADD_LOTUX = [\n {inv:['Lotux VC','Matevz Gantar','mat@lotux.vc','','Pre-seed Fintech, Education, Health - Latin America','Pre-seed','US$50-100K (INR 0.44-0.88 Cr)','2026-05-07','Shradha',''],\n  key:'lotux', st:'HOLD', si:'FINTECH_CONSUMER, FINTECH_INFRA, EDTECH_K12_TESTPREP, EDTECH_UPSKILLING_ENTERPRISE, EDTECH_HIGHER_ED_ADMISSIONS, HEALTHTECH_DIGITAL', lo:'PRE_SEED', hi:'PRE_SEED', geo:'LATAM', cm:'0.44',\n  rr:'Added 25 Sep 2026 from LinkedIn (user OK). HOLD per the user ruling on Tenity (24 Sep): keep non-India investors in the sheet but share no Indian deals, because the engine does not enforce geography_scope. Matevz asked for Latin America pre-seed fintech / education / health. Deals go to him by hand only if a LatAm startup comes on board.',\n  th:'Lotux VC. Matevz Gantar, Co-Founder & Managing Partner, shared the fund thesis and ticket size with Shradhaa on LinkedIn - pre-seed finance, education and health in Latin America, US$50-100K cheques - and asked whether Sidana has matching deals.'}\n];\nconst ADD_GENESIS = [\n {inv:['Genesis Alternative Ventures','Eddy Ng','eddy@genesisventures.co','','Venture & growth DEBT - SE Asia; lends to startups already backed by tier-one VCs','Venture / growth stage (VC-backed)','','2025-11-05','Shradha',''],\n  key:'genesisalt', ty:'DEBT', mode:'AGNOSTIC', st:'HOLD', si:'', lo:'', hi:'', geo:'SEA', cm:'',\n  rr:'Added 25 Sep 2026 from LinkedIn (user OK). HOLD for two standing rules: (1) debt investors never get matches (user 11 Sep 2026) - Genesis is a venture-debt lender, not equity; (2) non-India investors are added but held (user 24 Sep, Tenity) - Genesis is Southeast Asia focused. Relevant only for a revenue-stage, tier-one-VC-backed company raising debt alongside equity; send by hand.',\n  th:'Genesis Alternative Ventures (Singapore), Southeast Asia venture-debt provider to venture- and growth-stage companies funded by tier-one VCs; Fund II US$125M (2024), Fund I US$90M (2019). Eddy Ng (Venture & Growth Debt) agreed on LinkedIn to connect with Shradhaa and explore co-investment opportunities.'}\n];\nconst ADD = [\n {inv:['8i Ventures','Yug Shah','yug@8ivc.com','','Fintech (esp. B2B fintech, financial infrastructure, commerce), plus consumer and enterprise','Pre-seed, Seed','US$250K-2M (INR 2.2-17.6 Cr)','2026-01-23','Shradha',''],\n  key:'8iventures', ty:'VC', mode:'LIST', st:'ACTIVE', si:'FINTECH_CONSUMER, FINTECH_INFRA, FINTECH_SME_LENDING, RETAIL_TECH', lo:'PRE_SEED', hi:'SEED', geo:'INDIA', cm:'2.2',\n  rr:'Added 25 Sep 2026 from LinkedIn (user OK). Thesis from public sources (fund material / vcsheet / Business Standard), not yet confirmed by Yug - refine from pass reasons.',\n  th:'8i Ventures (Mumbai; led by repeat fintech founder Vikram Chachra). Believes fintech is the single largest venture opportunity in India; focus on financial infrastructure and the pipes of commerce, with added focus on B2B fintech and commerce; also consumer and enterprise. Pre-seed/seed via its Origami programme, US$250K-2M cheques; deliberately backs non-pedigree founders. Fund II US$50M first close (Nov 2022). Portfolio includes slice (the fintech), Blue Tokai, M2P. Yug Shah (Investment Team) replied to Shradhaa on LinkedIn offering a call in early Feb and shared his Calendly.'}\n];\n// Guard 1: dedupe on email, email domain, firm name across INVESTORS, and domain/firm across ONBOARDING\nconst problems = [];\nfor (const a of ADD) {\n  const em = a.inv[2].toLowerCase(), dom = em.split('@')[1], fn = nz(a.inv[0]);\n  inv.forEach((r,i) => { if (i === 0) return; const e = g(r,2).toLowerCase() + ' ' + g(r,3).toLowerCase(); if (e.indexOf(em) >= 0 || e.indexOf('@' + dom) >= 0 || nz(g(r,0)).indexOf(a.key) >= 0) problems.push(a.inv[0] + ' matches INVESTORS row ' + (i+1)); });\n  onb.forEach((r,i) => { if (i === 0) return; const s = [g(r,5), g(r,6), g(r,7), g(r,8)].join(' ').toLowerCase(); if (s.indexOf('@' + dom) >= 0 || nz(s).indexOf(a.key) >= 0) problems.push(a.inv[0] + ' matches ONBOARDING row ' + (i+1)); });\n  crit.forEach((r,i) => { if (i === 0) return; if (nz(g(r,1)).indexOf(a.key) >= 0) problems.push(a.inv[0] + ' matches CRITERIA row ' + (i+1)); });\n}\nif (problems.length) throw new Error('ABORT dedupe: ' + problems.join('; '));\n\n// Guard 2: target rows start after the last row holding data, and must be empty\nlet invLast = 0; inv.forEach((r,i) => { if (has(r)) invLast = i + 1; });\nlet critLast = 0; crit.forEach((r,i) => { if (has(r)) critLast = i + 1; });\nif (invLast !== 295) throw new Error('ABORT: expected INVESTORS last data row 295, found ' + invLast);\nif (critLast !== 296) throw new Error('ABORT: expected CRITERIA last data row 296, found ' + critLast);\n\nconst data = [];\nconst plan = [];\nADD.forEach((a, k) => {\n  const ir = invLast + 1 + k, cr = critLast + 1 + k;\n  if (has(inv[ir-1])) throw new Error('ABORT: INVESTORS row ' + ir + ' not empty');\n  if (has(crit[cr-1])) throw new Error('ABORT: CRITERIA row ' + cr + ' not empty');\n  crit.forEach((r,i) => { if (i > 0 && g(r,0) === String(ir)) throw new Error('ABORT: a criteria row already points at ' + ir); });\n  data.push({ range: 'INVESTORS!A' + ir + ':J' + ir, values: [a.inv] });\n  const c = new Array(26).fill('');\n  c[0] = String(ir); c[1] = a.inv[0]; c[2] = a.ty || 'VC'; c[3] = a.st; c[4] = 'USER'; c[5] = a.rr; c[6] = a.mode || 'LIST'; c[7] = a.si;\n  c[11] = a.lo; c[12] = a.hi; c[13] = a.cm || ''; c[19] = a.geo; c[21] = a.th;\n  c[22] = 'LinkedIn DM reply to Shradhaa (last message ' + a.inv[7] + '); email supplied by the user ' + (['lotux','genesisalt','8iventures'].includes(a.key) ? '25' : '24') + ' Sep 2026';\n  c[24] = 'MED';\n  c[25] = (['lotux','genesisalt','8iventures'].includes(a.key) ? '2026-09-25' : '2026-09-24') + ': added by one-off ADD-INV from the LinkedIn interest list, tagged ' + (a.ty || 'VC') + (a.key === '8iventures' ? '. Thesis researched from public sources (vcsheet, Business Standard, fund material); Yug has not stated it himself; refine from pass reasons.' : '. Thesis is what the contact said on LinkedIn, not researched; refine from pass reasons.');\n  data.push({ range: 'INVESTOR_CRITERIA!A' + cr + ':Z' + cr, values: [c] });\n  plan.push({ firm: a.inv[0], investors_row: ir, criteria_row: cr, status: a.st, sectors_in: a.si, geo: a.geo || '(blank=INDIA)' });\n});\nconst cells = data.reduce((n,d) => n + d.values[0].length, 0);\nif (cells > 150) throw new Error('ABORT: cap exceeded ' + cells);\nreturn [{ json: { dry, plan, cells, invLast, critLast, body: { valueInputOption: 'RAW', data } } }];"
+      }
+    },
+    {
+      "id": "if",
+      "name": "Dry?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "d1",
+              "leftValue": "={{ $json.dry }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "od",
+      "name": "Out dry",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        -150
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const c = $('Compute').first().json;\nreturn [{ json: { dry: true, cells: c.cells, invLast: c.invLast, critLast: c.critLast, plan: c.plan, rows: c.body.data.map(d => ({ range: d.range, values: d.values[0] })) } }];"
+      }
+    },
+    {
+      "id": "wr",
+      "name": "Write",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        800,
+        100
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "rb",
+      "name": "Read back",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1000,
+        100
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=INVESTORS%21A296%3AJ296&ranges=INVESTOR_CRITERIA%21A297%3AT297",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "ov",
+      "name": "Out verify",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        100
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const w = $('Write').first().json;\nconst R = $input.first().json.valueRanges || [];\nreturn [{ json: { dry: false, updatedCells: w.totalUpdatedCells, updatedRanges: (w.responses||[]).map(r => r.updatedRange), readback: R.map(r => ({ range: r.range, values: r.values })) } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read": {
+      "main": [
+        [
+          {
+            "node": "Compute",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute": {
+      "main": [
+        [
+          {
+            "node": "Dry?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dry?": {
+      "main": [
+        [
+          {
+            "node": "Out dry",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Write",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write": {
+      "main": [
+        [
+          {
+            "node": "Read back",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read back": {
+      "main": [
+        [
+          {
+            "node": "Out verify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "VPJoYaVLQUNeiz6N",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-24T10:11:06.406Z",
+      "updatedAt": "2026-09-24T10:11:06.406Z"
+    }
+  ],
+  "activeVersion": null
+}
