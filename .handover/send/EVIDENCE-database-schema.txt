@@ -1,0 +1,243 @@
+== TABLES + row counts (approx) (16)
+   {"tbl":"ai_log","approx_rows":"-1","cols":17}
+   {"tbl":"ai_runs","approx_rows":"-1","cols":10}
+   {"tbl":"app_users","approx_rows":"-1","cols":8}
+   {"tbl":"cal_events","approx_rows":"3377","cols":8}
+   {"tbl":"docs","approx_rows":"-1","cols":11}
+   {"tbl":"funding_rounds","approx_rows":"-1","cols":13}
+   {"tbl":"investors","approx_rows":"303","cols":40}
+   {"tbl":"mail_log","approx_rows":"42319","cols":15}
+   {"tbl":"matches","approx_rows":"3360","cols":10}
+   {"tbl":"meetings","approx_rows":"1667","cols":17}
+   {"tbl":"name_alias","approx_rows":"-1","cols":2}
+   {"tbl":"outreach","approx_rows":"-1","cols":13}
+   {"tbl":"replies","approx_rows":"382","cols":13}
+   {"tbl":"shares","approx_rows":"11069","cols":17}
+   {"tbl":"startups","approx_rows":"70","cols":32}
+   {"tbl":"task_heartbeat","approx_rows":"-1","cols":4}
+== VIEWS (14)
+   {"table_name":"investors_usable"}
+   {"table_name":"v_changes_7d"}
+   {"table_name":"v_investor_cohorts"}
+   {"table_name":"v_investor_domain"}
+   {"table_name":"v_investor_email"}
+   {"table_name":"v_investor_key"}
+   {"table_name":"v_owed_replies"}
+   {"table_name":"v_recent_replies"}
+   {"table_name":"v_silent_startups"}
+   {"table_name":"v_startup_board"}
+   {"table_name":"v_startup_funnel"}
+   {"table_name":"v_startup_key"}
+   {"table_name":"v_today"}
+   {"table_name":"v_upcoming_meetings"}
+== FUNCTIONS (16)
+   {"proname":"can_see_startup","args":"sid bigint"}
+   {"proname":"classify_replies","args":""}
+   {"proname":"clean_counterparty","args":"title text, drop_name text"}
+   {"proname":"clean_snippet","args":"raw text"}
+   {"proname":"current_app_role","args":""}
+   {"proname":"current_investor_id","args":""}
+   {"proname":"current_startup_id","args":""}
+   {"proname":"dedupe_meetings","args":""}
+   {"proname":"digest_replies","args":""}
+   {"proname":"is_admin","args":""}
+   {"proname":"is_staff","args":""}
+   {"proname":"prune_ai_raw_output","args":""}
+   {"proname":"resolve_mail","args":""}
+   {"proname":"resolve_meetings","args":""}
+   {"proname":"tidy_label","args":"s text"}
+   {"proname":"touch_updated_at","args":""}
+== COLUMNS of the core tables (156)
+   {"col":"cal_events.ical_uid :text NN"}
+   {"col":"cal_events.event_id :text"}
+   {"col":"cal_events.summary :text"}
+   {"col":"cal_events.start_at :timestamp with time zone"}
+   {"col":"cal_events.status :text"}
+   {"col":"cal_events.meet_link :text"}
+   {"col":"cal_events.attendees :text"}
+   {"col":"cal_events.created_at :timestamp with time zone"}
+   {"col":"docs.id :bigint NN"}
+   {"col":"docs.startup_id :bigint NN"}
+   {"col":"docs.investor_id :bigint"}
+   {"col":"docs.doc_type :text NN"}
+   {"col":"docs.requested_at :timestamp with time zone"}
+   {"col":"docs.received_at :timestamp with time zone"}
+   {"col":"docs.classification :USER-DEFINED"}
+   {"col":"docs.classify_note :text"}
+   {"col":"docs.chaser_count :integer NN"}
+   {"col":"docs.last_chased_at :timestamp with time zone"}
+   {"col":"docs.created_at :timestamp with time zone NN"}
+   {"col":"investors.id :bigint NN"}
+   {"col":"investors.name :text NN"}
+   {"col":"investors.contact_person :text"}
+   {"col":"investors.email :text"}
+   {"col":"investors.cc_email :text"}
+   {"col":"investors.linkedin_url :text"}
+   {"col":"investors.type :USER-DEFINED NN"}
+   {"col":"investors.status :USER-DEFINED NN"}
+   {"col":"investors.sectors :ARRAY"}
+   {"col":"investors.stage_pref :ARRAY"}
+   {"col":"investors.cheque_min_cr :numeric"}
+   {"col":"investors.cheque_max_cr :numeric"}
+   {"col":"investors.cheque_as_written :text"}
+   {"col":"investors.geography :text"}
+   {"col":"investors.do_not_contact :boolean NN"}
+   {"col":"investors.suppressed :boolean NN"}
+   {"col":"investors.suppressed_reason :text"}
+   {"col":"investors.last_contacted_on :date"}
+   {"col":"investors.contacted_by :text"}
+   {"col":"investors.thesis_call_on :date"}
+   {"col":"investors.source :text"}
+   {"col":"investors.added_month :date"}
+   {"col":"investors.notes :text"}
+   {"col":"investors.created_at :timestamp with time zone NN"}
+   {"col":"investors.updated_at :timestamp with time zone NN"}
+   {"col":"investors.cheque_max_cr_stated :numeric"}
+   {"col":"investors.lead_max_cr :numeric"}
+   {"col":"investors.round_max_cr :numeric"}
+   {"col":"investors.arr_min_cr :numeric"}
+   {"col":"investors.arr_min_strict :boolean"}
+   {"col":"investors.revenue_required :boolean"}
+   {"col":"investors.sector_mode :text"}
+   {"col":"investors.sectors_excluded :ARRAY"}
+   {"col":"investors.models_in :ARRAY"}
+   {"col":"investors.models_excluded :ARRAY"}
+   {"col":"investors.stage_min :text"}
+   {"col":"investors.stage_max :text"}
+   {"col":"investors.other_requirements :text"}
+   {"col":"investors.women_only :boolean"}
+   {"col":"investors.confirmed :text"}
+   {"col":"mail_log.gmail_id :text NN"}
+   {"col":"mail_log.thread_id :text"}
+   {"col":"mail_log.mailbox :text"}
+   {"col":"mail_log.from_email :text"}
+   {"col":"mail_log.to_emails :text"}
+   {"col":"mail_log.cc_emails :text"}
+   {"col":"mail_log.subject :text"}
+   {"col":"mail_log.sent_at :timestamp with time zone"}
+   {"col":"mail_log.created_at :timestamp with time zone"}
+   {"col":"mail_log.direction :text"}
+   {"col":"mail_log.investor_id :bigint"}
+   {"col":"mail_log.startup_id :bigint"}
+   {"col":"mail_log.snippet :text"}
+   {"col":"mail_log.reply_kind :text"}
+   {"col":"mail_log.reply_gist :text"}
+   {"col":"matches.id :bigint NN"}
+   {"col":"matches.startup_id :bigint NN"}
+   {"col":"matches.investor_id :bigint NN"}
+   {"col":"matches.type :USER-DEFINED NN"}
+   {"col":"matches.state :USER-DEFINED NN"}
+   {"col":"matches.score :numeric"}
+   {"col":"matches.stage_fit :boolean"}
+   {"col":"matches.cheque_fit :boolean"}
+   {"col":"matches.priority :integer"}
+   {"col":"matches.created_at :timestamp with time zone NN"}
+   {"col":"meetings.id :bigint NN"}
+   {"col":"meetings.startup_id :bigint"}
+   {"col":"meetings.investor_id :bigint"}
+   {"col":"meetings.scheduled_at :timestamp with time zone NN"}
+   {"col":"meetings.held :boolean"}
+   {"col":"meetings.is_second :boolean NN"}
+   {"col":"meetings.source :USER-DEFINED NN"}
+   {"col":"meetings.from_matcher :boolean"}
+   {"col":"meetings.fireflies_id :text"}
+   {"col":"meetings.meet_link :text"}
+   {"col":"meetings.notes :text"}
+   {"col":"meetings.created_at :timestamp with time zone NN"}
+   {"col":"meetings.startup_name :text"}
+   {"col":"meetings.investor_name :text"}
+   {"col":"meetings.in_book :boolean"}
+   {"col":"meetings.ical_uid :text"}
+   {"col":"meetings.superseded_by :text"}
+   {"col":"name_alias.alias :text NN"}
+   {"col":"name_alias.startup_id :bigint"}
+   {"col":"shares.id :bigint NN"}
+   {"col":"shares.startup_id :bigint NN"}
+   {"col":"shares.investor_id :bigint NN"}
+   {"col":"shares.sent_at :timestamp with time zone NN"}
+   {"col":"shares.mailbox :text"}
+   {"col":"shares.type :USER-DEFINED"}
+   {"col":"shares.opened_at :timestamp with time zone"}
+   {"col":"shares.replied_at :timestamp with time zone"}
+   {"col":"shares.is_followup :boolean NN"}
+   {"col":"shares.followup_no :integer"}
+   {"col":"shares.created_at :timestamp with time zone NN"}
+   {"col":"shares.subject :text"}
+   {"col":"shares.gmail_id :text"}
+   {"col":"shares.thread_id :text"}
+   {"col":"shares.to_email :text"}
+   {"col":"shares.source :text"}
+   {"col":"shares.superseded_by :text"}
+   {"col":"startups.id :bigint NN"}
+   {"col":"startups.name :text NN"}
+   {"col":"startups.sector :text"}
+   {"col":"startups.subsector :text"}
+   {"col":"startups.stage :text"}
+   {"col":"startups.bucket :USER-DEFINED NN"}
+   {"col":"startups.owner_name :text"}
+   {"col":"startups.status :USER-DEFINED NN"}
+   {"col":"startups.ask_current_cr :numeric"}
+   {"col":"startups.ask_reset_cr :numeric"}
+   {"col":"startups.reset_written_at :timestamp with time zone"}
+   {"col":"startups.revenue_note :text"}
+   {"col":"startups.revenue_inr_l :numeric"}
+   {"col":"startups.burn_inr_l :numeric"}
+   {"col":"startups.runway_months :numeric"}
+   {"col":"startups.score :integer"}
+   {"col":"startups.scored_at :timestamp with time zone"}
+   {"col":"startups.rule_tier :text"}
+   {"col":"startups.mandate_signed_on :date"}
+   {"col":"startups.mandate_closed_on :date"}
+   {"col":"startups.notes :text"}
+   {"col":"startups.created_at :timestamp with time zone NN"}
+   {"col":"startups.updated_at :timestamp with time zone NN"}
+   {"col":"startups.ask_currency :text"}
+   {"col":"startups.ask_amount :numeric"}
+   {"col":"startups.ask_as_written :text"}
+   {"col":"startups.ask_source :text"}
+   {"col":"startups.ask_updated_on :date"}
+   {"col":"startups.allocation_left_amount :numeric"}
+   {"col":"startups.allocation_left_as_written :text"}
+   {"col":"startups.allocation_source :text"}
+   {"col":"startups.allocation_updated_on :date"}
+   {"col":"task_heartbeat.task :text NN"}
+   {"col":"task_heartbeat.last_run_at :timestamp with time zone"}
+   {"col":"task_heartbeat.note :text"}
+   {"col":"task_heartbeat.updated_at :timestamp with time zone"}
+== FOREIGN KEYS (20)
+   {"fk":"ai_log.run_id -> ai_runs"}
+   {"fk":"app_users.id -> auth.users"}
+   {"fk":"docs.investor_id -> investors"}
+   {"fk":"docs.startup_id -> startups"}
+   {"fk":"funding_rounds.lead_investor_id -> investors"}
+   {"fk":"funding_rounds.startup_id -> startups"}
+   {"fk":"mail_log.investor_id -> investors"}
+   {"fk":"mail_log.startup_id -> startups"}
+   {"fk":"matches.investor_id -> investors"}
+   {"fk":"matches.startup_id -> startups"}
+   {"fk":"meetings.investor_id -> investors"}
+   {"fk":"meetings.startup_id -> startups"}
+   {"fk":"name_alias.startup_id -> startups"}
+   {"fk":"outreach.became_investor_id -> investors"}
+   {"fk":"outreach.investor_id -> investors"}
+   {"fk":"replies.investor_id -> investors"}
+   {"fk":"replies.share_id -> shares"}
+   {"fk":"replies.startup_id -> startups"}
+   {"fk":"shares.investor_id -> investors"}
+   {"fk":"shares.startup_id -> startups"}
+== RLS policies per table (15)
+   {"tablename":"ai_log","policies":1}
+   {"tablename":"ai_runs","policies":1}
+   {"tablename":"app_users","policies":3}
+   {"tablename":"cal_events","policies":1}
+   {"tablename":"docs","policies":2}
+   {"tablename":"funding_rounds","policies":2}
+   {"tablename":"investors","policies":2}
+   {"tablename":"mail_log","policies":2}
+   {"tablename":"matches","policies":2}
+   {"tablename":"meetings","policies":2}
+   {"tablename":"outreach","policies":2}
+   {"tablename":"replies","policies":2}
+   {"tablename":"shares","policies":2}
+   {"tablename":"startups","policies":2}
+   {"tablename":"task_heartbeat","policies":1}

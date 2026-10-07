@@ -1,0 +1,472 @@
+######## aavishkaar-followup-precheck
+-- bytes: 2894
+-- webhooks referenced:
+ASK-SEND GMAIL-SEARCH SHEET-CELL-FIX SHEET-READ 
+-- n8n workflow ids:
+
+-- sheets/tabs:
+INVESTOR_CRITERIA Thesis 
+-- mcp/tooling mentioned:
+
+-- section headings:
+
+######## aditya-email-reply-watch
+-- bytes: 7492
+-- webhooks referenced:
+GMAIL-SEARCH INTERNAL-SEND 
+-- n8n workflow ids:
+`V0NmD52cFC0HmJB4` 
+-- sheets/tabs:
+PIPELINE 
+-- mcp/tooling mentioned:
+gmail connector 
+-- section headings:
+## THE TRAP THAT MAKES THIS TASK NECESSARY
+## TOOLS — USE THE GMAIL CONNECTOR, NOT n8n
+## STEP 1 — FIND HIS REPLIES
+## STEP 2 — SPLIT IT INTO SEPARATE INSTRUCTIONS
+## STEP 3 — ACT, THEN CONFIRM BY EMAIL
+## STEP 4 — ROUTE WHAT IS NOT YOURS
+## NEVER
+## FINISH
+
+######## angel-desk-reply-watch
+-- bytes: 14962
+-- webhooks referenced:
+CAL-CREATE CAL-READ GMAIL-SEARCH INTERNAL-SEND NEW-SEND-MB2 NEW-SEND-MB4 NEW-SEND-MB5 PIPE-BATCH-FIX REPLY-SEND REPLY-SEND-MB2B REPLY-SEND-MB3 REPLY-SEND-MB4 REPLY-SEND-MB5 SHEET-CELL-FIX SHEET-READ 
+-- n8n workflow ids:
+`04qPLHnbKyU920po` `11bdYVjuKCkOk4sH` `7AHibjZoWQ1u8wPd` `AI43kudplo2uMCUF` `FJe1d0xRL1G0tdh2` `GeXSmrOTVeS7c9ib` `LRgpbZijdrDEPpxj` `NAQR29LsoNJMrLtX` `Wh4xkyLyqMksTlPo` `fmqKTt6NnKwZAQdK` `jZPS0jNUhiagPLN3` `m1C0zJbd3zdMUbx1` `uoYPlCSfZ8yzVlM6` 
+-- sheets/tabs:
+Founders Info INVESTOR_CRITERIA PIPELINE STARTUPS STARTUP_PROFILE 
+-- mcp/tooling mentioned:
+calendly fireflies linkedin 
+-- section headings:
+## DO NOT WRITE A ROW THE CHAIN IS HOLDING (added 30 Sep 2026)
+## STEP 0 — REBUILD THE OPEN-ASK LEDGER FROM THE MAILBOX (do this first, every run)
+## SCOPE
+## TOOLS — activate, call, then DEACTIVATE each. Check active state first; other sessions toggle them.
+## STEP 1 — FIND REPLIES
+## STEP 2 — ACT
+## STEP 3 — RECORD, AND UPDATE THE LEDGER
+## HARD RULES
+## STEP 4 — REPORT
+## STEP 1b — DESK HYGIENE AUDIT (every run, before acting)
+## STEP 1c — FOUNDER CHASE LADDER (every run)
+## STEP 5 — DECIDE, DO NOT ESCALATE
+## Sender not listed above
+
+######## angel-engagement-invites-29sep
+-- bytes: 6256
+-- webhooks referenced:
+GMAIL-SEARCH INTERNAL-SEND NEW-SEND-MB3 
+-- n8n workflow ids:
+`AI43kudplo2uMCUF` `QgiGt0dAh2QNScab` `V0NmD52cFC0HmJB4` 
+-- sheets/tabs:
+INVESTORS PIPELINE 
+-- mcp/tooling mentioned:
+calendly 
+-- section headings:
+## WHY THIS EXISTS
+## THE LIST — 15 people, one email each
+## WHO IS DELIBERATELY EXCLUDED — do not add them back
+## BEFORE YOU SEND — CHECK THE MAILBOXES
+## THE EMAIL
+## AFTER SENDING
+
+######## angel-thesis-ask-25sep
+-- bytes: 4454
+-- webhooks referenced:
+ENGINE-DAILY GMAIL-SEARCH 
+-- n8n workflow ids:
+`AI43kudplo2uMCUF` `GeXSmrOTVeS7c9ib` `m5wzSnMT08lm3oHK` 
+-- sheets/tabs:
+INVESTORS INVESTOR_CRITERIA 
+-- mcp/tooling mentioned:
+
+-- section headings:
+
+######## chaman-data-watch
+-- bytes: 5292
+-- webhooks referenced:
+GMAIL-SEARCH 
+-- n8n workflow ids:
+
+-- sheets/tabs:
+PIPELINE STARTUPS STARTUP_PROFILE 
+-- mcp/tooling mentioned:
+drive 
+-- section headings:
+
+######## clikd-colossa-vidhi-23sep
+-- bytes: 2947
+-- webhooks referenced:
+NEW-SEND-MB2 PIPE-BATCH-FIX PIPE-READ 
+-- n8n workflow ids:
+
+-- sheets/tabs:
+PIPELINE 
+-- mcp/tooling mentioned:
+
+-- section headings:
+
+######## clikd-udyat-reengage-nov
+-- bytes: 2302
+-- webhooks referenced:
+ENGINE-DAILY GMAIL-SEARCH 
+-- n8n workflow ids:
+
+-- sheets/tabs:
+STARTUPS 
+-- mcp/tooling mentioned:
+
+-- section headings:
+
+######## dealflow-state-machine
+-- bytes: 24157
+-- webhooks referenced:
+CAL-CREATE CAL-READ INTERNAL-SEND PIPE-BATCH-FIX 
+-- n8n workflow ids:
+
+-- sheets/tabs:
+Founders Info INVESTORS INVESTOR_CRITERIA PIPELINE STARTUPS 
+-- mcp/tooling mentioned:
+calendly fireflies google calendar 
+-- section headings:
+
+######## gargi-v3-trainrex-watch
+-- bytes: 1743
+-- webhooks referenced:
+
+-- n8n workflow ids:
+
+-- sheets/tabs:
+PIPELINE 
+-- mcp/tooling mentioned:
+
+-- section headings:
+
+######## hot-deals-reply-recorder
+-- bytes: 19791
+-- webhooks referenced:
+CAL-CREATE CAL-READ GMAIL-SEARCH INTERNAL-SEND PIPE-BATCH-FIX PIPE-READ SHEET-CELL-FIX 
+-- n8n workflow ids:
+`11bdYVjuKCkOk4sH` `7AHibjZoWQ1u8wPd` `AI43kudplo2uMCUF` `V0NmD52cFC0HmJB4` `jVVRssFPKY4GFrOz` `uoYPlCSfZ8yzVlM6` 
+-- sheets/tabs:
+Founders Info PIPELINE STARTUPS STARTUP_PROFILE 
+-- mcp/tooling mentioned:
+calendly drive fireflies google calendar linkedin 
+-- section headings:
+## SCOPE — the 11 HOT deals only
+## STATE
+## TOOLS — activate, call, then DEACTIVATE each one. Always check state first; other sessions toggle them.
+## TIMES — ALWAYS IST
+## MENTORCLOUD IS STOPPED
+## STEP 1 — FIND REPLIES
+## STEP 2 — RECORD (these are the automated actions; all are reversible sheet edits)
+## HARD RULES
+## STEP 2c — FOUNDER ASKS: REPORT THEM, DO NOT CHASE THEM
+## STEP 2b — CALENDAR CHECK (every run)
+## STEP 3 — REPORT, AND DELIVER WHAT CANNOT WAIT
+
+######## investor-thesis-ask-25sep
+-- bytes: 508
+-- webhooks referenced:
+NEW-SEND-MB3 
+-- n8n workflow ids:
+
+-- sheets/tabs:
+
+-- mcp/tooling mentioned:
+
+-- section headings:
+
+######## linkedin-outreach-cycle
+-- bytes: 10662
+-- webhooks referenced:
+
+-- n8n workflow ids:
+
+-- sheets/tabs:
+INVESTORS LI_OUTREACH ONBOARDING PIPELINE STARTUPS STARTUP_PROFILE 
+-- mcp/tooling mentioned:
+calendly chrome linkedin 
+-- section headings:
+
+######## linkedin-reply-watch
+-- bytes: 7249
+-- webhooks referenced:
+
+-- n8n workflow ids:
+
+-- sheets/tabs:
+INVESTORS LI_OUTREACH PIPELINE STARTUPS 
+-- mcp/tooling mentioned:
+calendly chrome linkedin 
+-- section headings:
+
+######## middle-desk-founder-chase-5day
+-- bytes: 3733
+-- webhooks referenced:
+GMAIL-SEARCH 
+-- n8n workflow ids:
+
+-- sheets/tabs:
+STARTUP_PROFILE 
+-- mcp/tooling mentioned:
+
+-- section headings:
+
+######## middle-desk-friday-result
+-- bytes: 5348
+-- webhooks referenced:
+GMAIL-SEARCH SHEET-READ 
+-- n8n workflow ids:
+`AI43kudplo2uMCUF` `m1C0zJbd3zdMUbx1` 
+-- sheets/tabs:
+STARTUP_PROFILE 
+-- mcp/tooling mentioned:
+fireflies 
+-- section headings:
+## 1. WHAT THE AUTOMATION DID
+## 2. WHAT CAME BACK ON THE 24 SEP EMAILS
+## 3. THE WEEKLY PROMOTION PASS
+## 4. THE STANDING PROBLEMS — state them in one line each, with today's number
+## TOOLS
+## OUTPUT
+
+######## middle-desk-reply-watch
+-- bytes: 14237
+-- webhooks referenced:
+CAL-CREATE CAL-READ GMAIL-SEARCH INTERNAL-SEND NEW-SEND-MB2 NEW-SEND-MB4 NEW-SEND-MB5 PIPE-BATCH-FIX REPLY-SEND REPLY-SEND-MB2B REPLY-SEND-MB3 REPLY-SEND-MB4 REPLY-SEND-MB5 SHEET-CELL-FIX SHEET-READ 
+-- n8n workflow ids:
+`04qPLHnbKyU920po` `11bdYVjuKCkOk4sH` `7AHibjZoWQ1u8wPd` `AI43kudplo2uMCUF` `FJe1d0xRL1G0tdh2` `GeXSmrOTVeS7c9ib` `LRgpbZijdrDEPpxj` `NAQR29LsoNJMrLtX` `Wh4xkyLyqMksTlPo` `fmqKTt6NnKwZAQdK` `jZPS0jNUhiagPLN3` `m1C0zJbd3zdMUbx1` `uoYPlCSfZ8yzVlM6` 
+-- sheets/tabs:
+Founders Info INVESTOR_CRITERIA PIPELINE STARTUPS STARTUP_PROFILE 
+-- mcp/tooling mentioned:
+calendly fireflies linkedin 
+-- section headings:
+## DO NOT WRITE A ROW THE CHAIN IS HOLDING (added 30 Sep 2026)
+## STEP 0 — REBUILD THE OPEN-ASK LEDGER FROM THE MAILBOX (do this first, every run)
+## SCOPE
+## TOOLS — activate, call, then DEACTIVATE each. Check active state first; other sessions toggle them.
+## STEP 1 — FIND REPLIES
+## STEP 2 — ACT
+## STEP 3 — RECORD, AND UPDATE THE LEDGER
+## HARD RULES
+## STEP 4 — REPORT
+## STEP 1b — DESK HYGIENE AUDIT (every run, before acting)
+## STEP 1c — FOUNDER CHASE LADDER (every run)
+## STEP 5 — DECIDE, DO NOT ESCALATE
+## Sender not listed above
+
+######## nirman-single-followup-8oct
+-- bytes: 5785
+-- webhooks referenced:
+INTERNAL-SEND REPLY-SEND-MB3 
+-- n8n workflow ids:
+`V0NmD52cFC0HmJB4` `wcXjlWbrLPU1PLZw` 
+-- sheets/tabs:
+INVESTOR_CRITERIA PIPELINE 
+-- mcp/tooling mentioned:
+
+-- section headings:
+## THE BACKGROUND, AND WHY THIS IS DELICATE
+## HARD LIMITS
+## STEP 1 — CHECK HE HAS NOT ALREADY REPLIED
+## STEP 2 — WORK OUT WHAT HE HAS ACTUALLY BEEN SENT
+## STEP 3 — SEND ONE SHORT EMAIL
+## STEP 4 — RECORD IT AND CLOSE THE TASK OUT
+
+######## onb-teaser-kalaari-23sep
+-- bytes: 1780
+-- webhooks referenced:
+REPLY-SEND-MB5 
+-- n8n workflow ids:
+
+-- sheets/tabs:
+
+-- mcp/tooling mentioned:
+
+-- section headings:
+
+######## onboarding-engine
+-- bytes: 6018
+-- webhooks referenced:
+
+-- n8n workflow ids:
+
+-- sheets/tabs:
+BOUNCES INVESTORS INVESTOR_CRITERIA LI_OUTREACH ONBOARDING 
+-- mcp/tooling mentioned:
+calendly linkedin 
+-- section headings:
+
+######## onboarding-followups
+-- bytes: 5540
+-- webhooks referenced:
+
+-- n8n workflow ids:
+
+-- sheets/tabs:
+BOUNCES INVESTORS ONBOARDING STARTUPS 
+-- mcp/tooling mentioned:
+
+-- section headings:
+
+######## onboarding-queue-refill
+-- bytes: 5911
+-- webhooks referenced:
+
+-- n8n workflow ids:
+
+-- sheets/tabs:
+INVESTORS ONBOARDING PIPELINE STARTUPS 
+-- mcp/tooling mentioned:
+linkedin 
+-- section headings:
+
+######## onboarding-reply-capture
+-- bytes: 7666
+-- webhooks referenced:
+GMAIL-SEARCH 
+-- n8n workflow ids:
+
+-- sheets/tabs:
+INVESTORS ONBOARDING STARTUPS 
+-- mcp/tooling mentioned:
+calendly 
+-- section headings:
+
+######## orbo-28sep-did-manoj-join
+-- bytes: 3900
+-- webhooks referenced:
+CAL-READ GMAIL-SEARCH 
+-- n8n workflow ids:
+
+-- sheets/tabs:
+
+-- mcp/tooling mentioned:
+calendly fireflies 
+-- section headings:
+
+######## road-athena-sunicon-trail-mail
+-- bytes: 3534
+-- webhooks referenced:
+GMAIL-SEARCH REPLY-SEND-MB2B 
+-- n8n workflow ids:
+
+-- sheets/tabs:
+
+-- mcp/tooling mentioned:
+calendly fireflies 
+-- section headings:
+
+######## sidana-1745-brief-prep
+-- bytes: 3990
+-- webhooks referenced:
+CAL-READ GMAIL-SEARCH 
+-- n8n workflow ids:
+
+-- sheets/tabs:
+PIPELINE 
+-- mcp/tooling mentioned:
+
+-- section headings:
+
+######## sidana-booking-watch
+-- bytes: 39491
+-- webhooks referenced:
+CAL-CREATE CAL-PATCH CAL-READ GMAIL-SEARCH INTERNAL-SEND PIPE-BATCH-FIX PIPE-READ PRE-SEND REPLY-SEND-MB2B SHEET-READ 
+-- n8n workflow ids:
+`V0NmD52cFC0HmJB4` 
+-- sheets/tabs:
+Founders Info INVESTORS PIPELINE STARTUPS STARTUP_PROFILE 
+-- mcp/tooling mentioned:
+calendly drive fireflies google calendar 
+-- section headings:
+
+######## sidana-morning-send-check-2026-09-11
+-- bytes: 2365
+-- webhooks referenced:
+
+-- n8n workflow ids:
+`BAkgem7Zu6uVyoFL` `TJUMpe2il97RIJi3` `jbrwBYNl17XAQClL` `n3NnZ386C0P9HNxc` 
+-- sheets/tabs:
+
+-- mcp/tooling mentioned:
+drive 
+-- section headings:
+
+######## sidana-rematch-watch
+-- bytes: 56593
+-- webhooks referenced:
+ASK-SEND CAL-CREATE CRIT-PATCH ENGINE-DAILY GMAIL-SEARCH INTERNAL-SEND PIPE-BATCH-FIX PIPE-READ SHEET-CELL-FIX SHEET-READ 
+-- n8n workflow ids:
+`V0NmD52cFC0HmJB4` `cWn4OtaMZEB9b60K` `isXhjjhrsdp60dv1` 
+-- sheets/tabs:
+ERROR LOG Founders Info INVESTORS INVESTOR_CRITERIA ONBOARDING PIPELINE STARTUPS STARTUP_PROFILE Thesis 
+-- mcp/tooling mentioned:
+drive linkedin 
+-- section headings:
+## DO NOT WRITE A ROW THE CHAIN IS HOLDING (added 30 Sep 2026)
+
+######## sidana-reply-capture
+-- bytes: 9012
+-- webhooks referenced:
+CRIT-PATCH ENGINE-DAILY GMAIL-SEARCH INTERNAL-SEND PIPE-READ SHEET-READ 
+-- n8n workflow ids:
+`V0NmD52cFC0HmJB4` 
+-- sheets/tabs:
+INVESTORS INVESTOR_CRITERIA PIPELINE Thesis 
+-- mcp/tooling mentioned:
+calendly drive fireflies linkedin 
+-- section headings:
+
+######## spintly-hem-book-watch
+-- bytes: 8512
+-- webhooks referenced:
+CAL-CREATE CAL-READ GMAIL-SEARCH PIPE-BATCH-FIX REPLY-SEND REPLY-SEND-MB5 
+-- n8n workflow ids:
+
+-- sheets/tabs:
+Founders Info PIPELINE STARTUPS 
+-- mcp/tooling mentioned:
+
+-- section headings:
+
+######## thesis-engine
+-- bytes: 14693
+-- webhooks referenced:
+ASK-SEND CRIT-PATCH ENGINE-DAILY GMAIL-SEARCH SHEET-READ 
+-- n8n workflow ids:
+
+-- sheets/tabs:
+INVESTOR_CRITERIA PIPELINE STARTUPS 
+-- mcp/tooling mentioned:
+calendly fireflies 
+-- section headings:
+
+######## vcat-reply-watch
+-- bytes: 3794
+-- webhooks referenced:
+GMAIL-SEARCH 
+-- n8n workflow ids:
+
+-- sheets/tabs:
+
+-- mcp/tooling mentioned:
+
+-- section headings:
+
+######## virajal-silverx-followup-7oct
+-- bytes: 3536
+-- webhooks referenced:
+INTERNAL-SEND PIPE-BATCH-FIX REPLY-SEND-MB4 
+-- n8n workflow ids:
+
+-- sheets/tabs:
+PIPELINE 
+-- mcp/tooling mentioned:
+
+-- section headings:
+

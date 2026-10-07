@@ -3,12 +3,12 @@
   "name": "Reply Detection — Akansha",
   "description": null,
   "active": true,
-  "activeVersionId": "4aabdee0-d982-4383-9810-689f67bba9a1",
+  "activeVersionId": "57d23f21-be76-4298-9b4d-e6ce359e61f7",
   "createdAt": "2026-09-01T04:53:56.456Z",
-  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "updatedAt": "2026-10-07T19:03:32.588Z",
   "isArchived": false,
-  "versionId": "4aabdee0-d982-4383-9810-689f67bba9a1",
-  "versionCounter": 10,
+  "versionId": "57d23f21-be76-4298-9b4d-e6ce359e61f7",
+  "versionCounter": 11,
   "sourceWorkflowId": null,
   "triggerCount": 1,
   "nodes": [
@@ -440,8 +440,8 @@
         432
       ],
       "parameters": {
-        "mode": "runOnceForEachItem",
-        "jsCode": "const tz = 'Asia/Kolkata';\nconst today = DateTime.now().setZone(tz).toISODate();\nconst ext = $json || {};\nconst ctx = $json;\nconst labelMap = {\n  'Positive / Meeting': 'Positive-Meeting',\n  'Interested / Reviewing': 'Interested-Reviewing',\n  'Documents Requested': 'Documents-Requested',\n  'Questions': 'Questions',\n  'Pass': 'Pass',\n  'Not Relevant': 'Not-Relevant',\n  'Referral / Forwarded': 'Referral-Forwarded',\n  'Out of Office': 'Out-of-Office',\n  'Other': 'Other',\n};\nconst statusMap = {\n  'Pass': 'Passed',\n  'Not Relevant': 'Not Relevant',\n  'Positive / Meeting': 'Meeting Scheduled',\n  'Interested / Reviewing': 'Reviewing',\n  'Documents Requested': 'Docs Requested',\n  'Questions': 'Questions',\n  'Referral / Forwarded': 'Referred',\n};\nconst cat = ext.category;\nconst conf = Number(ext.confidence);\nconst summary = String(ext.summary || '');\nlet doWrite = false, errorLog = false, row = null, errRow = null;\nlet labelNames = ['Reply-Logged'];\nif (!cat || !labelMap[cat]) {\n  errorLog = true;\n  errRow = { timestamp: today, workflow: 'Reply-Akansha', deal_id: ctx.deal_id, startup: ctx.startup, investor: ctx.investor, error_type: 'CLASSIFY_FAILED', details: 'Extractor returned no/invalid category', resolved: '' };\n  labelNames = ['Reply-Logged'];\n} else if (cat === 'Out of Office') {\n  doWrite = false;\n  labelNames = ['Out-of-Office', 'Reply-Logged'];\n} else if (isNaN(conf) || conf < 60) {\n  doWrite = true;\n  row = { deal_id: ctx.deal_id, investor_response: 'Other — needs review', deal_status: 'Needs Review' };\n  labelNames = ['Other', 'Reply-Logged'];\n} else {\n  const notes = (ctx.existing_notes ? ctx.existing_notes + ' | ' : '') + today + ': ' + summary;\n  row = { deal_id: ctx.deal_id, investor_response: cat, deal_status: statusMap[cat] || '', next_due: '', notes: notes, last_contact: today };\n  doWrite = true;\n  labelNames = [labelMap[cat], 'Reply-Logged'];\n}\nreturn { json: { messageId: ctx.messageId, deal_id: ctx.deal_id, doWrite, errorLog, row, errRow, labelNames } };"
+        "mode": "runOnceForAllItems",
+        "jsCode": "const tz = 'Asia/Kolkata';\nconst today = DateTime.now().setZone(tz).toISODate();\nconst ext = $json || {};\nconst ctx = $json;\nconst labelMap = {\n  'Positive / Meeting': 'Positive-Meeting',\n  'Interested / Reviewing': 'Interested-Reviewing',\n  'Documents Requested': 'Documents-Requested',\n  'Questions': 'Questions',\n  'Pass': 'Pass',\n  'Not Relevant': 'Not-Relevant',\n  'Referral / Forwarded': 'Referral-Forwarded',\n  'Out of Office': 'Out-of-Office',\n  'Other': 'Other',\n};\nconst statusMap = {\n  'Pass': 'Passed',\n  'Not Relevant': 'Not Relevant',\n  'Positive / Meeting': 'Meeting Scheduled',\n  'Interested / Reviewing': 'Reviewing',\n  'Documents Requested': 'Docs Requested',\n  'Questions': 'Questions',\n  'Referral / Forwarded': 'Referred',\n};\n// 8 Oct 2026: a pass used to be recorded without pausing the row or clearing\n// next_action, so follow-ups stayed live on a deal the investor had already\n// declined. Three desks were sweeping up after it. Terminal categories now\n// close the row the same way a desk does.\nconst TERMINAL = { 'Pass': 1, 'Not Relevant': 1 };\nconst cat = ext.category;\nconst conf = Number(ext.confidence);\nconst summary = String(ext.summary || '');\nlet doWrite = false, errorLog = false, row = null, errRow = null;\nlet labelNames = ['Reply-Logged'];\nif (!cat || !labelMap[cat]) {\n  errorLog = true;\n  errRow = { timestamp: today, workflow: 'Reply-Akansha', deal_id: ctx.deal_id, startup: ctx.startup, investor: ctx.investor, error_type: 'CLASSIFY_FAILED', details: 'Extractor returned no/invalid category', resolved: '' };\n  labelNames = ['Reply-Logged'];\n} else if (cat === 'Out of Office') {\n  doWrite = false;\n  labelNames = ['Out-of-Office', 'Reply-Logged'];\n} else if (isNaN(conf) || conf < 60) {\n  doWrite = true;\n  row = { deal_id: ctx.deal_id, investor_response: 'Other — needs review', deal_status: 'Needs Review' };\n  labelNames = ['Other', 'Reply-Logged'];\n} else {\n  const notes = (ctx.existing_notes ? ctx.existing_notes + ' | ' : '') + today + ': ' + summary;\n  const terminal = !!TERMINAL[cat];\n  row = { deal_id: ctx.deal_id, investor_response: cat, deal_status: terminal ? 'Closed - passed' : (statusMap[cat] || ''), pause: terminal ? 'Yes' : '', next_action: terminal ? 'Closed - passed' : '', next_due: '', notes: notes, last_contact: today };\n  doWrite = true;\n  labelNames = [labelMap[cat], 'Reply-Logged'];\n}\nreturn { json: { messageId: ctx.messageId, deal_id: ctx.deal_id, doWrite, errorLog, row, errRow, labelNames } };\n"
       }
     },
     {
@@ -1060,7 +1060,7 @@
     }
   ],
   "activeVersion": {
-    "versionId": "4aabdee0-d982-4383-9810-689f67bba9a1",
+    "versionId": "57d23f21-be76-4298-9b4d-e6ce359e61f7",
     "workflowId": "uHbP2eLYI37O2Xe3",
     "nodes": [
       {
@@ -1091,8 +1091,10 @@
       {
         "id": "8770ecd9-825b-4c9b-9c24-9f2feecd29f1",
         "name": "Create label (if missing)",
+        "webhookId": "7ea33b5a-1349-4ec3-b6ce-6c8b29c453b3",
         "type": "n8n-nodes-base.gmail",
         "typeVersion": 2.2,
+        "onError": "continueRegularOutput",
         "position": [
           448,
           96
@@ -1107,15 +1109,15 @@
             "id": "9IWD8mWqdARPXloL",
             "name": "Gmail account 4"
           }
-        },
-        "onError": "continueRegularOutput",
-        "webhookId": "7ea33b5a-1349-4ec3-b6ce-6c8b29c453b3"
+        }
       },
       {
         "id": "77de0e96-4587-46db-8351-67e880898918",
         "name": "Read labels final",
+        "webhookId": "3fcedcc6-7522-4f3f-b54a-a6c4b56586f9",
         "type": "n8n-nodes-base.gmail",
         "typeVersion": 2.2,
+        "executeOnce": true,
         "position": [
           672,
           96
@@ -1130,15 +1132,14 @@
             "id": "9IWD8mWqdARPXloL",
             "name": "Gmail account 4"
           }
-        },
-        "executeOnce": true,
-        "webhookId": "3fcedcc6-7522-4f3f-b54a-a6c4b56586f9"
+        }
       },
       {
         "id": "04f87759-c023-4b78-995d-b2171485f3b0",
         "name": "Read PIPELINE",
         "type": "n8n-nodes-base.googleSheets",
         "typeVersion": 4.7,
+        "executeOnce": true,
         "position": [
           896,
           96
@@ -1162,14 +1163,15 @@
             "id": "isXhjjhrsdp60dv1",
             "name": "Google Sheets account"
           }
-        },
-        "executeOnce": true
+        }
       },
       {
         "id": "c7d56ae4-28c3-46ac-9a74-7b7375c81561",
         "name": "Get Many Messages",
+        "webhookId": "7340d5df-3fe3-4ebb-9e64-9e3da46a4e3d",
         "type": "n8n-nodes-base.gmail",
         "typeVersion": 2.2,
+        "executeOnce": true,
         "position": [
           1120,
           96
@@ -1189,9 +1191,7 @@
             "id": "9IWD8mWqdARPXloL",
             "name": "Gmail account 4"
           }
-        },
-        "executeOnce": true,
-        "webhookId": "7340d5df-3fe3-4ebb-9e64-9e3da46a4e3d"
+        }
       },
       {
         "id": "c9e44982-4004-4277-9d86-8807332bb533",
@@ -1259,6 +1259,7 @@
         "name": "Append DEFERRED",
         "type": "n8n-nodes-base.googleSheets",
         "typeVersion": 4.7,
+        "retryOnFail": true,
         "position": [
           2016,
           0
@@ -1346,8 +1347,7 @@
             "id": "isXhjjhrsdp60dv1",
             "name": "Google Sheets account"
           }
-        },
-        "retryOnFail": true
+        }
       },
       {
         "id": "7c04cecc-ed40-4f2f-89d0-faa72fcbd2e0",
@@ -1444,8 +1444,10 @@
       {
         "id": "833d7238-5737-42cf-9365-95c99cb667c4",
         "name": "Apply Reply-Logged (already)",
+        "webhookId": "1548ba2e-8ed1-44c0-be17-545ad89d64c3",
         "type": "n8n-nodes-base.gmail",
         "typeVersion": 2.2,
+        "retryOnFail": true,
         "position": [
           2816,
           144
@@ -1463,9 +1465,7 @@
             "id": "9IWD8mWqdARPXloL",
             "name": "Gmail account 4"
           }
-        },
-        "retryOnFail": true,
-        "webhookId": "1548ba2e-8ed1-44c0-be17-545ad89d64c3"
+        }
       },
       {
         "id": "e0e5b732-6933-4f9d-acb7-d28d59b49a31",
@@ -1491,8 +1491,8 @@
           432
         ],
         "parameters": {
-          "mode": "runOnceForEachItem",
-          "jsCode": "const tz = 'Asia/Kolkata';\nconst today = DateTime.now().setZone(tz).toISODate();\nconst ext = $json || {};\nconst ctx = $json;\nconst labelMap = {\n  'Positive / Meeting': 'Positive-Meeting',\n  'Interested / Reviewing': 'Interested-Reviewing',\n  'Documents Requested': 'Documents-Requested',\n  'Questions': 'Questions',\n  'Pass': 'Pass',\n  'Not Relevant': 'Not-Relevant',\n  'Referral / Forwarded': 'Referral-Forwarded',\n  'Out of Office': 'Out-of-Office',\n  'Other': 'Other',\n};\nconst statusMap = {\n  'Pass': 'Passed',\n  'Not Relevant': 'Not Relevant',\n  'Positive / Meeting': 'Meeting Scheduled',\n  'Interested / Reviewing': 'Reviewing',\n  'Documents Requested': 'Docs Requested',\n  'Questions': 'Questions',\n  'Referral / Forwarded': 'Referred',\n};\nconst cat = ext.category;\nconst conf = Number(ext.confidence);\nconst summary = String(ext.summary || '');\nlet doWrite = false, errorLog = false, row = null, errRow = null;\nlet labelNames = ['Reply-Logged'];\nif (!cat || !labelMap[cat]) {\n  errorLog = true;\n  errRow = { timestamp: today, workflow: 'Reply-Akansha', deal_id: ctx.deal_id, startup: ctx.startup, investor: ctx.investor, error_type: 'CLASSIFY_FAILED', details: 'Extractor returned no/invalid category', resolved: '' };\n  labelNames = ['Reply-Logged'];\n} else if (cat === 'Out of Office') {\n  doWrite = false;\n  labelNames = ['Out-of-Office', 'Reply-Logged'];\n} else if (isNaN(conf) || conf < 60) {\n  doWrite = true;\n  row = { deal_id: ctx.deal_id, investor_response: 'Other — needs review', deal_status: 'Needs Review' };\n  labelNames = ['Other', 'Reply-Logged'];\n} else {\n  const notes = (ctx.existing_notes ? ctx.existing_notes + ' | ' : '') + today + ': ' + summary;\n  row = { deal_id: ctx.deal_id, investor_response: cat, deal_status: statusMap[cat] || '', next_due: '', notes: notes, last_contact: today };\n  doWrite = true;\n  labelNames = [labelMap[cat], 'Reply-Logged'];\n}\nreturn { json: { messageId: ctx.messageId, deal_id: ctx.deal_id, doWrite, errorLog, row, errRow, labelNames } };"
+          "mode": "runOnceForAllItems",
+          "jsCode": "const tz = 'Asia/Kolkata';\nconst today = DateTime.now().setZone(tz).toISODate();\nconst ext = $json || {};\nconst ctx = $json;\nconst labelMap = {\n  'Positive / Meeting': 'Positive-Meeting',\n  'Interested / Reviewing': 'Interested-Reviewing',\n  'Documents Requested': 'Documents-Requested',\n  'Questions': 'Questions',\n  'Pass': 'Pass',\n  'Not Relevant': 'Not-Relevant',\n  'Referral / Forwarded': 'Referral-Forwarded',\n  'Out of Office': 'Out-of-Office',\n  'Other': 'Other',\n};\nconst statusMap = {\n  'Pass': 'Passed',\n  'Not Relevant': 'Not Relevant',\n  'Positive / Meeting': 'Meeting Scheduled',\n  'Interested / Reviewing': 'Reviewing',\n  'Documents Requested': 'Docs Requested',\n  'Questions': 'Questions',\n  'Referral / Forwarded': 'Referred',\n};\n// 8 Oct 2026: a pass used to be recorded without pausing the row or clearing\n// next_action, so follow-ups stayed live on a deal the investor had already\n// declined. Three desks were sweeping up after it. Terminal categories now\n// close the row the same way a desk does.\nconst TERMINAL = { 'Pass': 1, 'Not Relevant': 1 };\nconst cat = ext.category;\nconst conf = Number(ext.confidence);\nconst summary = String(ext.summary || '');\nlet doWrite = false, errorLog = false, row = null, errRow = null;\nlet labelNames = ['Reply-Logged'];\nif (!cat || !labelMap[cat]) {\n  errorLog = true;\n  errRow = { timestamp: today, workflow: 'Reply-Akansha', deal_id: ctx.deal_id, startup: ctx.startup, investor: ctx.investor, error_type: 'CLASSIFY_FAILED', details: 'Extractor returned no/invalid category', resolved: '' };\n  labelNames = ['Reply-Logged'];\n} else if (cat === 'Out of Office') {\n  doWrite = false;\n  labelNames = ['Out-of-Office', 'Reply-Logged'];\n} else if (isNaN(conf) || conf < 60) {\n  doWrite = true;\n  row = { deal_id: ctx.deal_id, investor_response: 'Other — needs review', deal_status: 'Needs Review' };\n  labelNames = ['Other', 'Reply-Logged'];\n} else {\n  const notes = (ctx.existing_notes ? ctx.existing_notes + ' | ' : '') + today + ': ' + summary;\n  const terminal = !!TERMINAL[cat];\n  row = { deal_id: ctx.deal_id, investor_response: cat, deal_status: terminal ? 'Closed - passed' : (statusMap[cat] || ''), pause: terminal ? 'Yes' : '', next_action: terminal ? 'Closed - passed' : '', next_due: '', notes: notes, last_contact: today };\n  doWrite = true;\n  labelNames = [labelMap[cat], 'Reply-Logged'];\n}\nreturn { json: { messageId: ctx.messageId, deal_id: ctx.deal_id, doWrite, errorLog, row, errRow, labelNames } };\n"
         }
       },
       {
@@ -1547,6 +1547,7 @@
         "name": "Update PIPELINE",
         "type": "n8n-nodes-base.googleSheets",
         "typeVersion": 4.7,
+        "retryOnFail": true,
         "position": [
           3488,
           144
@@ -1591,8 +1592,7 @@
             "id": "isXhjjhrsdp60dv1",
             "name": "Google Sheets account"
           }
-        },
-        "retryOnFail": true
+        }
       },
       {
         "id": "6d3f23a2-f67a-4cee-b447-4348b23a203b",
@@ -1646,6 +1646,7 @@
         "name": "Append ERROR LOG",
         "type": "n8n-nodes-base.googleSheets",
         "typeVersion": 4.7,
+        "retryOnFail": true,
         "position": [
           3488,
           336
@@ -1751,8 +1752,7 @@
             "id": "isXhjjhrsdp60dv1",
             "name": "Google Sheets account"
           }
-        },
-        "retryOnFail": true
+        }
       },
       {
         "id": "59a46715-fb98-4a16-8eb5-8ce216e6fc40",
@@ -1771,8 +1771,10 @@
       {
         "id": "3014db42-2d71-4156-ac52-aa74f161a66d",
         "name": "Apply labels (classify)",
+        "webhookId": "933e8327-04f1-4341-bcb7-cb09a3c6fecf",
         "type": "n8n-nodes-base.gmail",
         "typeVersion": 2.2,
+        "retryOnFail": true,
         "position": [
           3264,
           528
@@ -1790,9 +1792,7 @@
             "id": "9IWD8mWqdARPXloL",
             "name": "Gmail account 4"
           }
-        },
-        "retryOnFail": true,
-        "webhookId": "933e8327-04f1-4341-bcb7-cb09a3c6fecf"
+        }
       },
       {
         "id": "f54ef709-98ef-4ca0-830a-59523fa8b300",
@@ -2077,32 +2077,16 @@
     "name": null,
     "description": null,
     "autosaved": false,
-    "createdAt": "2026-09-03T05:03:47.155Z",
-    "updatedAt": "2026-09-03T05:03:47.155Z",
+    "createdAt": "2026-10-07T19:03:32.589Z",
+    "updatedAt": "2026-10-07T19:03:32.589Z",
     "workflowPublishHistory": [
       {
-        "id": 58,
+        "id": 13162,
         "workflowId": "uHbP2eLYI37O2Xe3",
-        "versionId": "4aabdee0-d982-4383-9810-689f67bba9a1",
+        "versionId": "57d23f21-be76-4298-9b4d-e6ce359e61f7",
         "event": "activated",
         "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
-        "createdAt": "2026-09-03T07:15:54.889Z"
-      },
-      {
-        "id": 59,
-        "workflowId": "uHbP2eLYI37O2Xe3",
-        "versionId": "4aabdee0-d982-4383-9810-689f67bba9a1",
-        "event": "deactivated",
-        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
-        "createdAt": "2026-09-03T07:15:55.442Z"
-      },
-      {
-        "id": 60,
-        "workflowId": "uHbP2eLYI37O2Xe3",
-        "versionId": "4aabdee0-d982-4383-9810-689f67bba9a1",
-        "event": "activated",
-        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
-        "createdAt": "2026-09-03T07:15:55.444Z"
+        "createdAt": "2026-10-07T19:03:32.849Z"
       }
     ]
   }
