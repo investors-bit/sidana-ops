@@ -1,0 +1,886 @@
+[
+  {
+    "id": "06HDdyVsRmaOZJvB",
+    "name": "One-off — DELETE Climate Angels from PIPELINE + INVESTORS"
+  },
+  {
+    "id": "0C2ZckSfWg2feBhC",
+    "name": "One-off RMW-1 (read-only) — 10 Sep re-match watch: ERROR LOG + corrections + INVESTORS + tracker + STARTUPS + PIPELINE"
+  },
+  {
+    "id": "0EgrQntO24thHEWm",
+    "name": "One-off DX-2 — read-only: why PIPELINE column E won't keep emails on 32 rows (formula / validation / protection)"
+  },
+  {
+    "id": "0eIyXW4j6YrzpAS7",
+    "name": "One-off PS-1 — pause all queued Sahaj deals (user 14 Sep)"
+  },
+  {
+    "id": "0zrzir1Kq58uzSZP",
+    "name": "One-off FI-7 — drop bouncing founder addresses (Starz AI, Flyment, Recex)"
+  },
+  {
+    "id": "13mvTJoergXgRrQb",
+    "name": "One-off — Send 15 corrected deals now"
+  },
+  {
+    "id": "18p9gqRU3AsnuuiQ",
+    "name": "TEST — One real email (Shradha, throwaway row)"
+  },
+  {
+    "id": "1PEjleJNPz4qo9iB",
+    "name": "One-off CP-2 — find and read the Composition tab (read only)"
+  },
+  {
+    "id": "1XaMY7toWQxi1XYF",
+    "name": "One-off TC-1 (read-only) — impact of pending thesis changes: queued deals + startup revenue (17 Sep)"
+  },
+  {
+    "id": "1geGQnSb5sIR5NLX",
+    "name": "One-off READ — Shradhaa Gmail signature (16 Sep)"
+  },
+  {
+    "id": "24xpf4MOVCX7toQw",
+    "name": "READ (read-only) — investor runway per startup at current pace"
+  },
+  {
+    "id": "2EP6EYO5MrCZs1AW",
+    "name": "One-off RMW17-1 (read-only) — 17 Sep re-match watch: flags, corrections, dup check, meetings"
+  },
+  {
+    "id": "2N8upCa4hfw1bEsY",
+    "name": "One-off TEST — PeerCapital onboarding email to rakesh@ (16 Sep)"
+  },
+  {
+    "id": "3Lhi15wzSU8NbDjh",
+    "name": "READ (read-only) — WR-0 founders tab + PIPELINE weekly preview"
+  },
+  {
+    "id": "3WwvjCAlllCYWuDf",
+    "name": "One-off EL-READ (read-only) — unresolved THESIS-WATCH rows in ERROR LOG (29 Sep 17:30 run)"
+  },
+  {
+    "id": "3bX3nUPwuocUqUGN",
+    "name": "TEST-ONCE — Fireflies missed-meeting dry run (no email; delete after 23 Sep)"
+  },
+  {
+    "id": "3e1KWxLmAc9uR6uS",
+    "name": "One-off RO-DAY — daily outreach snapshot: shares, follow-ups, replies, meetings (read-only)"
+  },
+  {
+    "id": "40PTrM2Cg4pNnuIh",
+    "name": "One-off READ — verify ONBOARDING tab import (16 Sep)"
+  },
+  {
+    "id": "4Ld6pRE79QUfSHpm",
+    "name": "One-off DN-1 — DNC Capital-A + Windrose (inactive), drop debt investors' deals, list missing email/contact/thesis"
+  },
+  {
+    "id": "4uYlHfoW1TtUIJKI",
+    "name": "One-off DRM-4 — apply Riceberg + Siana mandates, resolve their THESIS-WATCH flags"
+  },
+  {
+    "id": "53zmFRLYHyZeoRk3",
+    "name": "One-off PH-1 — Physis Capital: Jatin left, Parnika thesis (agnostic + consumer ARR 15 Cr) (17 Sep)"
+  },
+  {
+    "id": "5HUHsplDRaNBtJKA",
+    "name": "DIAG — Pre-flight (read-only)"
+  },
+  {
+    "id": "5lJIuuyjglh3Kx8u",
+    "name": "One-off RP-1 — strict vs sector-only match report by meeting group (read only)"
+  },
+  {
+    "id": "634n71tAB1tpxjt7",
+    "name": "One-off PZ-1 — re-pause 2 A2D Ventures deals released by mistake (D03919, D04126)"
+  },
+  {
+    "id": "63MiUKRg3UokNXnl",
+    "name": "One-off FR-1 — fix 32 blank-email deals: rewrite E (USER_ENTERED), then replace any row that won't hold its email"
+  },
+  {
+    "id": "6GTtrAMQk4N7NZoU",
+    "name": "One-off — Reset bounced deals (Fireside, Flipkart)"
+  },
+  {
+    "id": "6YZYqVrjifScmtYM",
+    "name": "READ (read-only) — investors matched per startup"
+  },
+  {
+    "id": "6h8djasGGb93kBla",
+    "name": "One-off RW-3 — dump raw raise values from STARTUPS"
+  },
+  {
+    "id": "6iWmw1W7RRLENzqw",
+    "name": "One-off RMW-3 — 10 Sep re-match: Riceberg, Siana, DSG, Blinc, Prath (delete 49 / pause 2 / re-point 6 / add 1 / resolve 5)"
+  },
+  {
+    "id": "6rgRv3s9RbuaAN3u",
+    "name": "One-off TR-31 — TEST HARNESS: patched Build email on 60 sample deals (no send, read only)"
+  },
+  {
+    "id": "75XxnuqMFhWs7AIl",
+    "name": "One-off RO-LINKEDIN — NEW_INVESTORS all tabs read (read-only, 30 Sep)"
+  },
+  {
+    "id": "84aVT3FQtd8a0rw2",
+    "name": "One-off AN-2 — passed investors vs corrections (name-normalised)"
+  },
+  {
+    "id": "88gjxNGGKB145QIo",
+    "name": "One-off — FIX STARTUPS header back to 'startup'"
+  },
+  {
+    "id": "89ElaGZZXuIHJ5rM",
+    "name": "CHECK (read-only) — replies on the 7 already-sent duplicate rows"
+  },
+  {
+    "id": "8n9UK2ASzCKHY145",
+    "name": "One-off AI-1 — add 6 investors + fill 3 emails, match new/cleared investors (tiered, capped), release Loyal VC holds"
+  },
+  {
+    "id": "9FK1JeaeGlsI9Dcw",
+    "name": "STATS (read-only) — PIPELINE deal_shared breakdown"
+  },
+  {
+    "id": "9GE35r7AoGYp6d4G",
+    "name": "One-off CAL-14U — invite 14U Capital, Fri 25 Sep 15:00 IST, from investors@ calendar"
+  },
+  {
+    "id": "9eNTluFk32eHDtjl",
+    "name": "One-off TR-15 — remove duplicate deal pairs (delete unsent, silence already-sent)"
+  },
+  {
+    "id": "9ieM1arHMorGbSOq",
+    "name": "One-off RMW-2 (read-only) — scan all tracker + meetings tabs for flagged-firm mentions"
+  },
+  {
+    "id": "9rSfwLiXjn0Ay2tm",
+    "name": "One-off RW-2 — score each startup's untapped investor pool"
+  },
+  {
+    "id": "9wA3PxaKn46RvtJr",
+    "name": "One-off RMW17-2 (read-only) — 17 Sep: mail-correction carry-through + flagged investors (Blinc, Siana, PiperSireca, DSG) detail"
+  },
+  {
+    "id": "9ys1UJNKGR4Z0Rzl",
+    "name": "One-off — Scan memo tails"
+  },
+  {
+    "id": "AD0FIb29J3eJIUv2",
+    "name": "One-off MT-1 — dump deal-flow meetings sheet (gid 275166776)"
+  },
+  {
+    "id": "AThaYLvKpJ0cf6Fp",
+    "name": "One-off FD-1 — read-only: Founders Info tab (founder gender for women-only funds)"
+  },
+  {
+    "id": "AzRBZfXBqAPVQiXr",
+    "name": "One-off RO-PREREV — pre-revenue startups: shares, passes, meetings (read-only, 29 Sep)"
+  },
+  {
+    "id": "B8adaIYUYFpZX2vG",
+    "name": "One-off CG-5 — append INVESTOR_CRITERIA row for Dexter Ventures (investor-stated thesis)"
+  },
+  {
+    "id": "B9JTfejImQtDqWqx",
+    "name": "One-off DR-1 — dry run: new tiered rules (5+ strict; under-5 sector+cheque, stage ±1)"
+  },
+  {
+    "id": "BJpNnsCgqkn2IGG1",
+    "name": "One-off CL-1 — classify every sent deal: strict or why not, and how it performed (read only)"
+  },
+  {
+    "id": "BekwOQb44K7IXGB7",
+    "name": "One-off TC-P1 (read-only) — Piper Serica: every PIPELINE row + ERROR LOG history (17 Sep)"
+  },
+  {
+    "id": "Bl0cEJCAEHJJSibl",
+    "name": "One-off TR-26 — additive pre-revenue reach: add idea/pre-seed investors, drop nothing"
+  },
+  {
+    "id": "CIOwYtNUu1tDxJck",
+    "name": "READ (read-only) — MindWox: PIPELINE vs 4 mailboxes vs 4 calendars"
+  },
+  {
+    "id": "CMg1pnm6WTAQ0yDH",
+    "name": "One-off — Cosmicport audit (read-only)"
+  },
+  {
+    "id": "CoGpcjLwexoFVuAq",
+    "name": "One-off FQ-1 — deals per investor per day across the 4 mailboxes (read only)"
+  },
+  {
+    "id": "D260RXB6Qm0BvZ0t",
+    "name": "One-off — Pause 2 Kaizenvest rows already shared (Deal Tracker)"
+  },
+  {
+    "id": "DI4Rxqd1cdyHOS4h",
+    "name": "One-off — Preview memo restyle (headings black + 14px)"
+  },
+  {
+    "id": "DSCWwN6lZNwtpW31",
+    "name": "One-off — Update BlackSoil contact (Ravi)"
+  },
+  {
+    "id": "Ds9o7maIFj6av2UJ",
+    "name": "One-off WP-1 — women-only funds: drop deals to startups without a woman in the cap table"
+  },
+  {
+    "id": "DwD1Gc3eAAqNTFQ6",
+    "name": "READ (read-only) — find founder addresses for Indie Stori / Doffair / RemoteMore across MB2,4,5"
+  },
+  {
+    "id": "DyWw5BdB0GJxIPCB",
+    "name": "One-off DX-1 — read-only: PIPELINE rows for 32 release-check deal IDs"
+  },
+  {
+    "id": "FAwtJYmFsYV5MlYB",
+    "name": "One-off FQ-2 — simulate investor cap (5/week, 5/day) → deals per startup per week (read only)"
+  },
+  {
+    "id": "FQwG6jeOLfYlTv6W",
+    "name": "One-off BG-3 — add 20 new BlueGreen PIPELINE rows (new mandate)"
+  },
+  {
+    "id": "FS0huElEuzzDZQnC",
+    "name": "One-off TR-16 — add angel Gautam Kapur to INVESTORS"
+  },
+  {
+    "id": "FlxOTKWmZqJnJ7ek",
+    "name": "One-off PAUSE-3 — investor HOLD until thesis (last used 22 Sep for Equanimity; originally Chiratae/Blume/Orios)"
+  },
+  {
+    "id": "G0jFPAIrYwntZG4z",
+    "name": "One-off TR-23 — name the second mandate row for Accel and Yali (email untouched)"
+  },
+  {
+    "id": "GBdg9wdyKi44amwV",
+    "name": "One-off FE-1 — fill blank PIPELINE emails from INVESTORS (active unsent rows only)"
+  },
+  {
+    "id": "GWeOfvKczzVyaTuX",
+    "name": "One-off RD-1 — re-date queued deals: max 5 new deals per investor per week"
+  },
+  {
+    "id": "GfblrLvEY0tvo84x",
+    "name": "One-off — List contacted today (read-only)"
+  },
+  {
+    "id": "GlnVE9WE9CiwvmtJ",
+    "name": "One-off RW-6 — runway + gaps + tiered (5-meeting) headroom + per-investor view (read only)"
+  },
+  {
+    "id": "H59N7BFpMTHalt90",
+    "name": "One-off MT-3 — replace priority with match_type; drop queued deals that break the strategy"
+  },
+  {
+    "id": "HSJUIyDt0xsDA2M0",
+    "name": "One-off — Test read access to correction sheet"
+  },
+  {
+    "id": "HssOpEnBBfI09fgn",
+    "name": "One-off — Set do_not_contact on NORTHERN ARC"
+  },
+  {
+    "id": "ISNLJyk05m1Tc2nT",
+    "name": "One-off — My Soul PIPELINE rows (34 investors)"
+  },
+  {
+    "id": "IZWrpdYGlWlfRWsh",
+    "name": "One-off FI-6 — fix Orbis Lives founder email (bounce) in Founders Info"
+  },
+  {
+    "id": "IavaEQc4c3zDVjut",
+    "name": "VERIFY + STATS (read-only) — post-cleanup state and weekly send rate"
+  },
+  {
+    "id": "IbFDifjONlJkIkyn",
+    "name": "One-off FI-5 — add Train Rex to Founders Info"
+  },
+  {
+    "id": "IcFOEMBUvX8okON1",
+    "name": "One-off BG-2 — delete 5 off-mandate BlueGreen pending rows"
+  },
+  {
+    "id": "IfPTBOdMWN73ULyY",
+    "name": "One-off DRM-3 — delete 21 off-mandate pending rows (Riceberg, Siana)"
+  },
+  {
+    "id": "IikjJZEn5TY1IT6B",
+    "name": "One-off MAIL-0 (read-only) — which Gmail account is which owner + PIPELINE reply stats (17 Sep)"
+  },
+  {
+    "id": "IwOhrlvav6Mcr04q",
+    "name": "Investor Cleanup Rows 10-14"
+  },
+  {
+    "id": "JwKCKcCCOjaIs6mm",
+    "name": "One-off — Red text for passed deals (PIPELINE conditional format)"
+  },
+  {
+    "id": "KIomcePOm57RLwim",
+    "name": "One-off VR-1 — verify investor cap after re-date (read only)"
+  },
+  {
+    "id": "KtLxu5IT61lKKktO",
+    "name": "One-off KAE-1 — diagnose Kae Capital stop state"
+  },
+  {
+    "id": "L0HraxA2cK0vivcz",
+    "name": "One-off AN-3 — passed vs corrections (values API, bypasses metadata 503)"
+  },
+  {
+    "id": "L0awoBVpgUgKG2M6",
+    "name": "One-off — HOLD Aroa Venture Partners in Onboarding sheet (16 Sep)"
+  },
+  {
+    "id": "L72g9j4IrRJuUgRJ",
+    "name": "One-off — Restore today shares"
+  },
+  {
+    "id": "LXjRuRa9iT8qLxcs",
+    "name": "One-off TR-29 — PREVIEW raise removal for 16 pre-revenue memos, all investors (read only)"
+  },
+  {
+    "id": "MAc0biVrJTqkijta",
+    "name": "One-off — Add PIPELINE rows for 8 new investors (rows 173-185)"
+  },
+  {
+    "id": "MC5II7A6DHSojAmS",
+    "name": "One-off — remove THESIS-WATCH test flags from ERROR LOG"
+  },
+  {
+    "id": "MUyqFXjc9chR8FPV",
+    "name": "READ (read-only) — IAN meeting rows: Luxova, Nexcore, EosNox"
+  },
+  {
+    "id": "NFS5X4I4l7iwGlVh",
+    "name": "One-off CG-4 — confirm PENDING/HOLD rows that have a researched thesis (user-authorised 23 Sep)"
+  },
+  {
+    "id": "NOLBMsgfJJEnQ3EP",
+    "name": "FIX — Reconcile 7 sent rows (deal_shared=Yes)"
+  },
+  {
+    "id": "NRRYgucsYKuuDwgn",
+    "name": "DIAG — memo tails (read-only)"
+  },
+  {
+    "id": "NeJLa70VYHtoiNBB",
+    "name": "One-off IAN-2 — repoint existing IAN PIPELINE rows to Angel Fund"
+  },
+  {
+    "id": "O7Bs6ONa39naj6tv",
+    "name": "One-off CAL-0 (read-only) — can the 4 Gmail logins read Google Calendar? (17 Sep)"
+  },
+  {
+    "id": "OQy2mZezBAjWlNvO",
+    "name": "One-off FIX — backfill sent_date + thread_id for 17 Sep sends from Gmail Sent"
+  },
+  {
+    "id": "OWCxDiXorQZJ6HHe",
+    "name": "One-off — Update NORTHERN ARC mandate in INVESTORS"
+  },
+  {
+    "id": "PCBDv3s2KbnrBTsu",
+    "name": "One-off SIX-2 — add matches for the 6 investors + Siana cheque"
+  },
+  {
+    "id": "PJoOvXxxycF9fHrs",
+    "name": "READ (read-only) — rows with investor_response and their threads"
+  },
+  {
+    "id": "PRXEfYrOz5s2JNS8",
+    "name": "One-off CG-6 — activate the 14 no-code rows: real sectors_in codes, AGNOSTIC where the firm says so (user-authorised 23 Sep)"
+  },
+  {
+    "id": "PhprMV9TxqtE6qTG",
+    "name": "One-off DUP-1 — delete 27 tracker-duplicate pending rows"
+  },
+  {
+    "id": "PrM3n2w3He9Oe7pd",
+    "name": "One-off CK-2 — list do_not_contact investors (read only)"
+  },
+  {
+    "id": "Py68xnSHnVXTvuhJ",
+    "name": "One-off RW-1 — per-startup investor runway after Kae stop"
+  },
+  {
+    "id": "Q9uQeK6N6Yt21NfI",
+    "name": "One-off TR-11 — Hem Angels contact = Aditya only; mark VOLD x Sekhsaria manually shared"
+  },
+  {
+    "id": "QCPbWFuiM0FpGiwZ",
+    "name": "One-off — Strip closing line (write-back)"
+  },
+  {
+    "id": "QLHy1K3kGqMBDnV8",
+    "name": "One-off BG-1 — update BlueGreen mandate in INVESTORS + stop 7 follow-ups"
+  },
+  {
+    "id": "QlAhsckqgHJv1Vwg",
+    "name": "One-off EX-1 — Eximius Ventures: remove InsurTech from sectors (user 14 Sep)"
+  },
+  {
+    "id": "R3U6KHRBsflX2e3g",
+    "name": "One-off — Count today sends"
+  },
+  {
+    "id": "RAXmy91eYJppJkhV",
+    "name": "One-off — Clear GLOBAL_PAUSE"
+  },
+  {
+    "id": "RBVK7nzZzyHmx0wy",
+    "name": "One-off IAN-1 — split IAN Group into Angel Fund + Alpha Fund rows"
+  },
+  {
+    "id": "RH4bdJLq5LT3dQMb",
+    "name": "One-off TW-1 — apply 11 Sep thesis corrections, drop 29 keyword-only deals, hold Equentis, resolve flags"
+  },
+  {
+    "id": "SBqFYiGTGoPtSwXg",
+    "name": "One-off HS-1 — hold queued deals for investors with no stage in INVESTORS"
+  },
+  {
+    "id": "SPB9YWeyg6PmE4NW",
+    "name": "One-off IAN-4 — fresh matches for Angel + Alpha funds"
+  },
+  {
+    "id": "ST2ZSrUkTXVz14ep",
+    "name": "One-off FI-1 — fill 7 investors' blank email/contact/thesis from the team's info sheet (blank cells only)"
+  },
+  {
+    "id": "SV10R73wItQId0zj",
+    "name": "One-off FA-2 — append 32 new investors to INVESTORS (dedup, DNC preserved)"
+  },
+  {
+    "id": "SW5Pj4TGE0SWRROU",
+    "name": "One-off TR-30 — PREVIEW v2 raise cleaner (structure-preserving), 16 all-investor + 27 angel (read only)"
+  },
+  {
+    "id": "SewceinoOu1byPFu",
+    "name": "One-off TC-2 — apply 17 Sep thesis rules: Hem / Vertex / Zeren / DMI stops + INVESTORS updates (user-approved)"
+  },
+  {
+    "id": "TGw5QUJLVLQsiNNe",
+    "name": "One-off IAN-3 — record IAN meetings (Luxova, Nexcore) + create EosNox row"
+  },
+  {
+    "id": "UTI1y9Otxi9kgL6G",
+    "name": "One-off KX-1 — purge unsent sub-70 rows for the six startups"
+  },
+  {
+    "id": "UVQvCGO7gZSj5Xip",
+    "name": "One-off ENGINE-INSPECT (read-only) — headers, queue shape, tracker tab name (17 Sep)"
+  },
+  {
+    "id": "UhHR8aNInr5n7h8T",
+    "name": "One-off RM-2 — resolve THESIS-WATCH flags after re-match"
+  },
+  {
+    "id": "Uq1xLMUb2ieJ4GqY",
+    "name": "READ-STATE (read-only) — investor activation counts, ignores filter views"
+  },
+  {
+    "id": "VPJoYaVLQUNeiz6N",
+    "name": "One-off ADD-INV — append LinkedIn investors to INVESTORS + CRITERIA (last: 8i Ventures 25 Sep)"
+  },
+  {
+    "id": "Vd7nRntD4SxPRrvb",
+    "name": "One-off AA-1 — apply audit to INVESTORS (38 stage fills + 16 clearly-wrong fixes; correction sheet already excluded)"
+  },
+  {
+    "id": "WzZjnoOzOH0ohbhR",
+    "name": "One-off CAL-MUCKER — Mucker Capital intro invite from investors@ calendar (webhook, 30 Sep)"
+  },
+  {
+    "id": "Xxm8diNvKUoYhlqY",
+    "name": "One-off MATCH — Liftt into PIPELINE (28 Sep)"
+  },
+  {
+    "id": "Y2nyKyUYO42mwTbA",
+    "name": "One-off TS-TEST (read-only) — dry test of the Thesis row-diff against the snapshot (17 Sep)"
+  },
+  {
+    "id": "Y6Gf3UGge28Wt1Rv",
+    "name": "One-off — DELETE Cosmicport from PIPELINE + STARTUPS"
+  },
+  {
+    "id": "YsEbcgJ1jEfCj0t7",
+    "name": "One-off CA-1 — clear do_not_contact on Climate Angels (user 11 Sep)"
+  },
+  {
+    "id": "YuI0oOBJ62paICSX",
+    "name": "One-off TX-2 — match Tronix.AI and add PIPELINE rows"
+  },
+  {
+    "id": "Zd0OvIW59isaRq2Z",
+    "name": "One-off MS-1 — priority: My Soul to DSG Consumer Partners in tomorrow's run (15 Sep)"
+  },
+  {
+    "id": "Zdz2UBenSg85W1MK",
+    "name": "One-off DTF-1 — correct Deal Tracker row 108 (Atomic): EosNox passed 14 Sep, remove from Picked/Interested"
+  },
+  {
+    "id": "Zvj2LlgUpnIsMP93",
+    "name": "CLEANUP — Delete TEST-ADITYA-001 row"
+  },
+  {
+    "id": "ZyTqd07izBI5Trmw",
+    "name": "One-off TEST SEND — final PeerCapital email with signature to investors@ (16 Sep)"
+  },
+  {
+    "id": "aDI9pNidxR0A0fY7",
+    "name": "One-off TR-24 — extract revenue figures from the 8 unclassified startups' memos (read only)"
+  },
+  {
+    "id": "aEH8eCHOW6fH2waO",
+    "name": "One-off RMW16-1 (read-only) — 16 Sep re-match watch: flags, corrections, dup check, meetings"
+  },
+  {
+    "id": "al3C1vfFavzNi34B",
+    "name": "One-off — Dump CONFIG owner keys"
+  },
+  {
+    "id": "alhsZdEIg0WZpMSg",
+    "name": "One-off TC-2D (DRY RUN, read-only) — proposed stops: Hem / Vertex / Zeren / DMI Sparkle + Dexter view (17 Sep)"
+  },
+  {
+    "id": "b4oA56veAQ9J1oet",
+    "name": "One-off — Snapshot today shares"
+  },
+  {
+    "id": "bIf7voSVSMgdg0BQ",
+    "name": "Pilot Helper — Set PLT-002 next_due"
+  },
+  {
+    "id": "bKMx3DEmVdE48d02",
+    "name": "One-off RMW17-3 — 17 Sep: PiperSireca + DSG re-match, resolve 4 flags, mail-correction carry-through"
+  },
+  {
+    "id": "bcdEk1DcSfrCHaUe",
+    "name": "One-off — Preview closing strip"
+  },
+  {
+    "id": "bxoAaqBwh6eBjkbJ",
+    "name": "One-off DR-3 — drop 15 Elevation partner deals that mix the partners' sectors (reused DR-2)"
+  },
+  {
+    "id": "bzJOdCWqa7Mn1xqU",
+    "name": "One-off TX-1 — add Tronix.AI to STARTUPS + dump investor criteria"
+  },
+  {
+    "id": "cl9U8BpxSTgn0MuD",
+    "name": "One-off CK-4 — list Swishin + BITS BIoCyTIH rows and why each is paused (read only)"
+  },
+  {
+    "id": "dZhM6Ly4HMnZqZFH",
+    "name": "Investor Fix Row 21"
+  },
+  {
+    "id": "e12rRFwZFhnVPfqs",
+    "name": "One-off — Dump memo styles"
+  },
+  {
+    "id": "e7t5wXZ7UZhLBTNK",
+    "name": "One-off KAE-2 — pause Kae Capital's unsent queued rows"
+  },
+  {
+    "id": "eAG6CU8DbJXSLfrK",
+    "name": "READ (read-only) — investors who passed vs corrections received"
+  },
+  {
+    "id": "eqagPl5ZxOgIf8HV",
+    "name": "One-off DRM-5 — verify re-match writes (read-only)"
+  },
+  {
+    "id": "fLffMOvo3rC57gd9",
+    "name": "One-off CA-2 — drop 4 Climate Angels deals that only matched on a keyword (not climate)"
+  },
+  {
+    "id": "gA6BxmBEpiMgz8p9",
+    "name": "One-off EL-1 — split Elevation Capital into 5 partner rows and re-point its queued deals"
+  },
+  {
+    "id": "gbVzDsfzQSxic3gd",
+    "name": "One-off CG-7 — rename row 272 to Verge HealthTech Fund (INVESTORS + INVESTOR_CRITERIA, guarded)"
+  },
+  {
+    "id": "gnAse0umD53aJwQT",
+    "name": "TEST — One real email (Aditya, throwaway row)"
+  },
+  {
+    "id": "hQ0alr8QkOjUXK6f",
+    "name": "One-off PHASE 2 — delete 28 Deal Tracker duplicate rows"
+  },
+  {
+    "id": "hkfzoES5lKCFSZud",
+    "name": "One-off RM-1 — re-match Zeren, a99 VC, DSG Consumer Partners"
+  },
+  {
+    "id": "i3PX5DCufizvkb7P",
+    "name": "AUDIT (read-only) — PIPELINE pending rows vs Deal Tracker history"
+  },
+  {
+    "id": "i5UR6NuDTE1o6Jj9",
+    "name": "One-off CG-1 — fill blank sector_mode / sectors_in in INVESTOR_CRITERIA (guarded, blank-only)"
+  },
+  {
+    "id": "iaLOUW7C8IB6FldZ",
+    "name": "One-off — Restyle memo (headings black + 14px) write-back"
+  },
+  {
+    "id": "j1sbVcy1x80wLhIR",
+    "name": "One-off DRM-1 — read ERROR LOG + Thesis corrections + INVESTORS"
+  },
+  {
+    "id": "jZY9pozyB7WNS9zR",
+    "name": "One-off IA-2 — India Accelerator: drop Priyanshu, set Vasu thesis; Vertex US$3M cheque; Z47 no EdTech (17 Sep)"
+  },
+  {
+    "id": "jvAi8n6sVjfAA86L",
+    "name": "AUDIT2 (read-only) — FULL Deal Tracker vs all pending PIPELINE rows"
+  },
+  {
+    "id": "k0XYTgU4qZYDrCpJ",
+    "name": "One-off CS-AUDIT (read-only) — are Mail + Thesis corrections fully carried through? (17 Sep)"
+  },
+  {
+    "id": "kKELZ9mJc82oIFYT",
+    "name": "One-off CS-1 — apply corrections sheet to INVESTORS (mail + contact + thesis)"
+  },
+  {
+    "id": "kLA5jXvVOqqxJzE9",
+    "name": "One-off RM-2 — remove Susquehanna from INVESTORS + drop its deals (reused RM-1)"
+  },
+  {
+    "id": "kLEDuTxx0kaCRuRU",
+    "name": "One-off — Audit sent deals on corrected emails"
+  },
+  {
+    "id": "kLuZxPFL3PHxfwrA",
+    "name": "One-off — Add Bajaj Finserv (Equity) + 10 matched PIPELINE rows"
+  },
+  {
+    "id": "keUczDoVkwwp9GGT",
+    "name": "One-off SIX-1 — remove off-mandate rows for the 6 investors"
+  },
+  {
+    "id": "l0mrPo975PptkopW",
+    "name": "One-off — stop all follow-ups on 6 sent duplicate rows"
+  },
+  {
+    "id": "lAlTSC4DqORu5HyV",
+    "name": "One-off RM-13 — remove the 13 never-replied investors from all outreach (webhook, dry first)"
+  },
+  {
+    "id": "lajyU752yjJFg4oW",
+    "name": "TEST — Threaded follow-up (FU1, reuses TEST row)"
+  },
+  {
+    "id": "lcn7YUT5OOLQA9lH",
+    "name": "One-off NEWINV-ANGEL — restructure 'Angel Investors Reached over mail' tab (29 Sep)"
+  },
+  {
+    "id": "llTBsxuKyQ1Sjz5R",
+    "name": "One-off CG-2 — fill researched thesis into INVESTORS + INVESTOR_CRITERIA (webhook payload, blank-only)"
+  },
+  {
+    "id": "lo01XVYxXoW2TNVI",
+    "name": "One-off DK-1 — list startups + resolve deck links (read only)"
+  },
+  {
+    "id": "lsyD3m2yftgWxdFi",
+    "name": "VERIFY (read-only) — confirm D03010 deleted, neighbours intact"
+  },
+  {
+    "id": "mA6J7QnZBBMSs21c",
+    "name": "One-off — Replay INITIAL date gate"
+  },
+  {
+    "id": "mT8FH010gfFQQJWN",
+    "name": "One-off TR-27 — PREVIEW the angel memo sanitiser output (read only, no send)"
+  },
+  {
+    "id": "mYwia4xCbQAz6fcS",
+    "name": "READ (read-only) — BlueGreen Ventures existing PIPELINE rows"
+  },
+  {
+    "id": "mYyafqzm5tZssFoV",
+    "name": "One-off ASK-0 (read-only) — firms that already gave a thesis on the Corrections sheet (17 Sep)"
+  },
+  {
+    "id": "msxuuKOriWua0TRf",
+    "name": "One-off NEWINV-FO — Family Offices tab: celebrity, Asian FOs, Swiss investors (29 Sep)"
+  },
+  {
+    "id": "nZA6SIDR5c34CPFj",
+    "name": "One-off RW-4 — audit existing matches for the six USD-K startups"
+  },
+  {
+    "id": "nmoS6OmXs3EXqV9f",
+    "name": "One-off READ — onboarding replies in Shradhaa inbox (18 Sep)"
+  },
+  {
+    "id": "nvqwbjatmUl35U5G",
+    "name": "READ (read-only) — BOUNCE SWEEP: founder addresses failing across all 4 mailboxes"
+  },
+  {
+    "id": "oGvKr1AOnQR7lS9A",
+    "name": "One-off TR-28 — release the held angel x pre-revenue deals now the sanitiser is live"
+  },
+  {
+    "id": "oLKd1xf1PlJZ9wOU",
+    "name": "One-off MK-1 — mark held deals with what to fill (stage / email / name)"
+  },
+  {
+    "id": "oVBxUiufyQXZ9pO4",
+    "name": "One-off — Email corrections (Fireside, Debtworks)"
+  },
+  {
+    "id": "owN41PYCAm9XebNa",
+    "name": "One-off TR-20 — hold the 2 near-term angel x pre-revenue deals until the memo sanitiser is live"
+  },
+  {
+    "id": "p2AcvTSivfr9OYDb",
+    "name": "One-off IA-1 (read-only) — India Accelerator: INVESTORS, criteria, PIPELINE, corrections rows (17 Sep)"
+  },
+  {
+    "id": "p9SMIu3X5veRhcEa",
+    "name": "One-off RW-5 — runway + gaps + strict headroom after full re-match"
+  },
+  {
+    "id": "pZxzwaj8FaV0rvCM",
+    "name": "One-off TR-19 — which angel x pre-revenue deals are queued (read only)"
+  },
+  {
+    "id": "pgnDpeG9NNxOe64O",
+    "name": "One-off OG-1 — split OG Capital (Shrinidhi) and angel Sayan Ghosh (reused NI-1)"
+  },
+  {
+    "id": "pk3xhkDoHJpkiEIP",
+    "name": "One-off CR-1 — read Corrections sheet tabs (read only)"
+  },
+  {
+    "id": "q1a7dZAHzFKLbq5X",
+    "name": "One-off LOR-1 — clear L'Oreal pipeline rows + record true thesis"
+  },
+  {
+    "id": "q24zJzoQprk25R3n",
+    "name": "One-off NR-1 — investors with no reply to shared deals (read only)"
+  },
+  {
+    "id": "qjXBZpolaz5VIaeQ",
+    "name": "One-off NEWINV-ANGEL — Angel Investors tab: home-services / laundry angels (29 Sep)"
+  },
+  {
+    "id": "qk8BCT8dWOogQtas",
+    "name": "One-off ST-1 — perfect-match count, meetings per startup, series-stage + seed investors"
+  },
+  {
+    "id": "raauoz7Av3cTFyqn",
+    "name": "One-off RMW23-2 (read-only) — 23 Sep 17:30: ERROR LOG unresolved + INVESTORS vs CRITERIA gaps"
+  },
+  {
+    "id": "riWwU1NdWJjmac3T",
+    "name": "One-off CK-3 — per-startup queue cover after re-dating (read only)"
+  },
+  {
+    "id": "s7JSBOViexnLAwJd",
+    "name": "One-off INV-1 — innovative/niche startups for Swishin + BITS BIoCyTIH (user 14 Sep)"
+  },
+  {
+    "id": "sNVKE8ox0dfm6Et7",
+    "name": "One-off TR-25 — stage re-grade DRY RUN: what opens, what drops (read only)"
+  },
+  {
+    "id": "tTUVbx5dz8ajKUSz",
+    "name": "One-off — TVS correction + resend, Flipkart correction"
+  },
+  {
+    "id": "uIfY8vIKFOOjsIR3",
+    "name": "One-off — Resend 3 BlackSoil deals to Ravi (today 17:15 IST)"
+  },
+  {
+    "id": "uS7Sc8v7TnEXwHim",
+    "name": "One-off FULL-2 — strict re-match across all startups, throughput-paced"
+  },
+  {
+    "id": "ul0FKRZCofFxM0eL",
+    "name": "One-off MT-2 — combined meeting count + sector-only candidates for <5 meetings (dry run)"
+  },
+  {
+    "id": "uqkKNOqJu9PHauzr",
+    "name": "One-off RD-2 — re-date queued deals: minimum 5 per startup per week, investor caps kept"
+  },
+  {
+    "id": "vEymxXZYridkIrmP",
+    "name": "One-off TS-BASE — create THESIS SNAPSHOT tab and write today's baseline of the whole Thesis tab (17 Sep)"
+  },
+  {
+    "id": "va1t09FLAwJa7T0X",
+    "name": "One-off KX-2 — re-match the six startups at score 70+"
+  },
+  {
+    "id": "vdNiikxRdEEd6pl7",
+    "name": "One-off CP-3 — read every tab of InvestorCompositionList20260911 (Google Sheet, read only)"
+  },
+  {
+    "id": "vrQzVIcfhe4gXxh3",
+    "name": "One-off TR-1 — apply tiered rules: pause mismatches, delete dead + duplicates, add strict + stage-lenient (capped)"
+  },
+  {
+    "id": "wrAowfyuCdcN5cJG",
+    "name": "One-off PR-1 — why do rows have priority under 50 (read only)"
+  },
+  {
+    "id": "wrJsWWqsCJMEQot8",
+    "name": "One-off TR-21 — Michele x pre-revenue: report all, hold anything due before 24 Sep"
+  },
+  {
+    "id": "xUlwnGHI9ypfITsN",
+    "name": "One-off DRM-2 — read tracker + STARTUPS + PIPELINE for re-match"
+  },
+  {
+    "id": "y6NHL8RjZXjIi4SN",
+    "name": "READ (read-only) — unpaired investor headroom for the 19 short-runway startups"
+  },
+  {
+    "id": "yOrCIgz4nroQKvIb",
+    "name": "One-off — Set GLOBAL_PAUSE"
+  },
+  {
+    "id": "yTLodUeaDiUaoCsa",
+    "name": "One-off PHASE 1 — delete single test row D03010 (verify index semantics)"
+  },
+  {
+    "id": "yuZmVeKhmVSe7pvv",
+    "name": "One-off HC (read-only) — criteria health check both sides + STEP 0b new-investor gaps (last: 28 Sep 14:30 run)"
+  },
+  {
+    "id": "z8WgbwWRBIBzFL41",
+    "name": "One-off FULL-1 — strict match audit across all startups (dry run)"
+  },
+  {
+    "id": "zA6h8ERvK519c4el",
+    "name": "One-off — add investor to INVESTORS (reusable; last: RTP Global 22 Sep)"
+  },
+  {
+    "id": "zBKvv2l9YQhVLYgu",
+    "name": "One-off CP-1 — investor composition by type and cheque band (read only)"
+  },
+  {
+    "id": "zKSJVFxWAi1gPxer",
+    "name": "One-off FA-1 — fill angel thesis (Alex, Ignacio, Ishan, Jonathan) into blank INVESTORS cells"
+  },
+  {
+    "id": "zPI9DmHVnvZddl3L",
+    "name": "One-off — Audit TVS / Climate Angels / Flipkart / M Ventures"
+  },
+  {
+    "id": "zk7nf19x9HAlHifB",
+    "name": "One-off — set IN44 stage to MVP-early traction in INVESTORS (21 Sep)"
+  }
+]
