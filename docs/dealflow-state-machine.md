@@ -18,7 +18,7 @@ public key from `wrangler.toml` as a substitute — it is not issued for you.
 
 Instead POST to the read-only endpoint, which runs the query for you:
 
-    curl -s -m 60 -X POST https://sidanaventures.app.n8n.cloud/webhook/sidana-db-read-6f2a9e       -H 'Content-Type: application/json'       -d '{"secret":"sv-dbread-2026-10-05-R4nK","query":"<name>", ...options}'
+    curl -s -m 60 -X POST https://sidanaventures.app.n8n.cloud/webhook/sidana-db-read-6f2a9e       -H 'Content-Type: application/json'       -d '{"secret":"{{SECRET_DBREAD}}","query":"<name>", ...options}'
 
 It answers `{"query":..., "count":N, "rows":[...]}`. Seven queries, nothing
 else; it cannot write and cannot be asked for an arbitrary table.
