@@ -1,0 +1,1442 @@
+{
+  "id": "TrX1IxVeZwtxE4bP",
+  "name": "Fundraising Outreach — Person 1",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-08-28T07:55:27.468Z",
+  "updatedAt": "2026-08-29T16:37:32.000Z",
+  "isArchived": true,
+  "versionId": "f0400920-9007-481c-ab9d-8afb12a452fa",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 0,
+  "nodes": [
+    {
+      "id": "649fdacb-0e16-4995-868c-bcbebcce9eda",
+      "name": "Every 45 min (working hours)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        432
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 45
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "c9b2a8c2-0eaa-4e98-9352-f08e8e5b2923",
+      "name": "CONFIG",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        224,
+        432
+      ],
+      "parameters": {
+        "mode": "manual",
+        "includeOtherFields": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c1",
+              "name": "OWNER_NAME",
+              "value": "Person 1",
+              "type": "string"
+            },
+            {
+              "id": "c2",
+              "name": "SENDER_NAME",
+              "value": "Person 1",
+              "type": "string"
+            },
+            {
+              "id": "c3",
+              "name": "DAILY_NEW_OUTREACH_LIMIT",
+              "value": 25,
+              "type": "number"
+            },
+            {
+              "id": "c4",
+              "name": "FOLLOW_UP_1_DAYS",
+              "value": 4,
+              "type": "number"
+            },
+            {
+              "id": "c5",
+              "name": "FOLLOW_UP_2_DAYS",
+              "value": 7,
+              "type": "number"
+            },
+            {
+              "id": "c6",
+              "name": "FOLLOW_UP_3_DAYS",
+              "value": 7,
+              "type": "number"
+            },
+            {
+              "id": "c7",
+              "name": "TIMEZONE",
+              "value": "Asia/Kolkata",
+              "type": "string"
+            },
+            {
+              "id": "c8",
+              "name": "CONTINUE_STATES",
+              "value": "awaiting response,no response,",
+              "type": "string"
+            },
+            {
+              "id": "c9",
+              "name": "STOP_STATES",
+              "value": "interested,interested / picked,picked,reviewing,meeting requested,meeting scheduled,asked for documents,requested documents,due diligence,passed,not relevant,lost,won",
+              "type": "string"
+            },
+            {
+              "id": "c10",
+              "name": "DEAL_STOP_STATUSES",
+              "value": "lost,passed,closed,won",
+              "type": "string"
+            },
+            {
+              "id": "c11",
+              "name": "WORKING_DAYS",
+              "value": "1,2,3,4,5",
+              "type": "string"
+            },
+            {
+              "id": "c12",
+              "name": "OUTREACH_START_HOUR",
+              "value": 9,
+              "type": "number"
+            },
+            {
+              "id": "c13",
+              "name": "OUTREACH_END_HOUR",
+              "value": 19,
+              "type": "number"
+            },
+            {
+              "id": "c14",
+              "name": "TEST_MODE",
+              "value": false,
+              "type": "boolean"
+            },
+            {
+              "id": "c15",
+              "name": "TEST_EMAIL",
+              "value": "<__PLACEHOLDER_VALUE__Internal test email address__>",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "bd7b01b5-b7fc-40c7-ba6d-aa0af7e90eda",
+      "name": "TEMPLATES",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        448,
+        432
+      ],
+      "parameters": {
+        "mode": "manual",
+        "includeOtherFields": true,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "t1",
+              "name": "INITIAL_SUBJECT",
+              "value": "{{StartupName}} — {{Sector}} opportunity ({{FundraiseAmount}})",
+              "type": "string"
+            },
+            {
+              "id": "t2",
+              "name": "INITIAL_BODY",
+              "value": "<p>Hi {{InvestorName}},</p><p>[PLACEHOLDER — replace with approved Initial Deal Share copy.] Sharing {{StartupName}}, a {{Sector}} company raising {{FundraiseAmount}}.</p><ul><li>{{KeyHighlight1}}</li><li>{{KeyHighlight2}}</li><li>{{KeyHighlight3}}</li></ul><p>Deck: {{DeckLink}}</p><p>Best,<br/>{{SenderName}}</p>",
+              "type": "string"
+            },
+            {
+              "id": "t3",
+              "name": "FU1_BODY",
+              "value": "<p>Hi {{InvestorName}},</p><p>[PLACEHOLDER — replace with approved Follow-up 1 copy.] Following up on {{StartupName}}.</p><p>Best,<br/>{{SenderName}}</p>",
+              "type": "string"
+            },
+            {
+              "id": "t4",
+              "name": "FU2_BODY",
+              "value": "<p>Hi {{InvestorName}},</p><p>[PLACEHOLDER — replace with approved Follow-up 2 copy.] Circling back on {{StartupName}}.</p><p>Best,<br/>{{SenderName}}</p>",
+              "type": "string"
+            },
+            {
+              "id": "t5",
+              "name": "FU3_BODY",
+              "value": "<p>Hi {{InvestorName}},</p><p>[PLACEHOLDER — replace with approved Follow-up 3 copy.] Last note on {{StartupName}}.</p><p>Best,<br/>{{SenderName}}</p>",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "aaa00864-7ce6-4fd1-997f-3f89d3af089e",
+      "name": "Read Deal Tracker",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        672,
+        432
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "Fundraising Outreach spreadsheet (select at setup)"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Deal Tracker"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Owner",
+              "lookupValue": "={{ $('CONFIG').first().json.OWNER_NAME }}"
+            }
+          ]
+        },
+        "combineFilters": "AND",
+        "options": {
+          "returnAllMatches": "returnAllMatches"
+        }
+      },
+      "credentials": {}
+    },
+    {
+      "id": "f15b91fe-2415-4339-9eb2-d54232c2b26b",
+      "name": "Read Matching List",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        896,
+        432
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "Fundraising Outreach spreadsheet (select at setup)"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Matching List"
+        },
+        "options": {
+          "returnAllMatches": "returnAllMatches"
+        }
+      },
+      "credentials": {}
+    },
+    {
+      "id": "bc745438-1dd8-4aff-b45f-8efa6c950306",
+      "name": "Read Startup Master",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1120,
+        432
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "Fundraising Outreach spreadsheet (select at setup)"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Startup Master"
+        },
+        "options": {
+          "returnAllMatches": "returnAllMatches"
+        }
+      },
+      "credentials": {}
+    },
+    {
+      "id": "c8d9def3-30f1-45fe-a18b-99c4ed7e1895",
+      "name": "Decide Action",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1344,
+        432
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const cfg = $('CONFIG').first().json;\nconst tpl = $('TEMPLATES').first().json;\nconst tz = cfg.TIMEZONE || \"Asia/Kolkata\";\nconst now = DateTime.now().setZone(tz);\nconst today = now.toFormat(\"yyyy-LL-dd\");\n\nconst norm = (v) => String(v == null ? \"\" : v).trim().toLowerCase();\nconst isYes = (v) => norm(v) === \"yes\" || norm(v) === \"true\" || norm(v) === \"y\";\nconst toList = (s) => String(s || \"\").split(\",\").map(x => x.trim().toLowerCase()).filter(x => x.length > 0);\nconst continueStates = toList(cfg.CONTINUE_STATES);\nconst stopStates = toList(cfg.STOP_STATES);\nconst dealStopStatuses = toList(cfg.DEAL_STOP_STATUSES);\nconst fu1Days = Number(cfg.FOLLOW_UP_1_DAYS || 4);\nconst fu2Days = Number(cfg.FOLLOW_UP_2_DAYS || 7);\nconst fu3Days = Number(cfg.FOLLOW_UP_3_DAYS || 7);\nconst limit = Number(cfg.DAILY_NEW_OUTREACH_LIMIT || 25);\nconst testMode = cfg.TEST_MODE === true || norm(cfg.TEST_MODE) === \"true\";\nconst testEmail = cfg.TEST_EMAIL || \"\";\nconst senderName = cfg.SENDER_NAME || \"\";\n\nconst parseDate = (s) => {\n  if (!s) return null;\n  const str = String(s).trim();\n  let d = DateTime.fromISO(str, { zone: tz });\n  if (!d.isValid) d = DateTime.fromFormat(str, \"yyyy-LL-dd\", { zone: tz });\n  if (!d.isValid) d = DateTime.fromFormat(str, \"dd/LL/yyyy\", { zone: tz });\n  if (!d.isValid) d = DateTime.fromFormat(str, \"LL/dd/yyyy\", { zone: tz });\n  return d.isValid ? d : null;\n};\nconst daysSince = (s) => {\n  const d = parseDate(s);\n  if (!d) return null;\n  return Math.floor(now.startOf(\"day\").diff(d.startOf(\"day\"), \"days\").days);\n};\nconst addDays = (n) => now.plus({ days: n }).toFormat(\"yyyy-LL-dd\");\nconst validEmail = (e) => /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(String(e || \"\").trim());\n\n// Build lookup structures\nconst matchingRows = $(\"Read Matching List\").all().map(i => i.json);\nconst startupRows = $(\"Read Startup Master\").all().map(i => i.json);\nconst matchByDeal = new Set();\nconst matchByPair = new Set();\nfor (const m of matchingRows) {\n  const approved = m.Approved === undefined || isYes(m.Approved);\n  if (!approved) continue;\n  if (m[\"Deal ID\"]) matchByDeal.add(norm(m[\"Deal ID\"]));\n  matchByPair.add(norm(m[\"Startup Name\"]) + \"|\" + norm(m[\"Investor Email\"]));\n}\nconst startupByName = {};\nfor (const s of startupRows) { startupByName[norm(s[\"Startup Name\"])] = s; }\n\nconst REQUIRED_VARS = [\"InvestorName\", \"StartupName\", \"SenderName\"];\nconst render = (tplStr, vars, requiredExtra) => {\n  const missing = [];\n  const required = REQUIRED_VARS.concat(requiredExtra || []);\n  for (const r of required) { if (!vars[r] || String(vars[r]).trim() === \"\") missing.push(r); }\n  const out = String(tplStr || \"\").replace(/\\{\\{\\s*([A-Za-z0-9_]+)\\s*\\}\\}/g, (mm, k) => {\n    return (vars[k] !== undefined && vars[k] !== null) ? String(vars[k]) : \"\";\n  });\n  return { text: out, missing };\n};\n\nconst results = [];\nlet initialCandidates = [];\n\n// Count how many INITIAL sends already happened today (idempotency across runs)\nlet sentToday = 0;\nfor (const it of $(\"Read Deal Tracker\").all()) {\n  const r = it.json;\n  if (isYes(r[\"Deal Shared?\"]) && daysSince(r[\"Date Shared\"]) === 0) sentToday++;\n}\nlet remainingAllowance = Math.max(0, limit - sentToday);\n\nfor (const it of $(\"Read Deal Tracker\").all()) {\n  const row = it.json;\n  const dealId = row[\"Deal ID\"] || \"\";\n  const startupName = row[\"Startup Name\"] || \"\";\n  const investorName = row[\"Investor / VC Name\"] || row[\"Investor Name\"] || \"\";\n  const investorEmail = String(row[\"Investor Email\"] || \"\").trim();\n  const response = norm(row[\"Investor Response\"]);\n  const dealStatus = norm(row[\"Deal Status\"]);\n  const dnc = isYes(row[\"Do Not Contact\"]);\n\n  // 1) STOP STATE? -> skip permanently/temporarily\n  const isStop = dnc || stopStates.includes(response) || dealStopStatuses.includes(dealStatus) ||\n    (response !== \"\" && !continueStates.includes(response));\n  if (isStop) continue;\n\n  const startup = startupByName[norm(startupName)] || null;\n  const vars = {\n    InvestorName: investorName,\n    StartupName: startupName,\n    SenderName: senderName,\n    Sector: startup ? (startup.Sector || \"\") : \"\",\n    Subsector: startup ? (startup.Subsector || \"\") : \"\",\n    FundraiseAmount: startup ? (startup.FundraiseAmount || \"\") : \"\",\n    Stage: startup ? (startup.Stage || \"\") : \"\",\n    KeyHighlight1: startup ? (startup.KeyHighlight1 || \"\") : \"\",\n    KeyHighlight2: startup ? (startup.KeyHighlight2 || \"\") : \"\",\n    KeyHighlight3: startup ? (startup.KeyHighlight3 || \"\") : \"\",\n    DeckLink: startup ? (startup.DeckLink || \"\") : \"\",\n  };\n\n  const errItem = (type, details, extra) => Object.assign({\n    action: \"ERROR\", \"Deal ID\": dealId, owner: cfg.OWNER_NAME,\n    startupName, investorName, investorEmail,\n    errorType: type, errorDetails: details,\n    dateToday: today,\n  }, extra || {});\n\n  const shared = isYes(row[\"Deal Shared?\"]);\n\n  if (!shared) {\n    // ===== INITIAL candidate =====\n    const matchOk = matchByDeal.has(norm(dealId)) || matchByPair.has(norm(startupName) + \"|\" + norm(investorEmail));\n    if (!matchOk) { results.push(errItem(\"Missing match\", \"No approved Startup x Investor match found\")); continue; }\n    if (!validEmail(investorEmail)) { results.push(errItem(\"Invalid email\", \"Investor email missing or invalid: \" + investorEmail)); continue; }\n    if (!startup) { results.push(errItem(\"Missing memo\", \"No Startup Master row for: \" + startupName)); continue; }\n    const subj = render(tpl.INITIAL_SUBJECT, vars, [\"StartupName\"]);\n    const body = render(tpl.INITIAL_BODY, vars, [\"DeckLink\"]);\n    const missing = Array.from(new Set(subj.missing.concat(body.missing)));\n    if (missing.length > 0) { results.push(errItem(\"Missing template variable\", \"Unresolved required vars: \" + missing.join(\", \"))); continue; }\n    initialCandidates.push({\n      action: \"INITIAL\", \"Deal ID\": dealId, owner: cfg.OWNER_NAME,\n      startupName, investorName, investorEmail,\n      sendTo: testMode ? testEmail : investorEmail,\n      emailSubject: subj.text, emailBody: body.text,\n      messageId: \"\", dateToday: today, nextActionDue: addDays(fu1Days),\n      priority: row[\"Priority\"] || \"\",\n    });\n    continue;\n  }\n\n  // ===== Already shared: check follow-ups in priority order =====\n  const sharedAge = daysSince(row[\"Date Shared\"]);\n  if (sharedAge === null) { results.push(errItem(\"Bad date\", \"Deal Shared=Yes but Date Shared is missing/invalid\")); continue; }\n\n  const fu1Done = isYes(row[\"Follow-up 1 Done?\"]);\n  const fu2Done = isYes(row[\"Follow-up 2 Done?\"]);\n  const fu3Done = isYes(row[\"Follow-up 3 Done?\"]);\n  const messageId = String(row[\"Message ID\"] || \"\").trim();\n\n  let action = null; let body = null; let nextAction = \"\"; let nextDue = \"\";\n  if (!fu1Done && sharedAge >= fu1Days) {\n    action = \"FU1\"; body = render(tpl.FU1_BODY, vars); nextAction = \"Follow-up 2\"; nextDue = addDays(fu2Days);\n  } else if (fu1Done && !fu2Done && (daysSince(row[\"Follow-up 1 Date\"]) !== null) && daysSince(row[\"Follow-up 1 Date\"]) >= fu2Days) {\n    action = \"FU2\"; body = render(tpl.FU2_BODY, vars); nextAction = \"Follow-up 3\"; nextDue = addDays(fu3Days);\n  } else if (fu2Done && !fu3Done && (daysSince(row[\"Follow-up 2 Date\"]) !== null) && daysSince(row[\"Follow-up 2 Date\"]) >= fu3Days) {\n    action = \"FU3\"; body = render(tpl.FU3_BODY, vars); nextAction = \"Await investor revert\"; nextDue = \"\";\n  } else {\n    continue; // nothing due\n  }\n\n  if (!startup) { results.push(errItem(\"Missing memo\", \"No Startup Master row for: \" + startupName)); continue; }\n  if (body.missing.length > 0) { results.push(errItem(\"Missing template variable\", \"Unresolved required vars: \" + body.missing.join(\", \"))); continue; }\n  if (!messageId) { results.push(errItem(\"Threading failure\", \"No stored Message ID to reply into thread\")); continue; }\n\n  results.push({\n    action, \"Deal ID\": dealId, owner: cfg.OWNER_NAME,\n    startupName, investorName, investorEmail,\n    sendTo: testMode ? testEmail : investorEmail,\n    emailSubject: \"\", emailBody: body.text,\n    messageId, dateToday: today, nextAction, nextActionDue: nextDue,\n  });\n}\n\n// Apply daily new-outreach limit (follow-ups are NOT limited)\nconst allowedInitials = initialCandidates.slice(0, remainingAllowance);\nfor (const c of allowedInitials) results.push(c);\n\nreturn results.map(r => ({ json: r }));"
+      }
+    },
+    {
+      "id": "7e6ff02a-4a69-424f-b15f-3d5b79511aa6",
+      "name": "Route by Action",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        1568,
+        384
+      ],
+      "parameters": {
+        "mode": "rules",
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "INITIAL",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "INITIAL"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "FU1",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "FU1"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "FU2",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "FU2"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "FU3",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "FU3"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "ERROR",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "ERROR"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "571334d3-08d5-4c2b-8922-9956a7474989",
+      "name": "Send Initial Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1792,
+        48
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "={{ $json.sendTo }}",
+        "subject": "={{ $json.emailSubject }}",
+        "emailType": "html",
+        "message": "={{ $json.emailBody }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "={{ $('CONFIG').first().json.SENDER_NAME }}"
+        }
+      },
+      "credentials": {},
+      "onError": "continueErrorOutput",
+      "webhookId": "147dcc7e-144b-4921-9a61-29c553918fc0"
+    },
+    {
+      "id": "027b51e6-95fb-485c-a13f-d73ccdec7849",
+      "name": "Tracker: Initial Sent",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2016,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "Fundraising Outreach spreadsheet (select at setup)"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Deal Tracker"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "Deal ID"
+          ],
+          "value": {
+            "Deal ID": "={{ $('Decide Action').item.json['Deal ID'] }}",
+            "Deal Shared?": "Yes",
+            "Date Shared": "={{ $('Decide Action').item.json.dateToday }}",
+            "Channel": "Email",
+            "Last Contact Date": "={{ $('Decide Action').item.json.dateToday }}",
+            "Investor Response": "Awaiting response",
+            "Next Action": "Follow-up 1",
+            "Next Action Due": "={{ $('Decide Action').item.json.nextActionDue }}",
+            "Message ID": "={{ $json.id }}",
+            "Thread ID": "={{ $json.threadId }}"
+          },
+          "schema": [
+            {
+              "id": "Deal ID",
+              "displayName": "Deal ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Deal Shared?",
+              "displayName": "Deal Shared?",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Date Shared",
+              "displayName": "Date Shared",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Channel",
+              "displayName": "Channel",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Last Contact Date",
+              "displayName": "Last Contact Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Investor Response",
+              "displayName": "Investor Response",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Next Action",
+              "displayName": "Next Action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Next Action Due",
+              "displayName": "Next Action Due",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Message ID",
+              "displayName": "Message ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Thread ID",
+              "displayName": "Thread ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {}
+    },
+    {
+      "id": "671ef1cd-7590-46d8-946d-91df8ab9b490",
+      "name": "Log Send Failure",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2016,
+        288
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "Fundraising Outreach spreadsheet (select at setup)"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Automation Error Log"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ $now.toFormat(\"yyyy-LL-dd HH:mm\") }}",
+            "Workflow Owner": "={{ $('Decide Action').item.json.owner }}",
+            "Startup": "={{ $('Decide Action').item.json.startupName }}",
+            "Investor": "={{ $('Decide Action').item.json.investorName }}",
+            "Deal ID": "={{ $('Decide Action').item.json['Deal ID'] }}",
+            "Error Type": "={{ $('Decide Action').item.json.action }} send failure",
+            "Error Details": "Email send failed - action not marked complete. See execution log for details.",
+            "Required Action": "Retry / manual send",
+            "Resolved?": "No"
+          },
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Workflow Owner",
+              "displayName": "Workflow Owner",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Startup",
+              "displayName": "Startup",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Investor",
+              "displayName": "Investor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Deal ID",
+              "displayName": "Deal ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Error Type",
+              "displayName": "Error Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Error Details",
+              "displayName": "Error Details",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Required Action",
+              "displayName": "Required Action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Resolved?",
+              "displayName": "Resolved?",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {}
+    },
+    {
+      "id": "b861c44f-497b-4f5c-9bbe-089dd9e23b33",
+      "name": "Send Follow-up 1",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1792,
+        336
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "reply",
+        "messageId": "={{ $json.messageId }}",
+        "emailType": "html",
+        "message": "={{ $json.emailBody }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "={{ $('CONFIG').first().json.SENDER_NAME }}"
+        }
+      },
+      "credentials": {},
+      "onError": "continueErrorOutput",
+      "webhookId": "fb9dab81-091d-4e47-bda0-884eb67a9919"
+    },
+    {
+      "id": "e1242f8a-6f72-41a8-9608-b40c5f78fc09",
+      "name": "Tracker: FU1 Sent",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2016,
+        480
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "Fundraising Outreach spreadsheet (select at setup)"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Deal Tracker"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "Deal ID"
+          ],
+          "value": {
+            "Deal ID": "={{ $('Decide Action').item.json['Deal ID'] }}",
+            "Follow-up 1 Done?": "Yes",
+            "Follow-up 1 Date": "={{ $('Decide Action').item.json.dateToday }}",
+            "Last Contact Date": "={{ $('Decide Action').item.json.dateToday }}",
+            "Next Action": "Follow-up 2",
+            "Next Action Due": "={{ $('Decide Action').item.json.nextActionDue }}"
+          },
+          "schema": [
+            {
+              "id": "Deal ID",
+              "displayName": "Deal ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Follow-up 1 Done?",
+              "displayName": "Follow-up 1 Done?",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Follow-up 1 Date",
+              "displayName": "Follow-up 1 Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Last Contact Date",
+              "displayName": "Last Contact Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Next Action",
+              "displayName": "Next Action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Next Action Due",
+              "displayName": "Next Action Due",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {}
+    },
+    {
+      "id": "4100de6e-9feb-41e1-ad4a-196e8485676b",
+      "name": "Send Follow-up 2",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1792,
+        624
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "reply",
+        "messageId": "={{ $json.messageId }}",
+        "emailType": "html",
+        "message": "={{ $json.emailBody }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "={{ $('CONFIG').first().json.SENDER_NAME }}"
+        }
+      },
+      "credentials": {},
+      "onError": "continueErrorOutput",
+      "webhookId": "101d6da0-b532-4824-8aeb-cd407aa1ddc7"
+    },
+    {
+      "id": "e758fe0f-5db1-4afc-b1ae-97bd6ee43615",
+      "name": "Tracker: FU2 Sent",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2016,
+        672
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "Fundraising Outreach spreadsheet (select at setup)"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Deal Tracker"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "Deal ID"
+          ],
+          "value": {
+            "Deal ID": "={{ $('Decide Action').item.json['Deal ID'] }}",
+            "Follow-up 2 Done?": "Yes",
+            "Follow-up 2 Date": "={{ $('Decide Action').item.json.dateToday }}",
+            "Last Contact Date": "={{ $('Decide Action').item.json.dateToday }}",
+            "Next Action": "Follow-up 3",
+            "Next Action Due": "={{ $('Decide Action').item.json.nextActionDue }}"
+          },
+          "schema": [
+            {
+              "id": "Deal ID",
+              "displayName": "Deal ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Follow-up 2 Done?",
+              "displayName": "Follow-up 2 Done?",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Follow-up 2 Date",
+              "displayName": "Follow-up 2 Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Last Contact Date",
+              "displayName": "Last Contact Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Next Action",
+              "displayName": "Next Action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Next Action Due",
+              "displayName": "Next Action Due",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {}
+    },
+    {
+      "id": "c6b20ad4-d08d-4cac-998b-00282206c7af",
+      "name": "Send Follow-up 3",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1792,
+        816
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "reply",
+        "messageId": "={{ $json.messageId }}",
+        "emailType": "html",
+        "message": "={{ $json.emailBody }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "={{ $('CONFIG').first().json.SENDER_NAME }}"
+        }
+      },
+      "credentials": {},
+      "onError": "continueErrorOutput",
+      "webhookId": "a78dea68-d3a8-4053-b3dd-9cd7135abf98"
+    },
+    {
+      "id": "4d2b3e1e-3293-43d7-b945-8de1578f5b57",
+      "name": "Tracker: FU3 Sent",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2016,
+        864
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "Fundraising Outreach spreadsheet (select at setup)"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Deal Tracker"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "Deal ID"
+          ],
+          "value": {
+            "Deal ID": "={{ $('Decide Action').item.json['Deal ID'] }}",
+            "Follow-up 3 Done?": "Yes",
+            "Follow-up 3 Date": "={{ $('Decide Action').item.json.dateToday }}",
+            "Last Contact Date": "={{ $('Decide Action').item.json.dateToday }}",
+            "Next Action": "Await investor revert"
+          },
+          "schema": [
+            {
+              "id": "Deal ID",
+              "displayName": "Deal ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Follow-up 3 Done?",
+              "displayName": "Follow-up 3 Done?",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Follow-up 3 Date",
+              "displayName": "Follow-up 3 Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Last Contact Date",
+              "displayName": "Last Contact Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Next Action",
+              "displayName": "Next Action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {}
+    },
+    {
+      "id": "636b5499-cac2-4630-9c05-e65e6c0a84e9",
+      "name": "Log Validation Error",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1792,
+        1008
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "Fundraising Outreach spreadsheet (select at setup)"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Automation Error Log"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ $now.toFormat(\"yyyy-LL-dd HH:mm\") }}",
+            "Workflow Owner": "={{ $json.owner }}",
+            "Startup": "={{ $json.startupName }}",
+            "Investor": "={{ $json.investorName }}",
+            "Deal ID": "={{ $json['Deal ID'] }}",
+            "Error Type": "={{ $json.errorType }}",
+            "Error Details": "={{ $json.errorDetails }}",
+            "Required Action": "Manual review",
+            "Resolved?": "No"
+          },
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Workflow Owner",
+              "displayName": "Workflow Owner",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Startup",
+              "displayName": "Startup",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Investor",
+              "displayName": "Investor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Deal ID",
+              "displayName": "Deal ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Error Type",
+              "displayName": "Error Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Error Details",
+              "displayName": "Error Details",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Required Action",
+              "displayName": "Required Action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Resolved?",
+              "displayName": "Resolved?",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {}
+    }
+  ],
+  "connections": {
+    "Every 45 min (working hours)": {
+      "main": [
+        [
+          {
+            "node": "CONFIG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CONFIG": {
+      "main": [
+        [
+          {
+            "node": "TEMPLATES",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TEMPLATES": {
+      "main": [
+        [
+          {
+            "node": "Read Deal Tracker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Deal Tracker": {
+      "main": [
+        [
+          {
+            "node": "Read Matching List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Matching List": {
+      "main": [
+        [
+          {
+            "node": "Read Startup Master",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Startup Master": {
+      "main": [
+        [
+          {
+            "node": "Decide Action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Decide Action": {
+      "main": [
+        [
+          {
+            "node": "Route by Action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Action": {
+      "main": [
+        [
+          {
+            "node": "Send Initial Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Follow-up 1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Follow-up 2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Follow-up 3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Validation Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Initial Email": {
+      "main": [
+        [
+          {
+            "node": "Tracker: Initial Sent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Send Failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Follow-up 1": {
+      "main": [
+        [
+          {
+            "node": "Tracker: FU1 Sent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Send Failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Follow-up 2": {
+      "main": [
+        [
+          {
+            "node": "Tracker: FU2 Sent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Send Failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Follow-up 3": {
+      "main": [
+        [
+          {
+            "node": "Tracker: FU3 Sent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Send Failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [
+    {
+      "id": "7dd0e8ee-c039-4c8d-8a44-fc988945b653",
+      "name": "Configuration",
+      "nodeIds": [
+        "c9b2a8c2-0eaa-4e98-9352-f08e8e5b2923",
+        "bd7b01b5-b7fc-40c7-ba6d-aa0af7e90eda"
+      ],
+      "description": "All tunable settings and approved email templates. Edit here, not inside logic nodes."
+    },
+    {
+      "id": "d1ca3f9c-826a-4a4f-9928-8b1469fe1203",
+      "name": "Read sources",
+      "nodeIds": [
+        "aaa00864-7ce6-4fd1-997f-3f89d3af089e",
+        "f15b91fe-2415-4339-9eb2-d54232c2b26b",
+        "bc745438-1dd8-4aff-b45f-8efa6c950306"
+      ],
+      "description": "Reads the Deal Tracker (owner-filtered), approved Matching List, and Startup Master every run."
+    },
+    {
+      "id": "90ac06b9-170b-4ab1-9bdc-948acfdefb89",
+      "name": "Decision",
+      "nodeIds": [
+        "c8d9def3-30f1-45fe-a18b-99c4ed7e1895",
+        "7e6ff02a-4a69-424f-b15f-3d5b79511aa6"
+      ],
+      "description": "Computes exactly one due action per row from sheet dates and stop-states, then routes it."
+    }
+  ],
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "pinData": {},
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "TrX1IxVeZwtxE4bP",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-08-28T07:55:27.470Z",
+      "updatedAt": "2026-08-28T07:55:27.470Z"
+    }
+  ],
+  "activeVersion": null
+}

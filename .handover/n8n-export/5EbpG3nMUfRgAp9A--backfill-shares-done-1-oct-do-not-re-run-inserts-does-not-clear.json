@@ -1,0 +1,293 @@
+{
+  "id": "5EbpG3nMUfRgAp9A",
+  "name": "BACKFILL-SHARES — DONE 1 Oct, do NOT re-run (inserts, does not clear)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-10-01T03:04:21.098Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "45f9c8ed-bcfb-4241-8780-197bb462aa65",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Run",
+      "webhookId": "99c93cf6-becb-4033-846f-83f4eec425ce",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-backfill-shares-6b2d",
+        "responseMode": "lastNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "pl",
+      "name": "GET pipeline",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "position": [
+        180,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=PIPELINE!A1:AI8000",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {
+          "timeout": 180000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "gs",
+      "name": "GET startup ids",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        360,
+        0
+      ],
+      "parameters": {
+        "url": "https://elwaquzawoscotlojtnv.supabase.co/rest/v1/startups?select=id,name&limit=2000",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "ntQxeHO20ZUMASMg",
+          "name": "Supabase service"
+        }
+      }
+    },
+    {
+      "id": "gi",
+      "name": "GET investor ids",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        540,
+        0
+      ],
+      "parameters": {
+        "url": "https://elwaquzawoscotlojtnv.supabase.co/rest/v1/investors?select=id,name&limit=2000",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "ntQxeHO20ZUMASMg",
+          "name": "Supabase service"
+        }
+      }
+    },
+    {
+      "id": "bd",
+      "name": "Build shares",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Rebuilds `shares` from PIPELINE for every date STRICTLY BEFORE today.\n// Today is excluded on purpose: the live per-send recording added on 30 Sep\n// already owns today, and backfilling it would double-count. No deletion is\n// performed, so this is an insert-only one-off, not a re-runnable sync.\nconst vr = $('GET pipeline').first().json.valueRanges[0].values;\nconst h = vr[0];\nconst rows = vr.slice(1).map(function (r) { var o = {}; h.forEach(function (k, i) { o[k] = r[i] === undefined ? '' : r[i]; }); return o; });\nconst nz = function (s) { return String(s == null ? '' : s).toLowerCase().replace(/[^a-z0-9]/g, ''); };\nconst sMap = {}; for (const s of ($('GET startup ids').first().json.body || [])) { sMap[nz(s.name)] = s.id; }\nconst iMap = {}; for (const i of ($('GET investor ids').first().json.body || [])) { iMap[nz(i.name)] = i.id; }\nconst ISO = /^\\d{4}-\\d{2}-\\d{2}$/;\nconst today = new Date(Date.now() + 19800000).toISOString().slice(0, 10);\nconst ts = function (d) { return d + 'T09:00:00+05:30'; };\nconst mt = function (raw) {\n  raw = String(raw || '');\n  if (/stage\\s+(?:one\\s+step\\s+)?off/i.test(raw)) return 'stage_off';\n  if (/^\\s*exact\\s+match/i.test(raw)) return 'strict';\n  if (/sector\\s*\\+\\s*cheque\\s+match/i.test(raw)) return 'sector_only';\n  if (/minimum\\s+cheque|fails\\s+cheque/i.test(raw)) return 'below_min_cheque';\n  return null;\n};\nconst out = []; const miss = { s: {}, i: {} }; let skipped = 0; let excludedToday = 0;\nfor (const r of rows) {\n  const sid = sMap[nz(r.startup)]; const iid = iMap[nz(r.investor)];\n  if (!sid) { miss.s[String(r.startup)] = 1; }\n  if (!iid) { miss.i[String(r.investor)] = 1; }\n  if (!sid || !iid) { skipped++; continue; }\n  const type = mt(r.match_type); const mb = String(r.owner || '').trim() || null;\n  const add = function (d, fu, no) {\n    d = String(d == null ? '' : d).trim();\n    if (!ISO.test(d)) { return; }\n    if (d >= today) { excludedToday++; return; }\n    out.push({ startup_id: sid, investor_id: iid, sent_at: ts(d), mailbox: mb, type: type, is_followup: fu, followup_no: no });\n  };\n  if (String(r.deal_shared || '').trim().toLowerCase() === 'yes') { add(r.date_shared, false, null); }\n  add(r.fu1_date, true, 1); add(r.fu2_date, true, 2); add(r.fu3_date, true, 3);\n}\nconst CH = 800; const chunks = [];\nfor (let i = 0; i < out.length; i += CH) { chunks.push({ json: { rows: out.slice(i, i + CH), total: out.length, skipped: skipped, excluded_today: excludedToday, missing_startups: Object.keys(miss.s), missing_investors: Object.keys(miss.i) } }); }\nreturn chunks.length ? chunks : [{ json: { rows: [], total: 0, skipped: skipped, excluded_today: excludedToday, missing_startups: [], missing_investors: [] } }];"
+      }
+    },
+    {
+      "id": "po",
+      "name": "Insert chunk",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        1080,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://elwaquzawoscotlojtnv.supabase.co/rest/v1/shares",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.rows) }}",
+        "options": {
+          "timeout": 120000,
+          "response": {
+            "response": {
+              "neverError": true,
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "ntQxeHO20ZUMASMg",
+          "name": "Supabase service"
+        }
+      }
+    },
+    {
+      "id": "rp",
+      "name": "Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1260,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b = $('Build shares').first().json;\nconst items = $input.all();\nconst res = items.map(function (i) { return i.json.statusCode; });\nconst bad = items.filter(function (i) { return !(i.json.statusCode >= 200 && i.json.statusCode < 300); });\nreturn [{ json: {\n  share_rows_built: b.total,\n  chunks: res.length,\n  chunk_statuses: res,\n  failed_chunks: bad.length,\n  errors: bad.map(function (i) { return JSON.stringify(i.json.body).slice(0, 200); }).slice(0, 3),\n  excluded_today: b.excluded_today,\n  pipeline_rows_skipped_no_id_match: b.skipped,\n  missing_startups: b.missing_startups,\n  missing_investors: b.missing_investors\n} }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run": {
+      "main": [
+        [
+          {
+            "node": "GET pipeline",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET pipeline": {
+      "main": [
+        [
+          {
+            "node": "GET startup ids",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET startup ids": {
+      "main": [
+        [
+          {
+            "node": "GET investor ids",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build shares": {
+      "main": [
+        [
+          {
+            "node": "Insert chunk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert chunk": {
+      "main": [
+        [
+          {
+            "node": "Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET investor ids": {
+      "main": [
+        [
+          {
+            "node": "Build shares",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "5EbpG3nMUfRgAp9A",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-10-01T03:04:21.100Z",
+      "updatedAt": "2026-10-01T03:04:21.100Z"
+    }
+  ],
+  "activeVersion": null
+}

@@ -1,0 +1,126 @@
+{
+  "id": "1geGQnSb5sIR5NLX",
+  "name": "One-off READ — Shradhaa Gmail signature (16 Sep)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-16T12:14:48.331Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "d4841826-f279-4ca8-8538-640b0d468042",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "e5000001-0000-4000-8000-000000000001",
+      "name": "Webhook",
+      "webhookId": "c2d3e4f5-a6b7-4c8d-9e0f-1a2b3c4d5e6f",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "onb-read-signature-5e71a0",
+        "responseMode": "lastNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "e5000001-0000-4000-8000-000000000002",
+      "name": "Get sendAs settings",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        240,
+        300
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://gmail.googleapis.com/gmail/v1/users/me/settings/sendAs",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "R5K61omYbU9oT5J8",
+          "name": "Gmail account 5"
+        }
+      }
+    },
+    {
+      "id": "e5000001-0000-4000-8000-000000000003",
+      "name": "Extract signature",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const j = $input.first().json;\nif (j.error) return [{ json: { ok: false, source: 'sendAs', error: j.error.message || JSON.stringify(j.error).slice(0, 400) } }];\nconst list = j.sendAs || [];\nreturn [{ json: { ok: true, addresses: list.map(s => ({ email: s.sendAsEmail, isDefault: !!s.isDefault, displayName: s.displayName, sig_len: (s.signature || '').length })), signature: (list.find(s => s.isDefault) || list[0] || {}).signature || '' } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get sendAs settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get sendAs settings": {
+      "main": [
+        [
+          {
+            "node": "Extract signature",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "1geGQnSb5sIR5NLX",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-16T12:14:48.334Z",
+      "updatedAt": "2026-09-16T12:14:48.334Z"
+    }
+  ],
+  "activeVersion": null
+}

@@ -1,0 +1,474 @@
+{
+  "id": "s7JSBOViexnLAwJd",
+  "name": "One-off INV-1 — innovative/niche startups for Swishin + BITS BIoCyTIH (user 14 Sep)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-14T07:24:22.331Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "3f1e138a-1904-4cc8-9a2f-fed0650380c3",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once (set before activating)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "2 13 14 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "hh",
+      "name": "GET header",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/PIPELINE!1:1",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "r1",
+      "name": "Read INVESTORS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "INVESTORS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "r3",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cp",
+      "name": "Plan",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nfunction nz(x) { return s(x).toLowerCase().replace(/[^a-z0-9]/g, ''); }\nfunction colLetter(i) { let n = i + 1, out = ''; while (n > 0) { const m = (n - 1) % 26; out = String.fromCharCode(65 + m) + out; n = Math.floor((n - 1) / 26); } return out; }\nconst yes = function (x) { return s(x).toLowerCase() === 'yes'; };\nconst hdr = (($('GET header').first().json.values || [[]])[0] || []).map(s);\nconst C = {}; for (const h of ['pause', 'next_action', 'next_due', 'match_type', 'notes']) { const i = hdr.indexOf(h); if (i < 0) { throw new Error('ABORT: PIPELINE column missing ' + h); } C[h] = colLetter(i); }\nconst inv = $('Read INVESTORS').all().map(function (i) { return i.json; });\nconst pipe = $input.all().map(function (i) { return i.json; });\nif (pipe.length < 5200) { throw new Error('ABORT: PIPELINE only ' + pipe.length); }\nfunction one(key, label) { const r = inv.filter(function (x) { return nz(x.investor) === key; }); if (r.length !== 1) { throw new Error('ABORT: ' + label + ' resolves to ' + r.length + ' rows'); } return r[0]; }\nconst SW = one('swishinventures', 'Swishin'), BITS = one('bitsbiocytihfoundation', 'BITS');\n// user 14 Sep: both back innovative / niche technology regardless of the stage-adjacency rule\nconst SW_REVIVE = ['firearmor', 'ulai', 'eosnox', 'roadathena', 'glaziawindoors', 'orboai'];\nconst BITS_ADD = ['firearmor', 'formverse', 'glaziawindoors', 'roadathena', 'eosnox', 'ulai', 'orboai'];\nconst NOTE = 'INNOVATION MATCH 2026-09-14 - user: this investor backs novel / niche technology; stage-adjacency rule waived';\n// caps: investor inbox 5/week and 2/day, owner mailbox 20/weekday\nfunction weekOf(iso) { const d = new Date(iso + 'T00:00:00Z'); const w = d.getUTCDay(); d.setUTCDate(d.getUTCDate() - (w === 0 ? 6 : w - 1)); return d.toISOString().slice(0, 10); }\nconst days = []; { const d = new Date(Date.UTC(2026, 8, 15)); while (days.length < 60) { const w = d.getUTCDay(); if (w !== 0 && w !== 6) { days.push(d.toISOString().slice(0, 10)); } d.setUTCDate(d.getUTCDate() + 1); } }\nconst iw = {}, idd = {}, od = {};\nfor (const p of pipe) { if (yes(p.deal_shared) || yes(p.pause)) { continue; } const d = s(p.next_due).slice(0, 10); if (!d) { continue; }\n  const ib = s(p.email).split(/[,;\\s]+/)[0].toLowerCase() || ('name:' + nz(p.investor));\n  iw[ib + '|' + weekOf(d)] = (iw[ib + '|' + weekOf(d)] || 0) + 1; idd[ib + '|' + d] = (idd[ib + '|' + d] || 0) + 1; od[s(p.owner) + '|' + d] = (od[s(p.owner) + '|' + d] || 0) + 1; }\nfunction place(ib, owner) { for (const d of days) {\n    if ((iw[ib + '|' + weekOf(d)] || 0) >= 5) { continue; }\n    if ((idd[ib + '|' + d] || 0) >= 2) { continue; }\n    if ((od[owner + '|' + d] || 0) >= 20) { continue; }\n    iw[ib + '|' + weekOf(d)] = (iw[ib + '|' + weekOf(d)] || 0) + 1; idd[ib + '|' + d] = (idd[ib + '|' + d] || 0) + 1; od[owner + '|' + d] = (od[owner + '|' + d] || 0) + 1; return d; }\n  return null; }\nfunction ownerOf(sk) { const r = pipe.filter(function (p) { return nz(p.startup) === sk && s(p.owner); })[0]; return r ? s(r.owner) : ''; }\nfunction nameOf(sk) { const r = pipe.filter(function (p) { return nz(p.startup) === sk; })[0]; return r ? s(r.startup) : sk; }\nconst data = [], revived = [], appends = [], skipped = [];\nconst swMail = s(SW.email).split(/[,;\\s]+/)[0].toLowerCase();\nfor (const sk of SW_REVIVE) {\n  const rows = pipe.filter(function (p) { return nz(p.investor) === 'swishinventures' && nz(p.startup) === sk; });\n  if (!rows.length) { skipped.push('Swishin / ' + sk + ' - no row'); continue; }\n  if (rows.some(function (p) { return yes(p.deal_shared); })) { skipped.push('Swishin / ' + sk + ' - already sent'); continue; }\n  const p = rows[0]; const owner = s(p.owner) || ownerOf(sk);\n  const day = place(swMail, owner); if (!day) { throw new Error('ABORT: no slot for Swishin / ' + sk); }\n  const n = s(p.notes);\n  data.push({ range: 'PIPELINE!' + C.pause + p.row_number, values: [['']] }, { range: 'PIPELINE!' + C.next_action + p.row_number, values: [['Initial']] },\n    { range: 'PIPELINE!' + C.next_due + p.row_number, values: [[day]] }, { range: 'PIPELINE!' + C.match_type + p.row_number, values: [['Innovative / niche technology (user rule 14 Sep)']] },\n    { range: 'PIPELINE!' + C.notes + p.row_number, values: [[(n ? n + ' | ' : '') + NOTE]] });\n  revived.push([p.row_number, s(p.deal_id), s(p.startup), day]); }\nlet maxN = 0; for (const p of pipe) { const id = s(p.deal_id); if (id.charAt(0) === 'D') { const v = parseInt(id.slice(1), 10); if (!isNaN(v) && v > maxN) { maxN = v; } } }\nconst bitsMail = s(BITS.email).split(/[,;\\s]+/)[0].toLowerCase();\nif (!bitsMail) { throw new Error('ABORT: BITS has no email'); }\nfor (const sk of BITS_ADD) {\n  const rows = pipe.filter(function (p) { return nz(p.investor) === 'bitsbiocytihfoundation' && nz(p.startup) === sk; });\n  if (rows.length) { const p = rows[0];\n    if (yes(p.deal_shared)) { skipped.push('BITS / ' + sk + ' - already sent'); continue; }\n    const owner = s(p.owner) || ownerOf(sk); const day = place(bitsMail, owner); if (!day) { throw new Error('ABORT: no slot for BITS / ' + sk); }\n    const n = s(p.notes);\n    data.push({ range: 'PIPELINE!' + C.pause + p.row_number, values: [['']] }, { range: 'PIPELINE!' + C.next_action + p.row_number, values: [['Initial']] },\n      { range: 'PIPELINE!' + C.next_due + p.row_number, values: [[day]] }, { range: 'PIPELINE!' + C.match_type + p.row_number, values: [['Innovative / niche technology (user rule 14 Sep)']] },\n      { range: 'PIPELINE!' + C.notes + p.row_number, values: [[(n ? n + ' | ' : '') + NOTE]] });\n    revived.push([p.row_number, s(p.deal_id), s(p.startup) + ' (BITS)', day]); continue; }\n  const owner = ownerOf(sk); if (!owner) { skipped.push('BITS / ' + sk + ' - startup not in PIPELINE'); continue; }\n  const day = place(bitsMail, owner); if (!day) { throw new Error('ABORT: no slot for BITS / ' + sk); }\n  maxN++; let pad = String(maxN); while (pad.length < 5) { pad = '0' + pad; }\n  appends.push({ deal_id: 'D' + pad, startup: nameOf(sk), owner: owner, investor: s(BITS.investor), email: s(BITS.email), cc: s(BITS.cc), match_type: 'Innovative / niche technology (user rule 14 Sep)', deal_shared: 'No', next_action: 'Initial', next_due: day, notes: NOTE }); }\nif (revived.length + appends.length > 15) { throw new Error('ABORT: too many changes'); }\nif (!data.length) { data.push({ range: 'PIPELINE!' + C.pause + '1', values: [['pause']] }); }\nreturn [{ json: { revived: revived, appends: appends, skipped: skipped, swishin_email: s(SW.email), bits_email: s(BITS.email), data: data } }];"
+      }
+    },
+    {
+      "id": "wp",
+      "name": "Write updates",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "position": [
+        1000,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ valueInputOption: 'RAW', data: $('Plan').first().json.data }) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "ea",
+      "name": "Emit new rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const a = $('Plan').first().json.appends || [];\nif (!a.length) { return [{ json: { __none: true } }]; }\nreturn a.map(function (r) { return { json: r }; });"
+      }
+    },
+    {
+      "id": "if1",
+      "name": "Any to add?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1400,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.__none === true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "ap",
+      "name": "Append PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "position": [
+        1600,
+        -100
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "ra",
+      "name": "Read PIPELINE after",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        1800,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cv",
+      "name": "Verify",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nfunction nz(x) { return s(x).toLowerCase().replace(/[^a-z0-9]/g, ''); }\nconst yes = function (x) { return s(x).toLowerCase() === 'yes'; };\nfunction weekOf(iso) { const d = new Date(iso + 'T00:00:00Z'); if (isNaN(d.getTime())) { return ''; } const w = d.getUTCDay(); d.setUTCDate(d.getUTCDate() - (w === 0 ? 6 : w - 1)); return d.toISOString().slice(0, 10); }\nconst plan = $('Plan').first().json;\nconst pipe = $input.all().map(function (i) { return i.json; });\nconst want = new Set(['swishinventures', 'bitsbiocytihfoundation']);\nconst live = pipe.filter(function (p) { return want.has(nz(p.investor)) && !yes(p.deal_shared) && !yes(p.pause) && /Innovative \\/ niche/i.test(s(p.match_type)); })\n  .map(function (p) { return [s(p.deal_id), nz(p.investor) === 'swishinventures' ? 'Swishin' : 'BITS', s(p.startup), s(p.next_due)]; });\nconst iw = {}, idd = {}, od = {};\nfor (const p of pipe) { if (yes(p.deal_shared) || yes(p.pause)) { continue; } const d = s(p.next_due).slice(0, 10); if (!d) { continue; }\n  const ib = s(p.email).split(/[,;\\s]+/)[0].toLowerCase() || ('name:' + nz(p.investor));\n  iw[ib + '|' + weekOf(d)] = (iw[ib + '|' + weekOf(d)] || 0) + 1; idd[ib + '|' + d] = (idd[ib + '|' + d] || 0) + 1; od[s(p.owner) + '|' + d] = (od[s(p.owner) + '|' + d] || 0) + 1; }\nreturn [{ json: { innovation_deals_live: live.length, deals: live, skipped: plan.skipped,\n  over_investor_week: Object.keys(iw).filter(function (k) { return iw[k] > 5; }), over_investor_day: Object.keys(idd).filter(function (k) { return idd[k] > 2; }),\n  over_owner_day: Object.keys(od).filter(function (k) { return od[k] > 21; }),\n  ok: live.length === (plan.revived.length + plan.appends.length) } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once (set before activating)": {
+      "main": [
+        [
+          {
+            "node": "GET header",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET header": {
+      "main": [
+        [
+          {
+            "node": "Read INVESTORS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read INVESTORS": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Plan": {
+      "main": [
+        [
+          {
+            "node": "Write updates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write updates": {
+      "main": [
+        [
+          {
+            "node": "Emit new rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Emit new rows": {
+      "main": [
+        [
+          {
+            "node": "Any to add?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Any to add?": {
+      "main": [
+        [
+          {
+            "node": "Append PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Read PIPELINE after",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE after",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE after": {
+      "main": [
+        [
+          {
+            "node": "Verify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once (set before activating)": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "s7JSBOViexnLAwJd",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-14T07:24:22.333Z",
+      "updatedAt": "2026-09-14T07:24:22.333Z"
+    }
+  ],
+  "activeVersion": null
+}

@@ -1,0 +1,240 @@
+{
+  "id": "zk7nf19x9HAlHifB",
+  "name": "One-off — set IN44 stage to MVP-early traction in INVESTORS (21 Sep)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-17T05:33:53.266Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "f0009b97-e511-421c-a681-8e74e6eee8de",
+  "versionCounter": 5,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "c9000001-0000-4000-8000-000000000001",
+      "name": "Webhook",
+      "webhookId": "b3c4d5e6-f7a8-4b9c-0d1e-2f3a4b5c6d7e",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "onb-persist-test-2a7c9d",
+        "responseMode": "lastNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "c9000001-0000-4000-8000-000000000002",
+      "name": "Write AB3",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        200,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"valueInputOption\":\"RAW\",\"data\":[{\"range\":\"INVESTORS!F242\",\"values\":[[\"Seed, Early traction (MVP to early traction)\"]]}]}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "c9000001-0000-4000-8000-000000000003",
+      "name": "Read now",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        400,
+        300
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "ranges",
+              "value": "INVESTORS!A242:G242"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "c9000001-0000-4000-8000-000000000004",
+      "name": "Wait 30s",
+      "webhookId": "c4d5e6f7-a8b9-4c0d-1e2f-3a4b5c6d7e8f",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        600,
+        300
+      ],
+      "parameters": {
+        "resume": "timeInterval",
+        "amount": 5,
+        "unit": "seconds"
+      }
+    },
+    {
+      "id": "c9000001-0000-4000-8000-000000000005",
+      "name": "Read after 30s",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        800,
+        300
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "ranges",
+              "value": "INVESTORS!A242:G242"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "c9000001-0000-4000-8000-000000000006",
+      "name": "Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const fmt = j => (j.valueRanges || []).map(v => v.range + '=' + JSON.stringify(v.values || null));\nreturn [{ json: {\n  write: ($('Write AB3').first().json.responses || []).map(r => r.updatedRange),\n  immediately: fmt($('Read now').first().json),\n  after_5s: fmt($input.first().json)\n} }];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Write AB3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write AB3": {
+      "main": [
+        [
+          {
+            "node": "Read now",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read now": {
+      "main": [
+        [
+          {
+            "node": "Wait 30s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 30s": {
+      "main": [
+        [
+          {
+            "node": "Read after 30s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read after 30s": {
+      "main": [
+        [
+          {
+            "node": "Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "zk7nf19x9HAlHifB",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-17T05:33:53.270Z",
+      "updatedAt": "2026-09-17T05:33:53.270Z"
+    }
+  ],
+  "activeVersion": null
+}

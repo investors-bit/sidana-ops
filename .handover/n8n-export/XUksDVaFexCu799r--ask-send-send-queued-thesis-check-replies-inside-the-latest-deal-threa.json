@@ -1,0 +1,1616 @@
+{
+  "id": "XUksDVaFexCu799r",
+  "name": "ASK-SEND — send queued thesis-check replies inside the latest deal thread (weekdays 11:00 IST)",
+  "description": null,
+  "active": true,
+  "activeVersionId": "7de81f07-fba8-4431-821d-d02834a7fa9b",
+  "createdAt": "2026-09-17T10:48:13.768Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "7de81f07-fba8-4431-821d-d02834a7fa9b",
+  "versionCounter": 9,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 11 * * 1-5"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "md",
+      "name": "Mode",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// LIVE since 17 Sep 2026 (user approved). dry: true = check only. max_per_run caps daily sends.\nreturn [{ json: { dry: false, max_per_run: 40 } }];"
+      }
+    },
+    {
+      "id": "gq",
+      "name": "GET queue",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/' + encodeURIComponent('THESIS_ASK!A1:O3000') }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "gt",
+      "name": "GET thesis tab",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/1WOErvuYawblG-HkrK5In5YWtEiKKt_DeoVpmL5na6GU/values/' + encodeURIComponent(\"'Thesis correction'!A1:Z400\") }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "sel",
+      "name": "Select",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v){return String(v==null?'':v).trim();}\nfunction nz(x){return s(x).toLowerCase().replace(/[^a-z0-9]/g,'');}\nconst MODE=$('Mode').first().json;\nconst q=$('GET queue').first().json.values||[];\nif(!q.length||s(q[0][0])!=='ask_id'){throw new Error('ABORT: THESIS_ASK header missing');}\nconst h=q[0].map(s);const X={};h.forEach((k,i)=>X[k]=i);\nconst today=MODE.as_of||new Date(Date.now()+330*60000).toISOString().slice(0,10);\nfunction nextWeekday(d){const t=new Date(d+'T00:00:00Z');do{t.setUTCDate(t.getUTCDate()+1);}while(t.getUTCDay()===0||t.getUTCDay()===6);return t.toISOString().slice(0,10);}\nconst thesis=(($('GET thesis tab').first().json.values)||[]).slice(2).map(r=>nz((r||[])[0]).replace(/^the/,'')).filter(k=>k.length>=4);\nfunction gave(f){const k=nz(f);return thesis.some(t=>t.slice(0,6)===k.slice(0,6)||k.indexOf(t)===0||t.indexOf(k)===0||(t.length>=8&&k.indexOf(t)>=0)||(k.length>=8&&t.indexOf(k)>=0));}\nconst sentToday={};\nfor(let i=1;i<q.length;i++){const r=q[i]||[];if(s(r[X.status])==='SENT'&&s(r[X.sent_at]).slice(0,10)===today){sentToday[nz(r[X.firm]).slice(0,10)]=true;}}\nconst rows=[];for(let i=1;i<q.length;i++){const r=q[i]||[];if(s(r[X.status])!=='QUEUED'){continue;}const sa=s(r[X.send_after]);if(sa&&sa>today){continue;}rows.push({rn:i+1,ask_id:s(r[X.ask_id]),firm:s(r[X.firm]),mb:s(r[X.mb]),thread_id:s(r[X.thread_id]),body:s(r[X.body]),send_after:sa});}\nrows.sort((a,b)=>(a.send_after<b.send_after?-1:a.send_after>b.send_after?1:a.ask_id<b.ask_id?-1:1));\nconst out=[];const chosen={};const skipped=[];const postponed=[];\nfor(const r of rows){const fk=nz(r.firm).slice(0,10);\n  if(gave(r.firm)){skipped.push({rn:r.rn,ask_id:r.ask_id,note:'SKIPPED '+today+': firm already gave its thesis on the Corrections sheet'});continue;}\n  if(['2','3','4','5'].indexOf(r.mb)<0||!r.thread_id||!r.body){skipped.push({rn:r.rn,ask_id:r.ask_id,note:'SKIPPED '+today+': bad row (mailbox/thread/body missing)'});continue;}\n  if(sentToday[fk]||chosen[fk]||out.length>=Number(MODE.max_per_run||40)){postponed.push({rn:r.rn,ask_id:r.ask_id,send_after:nextWeekday(today),note:'postponed '+today+': one mailbox per investor per day / daily cap'});continue;}\n  chosen[fk]=true;out.push({json:Object.assign({kind:'send'},r)});}\nout.push({json:{kind:'meta',today:today,skipped:skipped,postponed:postponed,header:h}});\nreturn out;"
+      }
+    },
+    {
+      "id": "p2",
+      "name": "Pick2",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        -300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const a=$('Select').all().map(i=>i.json).filter(x=>x.kind==='send'&&x.mb==='2');return a.length?a.map(j=>({json:j})):[{json:{skip:true}}];"
+      }
+    },
+    {
+      "id": "m2",
+      "name": "Meta2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "continueOnFail": true,
+      "position": [
+        1200,
+        -300
+      ],
+      "parameters": {
+        "url": "={{ $json.skip ? 'https://gmail.googleapis.com/gmail/v1/users/me/profile' : 'https://gmail.googleapis.com/gmail/v1/users/me/threads/' + $json.thread_id + '?format=metadata&metadataHeaders=From&metadataHeaders=To&metadataHeaders=Cc&metadataHeaders=Subject&metadataHeaders=Message-ID&metadataHeaders=References' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "hwEqMRn6IxzoYs1R",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "id": "b2",
+      "name": "Build2",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1400,
+        -300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const PICK='Pick2',META='Meta2';\nconst dry=$('Mode').first().json.dry!==false;const picks=$(PICK).all().map(i=>i.json);const metas=$(META).all().map(i=>i.json);\nfunction hdr(m,n){const x=((m.payload||{}).headers||[]).find(y=>String(y.name).toLowerCase()===n);return x?String(x.value):'';}\nconst addrs=v=>(String(v).match(/[A-Za-z0-9._%+'-]+@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)+/g)||[]).map(x=>x.toLowerCase());\nconst OURS=/@sidanaventures\\.com$/;\nreturn picks.map(function(p,i){if(p.skip){return {json:{skip:true}};}\n  const m=metas[i]||{};const base={ask_id:p.ask_id,rn:p.rn,firm:p.firm,mb:p.mb};\n  try{const msgs=m.messages||[];if(!msgs.length||m.id!==p.thread_id){throw new Error('thread not found in this mailbox');}\n    const first=msgs[0],last=msgs[msgs.length-1];\n    if(/@sidanaventures\\.com/i.test(hdr(last,'from'))){throw new Error('investor has not replied (latest message is ours) - thesis-check only goes in a thread where the investor passed (user 18 Sep)');}\n    if(!/@sidanaventures\\.com/i.test(hdr(first,'from'))){throw new Error('thread was not started by us');}\n    let to=addrs(hdr(first,'to')).concat(addrs(hdr(first,'cc')));msgs.forEach(x=>{const f=addrs(hdr(x,'from'));if(f.length&&!OURS.test(f[0])){to.push(f[0]);}});\n    to=[...new Set(to)].filter(a=>!OURS.test(a));if(!to.length){throw new Error('no investor recipients in thread');}\n    const subj='Re: '+hdr(first,'subject').replace(/^\\s*(re|fwd?|fw)\\s*:\\s*/i,'');\n    const msgId=hdr(last,'message-id');if(!msgId){throw new Error('no Message-ID on last message');}\n    const refs=(hdr(last,'references')+' '+msgId).trim();\n    const toHdr=hdr(first,'to');const nm=(toHdr.split(',')[0].match(/^\\s*\"?([A-Za-z][A-Za-z.'-]+)[^<]*</)||[])[1];const lp=(to[0]||'').split('@')[0].split(/[._-]/)[0];const GEN=/^(partner|deals?|ir|info|startups?|ideas|team|contact|admin|hello|invest|pitch|founders?|yournest)/i;const greet=nm&&!GEN.test(nm)?nm:(lp&&!GEN.test(lp)&&to.length===1?lp.charAt(0).toUpperCase()+lp.slice(1):'team');\n    const body=String(p.body).replace(/^Hi [^,\\n]*,/,'Hi '+greet+',');\n    const bodyB64=Buffer.from(body,'utf8').toString('base64').replace(/(.{76})/g,'$1\\r\\n');\n    const mime=['To: '+to.join(', '),'Subject: =?UTF-8?B?'+Buffer.from(subj,'utf8').toString('base64')+'?=','In-Reply-To: '+msgId,'References: '+refs,'MIME-Version: 1.0','Content-Type: text/plain; charset=\"UTF-8\"','Content-Transfer-Encoding: base64','',bodyB64].join('\\r\\n');\n    const raw=Buffer.from(mime,'utf8').toString('base64').replace(/\\+/g,'-').replace(/\\//g,'_').replace(/=+$/,'');\n    return {json:Object.assign(base,{ok:true,skip:dry,to:to.join(', '),subject:subj,greet:greet,threadId:p.thread_id,raw:raw})};\n  }catch(e){return {json:Object.assign(base,{ok:false,skip:true,error:String(e.message||e)})};}\n});"
+      }
+    },
+    {
+      "id": "s2",
+      "name": "Send2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "continueOnFail": true,
+      "position": [
+        1600,
+        -300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.skip ? 'https://gmail.googleapis.com/gmail/v1/users/me/profile' : 'https://gmail.googleapis.com/gmail/v1/users/me/messages/send' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.skip ? {} : { raw: $json.raw, threadId: $json.threadId }) }}",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 4000
+            }
+          }
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "hwEqMRn6IxzoYs1R",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "id": "p3",
+      "name": "Pick3",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1800,
+        -100
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const a=$('Select').all().map(i=>i.json).filter(x=>x.kind==='send'&&x.mb==='3');return a.length?a.map(j=>({json:j})):[{json:{skip:true}}];"
+      }
+    },
+    {
+      "id": "m3",
+      "name": "Meta3",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "continueOnFail": true,
+      "position": [
+        2000,
+        -100
+      ],
+      "parameters": {
+        "url": "={{ $json.skip ? 'https://gmail.googleapis.com/gmail/v1/users/me/profile' : 'https://gmail.googleapis.com/gmail/v1/users/me/threads/' + $json.thread_id + '?format=metadata&metadataHeaders=From&metadataHeaders=To&metadataHeaders=Cc&metadataHeaders=Subject&metadataHeaders=Message-ID&metadataHeaders=References' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mymSHTFVWtsI3Mh7",
+          "name": "Gmail account 3"
+        }
+      }
+    },
+    {
+      "id": "b3",
+      "name": "Build3",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2200,
+        -100
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const PICK='Pick3',META='Meta3';\nconst dry=$('Mode').first().json.dry!==false;const picks=$(PICK).all().map(i=>i.json);const metas=$(META).all().map(i=>i.json);\nfunction hdr(m,n){const x=((m.payload||{}).headers||[]).find(y=>String(y.name).toLowerCase()===n);return x?String(x.value):'';}\nconst addrs=v=>(String(v).match(/[A-Za-z0-9._%+'-]+@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)+/g)||[]).map(x=>x.toLowerCase());\nconst OURS=/@sidanaventures\\.com$/;\nreturn picks.map(function(p,i){if(p.skip){return {json:{skip:true}};}\n  const m=metas[i]||{};const base={ask_id:p.ask_id,rn:p.rn,firm:p.firm,mb:p.mb};\n  try{const msgs=m.messages||[];if(!msgs.length||m.id!==p.thread_id){throw new Error('thread not found in this mailbox');}\n    const first=msgs[0],last=msgs[msgs.length-1];\n    if(/@sidanaventures\\.com/i.test(hdr(last,'from'))){throw new Error('investor has not replied (latest message is ours) - thesis-check only goes in a thread where the investor passed (user 18 Sep)');}\n    if(!/@sidanaventures\\.com/i.test(hdr(first,'from'))){throw new Error('thread was not started by us');}\n    let to=addrs(hdr(first,'to')).concat(addrs(hdr(first,'cc')));msgs.forEach(x=>{const f=addrs(hdr(x,'from'));if(f.length&&!OURS.test(f[0])){to.push(f[0]);}});\n    to=[...new Set(to)].filter(a=>!OURS.test(a));if(!to.length){throw new Error('no investor recipients in thread');}\n    const subj='Re: '+hdr(first,'subject').replace(/^\\s*(re|fwd?|fw)\\s*:\\s*/i,'');\n    const msgId=hdr(last,'message-id');if(!msgId){throw new Error('no Message-ID on last message');}\n    const refs=(hdr(last,'references')+' '+msgId).trim();\n    const toHdr=hdr(first,'to');const nm=(toHdr.split(',')[0].match(/^\\s*\"?([A-Za-z][A-Za-z.'-]+)[^<]*</)||[])[1];const lp=(to[0]||'').split('@')[0].split(/[._-]/)[0];const GEN=/^(partner|deals?|ir|info|startups?|ideas|team|contact|admin|hello|invest|pitch|founders?|yournest)/i;const greet=nm&&!GEN.test(nm)?nm:(lp&&!GEN.test(lp)&&to.length===1?lp.charAt(0).toUpperCase()+lp.slice(1):'team');\n    const body=String(p.body).replace(/^Hi [^,\\n]*,/,'Hi '+greet+',');\n    const bodyB64=Buffer.from(body,'utf8').toString('base64').replace(/(.{76})/g,'$1\\r\\n');\n    const mime=['To: '+to.join(', '),'Subject: =?UTF-8?B?'+Buffer.from(subj,'utf8').toString('base64')+'?=','In-Reply-To: '+msgId,'References: '+refs,'MIME-Version: 1.0','Content-Type: text/plain; charset=\"UTF-8\"','Content-Transfer-Encoding: base64','',bodyB64].join('\\r\\n');\n    const raw=Buffer.from(mime,'utf8').toString('base64').replace(/\\+/g,'-').replace(/\\//g,'_').replace(/=+$/,'');\n    return {json:Object.assign(base,{ok:true,skip:dry,to:to.join(', '),subject:subj,greet:greet,threadId:p.thread_id,raw:raw})};\n  }catch(e){return {json:Object.assign(base,{ok:false,skip:true,error:String(e.message||e)})};}\n});"
+      }
+    },
+    {
+      "id": "s3",
+      "name": "Send3",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "continueOnFail": true,
+      "position": [
+        2400,
+        -100
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.skip ? 'https://gmail.googleapis.com/gmail/v1/users/me/profile' : 'https://gmail.googleapis.com/gmail/v1/users/me/messages/send' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.skip ? {} : { raw: $json.raw, threadId: $json.threadId }) }}",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 4000
+            }
+          }
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mymSHTFVWtsI3Mh7",
+          "name": "Gmail account 3"
+        }
+      }
+    },
+    {
+      "id": "p4",
+      "name": "Pick4",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2600,
+        100
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const a=$('Select').all().map(i=>i.json).filter(x=>x.kind==='send'&&x.mb==='4');return a.length?a.map(j=>({json:j})):[{json:{skip:true}}];"
+      }
+    },
+    {
+      "id": "m4",
+      "name": "Meta4",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "continueOnFail": true,
+      "position": [
+        2800,
+        100
+      ],
+      "parameters": {
+        "url": "={{ $json.skip ? 'https://gmail.googleapis.com/gmail/v1/users/me/profile' : 'https://gmail.googleapis.com/gmail/v1/users/me/threads/' + $json.thread_id + '?format=metadata&metadataHeaders=From&metadataHeaders=To&metadataHeaders=Cc&metadataHeaders=Subject&metadataHeaders=Message-ID&metadataHeaders=References' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "9IWD8mWqdARPXloL",
+          "name": "Gmail account 4"
+        }
+      }
+    },
+    {
+      "id": "b4",
+      "name": "Build4",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3000,
+        100
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const PICK='Pick4',META='Meta4';\nconst dry=$('Mode').first().json.dry!==false;const picks=$(PICK).all().map(i=>i.json);const metas=$(META).all().map(i=>i.json);\nfunction hdr(m,n){const x=((m.payload||{}).headers||[]).find(y=>String(y.name).toLowerCase()===n);return x?String(x.value):'';}\nconst addrs=v=>(String(v).match(/[A-Za-z0-9._%+'-]+@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)+/g)||[]).map(x=>x.toLowerCase());\nconst OURS=/@sidanaventures\\.com$/;\nreturn picks.map(function(p,i){if(p.skip){return {json:{skip:true}};}\n  const m=metas[i]||{};const base={ask_id:p.ask_id,rn:p.rn,firm:p.firm,mb:p.mb};\n  try{const msgs=m.messages||[];if(!msgs.length||m.id!==p.thread_id){throw new Error('thread not found in this mailbox');}\n    const first=msgs[0],last=msgs[msgs.length-1];\n    if(/@sidanaventures\\.com/i.test(hdr(last,'from'))){throw new Error('investor has not replied (latest message is ours) - thesis-check only goes in a thread where the investor passed (user 18 Sep)');}\n    if(!/@sidanaventures\\.com/i.test(hdr(first,'from'))){throw new Error('thread was not started by us');}\n    let to=addrs(hdr(first,'to')).concat(addrs(hdr(first,'cc')));msgs.forEach(x=>{const f=addrs(hdr(x,'from'));if(f.length&&!OURS.test(f[0])){to.push(f[0]);}});\n    to=[...new Set(to)].filter(a=>!OURS.test(a));if(!to.length){throw new Error('no investor recipients in thread');}\n    const subj='Re: '+hdr(first,'subject').replace(/^\\s*(re|fwd?|fw)\\s*:\\s*/i,'');\n    const msgId=hdr(last,'message-id');if(!msgId){throw new Error('no Message-ID on last message');}\n    const refs=(hdr(last,'references')+' '+msgId).trim();\n    const toHdr=hdr(first,'to');const nm=(toHdr.split(',')[0].match(/^\\s*\"?([A-Za-z][A-Za-z.'-]+)[^<]*</)||[])[1];const lp=(to[0]||'').split('@')[0].split(/[._-]/)[0];const GEN=/^(partner|deals?|ir|info|startups?|ideas|team|contact|admin|hello|invest|pitch|founders?|yournest)/i;const greet=nm&&!GEN.test(nm)?nm:(lp&&!GEN.test(lp)&&to.length===1?lp.charAt(0).toUpperCase()+lp.slice(1):'team');\n    const body=String(p.body).replace(/^Hi [^,\\n]*,/,'Hi '+greet+',');\n    const bodyB64=Buffer.from(body,'utf8').toString('base64').replace(/(.{76})/g,'$1\\r\\n');\n    const mime=['To: '+to.join(', '),'Subject: =?UTF-8?B?'+Buffer.from(subj,'utf8').toString('base64')+'?=','In-Reply-To: '+msgId,'References: '+refs,'MIME-Version: 1.0','Content-Type: text/plain; charset=\"UTF-8\"','Content-Transfer-Encoding: base64','',bodyB64].join('\\r\\n');\n    const raw=Buffer.from(mime,'utf8').toString('base64').replace(/\\+/g,'-').replace(/\\//g,'_').replace(/=+$/,'');\n    return {json:Object.assign(base,{ok:true,skip:dry,to:to.join(', '),subject:subj,greet:greet,threadId:p.thread_id,raw:raw})};\n  }catch(e){return {json:Object.assign(base,{ok:false,skip:true,error:String(e.message||e)})};}\n});"
+      }
+    },
+    {
+      "id": "s4",
+      "name": "Send4",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "continueOnFail": true,
+      "position": [
+        3200,
+        100
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.skip ? 'https://gmail.googleapis.com/gmail/v1/users/me/profile' : 'https://gmail.googleapis.com/gmail/v1/users/me/messages/send' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.skip ? {} : { raw: $json.raw, threadId: $json.threadId }) }}",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 4000
+            }
+          }
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "9IWD8mWqdARPXloL",
+          "name": "Gmail account 4"
+        }
+      }
+    },
+    {
+      "id": "p5",
+      "name": "Pick5",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3400,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const a=$('Select').all().map(i=>i.json).filter(x=>x.kind==='send'&&x.mb==='5');return a.length?a.map(j=>({json:j})):[{json:{skip:true}}];"
+      }
+    },
+    {
+      "id": "m5",
+      "name": "Meta5",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "continueOnFail": true,
+      "position": [
+        3600,
+        300
+      ],
+      "parameters": {
+        "url": "={{ $json.skip ? 'https://gmail.googleapis.com/gmail/v1/users/me/profile' : 'https://gmail.googleapis.com/gmail/v1/users/me/threads/' + $json.thread_id + '?format=metadata&metadataHeaders=From&metadataHeaders=To&metadataHeaders=Cc&metadataHeaders=Subject&metadataHeaders=Message-ID&metadataHeaders=References' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "R5K61omYbU9oT5J8",
+          "name": "Gmail account 5"
+        }
+      }
+    },
+    {
+      "id": "b5",
+      "name": "Build5",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3800,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const PICK='Pick5',META='Meta5';\nconst dry=$('Mode').first().json.dry!==false;const picks=$(PICK).all().map(i=>i.json);const metas=$(META).all().map(i=>i.json);\nfunction hdr(m,n){const x=((m.payload||{}).headers||[]).find(y=>String(y.name).toLowerCase()===n);return x?String(x.value):'';}\nconst addrs=v=>(String(v).match(/[A-Za-z0-9._%+'-]+@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)+/g)||[]).map(x=>x.toLowerCase());\nconst OURS=/@sidanaventures\\.com$/;\nreturn picks.map(function(p,i){if(p.skip){return {json:{skip:true}};}\n  const m=metas[i]||{};const base={ask_id:p.ask_id,rn:p.rn,firm:p.firm,mb:p.mb};\n  try{const msgs=m.messages||[];if(!msgs.length||m.id!==p.thread_id){throw new Error('thread not found in this mailbox');}\n    const first=msgs[0],last=msgs[msgs.length-1];\n    if(/@sidanaventures\\.com/i.test(hdr(last,'from'))){throw new Error('investor has not replied (latest message is ours) - thesis-check only goes in a thread where the investor passed (user 18 Sep)');}\n    if(!/@sidanaventures\\.com/i.test(hdr(first,'from'))){throw new Error('thread was not started by us');}\n    let to=addrs(hdr(first,'to')).concat(addrs(hdr(first,'cc')));msgs.forEach(x=>{const f=addrs(hdr(x,'from'));if(f.length&&!OURS.test(f[0])){to.push(f[0]);}});\n    to=[...new Set(to)].filter(a=>!OURS.test(a));if(!to.length){throw new Error('no investor recipients in thread');}\n    const subj='Re: '+hdr(first,'subject').replace(/^\\s*(re|fwd?|fw)\\s*:\\s*/i,'');\n    const msgId=hdr(last,'message-id');if(!msgId){throw new Error('no Message-ID on last message');}\n    const refs=(hdr(last,'references')+' '+msgId).trim();\n    const toHdr=hdr(first,'to');const nm=(toHdr.split(',')[0].match(/^\\s*\"?([A-Za-z][A-Za-z.'-]+)[^<]*</)||[])[1];const lp=(to[0]||'').split('@')[0].split(/[._-]/)[0];const GEN=/^(partner|deals?|ir|info|startups?|ideas|team|contact|admin|hello|invest|pitch|founders?|yournest)/i;const greet=nm&&!GEN.test(nm)?nm:(lp&&!GEN.test(lp)&&to.length===1?lp.charAt(0).toUpperCase()+lp.slice(1):'team');\n    const body=String(p.body).replace(/^Hi [^,\\n]*,/,'Hi '+greet+',');\n    const bodyB64=Buffer.from(body,'utf8').toString('base64').replace(/(.{76})/g,'$1\\r\\n');\n    const mime=['To: '+to.join(', '),'Subject: =?UTF-8?B?'+Buffer.from(subj,'utf8').toString('base64')+'?=','In-Reply-To: '+msgId,'References: '+refs,'MIME-Version: 1.0','Content-Type: text/plain; charset=\"UTF-8\"','Content-Transfer-Encoding: base64','',bodyB64].join('\\r\\n');\n    const raw=Buffer.from(mime,'utf8').toString('base64').replace(/\\+/g,'-').replace(/\\//g,'_').replace(/=+$/,'');\n    return {json:Object.assign(base,{ok:true,skip:dry,to:to.join(', '),subject:subj,greet:greet,threadId:p.thread_id,raw:raw})};\n  }catch(e){return {json:Object.assign(base,{ok:false,skip:true,error:String(e.message||e)})};}\n});"
+      }
+    },
+    {
+      "id": "s5",
+      "name": "Send5",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "continueOnFail": true,
+      "position": [
+        4000,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.skip ? 'https://gmail.googleapis.com/gmail/v1/users/me/profile' : 'https://gmail.googleapis.com/gmail/v1/users/me/messages/send' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.skip ? {} : { raw: $json.raw, threadId: $json.threadId }) }}",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 4000
+            }
+          }
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "R5K61omYbU9oT5J8",
+          "name": "Gmail account 5"
+        }
+      }
+    },
+    {
+      "id": "rs",
+      "name": "Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4200,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function colL(i){let n=i+1,t='';while(n>0){const m=(n-1)%26;t=String.fromCharCode(65+m)+t;n=Math.floor((n-1)/26);}return t;}\nconst dry=$('Mode').first().json.dry!==false;\nconst meta=$('Select').all().map(i=>i.json).find(x=>x.kind==='meta')||{skipped:[],postponed:[],header:[]};\nconst X={};(meta.header||[]).forEach((k,i)=>X[k]=i);\nconst now=new Date(Date.now()+330*60000).toISOString().slice(0,16).replace('T',' ');\nconst data=[];const put=(rn,f,v)=>{if(X[f]!==undefined){data.push({range:'THESIS_ASK!'+colL(X[f])+rn,values:[[v]]});}};\nconst sum={dry:dry,sent:[],failed:[],planned:[],skipped:meta.skipped.map(x=>x.ask_id+' '+x.note),postponed:meta.postponed.map(x=>x.ask_id)};\nfor(const mb of ['2','3','4','5']){const builds=$('Build'+mb).all().map(i=>i.json);const sends=$('Send'+mb).all().map(i=>i.json);\n  builds.forEach(function(b,i){if(!b.ask_id){return;}\n    if(!b.ok){sum.failed.push(b.ask_id+' '+b.firm+': '+b.error);put(b.rn,'status','FAILED');put(b.rn,'note','FAILED '+now+': '+b.error);return;}\n    if(dry){sum.planned.push(b.ask_id+' '+b.firm+' -> Hi '+b.greet+' | '+b.to);return;}\n    const r=sends[i]||{};if(r.id){sum.sent.push(b.ask_id+' '+b.firm+' -> '+b.to);put(b.rn,'status','SENT');put(b.rn,'sent_at',now);put(b.rn,'gmail_message_id',r.id);}\n    else{const err=String((r.error&&(r.error.message||r.error))||JSON.stringify(r).slice(0,200));sum.failed.push(b.ask_id+' '+b.firm+': send failed '+err);put(b.rn,'status','FAILED');put(b.rn,'note','SEND FAILED '+now+': '+err.slice(0,200));}\n  });}\nmeta.skipped.forEach(x=>{put(x.rn,'status','SKIPPED');put(x.rn,'note',x.note);});\nmeta.postponed.forEach(x=>{put(x.rn,'send_after',x.send_after);put(x.rn,'note',x.note);});\nreturn [{json:{summary:sum,data:dry?[]:data}}];"
+      }
+    },
+    {
+      "id": "hd",
+      "name": "Has data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4400,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const j=$('Results').first().json;return j.data.length?[{json:{cells:j.data.length}}]:[];"
+      }
+    },
+    {
+      "id": "wr",
+      "name": "Write",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "position": [
+        4600,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ valueInputOption: 'RAW', data: $('Results').first().json.data }) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule": {
+      "main": [
+        [
+          {
+            "node": "Mode",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mode": {
+      "main": [
+        [
+          {
+            "node": "GET queue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET queue": {
+      "main": [
+        [
+          {
+            "node": "GET thesis tab",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET thesis tab": {
+      "main": [
+        [
+          {
+            "node": "Select",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select": {
+      "main": [
+        [
+          {
+            "node": "Pick2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick2": {
+      "main": [
+        [
+          {
+            "node": "Meta2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Meta2": {
+      "main": [
+        [
+          {
+            "node": "Build2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build2": {
+      "main": [
+        [
+          {
+            "node": "Send2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send2": {
+      "main": [
+        [
+          {
+            "node": "Pick3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick3": {
+      "main": [
+        [
+          {
+            "node": "Meta3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Meta3": {
+      "main": [
+        [
+          {
+            "node": "Build3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build3": {
+      "main": [
+        [
+          {
+            "node": "Send3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send3": {
+      "main": [
+        [
+          {
+            "node": "Pick4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick4": {
+      "main": [
+        [
+          {
+            "node": "Meta4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Meta4": {
+      "main": [
+        [
+          {
+            "node": "Build4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build4": {
+      "main": [
+        [
+          {
+            "node": "Send4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send4": {
+      "main": [
+        [
+          {
+            "node": "Pick5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick5": {
+      "main": [
+        [
+          {
+            "node": "Meta5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Meta5": {
+      "main": [
+        [
+          {
+            "node": "Build5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build5": {
+      "main": [
+        [
+          {
+            "node": "Send5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send5": {
+      "main": [
+        [
+          {
+            "node": "Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Results": {
+      "main": [
+        [
+          {
+            "node": "Has data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has data": {
+      "main": [
+        [
+          {
+            "node": "Write",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Schedule": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "XUksDVaFexCu799r",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-17T10:48:13.770Z",
+      "updatedAt": "2026-09-17T10:48:13.770Z"
+    }
+  ],
+  "activeVersion": {
+    "versionId": "7de81f07-fba8-4431-821d-d02834a7fa9b",
+    "workflowId": "XUksDVaFexCu799r",
+    "nodes": [
+      {
+        "id": "t1",
+        "name": "Schedule",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.4,
+        "position": [
+          0,
+          0
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "0 11 * * 1-5"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "md",
+        "name": "Mode",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          200,
+          0
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "// LIVE since 17 Sep 2026 (user approved). dry: true = check only. max_per_run caps daily sends.\nreturn [{ json: { dry: false, max_per_run: 40 } }];"
+        }
+      },
+      {
+        "id": "gq",
+        "name": "GET queue",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "executeOnce": true,
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 3000,
+        "position": [
+          400,
+          0
+        ],
+        "parameters": {
+          "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/' + encodeURIComponent('THESIS_ASK!A1:O3000') }}",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleSheetsOAuth2Api",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "gt",
+        "name": "GET thesis tab",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "executeOnce": true,
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 3000,
+        "position": [
+          600,
+          0
+        ],
+        "parameters": {
+          "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/1WOErvuYawblG-HkrK5In5YWtEiKKt_DeoVpmL5na6GU/values/' + encodeURIComponent(\"'Thesis correction'!A1:Z400\") }}",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleSheetsOAuth2Api",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "sel",
+        "name": "Select",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          800,
+          0
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "function s(v){return String(v==null?'':v).trim();}\nfunction nz(x){return s(x).toLowerCase().replace(/[^a-z0-9]/g,'');}\nconst MODE=$('Mode').first().json;\nconst q=$('GET queue').first().json.values||[];\nif(!q.length||s(q[0][0])!=='ask_id'){throw new Error('ABORT: THESIS_ASK header missing');}\nconst h=q[0].map(s);const X={};h.forEach((k,i)=>X[k]=i);\nconst today=MODE.as_of||new Date(Date.now()+330*60000).toISOString().slice(0,10);\nfunction nextWeekday(d){const t=new Date(d+'T00:00:00Z');do{t.setUTCDate(t.getUTCDate()+1);}while(t.getUTCDay()===0||t.getUTCDay()===6);return t.toISOString().slice(0,10);}\nconst thesis=(($('GET thesis tab').first().json.values)||[]).slice(2).map(r=>nz((r||[])[0]).replace(/^the/,'')).filter(k=>k.length>=4);\nfunction gave(f){const k=nz(f);return thesis.some(t=>t.slice(0,6)===k.slice(0,6)||k.indexOf(t)===0||t.indexOf(k)===0||(t.length>=8&&k.indexOf(t)>=0)||(k.length>=8&&t.indexOf(k)>=0));}\nconst sentToday={};\nfor(let i=1;i<q.length;i++){const r=q[i]||[];if(s(r[X.status])==='SENT'&&s(r[X.sent_at]).slice(0,10)===today){sentToday[nz(r[X.firm]).slice(0,10)]=true;}}\nconst rows=[];for(let i=1;i<q.length;i++){const r=q[i]||[];if(s(r[X.status])!=='QUEUED'){continue;}const sa=s(r[X.send_after]);if(sa&&sa>today){continue;}rows.push({rn:i+1,ask_id:s(r[X.ask_id]),firm:s(r[X.firm]),mb:s(r[X.mb]),thread_id:s(r[X.thread_id]),body:s(r[X.body]),send_after:sa});}\nrows.sort((a,b)=>(a.send_after<b.send_after?-1:a.send_after>b.send_after?1:a.ask_id<b.ask_id?-1:1));\nconst out=[];const chosen={};const skipped=[];const postponed=[];\nfor(const r of rows){const fk=nz(r.firm).slice(0,10);\n  if(gave(r.firm)){skipped.push({rn:r.rn,ask_id:r.ask_id,note:'SKIPPED '+today+': firm already gave its thesis on the Corrections sheet'});continue;}\n  if(['2','3','4','5'].indexOf(r.mb)<0||!r.thread_id||!r.body){skipped.push({rn:r.rn,ask_id:r.ask_id,note:'SKIPPED '+today+': bad row (mailbox/thread/body missing)'});continue;}\n  if(sentToday[fk]||chosen[fk]||out.length>=Number(MODE.max_per_run||40)){postponed.push({rn:r.rn,ask_id:r.ask_id,send_after:nextWeekday(today),note:'postponed '+today+': one mailbox per investor per day / daily cap'});continue;}\n  chosen[fk]=true;out.push({json:Object.assign({kind:'send'},r)});}\nout.push({json:{kind:'meta',today:today,skipped:skipped,postponed:postponed,header:h}});\nreturn out;"
+        }
+      },
+      {
+        "id": "p2",
+        "name": "Pick2",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1000,
+          -300
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const a=$('Select').all().map(i=>i.json).filter(x=>x.kind==='send'&&x.mb==='2');return a.length?a.map(j=>({json:j})):[{json:{skip:true}}];"
+        }
+      },
+      {
+        "id": "m2",
+        "name": "Meta2",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "continueOnFail": true,
+        "position": [
+          1200,
+          -300
+        ],
+        "parameters": {
+          "url": "={{ $json.skip ? 'https://gmail.googleapis.com/gmail/v1/users/me/profile' : 'https://gmail.googleapis.com/gmail/v1/users/me/threads/' + $json.thread_id + '?format=metadata&metadataHeaders=From&metadataHeaders=To&metadataHeaders=Cc&metadataHeaders=Subject&metadataHeaders=Message-ID&metadataHeaders=References' }}",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "gmailOAuth2",
+          "options": {}
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "hwEqMRn6IxzoYs1R",
+            "name": "Gmail account 2"
+          }
+        }
+      },
+      {
+        "id": "b2",
+        "name": "Build2",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1400,
+          -300
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const PICK='Pick2',META='Meta2';\nconst dry=$('Mode').first().json.dry!==false;const picks=$(PICK).all().map(i=>i.json);const metas=$(META).all().map(i=>i.json);\nfunction hdr(m,n){const x=((m.payload||{}).headers||[]).find(y=>String(y.name).toLowerCase()===n);return x?String(x.value):'';}\nconst addrs=v=>(String(v).match(/[A-Za-z0-9._%+'-]+@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)+/g)||[]).map(x=>x.toLowerCase());\nconst OURS=/@sidanaventures\\.com$/;\nreturn picks.map(function(p,i){if(p.skip){return {json:{skip:true}};}\n  const m=metas[i]||{};const base={ask_id:p.ask_id,rn:p.rn,firm:p.firm,mb:p.mb};\n  try{const msgs=m.messages||[];if(!msgs.length||m.id!==p.thread_id){throw new Error('thread not found in this mailbox');}\n    const first=msgs[0],last=msgs[msgs.length-1];\n    if(/@sidanaventures\\.com/i.test(hdr(last,'from'))){throw new Error('investor has not replied (latest message is ours) - thesis-check only goes in a thread where the investor passed (user 18 Sep)');}\n    if(!/@sidanaventures\\.com/i.test(hdr(first,'from'))){throw new Error('thread was not started by us');}\n    let to=addrs(hdr(first,'to')).concat(addrs(hdr(first,'cc')));msgs.forEach(x=>{const f=addrs(hdr(x,'from'));if(f.length&&!OURS.test(f[0])){to.push(f[0]);}});\n    to=[...new Set(to)].filter(a=>!OURS.test(a));if(!to.length){throw new Error('no investor recipients in thread');}\n    const subj='Re: '+hdr(first,'subject').replace(/^\\s*(re|fwd?|fw)\\s*:\\s*/i,'');\n    const msgId=hdr(last,'message-id');if(!msgId){throw new Error('no Message-ID on last message');}\n    const refs=(hdr(last,'references')+' '+msgId).trim();\n    const toHdr=hdr(first,'to');const nm=(toHdr.split(',')[0].match(/^\\s*\"?([A-Za-z][A-Za-z.'-]+)[^<]*</)||[])[1];const lp=(to[0]||'').split('@')[0].split(/[._-]/)[0];const GEN=/^(partner|deals?|ir|info|startups?|ideas|team|contact|admin|hello|invest|pitch|founders?|yournest)/i;const greet=nm&&!GEN.test(nm)?nm:(lp&&!GEN.test(lp)&&to.length===1?lp.charAt(0).toUpperCase()+lp.slice(1):'team');\n    const body=String(p.body).replace(/^Hi [^,\\n]*,/,'Hi '+greet+',');\n    const bodyB64=Buffer.from(body,'utf8').toString('base64').replace(/(.{76})/g,'$1\\r\\n');\n    const mime=['To: '+to.join(', '),'Subject: =?UTF-8?B?'+Buffer.from(subj,'utf8').toString('base64')+'?=','In-Reply-To: '+msgId,'References: '+refs,'MIME-Version: 1.0','Content-Type: text/plain; charset=\"UTF-8\"','Content-Transfer-Encoding: base64','',bodyB64].join('\\r\\n');\n    const raw=Buffer.from(mime,'utf8').toString('base64').replace(/\\+/g,'-').replace(/\\//g,'_').replace(/=+$/,'');\n    return {json:Object.assign(base,{ok:true,skip:dry,to:to.join(', '),subject:subj,greet:greet,threadId:p.thread_id,raw:raw})};\n  }catch(e){return {json:Object.assign(base,{ok:false,skip:true,error:String(e.message||e)})};}\n});"
+        }
+      },
+      {
+        "id": "s2",
+        "name": "Send2",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "continueOnFail": true,
+        "position": [
+          1600,
+          -300
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ $json.skip ? 'https://gmail.googleapis.com/gmail/v1/users/me/profile' : 'https://gmail.googleapis.com/gmail/v1/users/me/messages/send' }}",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "gmailOAuth2",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json.skip ? {} : { raw: $json.raw, threadId: $json.threadId }) }}",
+          "options": {
+            "batching": {
+              "batch": {
+                "batchSize": 1,
+                "batchInterval": 4000
+              }
+            }
+          }
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "hwEqMRn6IxzoYs1R",
+            "name": "Gmail account 2"
+          }
+        }
+      },
+      {
+        "id": "p3",
+        "name": "Pick3",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1800,
+          -100
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const a=$('Select').all().map(i=>i.json).filter(x=>x.kind==='send'&&x.mb==='3');return a.length?a.map(j=>({json:j})):[{json:{skip:true}}];"
+        }
+      },
+      {
+        "id": "m3",
+        "name": "Meta3",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "continueOnFail": true,
+        "position": [
+          2000,
+          -100
+        ],
+        "parameters": {
+          "url": "={{ $json.skip ? 'https://gmail.googleapis.com/gmail/v1/users/me/profile' : 'https://gmail.googleapis.com/gmail/v1/users/me/threads/' + $json.thread_id + '?format=metadata&metadataHeaders=From&metadataHeaders=To&metadataHeaders=Cc&metadataHeaders=Subject&metadataHeaders=Message-ID&metadataHeaders=References' }}",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "gmailOAuth2",
+          "options": {}
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "mymSHTFVWtsI3Mh7",
+            "name": "Gmail account 3"
+          }
+        }
+      },
+      {
+        "id": "b3",
+        "name": "Build3",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2200,
+          -100
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const PICK='Pick3',META='Meta3';\nconst dry=$('Mode').first().json.dry!==false;const picks=$(PICK).all().map(i=>i.json);const metas=$(META).all().map(i=>i.json);\nfunction hdr(m,n){const x=((m.payload||{}).headers||[]).find(y=>String(y.name).toLowerCase()===n);return x?String(x.value):'';}\nconst addrs=v=>(String(v).match(/[A-Za-z0-9._%+'-]+@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)+/g)||[]).map(x=>x.toLowerCase());\nconst OURS=/@sidanaventures\\.com$/;\nreturn picks.map(function(p,i){if(p.skip){return {json:{skip:true}};}\n  const m=metas[i]||{};const base={ask_id:p.ask_id,rn:p.rn,firm:p.firm,mb:p.mb};\n  try{const msgs=m.messages||[];if(!msgs.length||m.id!==p.thread_id){throw new Error('thread not found in this mailbox');}\n    const first=msgs[0],last=msgs[msgs.length-1];\n    if(/@sidanaventures\\.com/i.test(hdr(last,'from'))){throw new Error('investor has not replied (latest message is ours) - thesis-check only goes in a thread where the investor passed (user 18 Sep)');}\n    if(!/@sidanaventures\\.com/i.test(hdr(first,'from'))){throw new Error('thread was not started by us');}\n    let to=addrs(hdr(first,'to')).concat(addrs(hdr(first,'cc')));msgs.forEach(x=>{const f=addrs(hdr(x,'from'));if(f.length&&!OURS.test(f[0])){to.push(f[0]);}});\n    to=[...new Set(to)].filter(a=>!OURS.test(a));if(!to.length){throw new Error('no investor recipients in thread');}\n    const subj='Re: '+hdr(first,'subject').replace(/^\\s*(re|fwd?|fw)\\s*:\\s*/i,'');\n    const msgId=hdr(last,'message-id');if(!msgId){throw new Error('no Message-ID on last message');}\n    const refs=(hdr(last,'references')+' '+msgId).trim();\n    const toHdr=hdr(first,'to');const nm=(toHdr.split(',')[0].match(/^\\s*\"?([A-Za-z][A-Za-z.'-]+)[^<]*</)||[])[1];const lp=(to[0]||'').split('@')[0].split(/[._-]/)[0];const GEN=/^(partner|deals?|ir|info|startups?|ideas|team|contact|admin|hello|invest|pitch|founders?|yournest)/i;const greet=nm&&!GEN.test(nm)?nm:(lp&&!GEN.test(lp)&&to.length===1?lp.charAt(0).toUpperCase()+lp.slice(1):'team');\n    const body=String(p.body).replace(/^Hi [^,\\n]*,/,'Hi '+greet+',');\n    const bodyB64=Buffer.from(body,'utf8').toString('base64').replace(/(.{76})/g,'$1\\r\\n');\n    const mime=['To: '+to.join(', '),'Subject: =?UTF-8?B?'+Buffer.from(subj,'utf8').toString('base64')+'?=','In-Reply-To: '+msgId,'References: '+refs,'MIME-Version: 1.0','Content-Type: text/plain; charset=\"UTF-8\"','Content-Transfer-Encoding: base64','',bodyB64].join('\\r\\n');\n    const raw=Buffer.from(mime,'utf8').toString('base64').replace(/\\+/g,'-').replace(/\\//g,'_').replace(/=+$/,'');\n    return {json:Object.assign(base,{ok:true,skip:dry,to:to.join(', '),subject:subj,greet:greet,threadId:p.thread_id,raw:raw})};\n  }catch(e){return {json:Object.assign(base,{ok:false,skip:true,error:String(e.message||e)})};}\n});"
+        }
+      },
+      {
+        "id": "s3",
+        "name": "Send3",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "continueOnFail": true,
+        "position": [
+          2400,
+          -100
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ $json.skip ? 'https://gmail.googleapis.com/gmail/v1/users/me/profile' : 'https://gmail.googleapis.com/gmail/v1/users/me/messages/send' }}",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "gmailOAuth2",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json.skip ? {} : { raw: $json.raw, threadId: $json.threadId }) }}",
+          "options": {
+            "batching": {
+              "batch": {
+                "batchSize": 1,
+                "batchInterval": 4000
+              }
+            }
+          }
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "mymSHTFVWtsI3Mh7",
+            "name": "Gmail account 3"
+          }
+        }
+      },
+      {
+        "id": "p4",
+        "name": "Pick4",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2600,
+          100
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const a=$('Select').all().map(i=>i.json).filter(x=>x.kind==='send'&&x.mb==='4');return a.length?a.map(j=>({json:j})):[{json:{skip:true}}];"
+        }
+      },
+      {
+        "id": "m4",
+        "name": "Meta4",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "continueOnFail": true,
+        "position": [
+          2800,
+          100
+        ],
+        "parameters": {
+          "url": "={{ $json.skip ? 'https://gmail.googleapis.com/gmail/v1/users/me/profile' : 'https://gmail.googleapis.com/gmail/v1/users/me/threads/' + $json.thread_id + '?format=metadata&metadataHeaders=From&metadataHeaders=To&metadataHeaders=Cc&metadataHeaders=Subject&metadataHeaders=Message-ID&metadataHeaders=References' }}",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "gmailOAuth2",
+          "options": {}
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "9IWD8mWqdARPXloL",
+            "name": "Gmail account 4"
+          }
+        }
+      },
+      {
+        "id": "b4",
+        "name": "Build4",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3000,
+          100
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const PICK='Pick4',META='Meta4';\nconst dry=$('Mode').first().json.dry!==false;const picks=$(PICK).all().map(i=>i.json);const metas=$(META).all().map(i=>i.json);\nfunction hdr(m,n){const x=((m.payload||{}).headers||[]).find(y=>String(y.name).toLowerCase()===n);return x?String(x.value):'';}\nconst addrs=v=>(String(v).match(/[A-Za-z0-9._%+'-]+@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)+/g)||[]).map(x=>x.toLowerCase());\nconst OURS=/@sidanaventures\\.com$/;\nreturn picks.map(function(p,i){if(p.skip){return {json:{skip:true}};}\n  const m=metas[i]||{};const base={ask_id:p.ask_id,rn:p.rn,firm:p.firm,mb:p.mb};\n  try{const msgs=m.messages||[];if(!msgs.length||m.id!==p.thread_id){throw new Error('thread not found in this mailbox');}\n    const first=msgs[0],last=msgs[msgs.length-1];\n    if(/@sidanaventures\\.com/i.test(hdr(last,'from'))){throw new Error('investor has not replied (latest message is ours) - thesis-check only goes in a thread where the investor passed (user 18 Sep)');}\n    if(!/@sidanaventures\\.com/i.test(hdr(first,'from'))){throw new Error('thread was not started by us');}\n    let to=addrs(hdr(first,'to')).concat(addrs(hdr(first,'cc')));msgs.forEach(x=>{const f=addrs(hdr(x,'from'));if(f.length&&!OURS.test(f[0])){to.push(f[0]);}});\n    to=[...new Set(to)].filter(a=>!OURS.test(a));if(!to.length){throw new Error('no investor recipients in thread');}\n    const subj='Re: '+hdr(first,'subject').replace(/^\\s*(re|fwd?|fw)\\s*:\\s*/i,'');\n    const msgId=hdr(last,'message-id');if(!msgId){throw new Error('no Message-ID on last message');}\n    const refs=(hdr(last,'references')+' '+msgId).trim();\n    const toHdr=hdr(first,'to');const nm=(toHdr.split(',')[0].match(/^\\s*\"?([A-Za-z][A-Za-z.'-]+)[^<]*</)||[])[1];const lp=(to[0]||'').split('@')[0].split(/[._-]/)[0];const GEN=/^(partner|deals?|ir|info|startups?|ideas|team|contact|admin|hello|invest|pitch|founders?|yournest)/i;const greet=nm&&!GEN.test(nm)?nm:(lp&&!GEN.test(lp)&&to.length===1?lp.charAt(0).toUpperCase()+lp.slice(1):'team');\n    const body=String(p.body).replace(/^Hi [^,\\n]*,/,'Hi '+greet+',');\n    const bodyB64=Buffer.from(body,'utf8').toString('base64').replace(/(.{76})/g,'$1\\r\\n');\n    const mime=['To: '+to.join(', '),'Subject: =?UTF-8?B?'+Buffer.from(subj,'utf8').toString('base64')+'?=','In-Reply-To: '+msgId,'References: '+refs,'MIME-Version: 1.0','Content-Type: text/plain; charset=\"UTF-8\"','Content-Transfer-Encoding: base64','',bodyB64].join('\\r\\n');\n    const raw=Buffer.from(mime,'utf8').toString('base64').replace(/\\+/g,'-').replace(/\\//g,'_').replace(/=+$/,'');\n    return {json:Object.assign(base,{ok:true,skip:dry,to:to.join(', '),subject:subj,greet:greet,threadId:p.thread_id,raw:raw})};\n  }catch(e){return {json:Object.assign(base,{ok:false,skip:true,error:String(e.message||e)})};}\n});"
+        }
+      },
+      {
+        "id": "s4",
+        "name": "Send4",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "continueOnFail": true,
+        "position": [
+          3200,
+          100
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ $json.skip ? 'https://gmail.googleapis.com/gmail/v1/users/me/profile' : 'https://gmail.googleapis.com/gmail/v1/users/me/messages/send' }}",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "gmailOAuth2",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json.skip ? {} : { raw: $json.raw, threadId: $json.threadId }) }}",
+          "options": {
+            "batching": {
+              "batch": {
+                "batchSize": 1,
+                "batchInterval": 4000
+              }
+            }
+          }
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "9IWD8mWqdARPXloL",
+            "name": "Gmail account 4"
+          }
+        }
+      },
+      {
+        "id": "p5",
+        "name": "Pick5",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3400,
+          300
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const a=$('Select').all().map(i=>i.json).filter(x=>x.kind==='send'&&x.mb==='5');return a.length?a.map(j=>({json:j})):[{json:{skip:true}}];"
+        }
+      },
+      {
+        "id": "m5",
+        "name": "Meta5",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "continueOnFail": true,
+        "position": [
+          3600,
+          300
+        ],
+        "parameters": {
+          "url": "={{ $json.skip ? 'https://gmail.googleapis.com/gmail/v1/users/me/profile' : 'https://gmail.googleapis.com/gmail/v1/users/me/threads/' + $json.thread_id + '?format=metadata&metadataHeaders=From&metadataHeaders=To&metadataHeaders=Cc&metadataHeaders=Subject&metadataHeaders=Message-ID&metadataHeaders=References' }}",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "gmailOAuth2",
+          "options": {}
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "R5K61omYbU9oT5J8",
+            "name": "Gmail account 5"
+          }
+        }
+      },
+      {
+        "id": "b5",
+        "name": "Build5",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3800,
+          300
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const PICK='Pick5',META='Meta5';\nconst dry=$('Mode').first().json.dry!==false;const picks=$(PICK).all().map(i=>i.json);const metas=$(META).all().map(i=>i.json);\nfunction hdr(m,n){const x=((m.payload||{}).headers||[]).find(y=>String(y.name).toLowerCase()===n);return x?String(x.value):'';}\nconst addrs=v=>(String(v).match(/[A-Za-z0-9._%+'-]+@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)+/g)||[]).map(x=>x.toLowerCase());\nconst OURS=/@sidanaventures\\.com$/;\nreturn picks.map(function(p,i){if(p.skip){return {json:{skip:true}};}\n  const m=metas[i]||{};const base={ask_id:p.ask_id,rn:p.rn,firm:p.firm,mb:p.mb};\n  try{const msgs=m.messages||[];if(!msgs.length||m.id!==p.thread_id){throw new Error('thread not found in this mailbox');}\n    const first=msgs[0],last=msgs[msgs.length-1];\n    if(/@sidanaventures\\.com/i.test(hdr(last,'from'))){throw new Error('investor has not replied (latest message is ours) - thesis-check only goes in a thread where the investor passed (user 18 Sep)');}\n    if(!/@sidanaventures\\.com/i.test(hdr(first,'from'))){throw new Error('thread was not started by us');}\n    let to=addrs(hdr(first,'to')).concat(addrs(hdr(first,'cc')));msgs.forEach(x=>{const f=addrs(hdr(x,'from'));if(f.length&&!OURS.test(f[0])){to.push(f[0]);}});\n    to=[...new Set(to)].filter(a=>!OURS.test(a));if(!to.length){throw new Error('no investor recipients in thread');}\n    const subj='Re: '+hdr(first,'subject').replace(/^\\s*(re|fwd?|fw)\\s*:\\s*/i,'');\n    const msgId=hdr(last,'message-id');if(!msgId){throw new Error('no Message-ID on last message');}\n    const refs=(hdr(last,'references')+' '+msgId).trim();\n    const toHdr=hdr(first,'to');const nm=(toHdr.split(',')[0].match(/^\\s*\"?([A-Za-z][A-Za-z.'-]+)[^<]*</)||[])[1];const lp=(to[0]||'').split('@')[0].split(/[._-]/)[0];const GEN=/^(partner|deals?|ir|info|startups?|ideas|team|contact|admin|hello|invest|pitch|founders?|yournest)/i;const greet=nm&&!GEN.test(nm)?nm:(lp&&!GEN.test(lp)&&to.length===1?lp.charAt(0).toUpperCase()+lp.slice(1):'team');\n    const body=String(p.body).replace(/^Hi [^,\\n]*,/,'Hi '+greet+',');\n    const bodyB64=Buffer.from(body,'utf8').toString('base64').replace(/(.{76})/g,'$1\\r\\n');\n    const mime=['To: '+to.join(', '),'Subject: =?UTF-8?B?'+Buffer.from(subj,'utf8').toString('base64')+'?=','In-Reply-To: '+msgId,'References: '+refs,'MIME-Version: 1.0','Content-Type: text/plain; charset=\"UTF-8\"','Content-Transfer-Encoding: base64','',bodyB64].join('\\r\\n');\n    const raw=Buffer.from(mime,'utf8').toString('base64').replace(/\\+/g,'-').replace(/\\//g,'_').replace(/=+$/,'');\n    return {json:Object.assign(base,{ok:true,skip:dry,to:to.join(', '),subject:subj,greet:greet,threadId:p.thread_id,raw:raw})};\n  }catch(e){return {json:Object.assign(base,{ok:false,skip:true,error:String(e.message||e)})};}\n});"
+        }
+      },
+      {
+        "id": "s5",
+        "name": "Send5",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "continueOnFail": true,
+        "position": [
+          4000,
+          300
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ $json.skip ? 'https://gmail.googleapis.com/gmail/v1/users/me/profile' : 'https://gmail.googleapis.com/gmail/v1/users/me/messages/send' }}",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "gmailOAuth2",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json.skip ? {} : { raw: $json.raw, threadId: $json.threadId }) }}",
+          "options": {
+            "batching": {
+              "batch": {
+                "batchSize": 1,
+                "batchInterval": 4000
+              }
+            }
+          }
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "R5K61omYbU9oT5J8",
+            "name": "Gmail account 5"
+          }
+        }
+      },
+      {
+        "id": "rs",
+        "name": "Results",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          4200,
+          300
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "function colL(i){let n=i+1,t='';while(n>0){const m=(n-1)%26;t=String.fromCharCode(65+m)+t;n=Math.floor((n-1)/26);}return t;}\nconst dry=$('Mode').first().json.dry!==false;\nconst meta=$('Select').all().map(i=>i.json).find(x=>x.kind==='meta')||{skipped:[],postponed:[],header:[]};\nconst X={};(meta.header||[]).forEach((k,i)=>X[k]=i);\nconst now=new Date(Date.now()+330*60000).toISOString().slice(0,16).replace('T',' ');\nconst data=[];const put=(rn,f,v)=>{if(X[f]!==undefined){data.push({range:'THESIS_ASK!'+colL(X[f])+rn,values:[[v]]});}};\nconst sum={dry:dry,sent:[],failed:[],planned:[],skipped:meta.skipped.map(x=>x.ask_id+' '+x.note),postponed:meta.postponed.map(x=>x.ask_id)};\nfor(const mb of ['2','3','4','5']){const builds=$('Build'+mb).all().map(i=>i.json);const sends=$('Send'+mb).all().map(i=>i.json);\n  builds.forEach(function(b,i){if(!b.ask_id){return;}\n    if(!b.ok){sum.failed.push(b.ask_id+' '+b.firm+': '+b.error);put(b.rn,'status','FAILED');put(b.rn,'note','FAILED '+now+': '+b.error);return;}\n    if(dry){sum.planned.push(b.ask_id+' '+b.firm+' -> Hi '+b.greet+' | '+b.to);return;}\n    const r=sends[i]||{};if(r.id){sum.sent.push(b.ask_id+' '+b.firm+' -> '+b.to);put(b.rn,'status','SENT');put(b.rn,'sent_at',now);put(b.rn,'gmail_message_id',r.id);}\n    else{const err=String((r.error&&(r.error.message||r.error))||JSON.stringify(r).slice(0,200));sum.failed.push(b.ask_id+' '+b.firm+': send failed '+err);put(b.rn,'status','FAILED');put(b.rn,'note','SEND FAILED '+now+': '+err.slice(0,200));}\n  });}\nmeta.skipped.forEach(x=>{put(x.rn,'status','SKIPPED');put(x.rn,'note',x.note);});\nmeta.postponed.forEach(x=>{put(x.rn,'send_after',x.send_after);put(x.rn,'note',x.note);});\nreturn [{json:{summary:sum,data:dry?[]:data}}];"
+        }
+      },
+      {
+        "id": "hd",
+        "name": "Has data",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          4400,
+          300
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const j=$('Results').first().json;return j.data.length?[{json:{cells:j.data.length}}]:[];"
+        }
+      },
+      {
+        "id": "wr",
+        "name": "Write",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 5000,
+        "position": [
+          4600,
+          300
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdate",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleSheetsOAuth2Api",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ valueInputOption: 'RAW', data: $('Results').first().json.data }) }}",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Schedule": {
+        "main": [
+          [
+            {
+              "node": "Mode",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Mode": {
+        "main": [
+          [
+            {
+              "node": "GET queue",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "GET queue": {
+        "main": [
+          [
+            {
+              "node": "GET thesis tab",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "GET thesis tab": {
+        "main": [
+          [
+            {
+              "node": "Select",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Select": {
+        "main": [
+          [
+            {
+              "node": "Pick2",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Pick2": {
+        "main": [
+          [
+            {
+              "node": "Meta2",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Meta2": {
+        "main": [
+          [
+            {
+              "node": "Build2",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build2": {
+        "main": [
+          [
+            {
+              "node": "Send2",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Send2": {
+        "main": [
+          [
+            {
+              "node": "Pick3",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Pick3": {
+        "main": [
+          [
+            {
+              "node": "Meta3",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Meta3": {
+        "main": [
+          [
+            {
+              "node": "Build3",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build3": {
+        "main": [
+          [
+            {
+              "node": "Send3",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Send3": {
+        "main": [
+          [
+            {
+              "node": "Pick4",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Pick4": {
+        "main": [
+          [
+            {
+              "node": "Meta4",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Meta4": {
+        "main": [
+          [
+            {
+              "node": "Build4",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build4": {
+        "main": [
+          [
+            {
+              "node": "Send4",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Send4": {
+        "main": [
+          [
+            {
+              "node": "Pick5",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Pick5": {
+        "main": [
+          [
+            {
+              "node": "Meta5",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Meta5": {
+        "main": [
+          [
+            {
+              "node": "Build5",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build5": {
+        "main": [
+          [
+            {
+              "node": "Send5",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Send5": {
+        "main": [
+          [
+            {
+              "node": "Results",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Results": {
+        "main": [
+          [
+            {
+              "node": "Has data",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Has data": {
+        "main": [
+          [
+            {
+              "node": "Write",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "Sidana Ventures",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "createdAt": "2026-09-18T09:05:54.515Z",
+    "updatedAt": "2026-09-18T09:05:54.515Z",
+    "workflowPublishHistory": [
+      {
+        "id": 1634,
+        "workflowId": "XUksDVaFexCu799r",
+        "versionId": "7de81f07-fba8-4431-821d-d02834a7fa9b",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-09-18T09:05:54.663Z"
+      },
+      {
+        "id": 11800,
+        "workflowId": "XUksDVaFexCu799r",
+        "versionId": "7de81f07-fba8-4431-821d-d02834a7fa9b",
+        "event": "deactivated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-10-05T10:08:43.301Z"
+      },
+      {
+        "id": 11801,
+        "workflowId": "XUksDVaFexCu799r",
+        "versionId": "7de81f07-fba8-4431-821d-d02834a7fa9b",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-10-05T10:08:43.301Z"
+      },
+      {
+        "id": 11802,
+        "workflowId": "XUksDVaFexCu799r",
+        "versionId": "7de81f07-fba8-4431-821d-d02834a7fa9b",
+        "event": "deactivated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-10-05T10:08:43.791Z"
+      },
+      {
+        "id": 11864,
+        "workflowId": "XUksDVaFexCu799r",
+        "versionId": "7de81f07-fba8-4431-821d-d02834a7fa9b",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-10-05T10:46:51.698Z"
+      }
+    ]
+  }
+}

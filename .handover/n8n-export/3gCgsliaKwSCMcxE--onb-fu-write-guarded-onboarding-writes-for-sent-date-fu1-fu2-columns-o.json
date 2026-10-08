@@ -1,0 +1,447 @@
+{
+  "id": "3gCgsliaKwSCMcxE",
+  "name": "ONB-FU-WRITE — guarded ONBOARDING writes for sent_date / fu1 / fu2 columns only (webhook)",
+  "description": null,
+  "active": true,
+  "activeVersionId": "f6fa2b69-f2a8-4acc-88c7-d3e79a7e8bd5",
+  "createdAt": "2026-09-30T10:34:35.511Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "f6fa2b69-f2a8-4acc-88c7-d3e79a7e8bd5",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "1c6830c3-3f32-43c3-bcb1-81cf6f163f37",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "onb-fu-write-3d81f6",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "bd",
+      "name": "Build payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b=$input.first().json.body||{};\nif(b.secret!=='onb-fu-2026-09-30-Rz4'){throw new Error('bad secret');}\nconst ALLOWED={'AB':'sent_date','AM':'fu1_done','AN':'fu1_date','AO':'fu2_done','AP':'fu2_date'};\nconst col=String(b.col||'').toUpperCase();\nif(!ALLOWED[col]){throw new Error('column '+col+' not writable by this workflow; allowed: '+Object.keys(ALLOWED).join(','));}\nconst ups=Array.isArray(b.updates)?b.updates:[];\nif(!ups.length){throw new Error('no updates');}\nif(ups.length>300){throw new Error('too many updates in one call: '+ups.length);}\nconst data=[];const seen={};\nfor(const u of ups){\n  const row=Number(u.row);\n  if(!Number.isInteger(row)||row<2||row>900){throw new Error('bad row '+u.row);}\n  if(seen[row]){throw new Error('duplicate row '+row);}\n  seen[row]=1;\n  const v=String(u.value==null?'':u.value);\n  if(v.length>40){throw new Error('value too long for row '+row);}\n  if(col==='AB'&&v&&!/^\\d{4}-\\d{2}-\\d{2}( \\d{2}:\\d{2}:\\d{2})?$/.test(v)){throw new Error('row '+row+': sent_date must be YYYY-MM-DD[ HH:MM:SS], got '+v);}\n  if((col==='AN'||col==='AP')&&v&&!/^\\d{4}-\\d{2}-\\d{2}( \\d{2}:\\d{2}:\\d{2})?$/.test(v)){throw new Error('row '+row+': date column must be YYYY-MM-DD[ HH:MM:SS], got '+v);}\n  data.push({range:'ONBOARDING!'+col+row,values:[[v]]});\n}\nconst vio=(String(b.vio||'RAW').toUpperCase()==='USER_ENTERED')?'USER_ENTERED':'RAW';\nconst body={valueInputOption:vio,data:data};\nif(b.dry!==false){return [{json:{mode:'DRY_OK',vio:vio,column:col+' ('+ALLOWED[col]+')',cells:data.length,firstRange:data[0].range,lastRange:data[data.length-1].range,sampleValues:data.slice(0,3).map(d=>d.range+'='+d.values[0][0]),willWrite:false}}];}\nreturn [{json:{mode:'LIVE',vio:vio,column:col+' ('+ALLOWED[col]+')',cells:data.length,willWrite:true,payload:JSON.stringify(body)}}];"
+      }
+    },
+    {
+      "id": "ifw",
+      "name": "Write?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "version": 2,
+            "typeValidation": "loose"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "c1",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "leftValue": "={{ $json.willWrite }}",
+              "rightValue": ""
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "up",
+      "name": "Apply",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        -120
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.payload }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "ow",
+      "name": "Out written",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        -120
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b=$('Build payload').first().json;const r=$input.first().json;return [{json:{mode:'WRITTEN',column:b.column,cellsRequested:b.cells,totalUpdatedCells:r.totalUpdatedCells,totalUpdatedRows:r.totalUpdatedRows,totalUpdatedSheets:r.totalUpdatedSheets}}];"
+      }
+    },
+    {
+      "id": "od",
+      "name": "Out dry",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        140
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return [{json:$input.first().json}];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Build payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build payload": {
+      "main": [
+        [
+          {
+            "node": "Write?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write?": {
+      "main": [
+        [
+          {
+            "node": "Apply",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Out dry",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apply": {
+      "main": [
+        [
+          {
+            "node": "Out written",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "3gCgsliaKwSCMcxE",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-30T10:34:35.514Z",
+      "updatedAt": "2026-09-30T10:34:35.514Z"
+    }
+  ],
+  "activeVersion": {
+    "versionId": "f6fa2b69-f2a8-4acc-88c7-d3e79a7e8bd5",
+    "workflowId": "3gCgsliaKwSCMcxE",
+    "nodes": [
+      {
+        "id": "wh",
+        "name": "Webhook",
+        "webhookId": "1c6830c3-3f32-43c3-bcb1-81cf6f163f37",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          0
+        ],
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "onb-fu-write-3d81f6",
+          "responseMode": "lastNode",
+          "responseData": "firstEntryJson",
+          "options": {}
+        }
+      },
+      {
+        "id": "bd",
+        "name": "Build payload",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          220,
+          0
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const b=$input.first().json.body||{};\nif(b.secret!=='onb-fu-2026-09-30-Rz4'){throw new Error('bad secret');}\nconst ALLOWED={'AB':'sent_date','AM':'fu1_done','AN':'fu1_date','AO':'fu2_done','AP':'fu2_date'};\nconst col=String(b.col||'').toUpperCase();\nif(!ALLOWED[col]){throw new Error('column '+col+' not writable by this workflow; allowed: '+Object.keys(ALLOWED).join(','));}\nconst ups=Array.isArray(b.updates)?b.updates:[];\nif(!ups.length){throw new Error('no updates');}\nif(ups.length>300){throw new Error('too many updates in one call: '+ups.length);}\nconst data=[];const seen={};\nfor(const u of ups){\n  const row=Number(u.row);\n  if(!Number.isInteger(row)||row<2||row>900){throw new Error('bad row '+u.row);}\n  if(seen[row]){throw new Error('duplicate row '+row);}\n  seen[row]=1;\n  const v=String(u.value==null?'':u.value);\n  if(v.length>40){throw new Error('value too long for row '+row);}\n  if(col==='AB'&&v&&!/^\\d{4}-\\d{2}-\\d{2}( \\d{2}:\\d{2}:\\d{2})?$/.test(v)){throw new Error('row '+row+': sent_date must be YYYY-MM-DD[ HH:MM:SS], got '+v);}\n  if((col==='AN'||col==='AP')&&v&&!/^\\d{4}-\\d{2}-\\d{2}( \\d{2}:\\d{2}:\\d{2})?$/.test(v)){throw new Error('row '+row+': date column must be YYYY-MM-DD[ HH:MM:SS], got '+v);}\n  data.push({range:'ONBOARDING!'+col+row,values:[[v]]});\n}\nconst vio=(String(b.vio||'RAW').toUpperCase()==='USER_ENTERED')?'USER_ENTERED':'RAW';\nconst body={valueInputOption:vio,data:data};\nif(b.dry!==false){return [{json:{mode:'DRY_OK',vio:vio,column:col+' ('+ALLOWED[col]+')',cells:data.length,firstRange:data[0].range,lastRange:data[data.length-1].range,sampleValues:data.slice(0,3).map(d=>d.range+'='+d.values[0][0]),willWrite:false}}];}\nreturn [{json:{mode:'LIVE',vio:vio,column:col+' ('+ALLOWED[col]+')',cells:data.length,willWrite:true,payload:JSON.stringify(body)}}];"
+        }
+      },
+      {
+        "id": "ifw",
+        "name": "Write?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          440,
+          0
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "version": 2,
+              "typeValidation": "loose"
+            },
+            "combinator": "and",
+            "conditions": [
+              {
+                "id": "c1",
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                },
+                "leftValue": "={{ $json.willWrite }}",
+                "rightValue": ""
+              }
+            ]
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "up",
+        "name": "Apply",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          660,
+          -120
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdate",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleSheetsOAuth2Api",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ $json.payload }}",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "ow",
+        "name": "Out written",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          880,
+          -120
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const b=$('Build payload').first().json;const r=$input.first().json;return [{json:{mode:'WRITTEN',column:b.column,cellsRequested:b.cells,totalUpdatedCells:r.totalUpdatedCells,totalUpdatedRows:r.totalUpdatedRows,totalUpdatedSheets:r.totalUpdatedSheets}}];"
+        }
+      },
+      {
+        "id": "od",
+        "name": "Out dry",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          660,
+          140
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "return [{json:$input.first().json}];"
+        }
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Build payload",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build payload": {
+        "main": [
+          [
+            {
+              "node": "Write?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Write?": {
+        "main": [
+          [
+            {
+              "node": "Apply",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Out dry",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Apply": {
+        "main": [
+          [
+            {
+              "node": "Out written",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "Sidana Ventures",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "createdAt": "2026-09-30T10:40:33.405Z",
+    "updatedAt": "2026-09-30T10:40:33.405Z",
+    "workflowPublishHistory": [
+      {
+        "id": 9544,
+        "workflowId": "3gCgsliaKwSCMcxE",
+        "versionId": "f6fa2b69-f2a8-4acc-88c7-d3e79a7e8bd5",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-09-30T10:40:33.534Z"
+      },
+      {
+        "id": 9549,
+        "workflowId": "3gCgsliaKwSCMcxE",
+        "versionId": "f6fa2b69-f2a8-4acc-88c7-d3e79a7e8bd5",
+        "event": "deactivated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-09-30T10:41:00.607Z"
+      },
+      {
+        "id": 9550,
+        "workflowId": "3gCgsliaKwSCMcxE",
+        "versionId": "f6fa2b69-f2a8-4acc-88c7-d3e79a7e8bd5",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-09-30T10:41:00.608Z"
+      },
+      {
+        "id": 9551,
+        "workflowId": "3gCgsliaKwSCMcxE",
+        "versionId": "f6fa2b69-f2a8-4acc-88c7-d3e79a7e8bd5",
+        "event": "deactivated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-09-30T10:41:01.045Z"
+      },
+      {
+        "id": 9552,
+        "workflowId": "3gCgsliaKwSCMcxE",
+        "versionId": "f6fa2b69-f2a8-4acc-88c7-d3e79a7e8bd5",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-09-30T10:41:01.046Z"
+      }
+    ]
+  }
+}

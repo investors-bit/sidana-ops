@@ -1,0 +1,144 @@
+{
+  "id": "IavaEQc4c3zDVjut",
+  "name": "VERIFY + STATS (read-only) — post-cleanup state and weekly send rate",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-06T19:12:12.584Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "b3c30f02-5a39-445c-9e76-f7fba136912d",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "trg1",
+      "name": "Run once 00:56 IST 7 Sep",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "56 0 7 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "rd1",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cd1",
+      "name": "Verify and count",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nconst rows = $input.all().map(function (i) { return i.json; });\n\nconst DELETED = ['D00092','D00109','D00140','D00143','D00773','D00810','D00969','D01055','D01060','D01110','D01156','D01553','D01606','D01658','D01671','D01840','D01870','D02015','D02048','D02136','D02240','D02244','D02303','D02615','D02665','D02750','D02761','D02784','D02873','D02896','D03008','D03010'];\nconst PAUSED6 = ['D00021','D00664','D01709','D01774','D02484','D02511'];\n\nconst ids = {}, byId = {};\nfor (const r of rows) { const d = s(r.deal_id); if (d) { ids[d] = (ids[d] || 0) + 1; byId[d] = r; } }\nconst stillPresent = DELETED.filter(function (d) { return !!ids[d]; });\nconst notPaused = PAUSED6.filter(function (d) { return !byId[d] || s(byId[d].pause) === ''; });\n\n// ---- weekly send rate, from date_shared on sent rows ----\nfunction weekKey(d) {\n  const m = /^(\\d{4})-(\\d{2})-(\\d{2})$/.exec(d);\n  if (!m) { return null; }\n  const dt = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));\n  const day = (dt.getUTCDay() + 6) % 7;              // Mon=0\n  dt.setUTCDate(dt.getUTCDate() - day + 3);          // Thursday of that week\n  const firstThu = new Date(Date.UTC(dt.getUTCFullYear(), 0, 4));\n  const fday = (firstThu.getUTCDay() + 6) % 7;\n  firstThu.setUTCDate(firstThu.getUTCDate() - fday + 3);\n  const wk = 1 + Math.round((dt - firstThu) / 604800000);\n  return dt.getUTCFullYear() + '-W' + (wk < 10 ? '0' + wk : wk);\n}\n\nconst perWeek = {};\nlet sentTotal = 0;\nconst allStartups = {};\nfor (const r of rows) {\n  if (s(r.startup)) { allStartups[s(r.startup)] = 1; }\n  if (s(r.deal_shared).toLowerCase() !== 'yes') { continue; }\n  sentTotal++;\n  const d = s(r.date_shared) || s(r.last_contact);\n  const w = weekKey(d);\n  if (!w) { continue; }\n  if (!perWeek[w]) { perWeek[w] = { sends: 0, startups: {} }; }\n  perWeek[w].sends++;\n  perWeek[w].startups[s(r.startup)] = 1;\n}\n\nconst weeks = Object.keys(perWeek).sort();\nconst weekly = weeks.map(function (w) {\n  const n = perWeek[w].sends;\n  const st = Object.keys(perWeek[w].startups).length;\n  return { week: w, sends: n, startups_touched: st,\n           avg_per_touched_startup: Math.round(n / st * 10) / 10,\n           avg_per_all_60_startups: Math.round(n / 60 * 10) / 10 };\n});\n\nreturn [{ json: {\n  VERDICT: (stillPresent.length === 0 && notPaused.length === 0) ? 'PASS' : 'CHECK',\n  total_rows_now: rows.length,\n  expected_2903: rows.length === 2903,\n  deleted_still_present: stillPresent,\n  six_not_paused: notPaused,\n  sent_rows_total: sentTotal,\n  distinct_startups_in_pipeline: Object.keys(allStartups).length,\n  weekly_send_rate: weekly\n}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once 00:56 IST 7 Sep": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Verify and count",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once 00:56 IST 7 Sep": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "IavaEQc4c3zDVjut",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-06T19:12:12.586Z",
+      "updatedAt": "2026-09-06T19:12:12.586Z"
+    }
+  ],
+  "activeVersion": null
+}

@@ -1,0 +1,188 @@
+{
+  "id": "MC5II7A6DHSojAmS",
+  "name": "One-off — remove THESIS-WATCH test flags from ERROR LOG",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-08T09:17:43.723Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "edf32bf5-6959-4303-8f84-55362eea3772",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "trg1",
+      "name": "Run once 14:54 IST 8 Sep",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "22 16 8 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "rd1",
+      "name": "Read ERROR LOG",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "ERROR LOG"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cd1",
+      "name": "Find test flags",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Remove the THESIS-WATCH rows written during testing. 9 of the 12 were cosmetic\n// (case/punctuation) and one was a duplicate; clearing them all lets a fixed run\n// re-create only the genuine ones.\nfunction s(v) { return String(v == null ? '' : v).trim(); }\nconst rows = $input.all().map(function (i) { return i.json; });\nif (rows.length < 100) { throw new Error('ABORT: ERROR LOG returned only ' + rows.length + ' rows'); }\n\nconst mine = rows.filter(function (r) { return s(r.workflow) === 'THESIS-WATCH'; });\nif (mine.length === 0) { throw new Error('ABORT: no THESIS-WATCH rows found - already cleaned?'); }\nif (mine.length > 20) { throw new Error('ABORT: ' + mine.length + ' rows exceeds guard of 20'); }\nfor (const r of mine) { if (!r.row_number) { throw new Error('ABORT: missing row_number'); } }\n\nconst out = mine.map(function (r) {\n  return { json: { row_number: Number(r.row_number), investor: s(r.investor), error_type: s(r.error_type) } };\n});\nout.sort(function (a, b) { return b.json.row_number - a.json.row_number; });\nreturn out;"
+      }
+    },
+    {
+      "id": "dl1",
+      "name": "Delete test flags",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "delete",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "ERROR LOG"
+        },
+        "toDelete": "rows",
+        "startIndex": "={{ $json.row_number }}",
+        "numberToDelete": 1
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Run once 14:54 IST 8 Sep": {
+      "main": [
+        [
+          {
+            "node": "Read ERROR LOG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read ERROR LOG": {
+      "main": [
+        [
+          {
+            "node": "Find test flags",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find test flags": {
+      "main": [
+        [
+          {
+            "node": "Delete test flags",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once 14:54 IST 8 Sep": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "MC5II7A6DHSojAmS",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-08T09:17:43.728Z",
+      "updatedAt": "2026-09-08T09:17:43.728Z"
+    }
+  ],
+  "activeVersion": null
+}

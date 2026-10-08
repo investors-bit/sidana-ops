@@ -1,0 +1,206 @@
+{
+  "id": "pZxzwaj8FaV0rvCM",
+  "name": "One-off TR-19 — which angel x pre-revenue deals are queued (read only)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-14T09:40:52.064Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "32d5fde2-9558-4ff8-8e91-ad1c82b31d67",
+  "versionCounter": 15,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once (set before activating)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "2 18 15 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "m1",
+      "name": "GET tabs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/PIPELINE!A1:AJ6000",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "c0",
+      "name": "One item per tab",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const v = $input.first().json.values || [];\nif (v.length < 500) { throw new Error('ABORT: PIPELINE only ' + v.length); }\nreturn [{ json: { rows: v.length } }];"
+      }
+    },
+    {
+      "id": "rv",
+      "name": "GET tab values",
+      "disabled": false,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=STARTUPS!A1:N200&ranges=INVESTORS!A1:J400",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cc",
+      "name": "Collect",
+      "disabled": false,
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nfunction nz(x) { return s(x).toLowerCase().replace(/[^a-z0-9]/g, ''); }\nconst pipe = $('GET tabs').first().json.values || [];\nconst vr = $input.first().json.valueRanges || [];\nconst st = (vr[0] || {}).values || [];\nconst inv = (vr[1] || {}).values || [];\nif (!st.length || !inv.length) { throw new Error('ABORT: STARTUPS/INVESTORS read empty'); }\n\n// user 2026-09-15: angels = named individuals only\nconst ANGELS = ['gautamkapur','mohit','devesh','mandeepsingh','ankit','vivasvan','sayanghosh','gauthamkrishnan','ishansingh','alexalpert','ignacio','jonathansolamon'];\nconst A = {}; ANGELS.forEach(function (k) { A[k] = 1; });\n\nconst sh = (st[0] || []).map(s);\nconst S = {}; ['startup','stage','revenue','raise_inr_cr','active'].forEach(function (n) { S[n] = sh.indexOf(n); });\nconst RE = /pre-?\\s*revenue|pre-?\\s*launch|pre-?\\s*monetis|\\bmvp\\b/i;\nconst PRE = {}; const preList = [];\nfor (let r = 1; r < st.length; r++) { const row = st[r] || []; const n = s(row[S.startup]); if (!n) { continue; }\n  if (s(row[S.active]).toLowerCase() !== 'yes') { continue; }\n  if (RE.test(s(row[S.stage])) || RE.test(s(row[S.revenue]))) { PRE[nz(n)] = 1; preList.push(n); } }\n\nconst ih = (inv[0] || []).map(s);\nconst II = {}; ['investor','email','cheque_inr_cr'].forEach(function (n) { II[n] = ih.indexOf(n); });\nconst angelRows = [], maybePerson = [];\nfor (let r = 1; r < inv.length; r++) { const row = inv[r] || []; const n = s(row[II.investor]); if (!n) { continue; }\n  if (A[nz(n)]) { angelRows.push([n, s(row[II.email]), s(row[II.cheque_inr_cr])]); continue; }\n  // flag anything that looks like a person but is not on the list, so the user can confirm the list is complete\n  const words = n.split(/\\s+/);\n  const corp = /capital|ventures?|fund|partners?|group|angels?|network|llp|ltd|inc|vc\\b|investments?|advisors?|office|studio|labs?|accelerator|holdings/i;\n  if (words.length <= 2 && !corp.test(n)) { maybePerson.push([n, s(row[II.email])]); } }\n\nconst ph = (pipe[0] || []).map(s);\nconst P = {}; ['deal_id','startup','investor','owner','deal_shared','pause','next_action','next_due'].forEach(function (n) { P[n] = ph.indexOf(n); if (P[n] < 0) { throw new Error('ABORT: PIPELINE missing ' + n); } });\nconst queued = [], alreadySent = [];\nfor (let r = 1; r < pipe.length; r++) { const row = pipe[r] || [];\n  if (!A[nz(row[P.investor])]) { continue; }\n  if (!PRE[nz(row[P.startup])]) { continue; }\n  const sent = s(row[P.deal_shared]).toLowerCase() === 'yes';\n  const paused = s(row[P.pause]).toLowerCase() === 'yes';\n  const rec = [r + 1, s(row[P.deal_id]), s(row[P.startup]), s(row[P.investor]), s(row[P.owner]), s(row[P.next_due])];\n  if (sent) { alreadySent.push(rec); } else if (!paused) { queued.push(rec); } }\nqueued.sort(function (a, b) { return String(a[5]).localeCompare(String(b[5])); });\nreturn [{ json: { pre_revenue_startups: preList, pre_revenue_count: preList.length,\n  angels_found: angelRows, angels_found_count: angelRows.length,\n  possible_angels_not_on_list: maybePerson,\n  queued_angel_prerevenue_deals: queued.length, queued: queued,\n  already_sent_angel_prerevenue: alreadySent.length, sent_sample: alreadySent.slice(0, 15),\n  earliest_due: queued.length ? queued[0][5] : '(none)' } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once (set before activating)": {
+      "main": [
+        [
+          {
+            "node": "GET tabs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET tabs": {
+      "main": [
+        [
+          {
+            "node": "One item per tab",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET tab values": {
+      "main": [
+        [
+          {
+            "node": "Collect",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "One item per tab": {
+      "main": [
+        [
+          {
+            "node": "GET tab values",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once (set before activating)": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "pZxzwaj8FaV0rvCM",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-14T09:40:52.067Z",
+      "updatedAt": "2026-09-14T09:40:52.067Z"
+    }
+  ],
+  "activeVersion": null
+}

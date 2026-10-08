@@ -1,0 +1,313 @@
+{
+  "id": "nvqwbjatmUl35U5G",
+  "name": "READ (read-only) — BOUNCE SWEEP: founder addresses failing across all 4 mailboxes",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-25T05:43:01.855Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "f76a0c6a-d446-41f2-baa1-98ff7b48ee90",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "bs-wh",
+      "name": "Webhook",
+      "webhookId": "9c8d7e6f-3333-4a5b-9c1d-bouncesweep01",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "bounce-sweep-4mb-5f2a",
+        "responseMode": "lastNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "bs-g3",
+      "name": "DSN Aditya (investors@)",
+      "webhookId": "9c8d7e6f-3333-4a5b-9c1d-bsgmail003",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "onError": "continueRegularOutput",
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 150,
+        "simple": false,
+        "filters": {
+          "q": "from:mailer-daemon newer_than:120d"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mymSHTFVWtsI3Mh7",
+          "name": "Gmail account 3"
+        }
+      }
+    },
+    {
+      "id": "bs-g2",
+      "name": "DSN Chaman (dealflow@)",
+      "webhookId": "9c8d7e6f-3333-4a5b-9c1d-bsgmail002",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "onError": "continueRegularOutput",
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 150,
+        "simple": false,
+        "filters": {
+          "q": "from:mailer-daemon newer_than:120d"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "hwEqMRn6IxzoYs1R",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "id": "bs-g4",
+      "name": "DSN Akansha",
+      "webhookId": "9c8d7e6f-3333-4a5b-9c1d-bsgmail004",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "onError": "continueRegularOutput",
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 150,
+        "simple": false,
+        "filters": {
+          "q": "from:mailer-daemon newer_than:120d"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "9IWD8mWqdARPXloL",
+          "name": "Gmail account 4"
+        }
+      }
+    },
+    {
+      "id": "bs-g5",
+      "name": "DSN Shradhaa",
+      "webhookId": "9c8d7e6f-3333-4a5b-9c1d-bsgmail005",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "onError": "continueRegularOutput",
+      "position": [
+        880,
+        0
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 150,
+        "simple": false,
+        "filters": {
+          "q": "from:mailer-daemon newer_than:120d"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "R5K61omYbU9oT5J8",
+          "name": "Gmail account 5"
+        }
+      }
+    },
+    {
+      "id": "bs-fi",
+      "name": "Read Founders Info",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        1100,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Founders Info"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "bs-out",
+      "name": "Match founders",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const s = (v) => String(v == null ? '' : v).trim();\nconst low = (v) => s(v).toLowerCase();\n\n// founder addresses on file\nconst byEmail = {};\nfor (const it of $input.all()) {\n  const j = it.json; const st = s(j['Startup']); if (!st) continue;\n  for (const e of s(j['Emails']).split(/[,;\\s]+/)) {\n    const a = low(e);\n    if (/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(a)) (byEmail[a] = byEmail[a] || { startup: st, row: j.row_number });\n  }\n}\n\nconst boxes = [['Aditya investors@', 'DSN Aditya (investors@)'], ['Chaman dealflow@', 'DSN Chaman (dealflow@)'], ['Akansha', 'DSN Akansha'], ['Shradhaa', 'DSN Shradhaa']];\nconst hits = {};\nconst scanned = {};\nlet errors = [];\nfor (const [label, node] of boxes) {\n  let items = [];\n  try { items = $(node).all(); } catch (e) { errors.push(label + ': ' + e.message); continue; }\n  let n = 0;\n  for (const it of items) {\n    const m = it.json || {};\n    if (m.error) { errors.push(label + ': ' + JSON.stringify(m.error).slice(0, 120)); continue; }\n    n++;\n    const text = [m.snippet, m.text, m.textPlain, m.Subject, m.subject].map(s).join(' \\n ');\n    const failure = /not delivered|delivery to the following recipient failed|permanent(ly)? fail|address not found|couldn'?t be found|does not exist|550|553|554/i.test(text);\n    const delay = /delivery incomplete|temporary problem|will retry|delayed/i.test(text);\n    if (!failure && !delay) continue;\n    const date = s(m.date || m.internalDate);\n    for (const raw of (text.match(/[A-Za-z0-9._%+\\-]+@[A-Za-z0-9.\\-]+\\.[A-Za-z]{2,}/g) || [])) {\n      const a = low(raw);\n      if (!byEmail[a]) continue;\n      const k = a;\n      const h = hits[k] || (hits[k] = { email: a, startup: byEmail[a].startup, founders_info_row: byEmail[a].row, hard_failures: 0, delays: 0, mailboxes: {}, latest: '' });\n      if (failure) h.hard_failures++; else h.delays++;\n      h.mailboxes[label] = (h.mailboxes[label] || 0) + 1;\n      if (date > h.latest) h.latest = date;\n    }\n  }\n  scanned[label] = n;\n}\nconst list = Object.values(hits).sort((a, b) => (b.hard_failures - a.hard_failures) || (b.delays - a.delays));\nreturn [{ json: { window: 'mailer-daemon notices, last 120 days', dsn_messages_scanned: scanned, errors, founder_addresses_on_file: Object.keys(byEmail).length, affected_count: list.length, affected: list } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "DSN Aditya (investors@)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DSN Aditya (investors@)": {
+      "main": [
+        [
+          {
+            "node": "DSN Chaman (dealflow@)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DSN Chaman (dealflow@)": {
+      "main": [
+        [
+          {
+            "node": "DSN Akansha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DSN Akansha": {
+      "main": [
+        [
+          {
+            "node": "DSN Shradhaa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DSN Shradhaa": {
+      "main": [
+        [
+          {
+            "node": "Read Founders Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Founders Info": {
+      "main": [
+        [
+          {
+            "node": "Match founders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "nvqwbjatmUl35U5G",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-25T05:43:01.857Z",
+      "updatedAt": "2026-09-25T05:43:01.857Z"
+    }
+  ],
+  "activeVersion": null
+}

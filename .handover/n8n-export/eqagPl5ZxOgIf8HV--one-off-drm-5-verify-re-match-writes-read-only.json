@@ -1,0 +1,228 @@
+{
+  "id": "eqagPl5ZxOgIf8HV",
+  "name": "One-off DRM-5 — verify re-match writes (read-only)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-09T13:44:25.482Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "0f09f113-5f92-4f01-a139-b46b5be1987a",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "trg1",
+      "name": "Every minute",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "rd1",
+      "name": "Read INVESTORS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        220,
+        -160
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "INVESTORS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "rd2",
+      "name": "Read ERROR LOG",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        440,
+        -80
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "ERROR LOG"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "rd3",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cd1",
+      "name": "Verify",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v){return String(v==null?'':v).trim();}\nconst DEL=['D01660','D02265','D03212','D00268','D00496','D00528','D00578','D01132','D01621','D01637','D02214','D02296','D02367','D02378','D02460','D02699','D02774','D03070','D03071','D03072','D03073'];\nconst inv=$('Read INVESTORS').all().map(i=>i.json);\nconst el=$('Read ERROR LOG').all().map(i=>i.json);\nconst pipe=$input.all().map(i=>i.json);\nconst recs={};\nfor(const n of ['Riceberg Ventures','Siana Capital','Elevation Capital']){\n  recs[n]=inv.filter(r=>s(r.investor)===n).map(r=>({row:r.row_number,sector:s(r.sector),stage:s(r.stage),cheque:s(r.cheque_inr_cr),email:s(r.email)}));\n}\nconst stillThere=DEL.filter(id=>pipe.some(r=>s(r.deal_id)===id));\nconst remaining={};\nfor(const n of ['Riceberg Ventures','Siana Capital']){\n  remaining[n]=pipe.filter(r=>s(r.investor)===n).map(r=>s(r.deal_id)+' '+s(r.startup)+' shared='+s(r.deal_shared)+' pri='+s(r.priority));\n}\nconst openFlags=el.filter(r=>s(r.workflow).toUpperCase()==='THESIS-WATCH'&&s(r.resolved)==='').map(r=>({row:r.row_number,investor:s(r.investor),error_type:s(r.error_type)}));\nconst closedToday=el.filter(r=>s(r.workflow).toUpperCase()==='THESIS-WATCH'&&s(r.resolved).toLowerCase()==='yes').map(r=>({row:r.row_number,investor:s(r.investor),resolved:s(r.resolved)}));\nreturn [{json:{pipeline_rows:pipe.length,error_log_rows:el.length,investors_rows:inv.length,deleted_ids_still_present:stillThere,records:recs,remaining_rows:remaining,open_thesis_watch_flags:openFlags,resolved_thesis_watch_flags:closedToday}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Every minute": {
+      "main": [
+        [
+          {
+            "node": "Read INVESTORS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read INVESTORS": {
+      "main": [
+        [
+          {
+            "node": "Read ERROR LOG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read ERROR LOG": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Verify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Every minute": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "eqagPl5ZxOgIf8HV",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-09T13:44:25.484Z",
+      "updatedAt": "2026-09-09T13:44:25.484Z"
+    }
+  ],
+  "activeVersion": null
+}

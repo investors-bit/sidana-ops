@@ -1,0 +1,343 @@
+{
+  "id": "6rgRv3s9RbuaAN3u",
+  "name": "One-off TR-31 — TEST HARNESS: patched Build email on 60 sample deals (no send, read only)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-16T08:47:06.482Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "d26e1010-829e-4dac-a0fb-d6a956426bd5",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once (set before activating)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "24 14 16 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "gs",
+      "name": "GET sheets",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=STARTUPS!A1:N400&ranges=TEMPLATES!A1:Z50&ranges=INVESTORS!A1:AZ3000",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cf",
+      "name": "Build CONFIG object",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return [{ json: { SENDER_NAME: 'Aditya' } }];"
+      }
+    },
+    {
+      "id": "rs",
+      "name": "Read STARTUPS",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const vr = $('GET sheets').first().json.valueRanges || []; const v = (vr[0] || {}).values || []; const h = (v[0] || []).map(function (x) { return String(x).trim(); }); const out = []; for (let r = 1; r < v.length; r++) { const row = v[r] || []; if (!row.some(function (c) { return String(c).trim(); })) { continue; } const o = {}; h.forEach(function (k, i) { if (k) { o[k] = row[i] === undefined ? '' : row[i]; } }); out.push({ json: o }); } if (out.length < 40) { throw new Error('ABORT: STARTUPS short'); } return out;"
+      }
+    },
+    {
+      "id": "ri",
+      "name": "Read INVESTORS",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const vr = $('GET sheets').first().json.valueRanges || []; const v = (vr[2] || {}).values || []; const h = (v[0] || []).map(function (x) { return String(x).trim(); }); const out = []; for (let r = 1; r < v.length; r++) { const row = v[r] || []; if (!row.some(function (c) { return String(c).trim(); })) { continue; } const o = {}; h.forEach(function (k, i) { if (k) { o[k] = row[i] === undefined ? '' : row[i]; } }); out.push({ json: o }); } if (out.length < 100) { throw new Error('ABORT: INVESTORS short'); } return out;"
+      }
+    },
+    {
+      "id": "rt",
+      "name": "Read TEMPLATES",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const vr = $('GET sheets').first().json.valueRanges || []; const v = (vr[1] || {}).values || []; const h = (v[0] || []).map(function (x) { return String(x).trim(); }); const out = []; for (let r = 1; r < v.length; r++) { const row = v[r] || []; if (!row.some(function (c) { return String(c).trim(); })) { continue; } const o = {}; h.forEach(function (k, i) { if (k) { o[k] = row[i] === undefined ? '' : row[i]; } }); out.push({ json: o }); } return out;"
+      }
+    },
+    {
+      "id": "dl",
+      "name": "Deals",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s0(v) { return String(v == null ? '' : v); }\nfunction nz(x) { return s0(x).trim().toLowerCase().replace(/[^a-z0-9]/g, ''); }\nconst ANG = ['Gautam Kapur','Ignacio','Ishan Singh','Jonathan Solamon','Alex Alpert','Devesh','Mandeep Singh','Ankit','Vivasvan','Mohit','Gautham Krishnan','Sayan Ghosh','Michele'];\nconst angSet = {}; ANG.forEach(function (x) { angSet[nz(x)] = 1; });\nconst invs = $('Read INVESTORS').all().map(function (i) { return i.json; });\nconst angel = invs.find(function (v) { return nz(v.investor) === nz('Gautam Kapur'); }) || invs.find(function (v) { return angSet[nz(v.investor)]; });\nconst vc = invs.find(function (v) { return v.investor && !angSet[nz(v.investor)] && s0(v.contact_person).trim(); });\nif (!angel || !vc) { throw new Error('ABORT: test investors not found'); }\nconst A16 = ['Body & Beyond','Outlanders','Koncite','Washtro','Fire Armor','Tronix.AI','Springbase.ai','Formverse','ServeAmigo','MonitorExam','Pixelence','Fuski.AI','Vilva AI','SkillBytes','Orbit AI','Vira Jal'];\nconst O11 = ['Opulytics','Train Rex','Xproguard','Indie Stori','Appli','Luxova','AI Signal Labs','Desi Machines','Doffair','bezgoFresh','Chayan Karo'];\nconst in27 = {}; A16.concat(O11).forEach(function (x) { in27[nz(x)] = 1; });\nconst sts = $('Read STARTUPS').all().map(function (i) { return i.json; });\nconst controls = sts.filter(function (x) { return x.startup && !in27[nz(x.startup)] && s0(x.active).toLowerCase() === 'yes' && /Raising/i.test(s0(x.memo_html)) && s0(x.memo_html).length > 1500; }).slice(0, 2).map(function (x) { return x.startup; });\nconst out = []; let k = 0;\nA16.concat(O11).concat(controls).forEach(function (n) { [[vc, 'vc'], [angel, 'angel']].forEach(function (w) { k++; out.push({ json: { deal_id: 'TEST' + k, startup: n, investor: w[0].investor, test_kind: w[1], email: 'test@example.com', stage: 'INITIAL', channel: 'Email', cc: '', thread_id: '', message_id: '' } }); }); });\nout.push({ json: { deal_id: 'TEST-ROUTING', startup: 'ServeAmigo', investor: vc.investor, test_kind: 'vc', email: 'test@example.com', stage: 'INITIAL', channel: 'ROUTING', cc: '', thread_id: '', message_id: '' } });\nreturn out;"
+      }
+    },
+    {
+      "id": "be",
+      "name": "Build email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1400,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const cfg = $('Build CONFIG object').first().json;\nconst r = $json;\nconst stage = r.stage; // INITIAL | FU1 | FU2 | FU3\n\nlet st = null;\nfor (const s of $('Read STARTUPS').all()) { if (String(s.json.startup).trim() === String(r.startup).trim()) { st = s.json; break; } }\nlet inv = null;\nfor (const v of $('Read INVESTORS').all()) { if (String(v.json.investor).trim() === String(r.investor).trim()) { inv = v.json; break; } }\n\n// ROUTING rows get the routing variant of the INITIAL template only; follow-ups stay on FU1/FU2/FU3.\nconst isRouting = String(r.channel || '').toUpperCase() === 'ROUTING';\nconst tid = (stage === 'INITIAL' && isRouting) ? 'INITIAL_ROUTING' : stage;\n\nlet tpl = null;\nfor (const t of $('Read TEMPLATES').all()) { if (String(t.json.template_id).trim() === tid) { tpl = t.json; break; } }\nif (!tpl) throw new Error('Template not found for stage ' + tid);\n\nconst tokens = {\n  '{{InvestorName}}': inv.investor,\n  '{{ContactPerson}}': inv.contact_person,\n  '{{StartupName}}': st.startup,\n  '{{Sector}}': st.sector,\n  '{{FundraiseAmount}}': st.raise_inr_cr,\n  '{{Revenue}}': st.revenue,\n  '{{Highlight1}}': st.highlight_1,\n  '{{Highlight2}}': st.highlight_2,\n  '{{Highlight3}}': st.highlight_3,\n  '{{DeckLink}}': st.deck_link,\n  '{{SenderName}}': cfg.SENDER_NAME,\n};\nconst fill = (s) => {\n  let out = String(s == null ? '' : s);\n  for (const k in tokens) { out = out.split(k).join(String(tokens[k] == null ? '' : tokens[k])); }\n  return out;\n};\nlet subject = fill(tpl.subject);\nconst body0 = fill(tpl.body);\nlet memoHtml = (st.memo_html == null ? '' : String(st.memo_html));\n\n// ---- RAISE REMOVAL (user rules 2026-09-15 and 2026-09-16) ----\n// (a) 16 pre-revenue startups: the raise is removed from subject + memo for EVERY investor type (from 17 Sep).\n// (b) 13 angels x 27 startups: additionally strips pre-revenue wording and other companies' funding lines.\n// Applied at SEND TIME only; the memo stored in STARTUPS is never modified.\n// Removes text only and keeps every HTML tag so the layout survives. Never throws: if the cleaner errors,\n// unbalances tags or still finds raise text, the memo falls back to name + sector + highlights.\nconst _nz = function (x) { return String(x == null ? '' : x).toLowerCase().replace(/[^a-z0-9]/g, ''); };\nconst _ANGELS = {};\n['Gautam Kapur','Ignacio','Ishan Singh','Jonathan Solamon','Alex Alpert','Devesh','Mandeep Singh','Ankit','Vivasvan','Mohit','Gautham Krishnan','Sayan Ghosh','Michele'].forEach(function (x) { _ANGELS[_nz(x)] = 1; });\nconst _ALL16 = {};\n['Body & Beyond','Outlanders','Koncite','Washtro','Fire Armor','Tronix.AI','Springbase.ai','Formverse','ServeAmigo','MonitorExam','Pixelence','Fuski.AI','Vilva AI','SkillBytes','Orbit AI','Vira Jal'].forEach(function (x) { _ALL16[_nz(x)] = 1; });\nconst _HIDE27 = Object.assign({}, _ALL16);\n['Opulytics','Train Rex','Xproguard','Indie Stori','Appli','Luxova','AI Signal Labs','Desi Machines','Doffair','bezgoFresh','Chayan Karo'].forEach(function (x) { _HIDE27[_nz(x)] = 1; });\nconst _mode = (_ANGELS[_nz(inv.investor)] && _HIDE27[_nz(st.startup)]) ? 'angel' : (_ALL16[_nz(st.startup)] ? 'all' : '');\nif (_mode) {\n  let _R = null;\n  try { _R = (function () {\nconst AMT = String.raw`(?:(?:₹|\\brs\\.?|\\binr|\\busd|us\\$|\\$|€|\\beur|£)\\s*\\d[\\d.,]*(?:\\s*(?:cr\\b|crores?\\b|lakhs?\\b|lacs?\\b|l\\b|mn\\b|m\\b|million\\b|k\\b|bn\\b|billion\\b))?|\\d[\\d.,]*\\s*(?:cr\\b|crores?\\b|lakhs?\\b|lacs?\\b|mn\\b|million\\b|bn\\b|billion\\b)|\\d[\\d.,]*(?:m|k|l)\\b)`;\nconst KW = String.raw`(?:\\brais(?:e|es|ing)\\b|\\bfund\\s*-?\\s*rais(?:e|es|ing)\\b|\\bfundrais(?:e|es|ing)\\b|\\b(?:fund|funds|funding|investment|capital)\\s*(?:ask|sought|required|requirement|needed)\\b|\\bthe\\s+ask\\b|\\bask\\s*[:\\-–—]|\\basking\\s+for\\b|\\bseeking\\b|\\b(?:round|raise|ticket|cheque|check)\\s*size\\b|\\bminimum\\s+(?:ticket|cheque|check)\\b|\\b(?:current|this|proposed|ongoing)\\s+round\\b)`;\nconst AMT1 = new RegExp(AMT, 'i');\nconst OWN_A = new RegExp(KW + '[^.<|]{0,60}?' + AMT, 'i');\nconst OWN_B = /(?:\\brais(?:e|es|ing)\\b|\\bfund(?:ing)?\\s*ask\\b)[^.<|]{0,15}?\\d/i;\nconst AMT_ROUND = new RegExp(AMT + String.raw`[^.<|]{0,30}?\\b(?:round|raise|fundraise|ask)\\b`, 'i');\nconst CTX_B = new RegExp(String.raw`\\b(?:raised|raises|secured|closed|bagged|landed)\\b[^.<|]{0,60}?` + AMT, 'i');\nconst RAISEREF = /\\b(?:the|this|our)\\s+raise\\s+(?:is|will|would)\\b|\\b(?:funding|funds|capital|proceeds)\\s+(?:raised\\s+)?(?:will|would|shall)\\s+be\\s+(?:used|deployed|allocated|utili[sz]ed)\\b|\\buse\\s+of\\s+(?:funds|proceeds)\\b|\\b(?:this|the\\s+current)\\s+round\\s+is\\s+(?:intended|meant|designed)\\b/i;\nconst PAST = /\\braised\\b|\\bclosed\\b|\\bsecured\\b|\\bled by\\b|\\bbacked by\\b|\\bfunded by\\b/i;\nconst PRE = /pre-?\\s*revenue|pre-?\\s*launch|pre-?\\s*monetis|pre-?\\s*monetiz/i;\nconst HEAD = /^(?:the\\s+)?(?:funding\\s+ask|fund\\s*ask|ask|investment\\s+ask|fundrais(?:e|ing)(?:\\s+details)?|funding\\s+round|current\\s+round|round(?:\\s+details|\\s+size)?|raise|raising|deal\\s+terms)\\s*[:\\-–—]?$/i;\nconst URLISH = /https?:\\/\\/|www\\.|^\\s*(?:website|web|site|press|linkedin)\\s*:/i;\nconst ROUNDLINE = /runway|valuation|pre-?money|post-?money|deployment|use\\s+of\\s+(?:funds|proceeds)|allocation|dilution|\\bsafe\\b|convertible|instrument|ticket|cheque|\\bround\\b|\\braise\\b|\\braising\\b/i;\nconst PAREN = /\\s*\\([^()]*pre-?\\s*(?:revenue|launch|monetis|monetiz)[^()]*\\)/i;\nconst SPLIT_SRC = String.raw`(?<=[.!?])(?<!\\b(?:Rs|RS|rs|No|no|vs|Vs|Pvt|PVT|Ltd|LTD|Inc|approx|Approx|Dr|Mr|Ms|Mrs|St|Co|etc|e\\.g|i\\.e)\\.)\\s+(?=[^a-z\\s])`;\nconst BLOCKTAG = /^<\\/?(?:div|p|li|ul|ol|h[1-6]|table|tbody|thead|tr|td|th|section|blockquote|hr|br)\\b/i;\nconst ENT = {nbsp:' ',amp:'&',bull:'•',rsquo:'’',lsquo:'‘',rdquo:'”',ldquo:'“',quot:'“',apos:'’',mdash:'—',ndash:'–',hellip:'…',lt:'‹',gt:'›',middot:'·',rarr:'→',times:'×',deg:'°',trade:'™',reg:'®',copy:'©',euro:'€',pound:'£',rupee:'₹'};\nfunction classify(x) { if (OWN_A.test(x) || OWN_B.test(x) || RAISEREF.test(x)) { return 'own'; } if (AMT_ROUND.test(x)) { return PAST.test(x) ? 'context' : 'own'; } if (CTX_B.test(x)) { return 'context'; } return null; }\nfunction kill(x, mode) { const c = classify(x); if (c === 'own') { return true; } return mode === 'angel' && (c === 'context' || PRE.test(x)); }\nfunction build(html) { const P = [], S = [], E = []; const n = html.length; let i = 0;\n while (i < n) { const ch = html[i];\n  if (ch === '<') { const j = html.indexOf('>', i); if (j >= 0) { if (BLOCKTAG.test(html.slice(i, j + 1))) { P.push('\\n'); S.push(i); E.push(j + 1); } i = j + 1; continue; } }\n  if (ch === '&') { const m = /^&(#\\d{1,7}|#x[0-9a-f]{1,6}|[a-z]{2,10});/i.exec(html.slice(i, i + 14)); if (m) { const k = m[1]; let d; if (k[0] === '#') { const cp = (k[1] === 'x' || k[1] === 'X') ? parseInt(k.slice(2), 16) : parseInt(k.slice(1), 10); try { d = String.fromCodePoint(cp); } catch (e) { d = ' '; } } else { d = ENT[k.toLowerCase()]; if (d === undefined) { d = ' '; } } for (let q = 0; q < d.length; q++) { P.push(d[q]); S.push(i); E.push(i + m[0].length); } i += m[0].length; continue; } }\n  P.push(/\\s/.test(ch) ? ' ' : ch); S.push(i); E.push(i + 1); i++; }\n return { t: P.join(''), S: S, E: E }; }\nfunction lines(t) { const out = []; let ls = 0;\n for (let k = 0; k <= t.length; k++) { if (k === t.length || t[k] === '\\n') { if (k > ls) { out.push({ s: ls, e: k }); } ls = k + 1; } }\n for (const L of out) { L.segs = []; const lt = t.slice(L.s, L.e); const re = /\\s*\\|\\s*/g; let last = 0, m;\n  while ((m = re.exec(lt)) !== null) { L.segs.push({ s: L.s + last, e: L.s + m.index, sepEnd: L.s + m.index + m[0].length }); last = m.index + m[0].length; }\n  L.segs.push({ s: L.s + last, e: L.e, sepEnd: L.e });\n  for (const G of L.segs) { G.sents = []; const gt = t.slice(G.s, G.e); const sp = new RegExp(SPLIT_SRC, 'g'); let p = 0, x;\n   while ((x = sp.exec(gt)) !== null) { G.sents.push({ s: G.s + p, e: G.s + x.index, next: G.s + x.index + x[0].length }); p = x.index + x[0].length; }\n   G.sents.push({ s: G.s + p, e: G.e, next: G.e }); } }\n return out; }\nfunction headingLike(x) { return x.length <= 40 && /[a-z]/i.test(x) && !/[.!?;,|]/.test(x) && !/:\\s*\\S/.test(x) && !AMT1.test(x); }\nfunction analyse(html, mode) { const B = build(html); const t = B.t; const L = lines(t); const removed = []; const R = [];\n const lt = L.map(function (o) { return t.slice(o.s, o.e).trim(); });\n const gone = L.map(function () { return false; });\n const heads = [];\n for (let a = 0; a < L.length; a++) { if (!lt[a] || !HEAD.test(lt[a])) { continue; } const sect = [];\n  for (let b = a + 1; b < L.length; b++) { if (!lt[b]) { continue; } if (headingLike(lt[b])) { break; } sect.push(b); }\n  heads.push({ a: a, sect: sect });\n  for (const c of sect) { if (URLISH.test(lt[c])) { continue; } if (AMT1.test(lt[c]) || ROUNDLINE.test(lt[c])) { gone[c] = true; removed.push(lt[a] + ' => ' + lt[c].slice(0, 200)); } } }\n for (let a = 0; a < L.length; a++) { if (!lt[a] || gone[a]) { continue; } const segs = L[a].segs; let any = false;\n  for (const G of segs) { let hasText = false, allKill = true;\n   for (const X of G.sents) { const raw = t.slice(X.s, X.e); const x = raw.trim(); if (!x) { continue; } hasText = true;\n    if (!kill(x, mode)) { allKill = false; continue; }\n    if (mode === 'angel' && classify(x) === null) { const pm = PAREN.exec(raw); if (pm) { const rest = raw.slice(0, pm.index) + raw.slice(pm.index + pm[0].length); if (rest.trim() && !PRE.test(rest)) { R.push([X.s + pm.index, X.s + pm.index + pm[0].length]); any = true; allKill = false; removed.push('phrase: ' + pm[0].trim()); continue; } } }\n    X.gone = true; any = true; removed.push(x.slice(0, 240)); }\n   G.hasText = hasText; G.gone = hasText && allKill; }\n  if (!any) { continue; }\n  const withText = segs.filter(function (G) { return G.hasText; });\n  if (withText.every(function (G) { return G.gone; })) { gone[a] = true; continue; }\n  for (let gi = 0; gi < segs.length; gi++) { const G = segs[gi]; if (!G.hasText) { continue; }\n   if (G.gone) { let prevKept = false; for (let k = 0; k < gi; k++) { if (segs[k].hasText && !segs[k].gone) { prevKept = true; } } R.push(prevKept ? [segs[gi - 1].e, G.e] : [G.s, G.sepEnd]); continue; }\n   for (const X of G.sents) { if (X.gone) { R.push([X.s, X.next]); } } } }\n for (const h of heads) { if (gone[h.a]) { continue; } const nu = h.sect.filter(function (c) { return !URLISH.test(lt[c]); }); if (nu.length && nu.every(function (c) { return gone[c]; })) { gone[h.a] = true; removed.push('heading: ' + lt[h.a]); } }\n for (let a = 0; a < L.length; a++) { if (gone[a]) { R.push([L[a].s, L[a].e]); } }\n return { B: B, R: R, removed: removed }; }\nfunction tidy(h) { let prev = null, k = 0;\n while (h !== prev && k < 10) { prev = h; k++;\n  h = h.replace(/<(li|p|div|h[1-6]|td|th|b|strong|em|i|u|span|a|font|small)\\b[^>]*>(?:\\s|&nbsp;|<br\\s*\\/?>|⁣)*⁣(?:\\s|&nbsp;|<br\\s*\\/?>|⁣)*<\\/\\1>/gi, '⁣');\n  h = h.replace(/<(ul|ol|tr|tbody|table)\\b[^>]*>(?:\\s|⁣)*⁣(?:\\s|⁣)*<\\/\\1>/gi, '⁣');\n  h = h.replace(/(<hr\\b[^>]*>)(?:\\s|⁣)*⁣(?:\\s|⁣)*<hr\\b[^>]*>/gi, '$1');\n  h = h.replace(/(<br\\s*\\/?>)(?:\\s|⁣)*⁣(?:\\s|⁣)*<br\\s*\\/?>/gi, '$1'); }\n h = h.replace(/<hr\\b[^>]*>(?:\\s|⁣)*⁣(?:\\s|⁣)*$/i, '');\n h = h.replace(/^(?:\\s|⁣)*⁣(?:\\s|⁣)*<hr\\b[^>]*>/i, '');\n return h.replace(/⁣/g, ''); }\nfunction apply(html, B, R) { const hr = [];\n for (const r of R) { let a = r[0], b = r[1]; while (a < b && B.t[a] === '\\n') { a++; } while (b > a && B.t[b - 1] === '\\n') { b--; } if (b <= a) { continue; } hr.push([B.S[a], B.E[b - 1]]); }\n hr.sort(function (x, y) { return x[0] - y[0]; });\n const m = []; for (const r of hr) { if (m.length && r[0] <= m[m.length - 1][1]) { m[m.length - 1][1] = Math.max(m[m.length - 1][1], r[1]); } else { m.push([r[0], r[1]]); } }\n let out = html; for (let k = m.length - 1; k >= 0; k--) { const sl = out.slice(m[k][0], m[k][1]); const tags = (sl.match(/<[^>]*>/g) || []).join(''); out = out.slice(0, m[k][0]) + '⁣' + tags + '⁣' + out.slice(m[k][1]); }\n return tidy(out); }\nfunction bal(h) { return ['div','p','li','ul','ol','b','strong','em','span','a','table','tr','td','h1','h2','h3','h4','h5','h6'].map(function (tg) { return (h.match(new RegExp(String.raw`<${tg}\\b`, 'gi')) || []).length - (h.match(new RegExp(String.raw`<\\/${tg}>`, 'gi')) || []).length; }).join(','); }\nfunction clean(html, mode) { const src = String(html == null ? '' : html); const A = analyse(src, mode); if (!A.R.length) { return { html: src, removed: A.removed, residual: [], balanced: true, changed: false }; } const out = apply(src, A.B, A.R); return { html: out, removed: A.removed, residual: analyse(out, mode).removed, balanced: bal(out) === bal(src), changed: out !== src }; }\nfunction subjOk(x, mode) { return !kill(x, mode) && !/\\brais(?:e|es|ing)\\b/i.test(x); }\nfunction plain(html) { return build(String(html == null ? '' : html)).t.replace(/\\s*\\n[\\s\\n]*/g, ' ▮ ').replace(/ {2,}/g, ' ').trim(); }\nreturn { clean: clean, subjOk: subjOk, kill: kill, plain: plain };\n})(); } catch (e) { _R = null; }\n  const _crude = /rais(?:e|ed|es|ing)|fund(?:ing)?\\s*ask|\\bask\\b|\\bround\\b|pre-?\\s*revenue|pre-?\\s*launch|pre-?\\s*monetis|pre-?\\s*monetiz/i;\n  subject = String(subject).replace(/\\s*\\|\\s*Rais(?:e|es|ing)\\b[^|]*$/i, '').trim();\n  if (_R ? !_R.subjOk(subject, _mode) : _crude.test(subject)) { subject = st.startup + ' — ' + String(st.sector == null ? '' : st.sector).split('|')[0].trim(); }\n  let _ok = false;\n  if (_R) { try { const _c = _R.clean(memoHtml, _mode); if (_c.balanced && !_c.residual.length) { memoHtml = _c.html; _ok = true; } } catch (e) { _ok = false; } }\n  if (!_ok) {\n    const _esc = function (x) { return String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };\n    const _hs = [st.highlight_1, st.highlight_2, st.highlight_3].map(function (x) { return String(x == null ? '' : x).trim(); }).filter(function (x) { return x && !_crude.test(x); });\n    memoHtml = '<div style=\"font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.65;color:#222222;\">'\n      + '<div style=\"font-weight:700;color:#000000;margin:0 0 6px 0;\">' + _esc(st.startup) + '</div>'\n      + '<div style=\"margin:0 0 12px 0;\">' + _esc(String(st.sector == null ? '' : st.sector).split('|')[0].trim()) + '</div>'\n      + '<ul style=\"margin:0 0 14px 0;padding-left:20px;\">' + _hs.map(function (h) { return '<li style=\"margin:0 0 6px 0;\">' + _esc(h) + '</li>'; }).join('') + '</ul></div>';\n  }\n}\nconst body = String(body0).split('{{MemoBody}}').join('%%MEMOBODY_SLOT%%');\nif (/\\{\\{[^}]+\\}\\}/.test(subject) || /\\{\\{[^}]+\\}\\}/.test(body)) {\n  throw new Error('Unresolved template token for deal ' + r.deal_id);\n}\n\nconst ownerNames = { Aditya: \"Aditya Mishra\", Chaman: \"Chaman Yadav\", Akansha: \"Akansha\", Shradha: \"Shradha\" };\nconst senderFull = ownerNames[String(cfg.SENDER_NAME).trim()] || cfg.SENDER_NAME;\nconst logoUrl = \"https://drive.google.com/uc?export=view&id=1iLMGooCx6B8bmYJxlYMdNg0YhdSoFAFi\";\nconst bodyHtml0 = String(body).split(String.fromCharCode(10)).join(\"<br>\");\nconst bodyHtml = bodyHtml0.split('%%MEMOBODY_SLOT%%').join(\"<div style='height:18px;'></div>\" + memoHtml + \"<div style='height:18px;'></div>\");\nconst sig = \"<br>--<br>\" + \"<img src='\" + logoUrl + \"' alt='Sidana Ventures' width='120' style='display:block;margin-bottom:8px;border:0;'>\" + \"<div style='font-family:Arial,sans-serif;font-size:13px;color:#333333;line-height:1.4;'>\" + \"<span style='font-weight:bold;color:#1a5fb4;'>\" + senderFull + \"</span><br>\" + \"Investor Relations<br>\" + \"<span style='font-weight:bold;'>SIDANA VENTURES LLP</span><br>\" + \"424A Tower B3, Spaze iTech Park, Sector 49, Sohna Road<br>\" + \"Gurgaon, Haryana 122022<br>\" + \"+91 87965 31802<br>\" + \"<a href='https://www.sidanaventures.com' style='color:#1a5fb4;'>www.sidanaventures.com</a>\" + \"</div>\";\nconst html = \"<div style='font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.65;color:#222222;max-width:640px;'>\" + bodyHtml + \"</div>\" + sig;\n\nreturn { json: Object.assign({}, r, {\n  to: r.email,\n  cc: r.cc || '',\n  subject,\n  body,\n  html,\n  threadId: r.thread_id || '',\n  replyMessageId: r.message_id || '',\n}) };"
+      }
+    },
+    {
+      "id": "ck",
+      "name": "Check",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Independent verifier: deliberately NOT the cleaner's logic. Looks for each startup's own raise figure\n// and for raise vocabulary in the final rendered email, and confirms untouched startups are byte-identical.\nfunction s0(v) { return String(v == null ? '' : v); }\nfunction nz(x) { return s0(x).trim().toLowerCase().replace(/[^a-z0-9]/g, ''); }\nconst A16 = ['Body & Beyond','Outlanders','Koncite','Washtro','Fire Armor','Tronix.AI','Springbase.ai','Formverse','ServeAmigo','MonitorExam','Pixelence','Fuski.AI','Vilva AI','SkillBytes','Orbit AI','Vira Jal'];\nconst O11 = ['Opulytics','Train Rex','Xproguard','Indie Stori','Appli','Luxova','AI Signal Labs','Desi Machines','Doffair','bezgoFresh','Chayan Karo'];\nconst in16 = {}, in27 = {}; A16.forEach(function (x) { in16[nz(x)] = 1; in27[nz(x)] = 1; }); O11.forEach(function (x) { in27[nz(x)] = 1; });\nconst stBy = {}; for (const it of $('Read STARTUPS').all()) { stBy[nz(it.json.startup)] = it.json; }\nfunction txt(h) { return s0(h).replace(/<br\\s*\\/?>/gi, ' ').replace(/<\\/(?:p|div|li|h[1-6])>/gi, ' | ').replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&bull;/g, '•').replace(/&#8377;/g, '₹').replace(/&[a-z]+;/gi, ' ').replace(/\\s+/g, ' ').trim(); }\nfunction ctx(t, re) { const o = []; const g = new RegExp(re.source, re.flags.indexOf('g') >= 0 ? re.flags : re.flags + 'g'); let m; while ((m = g.exec(t)) !== null) { o.push(t.slice(Math.max(0, m.index - 60), m.index + m[0].length + 40)); if (!m[0].length) { g.lastIndex++; } if (o.length >= 6) { break; } } return o; }\nfunction figRes(raise) { const res = []; const re = /(\\d+(?:\\.\\d+)?)\\s*(cr|crores?|l|lakhs?|m|mn|million|k)\\b/gi; let m;\n  while ((m = re.exec(s0(raise))) !== null) { const n = m[1].replace('.', String.raw`\\.`); const u = m[2].toLowerCase(); let ur;\n    if (/^cr/.test(u)) { ur = String.raw`(?:cr|crores?)\\b`; } else if (/^l/.test(u)) { ur = String.raw`(?:l|lakhs?|lacs?)\\b`; } else if (/^m/.test(u)) { ur = String.raw`(?:m|mn|million)\\b`; } else { ur = String.raw`(?:k|thousand)\\b`; }\n    res.push(new RegExp(String.raw`(?<![\\d.,])` + n + String.raw`(?:\\.0+)?\\s*` + ur, 'i'));\n    if (/^k/.test(u) && /^\\d+$/.test(m[1])) { res.push(new RegExp(String.raw`(?<![\\d.,])` + m[1] + String.raw`,000\\b`)); }\n    if (/^m/.test(u) && /^\\d+$/.test(m[1])) { res.push(new RegExp(String.raw`(?<![\\d.,])` + m[1] + String.raw`,000,000\\b`)); } }\n  return res; }\nconst WORDS = /\\b(?:raising|fund(?:ing)?\\s*ask|the\\s+ask|ask\\s*:|the\\s+round|use\\s+of\\s+funds|(?:funding|funds)\\s+will\\s+be\\s+used|the\\s+raise|this\\s+round)\\b/i;\nconst PREW = /pre-?\\s*revenue|pre-?\\s*launch|pre-?\\s*monetis/i;\nconst OTHERS = /\\b(?:raised|secured|bagged)\\b[^.|]{0,60}?(?:₹|\\$|€|\\binr\\b|\\busd\\b|\\d\\s*(?:cr|crore|m|mn|million|k)\\b)/i;\nconst rows = [], problems = [];\nfor (const it of $input.all()) { const j = it.json; const st = stBy[nz(j.startup)] || {}; const kind = j.test_kind;\n  const expect = (kind === 'angel' && in27[nz(j.startup)]) ? 'angel' : (in16[nz(j.startup)] ? 'all' : 'none');\n  const full = txt(j.html); const t = (full.split('explore it further:')[1] || full).split('Pitch Deck:')[0]; const orig = s0(st.memo_html);\n  const row = { deal: j.deal_id, startup: j.startup, kind: kind, channel: j.channel, expect: expect, subject: j.subject };\n  if (expect === 'none') { row.unchanged = s0(j.html).indexOf(orig) >= 0; row.subject_keeps_raise = /Raising/.test(j.subject); if (!row.unchanged || !row.subject_keeps_raise) { problems.push(row); } }\n  else { row.subject_raise = /rais/i.test(j.subject); row.fig = []; figRes(st.raise_inr_cr).forEach(function (re) { row.fig = row.fig.concat(ctx(t, re)); }); row.words = ctx(t, WORDS);\n    row.pre = expect === 'angel' ? ctx(t, PREW) : []; row.others = expect === 'angel' ? ctx(t, OTHERS) : [];\n    row.len_pct = Math.round(100 * t.length / Math.max(1, txt(orig).length)); row.fallback = t.length < 0.5 * txt(orig).length;\n    if (row.subject_raise || row.fig.length || row.words.length || row.pre.length || row.others.length || row.fallback) { problems.push(row); } }\n  rows.push(row); }\nreturn [{ json: { emails_built: rows.length, problem_count: problems.length, problems: problems, rows: rows.map(function (r) { return [r.startup, r.kind, r.channel, r.expect, r.subject, r.len_pct === undefined ? (r.unchanged ? 'unchanged' : 'CHANGED') : r.len_pct + '%']; }) } }];"
+      }
+    },
+    {
+      "id": "ta",
+      "name": "Texts VC",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1800,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s0(v) { return String(v == null ? '' : v); }\nfunction txt(h) { const t = s0(h).replace(/<br\\s*\\/?>/gi, ' ▮ ').replace(/<\\/(?:p|div|li|h[1-6])>/gi, ' ▮ ').replace(/<hr\\b[^>]*>/gi, ' ——— ').replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&bull;/g, '•').replace(/&[a-z]+;/gi, ' ').replace(/\\s+/g, ' ').replace(/(?:\\s*▮\\s*)+/g, ' ▮ ').trim(); return (t.split('explore it further:')[1] || t).split('Pitch Deck:')[0]; }\nconst items = $('Build email').all().map(function (i) { return i.json; });\nconst want = [['Tronix.AI', 'vc'], ['Body & Beyond', 'vc'], ['Springbase.ai', 'vc'], ['SkillBytes', 'vc']];\nreturn [{ json: { memos: want.map(function (w) { const j = items.find(function (x) { return x.startup === w[0] && x.test_kind === w[1] && x.channel === 'Email'; }); return { startup: w[0], kind: w[1], subject: j && j.subject, text: j && txt(j.html) }; }) } }];"
+      }
+    },
+    {
+      "id": "tb",
+      "name": "Texts Angel",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s0(v) { return String(v == null ? '' : v); }\nfunction txt(h) { const t = s0(h).replace(/<br\\s*\\/?>/gi, ' ▮ ').replace(/<\\/(?:p|div|li|h[1-6])>/gi, ' ▮ ').replace(/<hr\\b[^>]*>/gi, ' ——— ').replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&bull;/g, '•').replace(/&[a-z]+;/gi, ' ').replace(/\\s+/g, ' ').replace(/(?:\\s*▮\\s*)+/g, ' ▮ ').trim(); return (t.split('explore it further:')[1] || t).split('Pitch Deck:')[0]; }\nconst items = $('Build email').all().map(function (i) { return i.json; });\nconst want = [['Chayan Karo', 'angel'], ['Desi Machines', 'angel'], ['Luxova', 'angel'], ['Tronix.AI', 'angel']];\nreturn [{ json: { memos: want.map(function (w) { const j = items.find(function (x) { return x.startup === w[0] && x.test_kind === w[1] && x.channel === 'Email'; }); return { startup: w[0], kind: w[1], subject: j && j.subject, text: j && txt(j.html) }; }) } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once (set before activating)": {
+      "main": [
+        [
+          {
+            "node": "GET sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET sheets": {
+      "main": [
+        [
+          {
+            "node": "Build CONFIG object",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build CONFIG object": {
+      "main": [
+        [
+          {
+            "node": "Read STARTUPS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read STARTUPS": {
+      "main": [
+        [
+          {
+            "node": "Read INVESTORS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read INVESTORS": {
+      "main": [
+        [
+          {
+            "node": "Read TEMPLATES",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read TEMPLATES": {
+      "main": [
+        [
+          {
+            "node": "Deals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deals": {
+      "main": [
+        [
+          {
+            "node": "Build email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build email": {
+      "main": [
+        [
+          {
+            "node": "Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check": {
+      "main": [
+        [
+          {
+            "node": "Texts VC",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Texts VC": {
+      "main": [
+        [
+          {
+            "node": "Texts Angel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once (set before activating)": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "6rgRv3s9RbuaAN3u",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-16T08:47:06.486Z",
+      "updatedAt": "2026-09-16T08:47:06.486Z"
+    }
+  ],
+  "activeVersion": null
+}

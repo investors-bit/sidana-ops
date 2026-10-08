@@ -1,0 +1,274 @@
+{
+  "id": "wrAowfyuCdcN5cJG",
+  "name": "One-off PR-1 — why do rows have priority under 50 (read only)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-10T18:53:26.622Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "f6057163-1f1b-4fa4-9a7e-5311898adee3",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once (set before activating)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "28 0 11 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "hg",
+      "name": "GET meetings values",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/1d-wSnDCnC_c9_rqD652Zayu6An-dipeVyC7lCD_TD0Y/values/' + encodeURIComponent(\"'Report - No of Deal Flows'!A1:Z400\") }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "r1",
+      "name": "Read INVESTORS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "INVESTORS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "r2",
+      "name": "Read STARTUPS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "STARTUPS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "r3",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        880,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "c1",
+      "name": "Analyze",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nfunction nz(x) { return s(x).toLowerCase().replace(/[^a-z0-9]/g, ''); }\nconst grid = $('GET meetings values').first().json.values || [];\nconst invRaw = $('Read INVESTORS').all().map(function (i) { return i.json; });\nconst stRaw = $('Read STARTUPS').all().map(function (i) { return i.json; });\nconst pipe = $input.all().map(function (i) { return i.json; });\nif (pipe.length < 500) { throw new Error('ABORT: PIPELINE only ' + pipe.length); }\n\n// --- meetings (latest staircase block) ---\nfunction isHdr(row) { return /startup got meetings/i.test(s((row || [])[1])) && /\\d/.test(s((row || [])[0])); }\nconst hdrs = []; for (let i = 0; i < grid.length; i++) { if (isHdr(grid[i])) { hdrs.push(i); } }\nconst TODAYD = new Date(Date.UTC(2026, 8, 11));\nfunction blockDate(label) { const m = s(label).match(/^(\\d{1,2})[\\/\\-.](\\d{1,2})[\\/\\-.](\\d{4})/); if (!m) { return null; }\n  const a = +m[1], b = +m[2], y = +m[3]; const c = [];\n  if (b >= 1 && b <= 12 && a >= 1 && a <= 31) { c.push(new Date(Date.UTC(y, b - 1, a))); }\n  if (a >= 1 && a <= 12 && b >= 1 && b <= 31) { c.push(new Date(Date.UTC(y, a - 1, b))); }\n  const past = c.filter(function (d) { return d <= TODAYD; }); const pool = past.length ? past : c;\n  pool.sort(function (x, z) { return z - x; }); return pool[0] || null; }\nlet li = hdrs[hdrs.length - 1]; let ld = blockDate(s(grid[li][0]));\nfor (const i of hdrs) { const d = blockDate(s(grid[i][0])); if (d && (!ld || d > ld)) { ld = d; li = i; } }\nconst stair = {};\nfor (let i = li + 1; i < grid.length; i++) { const row = grid[i] || []; if (isHdr(row)) { break; }\n  const m = s(row[1]).match(/^(\\d+)\\s*meetings?/i); if (!m) { if (Object.keys(stair).length) { break; } else { continue; } }\n  const n = parseInt(m[1], 10);\n  for (let j = 2; j < row.length; j++) { const nm = s(row[j]); if (!nm) { continue; } const k = nz(nm); if (stair[k] === undefined || n > stair[k]) { stair[k] = n; } } }\nconst ALIAS = { caffeinacoffee: 'caffenacoffee' };\nfunction meetingsFor(name) { const k = nz(name); let best = null;\n  for (const sk of Object.keys(stair)) { const kk = ALIAS[sk] || sk;\n    const hit = kk === k || (kk.length >= 4 && k.length >= 4 && (kk.indexOf(k) === 0 || k.indexOf(kk) === 0));\n    if (hit && (best === null || stair[sk] > best)) { best = stair[sk]; } }\n  return best === null ? 0 : best; }\n\n// --- current scoring (same as the tiered rules) ---\nconst TAGS = [\n  ['health', /health|medtech|bio|clinic|pharma|life science|wellness|fitness|diagnost|hospital|patient|doctor/],\n  ['fintech', /fintech|lending|insur|payment|banking|wealth|credit|financial|neobank/],\n  ['saas', /saas|b2b|enterprise|software|platform|api|devtool|cloud|workflow|automation/],\n  ['consumer', /consumer|d2c|b2c|retail|fmcg|food|beverage|fashion|beauty|apparel|coffee|restaurant|cafe|grocer|kitchen|snack|personal care/],\n  ['deeptech', /deeptech|deep tech|\\bai\\b|artificial intelligence|\\bml\\b|robot|iot|semiconductor|space|drone|quantum|computer vision|hardware/],\n  ['climate', /climate|clean|energy|solar|ev\\b|electric vehicle|sustain|green|water|waste|carbon|recycl/],\n  ['edtech', /edtech|education|learning|skill|training|exam|student|course/],\n  ['logistics', /logistic|supply chain|mobility|delivery|freight|shipping|transport|warehous/],\n  ['agritech', /agri|farm|agtech|crop/],\n  ['hrtech', /hrtech|\\bhr\\b|recruit|talent|hiring|staffing|workforce/],\n  ['proptech', /proptech|real estate|construction|coworking|interior|windoor|building/],\n  ['media', /media|gaming|content|entertainment|creator|social|dating|travel|music|video/]\n];\nfunction tagsOf(txt) { const t = s(txt).toLowerCase(); const o = {}; for (const p of TAGS) { if (p[1].test(t)) { o[p[0]] = 1; } } return Object.keys(o); }\nfunction startupStage(txt) { const t = s(txt).toLowerCase();\n  if (/series[\\s-]*[b-e]\\b|growth|pre-?\\s*ipo/.test(t)) { return 4; }\n  if (/series[\\s-]*a\\b/.test(t)) { return 3; }\n  if (/pilot|traction|early revenue|revenue|mvp|launched/.test(t)) { return 2; }\n  if (/\\bseed\\b/.test(t.replace(/pre-?\\s*seed/g, ''))) { return 1; }\n  if (/pre-?\\s*seed|ideation|concept|idea|prototype/.test(t)) { return 0; }\n  return 1; }\nfunction investorBand(txt) { const t = s(txt).toLowerCase(); const h = [];\n  if (/pre-?\\s*seed|preseed/.test(t)) { h.push(0); }\n  if (/\\bseed\\b/.test(t.replace(/pre-?\\s*seed/g, ''))) { h.push(1); }\n  if (/pilot|traction|early|pre-?\\s*series[\\s-]*a/.test(t)) { h.push(2); }\n  if (/series[\\s-]*a\\b/.test(t)) { h.push(3); }\n  if (/series[\\s-]*[b-e]\\b|series[\\s-]*a\\s*[\\/&,]\\s*b|growth|late|pre-?\\s*ipo|onwards|and above/.test(t)) { h.push(4); }\n  if (!h.length) { return null; }\n  return { lo: Math.min.apply(null, h), hi: Math.max.apply(null, h), seed: h.indexOf(1) >= 0 }; }\nfunction chequeMin(txt) { const t = s(txt).replace(/,/g, '').toLowerCase(); if (!t) { return null; }\n  const usd = /\\$|usd/.test(t); const re = /(\\d+(?:\\.\\d+)?)\\s*(crores?|cr|million|mn|m|k|lakhs?|lacs?)?(?![a-z])/g;\n  const tok = []; let m; while ((m = re.exec(t)) !== null) { tok.push({ v: parseFloat(m[1]), u: m[2] || '' }); }\n  if (!tok.length) { return null; }\n  for (let i = tok.length - 2; i >= 0; i--) { if (!tok[i].u && tok[i + 1].u) { tok[i].u = tok[i + 1].u; } }\n  const vals = [];\n  for (const k of tok) { const u = k.u || (usd ? 'm' : 'cr'); let cr;\n    if (/^cr/.test(u)) { cr = k.v; } else if (/^la/.test(u)) { cr = k.v / 100; }\n    else if (u === 'k') { cr = usd ? k.v * 0.0085 : k.v / 10000; } else { cr = usd ? k.v * 8.5 : k.v / 10; }\n    if (cr > 0) { vals.push(cr); } }\n  if (!vals.length) { return null; }\n  if (vals.length === 1 && /up\\s*to|upto|\\bmax/.test(t)) { return 0; }\n  return Math.min.apply(null, vals); }\nfunction raiseOf(txt) { const t = s(txt).replace(/,/g, ''); if (!t) { return null; }\n  let m = t.match(/(?:US\\$|\\$)\\s*([\\d.]+)\\s*M/i); if (m) { return parseFloat(m[1]) * 8.5; }\n  m = t.match(/(?:US\\$|\\$)\\s*([\\d.]+)\\s*K/i); if (m) { return parseFloat(m[1]) * 0.0085; }\n  m = t.match(/([\\d.]+)\\s*(?:-|to|–)\\s*[\\d.]+\\s*Cr/i); if (m) { return parseFloat(m[1]); }\n  m = t.match(/([\\d.]+)\\s*Cr/i); if (m) { return parseFloat(m[1]); }\n  m = t.match(/([\\d.]+)\\s*Lakh/i); if (m) { return parseFloat(m[1]) / 100; }\n  return null; }\nconst FLOOR_FIX = { a2dventures: 0.85, mintvc: 0.5, pipersireca: 1.0 };\nconst byName = {};\nfor (const r of invRaw) { const n = s(r.investor); if (!n) { continue; } const k = nz(n); if (!byName[k]) { byName[k] = []; } byName[k].push(r); }\nconst inv = {};\nfor (const k of Object.keys(byName)) { const rs = byName[k]; const pick = rs.filter(function (r) { return s(r.stage) !== ''; })[0] || rs[0];\n  let floor = chequeMin(pick.cheque_inr_cr); if (FLOOR_FIX[k] !== undefined) { floor = FLOOR_FIX[k]; }\n  inv[k] = { agnostic: /agno/i.test(s(pick.sector)), tags: tagsOf(pick.sector), band: investorBand(pick.stage), floor: floor }; }\nconst ST = {};\nfor (const r of stRaw) { const n = s(r.startup); if (!n) { continue; } const mt = meetingsFor(n);\n  ST[nz(n)] = { tags: tagsOf(r.sector), si: startupStage(r.stage), raise: raiseOf(r.raise_inr_cr), under5: mt < 5 }; }\nfunction rescore(p) { const st = ST[nz(p.startup)], b = inv[nz(p.investor)]; if (!st || !b || !b.band) { return null; }\n  let ov = false; for (const tg of b.tags) { if (st.tags.indexOf(tg) >= 0) { ov = true; break; } }\n  const sec = b.agnostic || ov; const chq = b.floor === null || (st.raise !== null && st.raise >= b.floor);\n  let stage = 'off'; if (st.si >= b.band.lo && st.si <= b.band.hi) { stage = 'in'; } else if (st.si >= 3 && b.band.seed) { stage = 'in'; }\n  else if (st.si === b.band.lo - 1 || st.si === b.band.hi + 1) { stage = 'adjacent'; }\n  const ok = sec && chq && (stage === 'in' || (st.under5 && stage === 'adjacent'));\n  return { ok: ok, score: (sec ? (ov ? 40 : 28) : 0) + (stage === 'in' ? 30 : (stage === 'adjacent' ? 20 : 0)) + (chq ? (b.floor === null ? 20 : 30) : 0) }; }\n\n// --- the low-priority rows ---\nfunction status(p) { if (s(p.deal_shared).toLowerCase() === 'yes') { return 'sent'; }\n  if (s(p.pause).toLowerCase() === 'yes') { const n = s(p.notes);\n    if (n.indexOf('ON HOLD 2026-09-10') >= 0) { return 'paused: stage-missing hold'; }\n    if (n.indexOf('tier rule') >= 0) { return 'paused: fails tiered rules'; }\n    if (n.indexOf('name not found') >= 0) { return 'paused: name not in INVESTORS'; }\n    if (n.indexOf('email missing') >= 0) { return 'paused: email missing'; }\n    return 'paused: other (older pause)'; }\n  return 'QUEUED - will send'; }\nfunction label(p) { const m = s(p.notes).match(/^(Very High|High|Moderate|Low|Strict|Meeting-push)/i); return m ? m[1] : (s(p.notes) ? 'other note' : 'no note'); }\nfunction bucket(id) { const n = parseInt(s(id).slice(1), 10); if (isNaN(n)) { return 'no id'; } if (n < 1000) { return 'D0000-D0999 (first batch)'; } if (n < 2000) { return 'D1000-D1999'; } if (n < 3000) { return 'D2000-D2999'; } return 'D3000+ (9-10 Sep adds)'; }\nconst low = pipe.filter(function (p) { const v = parseFloat(s(p.priority)); return !isNaN(v) && v < 50; });\nconst blankPri = pipe.filter(function (p) { return s(p.priority) === ''; }).length;\nconst byStatus = {}, byLabel = {}, byBucket = {}, hist = {};\nconst queuedLow = []; let sentReplied = 0, sentPositive = 0, sentN = 0;\nfor (const p of low) {\n  const st = status(p); byStatus[st] = (byStatus[st] || 0) + 1;\n  const lb = label(p); byLabel[lb] = (byLabel[lb] || 0) + 1;\n  const bk = bucket(p.deal_id); byBucket[bk] = (byBucket[bk] || 0) + 1;\n  const v = parseFloat(s(p.priority)); const h = v < 10 ? '0-9' : v < 20 ? '10-19' : v < 30 ? '20-29' : v < 40 ? '30-39' : '40-49'; hist[h] = (hist[h] || 0) + 1;\n  if (st === 'sent') { sentN++; const r = s(p.investor_response).toLowerCase(); if (r) { sentReplied++; } if (/interest|intrest|meet|form|question|transfer/.test(r) || s(p.meeting_date)) { sentPositive++; } }\n  if (st.indexOf('QUEUED') === 0) { queuedLow.push(p); }\n}\n// queued low-priority rows: what would today's rules score them?\nconst requeue = { passes_rules_now: 0, fails_rules_now: 0, cannot_score: 0 }; const newScoreHist = {};\nconst examples = [];\nfor (const p of queuedLow) { const r = rescore(p);\n  if (!r) { requeue.cannot_score++; } else { if (r.ok) { requeue.passes_rules_now++; } else { requeue.fails_rules_now++; }\n    const k = r.score >= 85 ? '85+' : r.score >= 70 ? '70-84' : r.score >= 60 ? '60-69' : '<60'; newScoreHist[k] = (newScoreHist[k] || 0) + 1; }\n  if (examples.length < 12) { examples.push([s(p.deal_id), s(p.startup), s(p.investor), s(p.priority), r ? r.score : null, r ? r.ok : null, s(p.next_due), s(p.notes).slice(0, 40)]); } }\n// overall sent performance for comparison\nlet allSent = 0, allRep = 0, allPos = 0;\nfor (const p of pipe) { if (s(p.deal_shared).toLowerCase() !== 'yes') { continue; } allSent++; const r = s(p.investor_response).toLowerCase(); if (r) { allRep++; } if (/interest|intrest|meet|form|question|transfer/.test(r) || s(p.meeting_date)) { allPos++; } }\nreturn [{ json: { pipeline_rows: pipe.length, priority_under_50: low.length, priority_blank: blankPri,\n  by_status: byStatus, by_note_label: byLabel, by_deal_id_batch: byBucket, priority_histogram: hist,\n  queued_low_priority: queuedLow.length, queued_low_rescored_today: requeue, queued_low_new_score_bands: newScoreHist,\n  sent_low: { sent: sentN, replied: sentReplied, positive: sentPositive }, sent_all: { sent: allSent, replied: allRep, positive: allPos },\n  queued_examples_cols: ['deal_id', 'startup', 'investor', 'old_priority', 'score_today', 'passes_rules_today', 'next_due', 'notes'], queued_examples: examples } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once (set before activating)": {
+      "main": [
+        [
+          {
+            "node": "GET meetings values",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET meetings values": {
+      "main": [
+        [
+          {
+            "node": "Read INVESTORS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read INVESTORS": {
+      "main": [
+        [
+          {
+            "node": "Read STARTUPS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read STARTUPS": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Analyze",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once (set before activating)": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "wrAowfyuCdcN5cJG",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-10T18:53:26.626Z",
+      "updatedAt": "2026-09-10T18:53:26.626Z"
+    }
+  ],
+  "activeVersion": null
+}

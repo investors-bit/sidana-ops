@@ -1,0 +1,394 @@
+{
+  "id": "4uYlHfoW1TtUIJKI",
+  "name": "One-off DRM-4 — apply Riceberg + Siana mandates, resolve their THESIS-WATCH flags",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-09T13:43:36.555Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "3f50c0e6-4dfd-4d23-b6ec-b778cc0ca98b",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "trg1",
+      "name": "Every minute",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "rd1",
+      "name": "Read INVESTORS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "INVESTORS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cd1",
+      "name": "Build investor updates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Corrections-sheet values for the two investors whose thesis changed. Both firms already\n// exist in INVESTORS - these are updates to the live row, never new rows.\n// Siana's cheque band ($1M-$2M) is unchanged in substance, so the existing INR gloss stays.\nfunction s(v){return String(v==null?'':v).trim();}\nconst rows=$input.all().map(i=>i.json);\nif(rows.length<100){throw new Error('ABORT: INVESTORS returned only '+rows.length+' rows');}\nconst U=[\n  {investor:'Riceberg Ventures', sector:'Foundational AI technology (foundational AI only - not application-layer AI platforms)'},\n  {investor:'Siana Capital', sector:'Deep-tech, IP-led innovation: HealthTech, Battery Tech, Biotech, MedTech', stage:'Pre-Series A - Series A'}\n];\nfor(const u of U){\n  const h=rows.filter(r=>s(r.investor)===u.investor);\n  if(h.length!==1){throw new Error('ABORT: expected 1 INVESTORS row for '+u.investor+', found '+h.length);}\n  if(s(h[0].do_not_contact).toLowerCase()==='yes'){throw new Error('ABORT: '+u.investor+' is do_not_contact');}\n}\nreturn U.map(u=>({json:u}));"
+      }
+    },
+    {
+      "id": "up1",
+      "name": "Update INVESTORS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "INVESTORS"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "investor"
+          ],
+          "schema": [
+            {
+              "id": "investor",
+              "displayName": "investor",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "rd2",
+      "name": "Read ERROR LOG",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        880,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "ERROR LOG"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cd2",
+      "name": "Find flags",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Close only the two flags whose investor has actually been re-matched. Elevation Capital\n// stays open on purpose: five partners with five different theses sit on one INVESTORS row,\n// so there is no single mandate to apply and guessing would email a real investor a bad deal.\nfunction s(v){return String(v==null?'':v).trim();}\nconst DONE=['Riceberg Ventures','Siana Capital'];\nconst rows=$input.all().map(i=>i.json);\nif(rows.length<100){throw new Error('ABORT: ERROR LOG returned only '+rows.length+' rows');}\nconst hits=rows.filter(r=>s(r.workflow).toUpperCase()==='THESIS-WATCH' && s(r.resolved)==='' && DONE.indexOf(s(r.investor))>=0);\nif(hits.length!==2){throw new Error('ABORT: expected 2 open THESIS-WATCH flags to close, found '+hits.length);}\nreturn hits.map(function(r){\n  const o={};\n  for(const k of Object.keys(r)){ if(k!=='row_number'){ o[k]=r[k]; } }\n  o.resolved='Yes';\n  o._rn=Number(r.row_number);\n  return {json:o};\n});"
+      }
+    },
+    {
+      "id": "ap1",
+      "name": "Append resolved copies",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "position": [
+        1320,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "ERROR LOG"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cd3",
+      "name": "Prep deletes",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1540,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const f=$('Find flags').all().map(i=>i.json);\nif(f.length!==2){throw new Error('ABORT: expected 2 flag rows, got '+f.length);}\nconst out=f.map(r=>({json:{row_number:Number(r._rn),investor:String(r.investor||'')}}));\nout.sort((a,b)=>b.json.row_number-a.json.row_number);\nif(out[0].json.row_number===out[1].json.row_number){throw new Error('ABORT: duplicate row_number');}\nreturn out;"
+      }
+    },
+    {
+      "id": "dl1",
+      "name": "Delete old flag rows",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1760,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "delete",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "ERROR LOG"
+        },
+        "toDelete": "rows",
+        "startIndex": "={{ $json.row_number }}",
+        "numberToDelete": 1
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Every minute": {
+      "main": [
+        [
+          {
+            "node": "Read INVESTORS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read INVESTORS": {
+      "main": [
+        [
+          {
+            "node": "Build investor updates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build investor updates": {
+      "main": [
+        [
+          {
+            "node": "Update INVESTORS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update INVESTORS": {
+      "main": [
+        [
+          {
+            "node": "Read ERROR LOG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read ERROR LOG": {
+      "main": [
+        [
+          {
+            "node": "Find flags",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find flags": {
+      "main": [
+        [
+          {
+            "node": "Append resolved copies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append resolved copies": {
+      "main": [
+        [
+          {
+            "node": "Prep deletes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep deletes": {
+      "main": [
+        [
+          {
+            "node": "Delete old flag rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Every minute": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "4uYlHfoW1TtUIJKI",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-09T13:43:36.556Z",
+      "updatedAt": "2026-09-09T13:43:36.556Z"
+    }
+  ],
+  "activeVersion": null
+}

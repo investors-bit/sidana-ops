@@ -1,0 +1,180 @@
+{
+  "id": "pk3xhkDoHJpkiEIP",
+  "name": "One-off CR-1 — read Corrections sheet tabs (read only)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-11T07:43:01.181Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "3537ecfb-d455-4fc4-9257-a3d7ec59ffc7",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once (set before activating)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "17 13 11 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "hm",
+      "name": "GET metadata",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1WOErvuYawblG-HkrK5In5YWtEiKKt_DeoVpmL5na6GU?fields=sheets.properties(sheetId,title)",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "ht",
+      "name": "GET thesis values",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/1WOErvuYawblG-HkrK5In5YWtEiKKt_DeoVpmL5na6GU/values/' + encodeURIComponent(\"'Thesis correction'!A1:Z600\") }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "c1",
+      "name": "Pack",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const meta = $('GET metadata').first().json;\nconst t = $('GET thesis values').first().json;\nreturn [{ json: { tabs: (meta.sheets || []).map(function (x) { return x.properties.title; }), thesis_range: t.range, thesis: t.values || [] } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once (set before activating)": {
+      "main": [
+        [
+          {
+            "node": "GET metadata",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET metadata": {
+      "main": [
+        [
+          {
+            "node": "GET thesis values",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET thesis values": {
+      "main": [
+        [
+          {
+            "node": "Pack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once (set before activating)": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "pk3xhkDoHJpkiEIP",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-11T07:43:01.184Z",
+      "updatedAt": "2026-09-11T07:43:01.184Z"
+    }
+  ],
+  "activeVersion": null
+}

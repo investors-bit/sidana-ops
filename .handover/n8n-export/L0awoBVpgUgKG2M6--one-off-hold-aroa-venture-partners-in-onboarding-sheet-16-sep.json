@@ -1,0 +1,152 @@
+{
+  "id": "L0awoBVpgUgKG2M6",
+  "name": "One-off — HOLD Aroa Venture Partners in Onboarding sheet (16 Sep)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-16T11:59:09.608Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "b42537fe-fa68-4002-9ea4-8164a93e7124",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "d4000001-0000-4000-8000-000000000001",
+      "name": "Webhook",
+      "webhookId": "b1c2d3e4-f5a6-4b7c-8d9e-0f1a2b3c4d5e",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "onb-hold-aroa-91d3f2",
+        "responseMode": "lastNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "d4000001-0000-4000-8000-000000000002",
+      "name": "Aroa HOLD row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return [{ json: {\n  rank: '10',\n  status: 'HOLD',\n  send_order: '',\n  send_day: '',\n  review_note: 'Skipped by user 16 Sep 2026 - Mihir Kapoor (Aroa) not to be emailed'\n} }];"
+      }
+    },
+    {
+      "id": "d4000001-0000-4000-8000-000000000003",
+      "name": "Update Onboarding sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        480,
+        300
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "id",
+          "value": "38341156"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "rank"
+          ],
+          "schema": [
+            {
+              "id": "rank",
+              "displayName": "rank",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Aroa HOLD row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aroa HOLD row": {
+      "main": [
+        [
+          {
+            "node": "Update Onboarding sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "L0awoBVpgUgKG2M6",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-16T11:59:09.610Z",
+      "updatedAt": "2026-09-16T11:59:09.610Z"
+    }
+  ],
+  "activeVersion": null
+}

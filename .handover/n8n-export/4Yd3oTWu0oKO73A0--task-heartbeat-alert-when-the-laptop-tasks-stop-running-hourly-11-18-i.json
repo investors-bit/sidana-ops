@@ -1,0 +1,531 @@
+{
+  "id": "4Yd3oTWu0oKO73A0",
+  "name": "TASK-HEARTBEAT — alert when the laptop tasks stop running (hourly 11-18 IST weekdays)",
+  "description": null,
+  "active": true,
+  "activeVersionId": "5bc4af03-a9f9-46fc-8c2a-b84f7f7a3d0d",
+  "createdAt": "2026-10-05T06:46:28.155Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "5bc4af03-a9f9-46fc-8c2a-b84f7f7a3d0d",
+  "versionCounter": 6,
+  "sourceWorkflowId": null,
+  "triggerCount": 2,
+  "nodes": [
+    {
+      "id": "sch",
+      "name": "Hourly 11-18 IST",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -220,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 30 11-18 * * 1-5"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "wh",
+      "name": "Test hook",
+      "webhookId": "cffd21b0-ab3b-44fa-aeb3-dcd18bd34a1b",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -220,
+        200
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-heartbeat-test-4d7e",
+        "responseMode": "lastNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "list",
+      "name": "Find last chain run",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        20,
+        100
+      ],
+      "parameters": {
+        "url": "https://gmail.googleapis.com/gmail/v1/users/me/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "from:investors@sidanaventures.com subject:(Chain OR \"Hot deals\") newer_than:4d"
+            },
+            {
+              "name": "maxResults",
+              "value": "1"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mymSHTFVWtsI3Mh7",
+          "name": "Gmail account 3"
+        }
+      }
+    },
+    {
+      "id": "get",
+      "name": "Its timestamp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        260,
+        100
+      ],
+      "parameters": {
+        "url": "=https://gmail.googleapis.com/gmail/v1/users/me/messages/{{ $json.messages ? $json.messages[0].id : 'none' }}?format=metadata&metadataHeaders=Subject",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mymSHTFVWtsI3Mh7",
+          "name": "Gmail account 3"
+        }
+      }
+    },
+    {
+      "id": "judge",
+      "name": "Judge",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        500,
+        100
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// The laptop tasks announce every run by email to investors@. No email for\n// several hours during the working day means Claude Code is not running --\n// which looks identical to everything being fine, because the dashboard keeps\n// updating from n8n regardless.\n//\n// This is not hypothetical: the chain died at 21:48 on 1 Oct and nobody knew\n// until it restarted 84 hours later and said so itself. A Spintly call was\n// missed and an AI Signal Labs meeting reached its day with no invite.\nconst QUIET_HOURS = 3;   // alert after this long with no run\nconst m = $input.first().json || {};\nconst ms = m.internalDate ? Number(m.internalDate) : null;\n\nconst hdrs = (m.payload && m.payload.headers) || [];\nconst subjHdr = hdrs.find((h) => String(h.name).toLowerCase() === 'subject');\nconst subject = subjHdr ? String(subjHdr.value) : '(unknown)';\n\nconst now = Date.now();\nconst ist = (t) => new Date(t + 330 * 60000).toISOString().replace('T', ' ').slice(0, 16) + ' IST';\n\n// Only judge during the hours the tasks are supposed to run (09:00-22:00 IST).\nconst istHour = Number(new Date(now + 330 * 60000).toISOString().slice(11, 13));\nconst inHours = istHour >= 9 && istHour <= 22;\n\nconst hours = ms === null ? null : (now - ms) / 3600000;\nconst stale = inHours && (ms === null || hours > QUIET_HOURS);\n\nreturn [{ json: {\n  alert: stale,\n  hours: hours === null ? null : Math.round(hours * 10) / 10,\n  last_run_ist: ms === null ? 'no run found in the last 4 days' : ist(ms),\n  last_subject: subject,\n  checked_ist: ist(now),\n  quiet_hours: QUIET_HOURS,\n} }];"
+      }
+    },
+    {
+      "id": "gate",
+      "name": "Only if stale",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        740,
+        100
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const j = $input.first().json;\nreturn j.alert ? [{ json: j }] : [];"
+      }
+    },
+    {
+      "id": "mail",
+      "name": "Tell Aditya",
+      "webhookId": "2a92eda9-bf39-41f0-90b8-993817194542",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "onError": "continueRegularOutput",
+      "position": [
+        980,
+        100
+      ],
+      "parameters": {
+        "sendTo": "investors@sidanaventures.com",
+        "subject": "=HEARTBEAT: the laptop tasks have not run for {{ $json.hours }} hours",
+        "emailType": "text",
+        "message": "=The scheduled tasks on Aditya's laptop appear to have stopped.\n\nLast run seen:   {{ $json.last_run_ist }}\nThat was:        {{ $json.hours }} hours ago\nIts subject:     {{ $json.last_subject }}\nChecked at:      {{ $json.checked_ist }}\n\nThose tasks only run while Claude Code is open on the laptop. While they are\ndown, nothing books meetings, briefs founders, sends reminders or acts on\nreplies. The dashboard keeps updating from n8n, so it will look completely\nnormal and tell you nothing is wrong.\n\nThis happened before: the chain stopped at 21:48 on 1 Oct and nobody noticed\nfor 84 hours. A Spintly call was missed and an AI Signal Labs meeting reached\nits start time with no invite.\n\nTo fix: open Claude Code on the laptop. The tasks sweep the gap themselves and\nfire what they missed.\n\nThis alert repeats hourly, 09:00-22:00 IST, until a run is seen.",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mymSHTFVWtsI3Mh7",
+          "name": "Gmail account 3"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Hourly 11-18 IST": {
+      "main": [
+        [
+          {
+            "node": "Find last chain run",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Test hook": {
+      "main": [
+        [
+          {
+            "node": "Find last chain run",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find last chain run": {
+      "main": [
+        [
+          {
+            "node": "Its timestamp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Its timestamp": {
+      "main": [
+        [
+          {
+            "node": "Judge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Judge": {
+      "main": [
+        [
+          {
+            "node": "Only if stale",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Only if stale": {
+      "main": [
+        [
+          {
+            "node": "Tell Aditya",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "none",
+    "executionTimeout": 300,
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Hourly 09-22 IST": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    },
+    "node:Hourly 11-18 IST": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "4Yd3oTWu0oKO73A0",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-10-05T06:46:28.159Z",
+      "updatedAt": "2026-10-05T06:46:28.159Z"
+    }
+  ],
+  "activeVersion": {
+    "versionId": "5bc4af03-a9f9-46fc-8c2a-b84f7f7a3d0d",
+    "workflowId": "4Yd3oTWu0oKO73A0",
+    "nodes": [
+      {
+        "id": "sch",
+        "name": "Hourly 11-18 IST",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          -220,
+          0
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "0 30 11-18 * * 1-5"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "wh",
+        "name": "Test hook",
+        "webhookId": "cffd21b0-ab3b-44fa-aeb3-dcd18bd34a1b",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          -220,
+          200
+        ],
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "sidana-heartbeat-test-4d7e",
+          "responseMode": "lastNode",
+          "options": {}
+        }
+      },
+      {
+        "id": "list",
+        "name": "Find last chain run",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          20,
+          100
+        ],
+        "parameters": {
+          "url": "https://gmail.googleapis.com/gmail/v1/users/me/messages",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "gmailOAuth2",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "q",
+                "value": "from:investors@sidanaventures.com subject:(Chain OR \"Hot deals\") newer_than:4d"
+              },
+              {
+                "name": "maxResults",
+                "value": "1"
+              }
+            ]
+          },
+          "options": {
+            "timeout": 60000
+          }
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "mymSHTFVWtsI3Mh7",
+            "name": "Gmail account 3"
+          }
+        }
+      },
+      {
+        "id": "get",
+        "name": "Its timestamp",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          260,
+          100
+        ],
+        "parameters": {
+          "url": "=https://gmail.googleapis.com/gmail/v1/users/me/messages/{{ $json.messages ? $json.messages[0].id : 'none' }}?format=metadata&metadataHeaders=Subject",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "gmailOAuth2",
+          "options": {
+            "timeout": 60000
+          }
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "mymSHTFVWtsI3Mh7",
+            "name": "Gmail account 3"
+          }
+        }
+      },
+      {
+        "id": "judge",
+        "name": "Judge",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          500,
+          100
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "// The laptop tasks announce every run by email to investors@. No email for\n// several hours during the working day means Claude Code is not running --\n// which looks identical to everything being fine, because the dashboard keeps\n// updating from n8n regardless.\n//\n// This is not hypothetical: the chain died at 21:48 on 1 Oct and nobody knew\n// until it restarted 84 hours later and said so itself. A Spintly call was\n// missed and an AI Signal Labs meeting reached its day with no invite.\nconst QUIET_HOURS = 3;   // alert after this long with no run\nconst m = $input.first().json || {};\nconst ms = m.internalDate ? Number(m.internalDate) : null;\n\nconst hdrs = (m.payload && m.payload.headers) || [];\nconst subjHdr = hdrs.find((h) => String(h.name).toLowerCase() === 'subject');\nconst subject = subjHdr ? String(subjHdr.value) : '(unknown)';\n\nconst now = Date.now();\nconst ist = (t) => new Date(t + 330 * 60000).toISOString().replace('T', ' ').slice(0, 16) + ' IST';\n\n// Only judge during the hours the tasks are supposed to run (09:00-22:00 IST).\nconst istHour = Number(new Date(now + 330 * 60000).toISOString().slice(11, 13));\nconst inHours = istHour >= 9 && istHour <= 22;\n\nconst hours = ms === null ? null : (now - ms) / 3600000;\nconst stale = inHours && (ms === null || hours > QUIET_HOURS);\n\nreturn [{ json: {\n  alert: stale,\n  hours: hours === null ? null : Math.round(hours * 10) / 10,\n  last_run_ist: ms === null ? 'no run found in the last 4 days' : ist(ms),\n  last_subject: subject,\n  checked_ist: ist(now),\n  quiet_hours: QUIET_HOURS,\n} }];"
+        }
+      },
+      {
+        "id": "gate",
+        "name": "Only if stale",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          740,
+          100
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const j = $input.first().json;\nreturn j.alert ? [{ json: j }] : [];"
+        }
+      },
+      {
+        "id": "mail",
+        "name": "Tell Aditya",
+        "webhookId": "2a92eda9-bf39-41f0-90b8-993817194542",
+        "type": "n8n-nodes-base.gmail",
+        "typeVersion": 2.1,
+        "onError": "continueRegularOutput",
+        "position": [
+          980,
+          100
+        ],
+        "parameters": {
+          "sendTo": "investors@sidanaventures.com",
+          "subject": "=HEARTBEAT: the laptop tasks have not run for {{ $json.hours }} hours",
+          "emailType": "text",
+          "message": "=The scheduled tasks on Aditya's laptop appear to have stopped.\n\nLast run seen:   {{ $json.last_run_ist }}\nThat was:        {{ $json.hours }} hours ago\nIts subject:     {{ $json.last_subject }}\nChecked at:      {{ $json.checked_ist }}\n\nThose tasks only run while Claude Code is open on the laptop. While they are\ndown, nothing books meetings, briefs founders, sends reminders or acts on\nreplies. The dashboard keeps updating from n8n, so it will look completely\nnormal and tell you nothing is wrong.\n\nThis happened before: the chain stopped at 21:48 on 1 Oct and nobody noticed\nfor 84 hours. A Spintly call was missed and an AI Signal Labs meeting reached\nits start time with no invite.\n\nTo fix: open Claude Code on the laptop. The tasks sweep the gap themselves and\nfire what they missed.\n\nThis alert repeats hourly, 09:00-22:00 IST, until a run is seen.",
+          "options": {}
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "mymSHTFVWtsI3Mh7",
+            "name": "Gmail account 3"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Hourly 11-18 IST": {
+        "main": [
+          [
+            {
+              "node": "Find last chain run",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Test hook": {
+        "main": [
+          [
+            {
+              "node": "Find last chain run",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Find last chain run": {
+        "main": [
+          [
+            {
+              "node": "Its timestamp",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Its timestamp": {
+        "main": [
+          [
+            {
+              "node": "Judge",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Judge": {
+        "main": [
+          [
+            {
+              "node": "Only if stale",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Only if stale": {
+        "main": [
+          [
+            {
+              "node": "Tell Aditya",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "Sidana Ventures",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "createdAt": "2026-10-06T05:07:02.413Z",
+    "updatedAt": "2026-10-06T05:07:02.413Z",
+    "workflowPublishHistory": [
+      {
+        "id": 12090,
+        "workflowId": "4Yd3oTWu0oKO73A0",
+        "versionId": "5bc4af03-a9f9-46fc-8c2a-b84f7f7a3d0d",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-10-06T05:07:02.666Z"
+      }
+    ]
+  }
+}

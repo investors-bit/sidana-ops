@@ -1,0 +1,293 @@
+{
+  "id": "PnxcEaAPJxfQQ3sI",
+  "name": "BACKFILL-MATCHES — PIPELINE pairs into matches (idempotent, upserts)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-10-01T07:33:48.502Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "05047403-d58f-4b7c-b990-542084b76813",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Run",
+      "webhookId": "120d80c5-fa46-4f64-936a-0363a0b60cc0",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-backfill-matches-3e7c",
+        "responseMode": "lastNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "pl",
+      "name": "GET pipeline",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "position": [
+        180,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=PIPELINE!A1:AI8000",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {
+          "timeout": 180000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "gs",
+      "name": "GET startup ids",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        360,
+        0
+      ],
+      "parameters": {
+        "url": "https://elwaquzawoscotlojtnv.supabase.co/rest/v1/startups?select=id,name&limit=2000",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "ntQxeHO20ZUMASMg",
+          "name": "Supabase service"
+        }
+      }
+    },
+    {
+      "id": "gi",
+      "name": "GET investor ids",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        540,
+        0
+      ],
+      "parameters": {
+        "url": "https://elwaquzawoscotlojtnv.supabase.co/rest/v1/investors?select=id,name&limit=2000",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "ntQxeHO20ZUMASMg",
+          "name": "Supabase service"
+        }
+      }
+    },
+    {
+      "id": "bd",
+      "name": "Build matches",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// One row per startup x investor pair that is a genuine match.\n// 'Not per strategy' and 'Do-not-contact' rows are NOT matches and are skipped:\n// matches.type is NOT NULL and there is no honest enum value for them.\n// Upserts on the (startup_id, investor_id) unique key, so re-running is safe\n// and no delete is needed.\nconst vr = $('GET pipeline').first().json.valueRanges[0].values;\nconst h = vr[0];\nconst rows = vr.slice(1).map(function (r) { var o = {}; h.forEach(function (k, i) { o[k] = r[i] === undefined ? '' : r[i]; }); return o; });\nconst nz = function (s) { return String(s == null ? '' : s).toLowerCase().replace(/[^a-z0-9]/g, ''); };\nconst sMap = {}; for (const s of ($('GET startup ids').first().json.body || [])) { sMap[nz(s.name)] = s.id; }\nconst iMap = {}; for (const i of ($('GET investor ids').first().json.body || [])) { iMap[nz(i.name)] = i.id; }\n\nfunction mtype(raw) {\n  raw = String(raw || '');\n  if (/stage\\s+(?:one\\s+step\\s+)?off/i.test(raw)) return 'stage_off';\n  if (/^\\s*exact\\s+match/i.test(raw)) return 'strict';\n  if (/sector\\s*\\+\\s*cheque\\s+match/i.test(raw)) return 'sector_only';\n  return null;\n}\nconst PRI = { strict: 1, stage_off: 2, sector_only: 3 };\nconst seen = {}; const out = []; let skipped_notmatch = 0, skipped_noid = 0, dupes = 0;\nfor (const r of rows) {\n  const t = mtype(r.match_type);\n  if (!t) { skipped_notmatch++; continue; }\n  const sid = sMap[nz(r.startup)], iid = iMap[nz(r.investor)];\n  if (!sid || !iid) { skipped_noid++; continue; }\n  const k = sid + ':' + iid;\n  if (seen[k]) { dupes++; continue; }\n  seen[k] = 1;\n  const sent = String(r.deal_shared || '').trim().toLowerCase() === 'yes';\n  const paused = !!String(r.pause || '').trim();\n  const state = sent ? 'sent' : (paused ? 'paused' : 'queued');\n  out.push({ startup_id: sid, investor_id: iid, type: t, state: state, priority: PRI[t],\n             stage_fit: t !== 'stage_off', cheque_fit: true });\n}\nconst CH = 700; const chunks = [];\nfor (let i = 0; i < out.length; i += CH) {\n  chunks.push({ json: { rows: out.slice(i, i + CH), total: out.length,\n    skipped_notmatch: skipped_notmatch, skipped_noid: skipped_noid, dupes: dupes,\n    queued: out.filter(function (x) { return x.state === 'queued'; }).length,\n    sent: out.filter(function (x) { return x.state === 'sent'; }).length,\n    paused: out.filter(function (x) { return x.state === 'paused'; }).length } });\n}\nreturn chunks;"
+      }
+    },
+    {
+      "id": "po",
+      "name": "Upsert chunk",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        900,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://elwaquzawoscotlojtnv.supabase.co/rest/v1/matches?on_conflict=startup_id,investor_id",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates,return=minimal"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.rows) }}",
+        "options": {
+          "timeout": 120000,
+          "response": {
+            "response": {
+              "neverError": true,
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "ntQxeHO20ZUMASMg",
+          "name": "Supabase service"
+        }
+      }
+    },
+    {
+      "id": "rp",
+      "name": "Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1080,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b = $('Build matches').first().json;\nconst items = $input.all();\nconst bad = items.filter(function (i) { return !(i.json.statusCode >= 200 && i.json.statusCode < 300); });\nreturn [{ json: { matches_built: b.total, queued: b.queued, sent: b.sent, paused: b.paused,\n  chunks: items.length, statuses: items.map(function (i) { return i.json.statusCode; }),\n  failed: bad.length, errors: bad.map(function (i) { return JSON.stringify(i.json.body).slice(0, 200); }).slice(0, 3),\n  skipped_not_a_match: b.skipped_notmatch, skipped_name_not_found: b.skipped_noid, duplicate_pairs: b.dupes } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run": {
+      "main": [
+        [
+          {
+            "node": "GET pipeline",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET pipeline": {
+      "main": [
+        [
+          {
+            "node": "GET startup ids",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET startup ids": {
+      "main": [
+        [
+          {
+            "node": "GET investor ids",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET investor ids": {
+      "main": [
+        [
+          {
+            "node": "Build matches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build matches": {
+      "main": [
+        [
+          {
+            "node": "Upsert chunk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert chunk": {
+      "main": [
+        [
+          {
+            "node": "Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "PnxcEaAPJxfQQ3sI",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-10-01T07:33:48.505Z",
+      "updatedAt": "2026-10-01T07:33:48.505Z"
+    }
+  ],
+  "activeVersion": null
+}

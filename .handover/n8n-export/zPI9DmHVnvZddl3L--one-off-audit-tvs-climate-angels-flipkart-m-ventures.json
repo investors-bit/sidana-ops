@@ -1,0 +1,217 @@
+{
+  "id": "zPI9DmHVnvZddl3L",
+  "name": "One-off — Audit TVS / Climate Angels / Flipkart / M Ventures",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-04T10:31:08.626Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "7df6d38f-37d7-43ba-82d7-cde2fe426d98",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run (press Execute)",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "t2",
+      "name": "Audit at 16:12 IST",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        200
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "12 16 4 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "n1",
+      "name": "Read INVESTORS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        224,
+        100
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "INVESTORS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "n2",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        448,
+        100
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "n3",
+      "name": "Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        100
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const inv = [];\nfor (const v of $('Read INVESTORS').all()) {\n  const n = String(v.json.investor || '').trim();\n  if (/tvs capital|climate angels|flipkart|m venture/i.test(n)) {\n    inv.push({ row: v.json.row_number, investor: n, contact: v.json.contact_person, email: v.json.email, dnc: v.json.do_not_contact });\n  }\n}\n\nconst pick = (p) => ({ row: p.row_number, deal_id: p.deal_id, startup: p.startup, owner: p.owner, investor: p.investor, email: p.email, shared: p.deal_shared, date_shared: p.date_shared, next_action: p.next_action, next_due: p.next_due, resp: p.investor_response, thread: p.thread_id });\n\nconst tvs = [], climate = [], flip = [], mv = [];\nfor (const p of $('Read PIPELINE').all()) {\n  const n = String(p.json.investor || '').trim();\n  if (/tvs capital/i.test(n)) { tvs.push(pick(p.json)); }\n  if (/climate angels/i.test(n)) { climate.push(pick(p.json)); }\n  if (/flipkart/i.test(n)) { flip.push(pick(p.json)); }\n  if (/m venture/i.test(n)) { mv.push(pick(p.json)); }\n}\n\nreturn [{ json: {\n  investors_rows: inv,\n  tvs_count: tvs.length, tvs_rows: tvs,\n  climate_count: climate.length, climate_rows: climate,\n  flipkart_count: flip.length, flipkart_rows: flip,\n  mventures_count: mv.length, mventures_rows: mv,\n} }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run (press Execute)": {
+      "main": [
+        [
+          {
+            "node": "Read INVESTORS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Audit at 16:12 IST": {
+      "main": [
+        [
+          {
+            "node": "Read INVESTORS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read INVESTORS": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Audit at 15:45 IST": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    },
+    "node:Audit at 16:12 IST": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "zPI9DmHVnvZddl3L",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-04T10:31:08.629Z",
+      "updatedAt": "2026-09-04T10:31:08.629Z"
+    }
+  ],
+  "activeVersion": null
+}

@@ -1,0 +1,210 @@
+{
+  "id": "JwKCKcCCOjaIs6mm",
+  "name": "One-off — Red text for passed deals (PIPELINE conditional format)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-03T11:19:21.641Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "390c080c-2c73-4220-af54-35cb1522bdda",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run (press Execute)",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "t2",
+      "name": "Apply at 17:10 IST today",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        200
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "10 17 3 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "n1",
+      "name": "Get sheet metadata",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        100
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "fields",
+              "value": "sheets.properties(sheetId,title,gridProperties)"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "n2",
+      "name": "Build format rule",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        100
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const resp = $input.first().json;\nconst sheets = resp.sheets || [];\nlet gid = null;\nlet cols = 35;\nfor (const s of sheets) {\n  if (String(s.properties.title).trim() === 'PIPELINE') {\n    gid = s.properties.sheetId;\n    if (s.properties.gridProperties && s.properties.gridProperties.columnCount) { cols = s.properties.gridProperties.columnCount; }\n    break;\n  }\n}\nif (gid === null) { throw new Error('PIPELINE tab not found in spreadsheet'); }\n\nconst FORMULA = '=OR($AD2=\"Passed\", $V2=\"Pass\", $V2=\"Passed\")';\n\nconst body = { requests: [ { addConditionalFormatRule: { index: 0, rule: {\n  ranges: [ { sheetId: gid, startRowIndex: 1, startColumnIndex: 0, endColumnIndex: cols } ],\n  booleanRule: {\n    condition: { type: 'CUSTOM_FORMULA', values: [ { userEnteredValue: FORMULA } ] },\n    format: { textFormat: { foregroundColor: { red: 0.8, green: 0, blue: 0 }, foregroundColorStyle: { rgbColor: { red: 0.8, green: 0, blue: 0 } } } }\n  }\n} } } ] };\n\nreturn [{ json: { gid: gid, columnCount: cols, formula: FORMULA, body: body } }];"
+      }
+    },
+    {
+      "id": "n3",
+      "name": "Apply conditional format",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        720,
+        100
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Run (press Execute)": {
+      "main": [
+        [
+          {
+            "node": "Get sheet metadata",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apply at 17:10 IST today": {
+      "main": [
+        [
+          {
+            "node": "Get sheet metadata",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get sheet metadata": {
+      "main": [
+        [
+          {
+            "node": "Build format rule",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build format rule": {
+      "main": [
+        [
+          {
+            "node": "Apply conditional format",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apply conditional format": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Apply at 17:10 IST today": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "JwKCKcCCOjaIs6mm",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-03T11:19:21.644Z",
+      "updatedAt": "2026-09-03T11:19:21.644Z"
+    }
+  ],
+  "activeVersion": null
+}

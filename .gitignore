@@ -14,3 +14,7 @@ seed.sql
 load-report.md
 dealflow-report-*
 zr.html
+
+# handover packaging artifacts, rebuildable from .handover/send/
+.handover/sidana-handover.zip
+.handover/zip.b64

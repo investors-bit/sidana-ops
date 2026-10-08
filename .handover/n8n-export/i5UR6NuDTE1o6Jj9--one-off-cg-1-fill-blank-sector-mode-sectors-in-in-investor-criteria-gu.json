@@ -1,0 +1,193 @@
+{
+  "id": "i5UR6NuDTE1o6Jj9",
+  "name": "One-off CG-1 — fill blank sector_mode / sectors_in in INVESTOR_CRITERIA (guarded, blank-only)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-23T12:38:28.763Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "4142c019-4db6-4315-8ec3-7df4ecb4c5c7",
+  "versionCounter": 5,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "b720855f-ee09-41c6-9f89-6ee7a4797145",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-crit-gap-fill-7f2c9d",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "g",
+      "name": "Read",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=INVESTOR_CRITERIA%21A1%3AAC300&ranges=INVESTORS%21A1%3AJ300",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "v",
+      "name": "Compute",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const R = $json.valueRanges || [];\nconst pick = (n) => (R.find(x => String(x.range||'').indexOf(n) === 0) || {}).values || [];\nconst crit = pick('INVESTOR_CRITERIA');\nconst inv  = pick('INVESTORS!');\nif (!crit.length || !inv.length) throw new Error('Read failed: got ranges ' + R.map(x=>x.range).join(' , '));\nconst g = (row,i) => (row && row[i] != null) ? String(row[i]).trim() : '';\n\nconst MAP = [\n  [/\\bai\\b|artificial intelligence/i, ['AI_APPLIED_ENTERPRISE','AI_FOUNDATIONAL']],\n  [/\\bsaas\\b|\\bb2b\\b/i, ['SAAS_ENTERPRISE']],\n  [/\\bconsumer\\b/i, ['CONSUMER_TECH_APP']],\n  [/\\bd2c\\b/i, ['D2C_HOME_LIFESTYLE','D2C_FASHION_JEWELLERY','D2C_HEALTH_WELLNESS','D2C_BEAUTY_PERSONAL_CARE']],\n  [/beauty|personal care/i, ['D2C_BEAUTY_PERSONAL_CARE']],\n  [/edtech/i, ['EDTECH_K12_TESTPREP','EDTECH_UPSKILLING_ENTERPRISE']],\n  [/\\bf\\s*&?\\s*b\\b|fmcg|packaged food|\\bfood\\b/i, ['FNB_PACKAGED_FOOD','FNB_BEVERAGE']],\n  [/fintech/i, ['FINTECH_CONSUMER','FINTECH_INFRA','FINTECH_SME_LENDING']],\n  [/insurtech/i, ['INSURTECH']],\n  [/hrtech/i, ['HRTECH']],\n  [/marketplace/i, ['RETAIL_TECH','QUICK_HYPERLOCAL_COMMERCE']],\n  [/travel/i, ['TRAVEL_HOSPITALITY']],\n  [/manufactur/i, ['MANUFACTURING_INDUSTRIAL']],\n  [/deep\\s?tech/i, ['AI_FOUNDATIONAL','SEMICONDUCTOR_ELECTRONICS']],\n  [/climate|clean\\s?tech/i, ['CLIMATE_ENERGY']],\n  [/semiconductor/i, ['SEMICONDUCTOR_ELECTRONICS']],\n  [/\\bev\\b/i, ['EV_CLEAN_MOBILITY']],\n  [/\\bagri/i, ['AGRITECH']],\n  [/health/i, ['HEALTHTECH_DIGITAL']],\n  [/supply\\s?chain/i, ['LOGISTICS_SUPPLY_CHAIN']]\n];\n\nconst data = [];\nconst report = [];\nconst skipped = [];\n\nfor (let i = 1; i < crit.length; i++) {\n  const r = crit[i];\n  const critRow = i + 1;\n  const name = g(r,1);\n  if (!name) continue;\n  const mode = g(r,6);\n  if (mode) continue;                      // only rows whose sector_mode is blank\n  const secNow = g(r,7);\n\n  const n = parseInt(g(r,0), 10);\n  const ivRow = (n > 1 && n <= inv.length) ? inv[n-1] : null;\n  if (!ivRow) { skipped.push(critRow + ' ' + name + ' :: no linked INVESTORS row'); continue; }\n  const txt = g(ivRow,4);\n  if (!txt) { skipped.push(critRow + ' ' + name + ' :: INVESTORS sector is blank too'); continue; }\n\n  const agnostic = /sector\\s*agnostic/i.test(txt);\n  const codes = [];\n  for (const [re, cs] of MAP) { if (re.test(txt)) for (const c of cs) if (!codes.includes(c)) codes.push(c); }\n\n  let newMode = null, newSec = null;\n  if (agnostic) {\n    newMode = 'AGNOSTIC';\n  } else if (codes.length) {\n    newMode = 'LIST';\n    if (!secNow) newSec = codes.join(', ');\n  } else if (/venture\\s?debt|debt\\s?only/i.test(txt)) {\n    newMode = 'AGNOSTIC';\n  } else {\n    skipped.push(critRow + ' ' + name + ' :: no code could be derived from: ' + txt.slice(0,80));\n    continue;\n  }\n\n  data.push({ range: 'INVESTOR_CRITERIA!G' + critRow, values: [[newMode]] });\n  if (newSec) data.push({ range: 'INVESTOR_CRITERIA!H' + critRow, values: [[newSec]] });\n  report.push({ crit_row: critRow, investor: name, status: g(r,3), confirmed: g(r,4), source_sector_text: txt.slice(0,160), new_mode: newMode, new_sectors_in: newSec || '(left blank - agnostic or already filled)' });\n}\n\nif (data.length === 0) throw new Error('Nothing to write - no blank sector_mode rows resolved');\nif (data.length > 60) throw new Error('Guard: refusing to write ' + data.length + ' cells (cap 60)');\n\nreturn [{ json: { body: { valueInputOption: 'RAW', data: data }, cells: data.length, report: report, skipped: skipped } }];"
+      }
+    },
+    {
+      "id": "w",
+      "name": "Write",
+      "disabled": false,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "o",
+      "name": "Out",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const c = $('Compute').first().json;\nconst w = $json;\nreturn [{ json: { updatedCells: w.totalUpdatedCells != null ? w.totalUpdatedCells : null, updatedRanges: (w.responses||[]).length, planned_cells: c.cells, report: c.report, skipped: c.skipped } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read": {
+      "main": [
+        [
+          {
+            "node": "Compute",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute": {
+      "main": [
+        [
+          {
+            "node": "Write",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write": {
+      "main": [
+        [
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "i5UR6NuDTE1o6Jj9",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-23T12:38:28.765Z",
+      "updatedAt": "2026-09-23T12:38:28.765Z"
+    }
+  ],
+  "activeVersion": null
+}

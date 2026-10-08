@@ -1,0 +1,207 @@
+{
+  "id": "NeJLa70VYHtoiNBB",
+  "name": "One-off IAN-2 — repoint existing IAN PIPELINE rows to Angel Fund",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-07T10:08:59.363Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "92fed984-63e4-400a-940f-7c350457b406",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "trg1",
+      "name": "Run once 15:54 IST 7 Sep",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "54 15 7 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "rd1",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cd1",
+      "name": "Repoint to Angel Fund",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// The INVESTORS row was renamed by IAN-1. Every PIPELINE row still carrying the OLD name would\n// fail investor lookup ('investor-not-found') and silently stop sending, so repoint them.\n// They go to the Angel Fund: that is the continuing relationship and its 2-6 Cr band matches\n// the raise sizes these rows were originally matched on.\nconst OLD = 'IAN Group (Indian Angel Network)';\nconst NEW = 'IAN Group - Angel Fund';\nfunction s(v) { return String(v == null ? '' : v).trim(); }\n\nconst rows = $input.all().map(function (i) { return i.json; });\nif (rows.length < 500) { throw new Error('ABORT: PIPELINE returned only ' + rows.length + ' rows'); }\n\nconst hits = rows.filter(function (r) { return s(r.investor) === OLD; });\nif (hits.length === 0) { throw new Error('ABORT: no PIPELINE rows found for ' + OLD + ' - already repointed?'); }\nif (hits.length > 60) { throw new Error('ABORT: ' + hits.length + ' rows exceeds guard of 60'); }\n\nreturn hits.map(function (h) { return { json: { deal_id: s(h.deal_id), investor: NEW } }; });"
+      }
+    },
+    {
+      "id": "up1",
+      "name": "Update PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "deal_id"
+          ],
+          "schema": [
+            {
+              "id": "deal_id",
+              "displayName": "deal_id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Run once 15:54 IST 7 Sep": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Repoint to Angel Fund",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Repoint to Angel Fund": {
+      "main": [
+        [
+          {
+            "node": "Update PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once 15:54 IST 7 Sep": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "NeJLa70VYHtoiNBB",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-07T10:08:59.364Z",
+      "updatedAt": "2026-09-07T10:08:59.364Z"
+    }
+  ],
+  "activeVersion": null
+}

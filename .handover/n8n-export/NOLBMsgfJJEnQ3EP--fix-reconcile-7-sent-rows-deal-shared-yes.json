@@ -1,0 +1,214 @@
+{
+  "id": "NOLBMsgfJJEnQ3EP",
+  "name": "FIX — Reconcile 7 sent rows (deal_shared=Yes)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-01T08:41:33.285Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "83198d9e-3008-4624-b282-dad7e863f49c",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 0,
+  "nodes": [
+    {
+      "id": "24eb5b6e-7049-4894-b766-36e0fcc52bff",
+      "name": "Run (press Execute)",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "5c6274fa-131d-465e-a0b2-63892cf11fb5",
+      "name": "Build 7 reconcile rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\n// The seven rows that received a real email during the incident.\n// They currently have deal_shared=\"No\" + fu1_done=\"Yes\" (inconsistent state from the FU1 misroute).\n// Setting deal_shared=\"Yes\" makes them continue at FU2 on their next_due (2026-09-05) instead of re-INITIALing.\nconst ids = ['D00001','D00002','D00003','D00004','D00005','D00006','D00007'];\nreturn ids.map(id => ({ json: { deal_id: id, deal_shared: 'Yes' } }));\n"
+      }
+    },
+    {
+      "id": "ad975a19-6615-44ea-a2e5-a6fdb8cc07a4",
+      "name": "Update deal_shared=Yes",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        448,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "deal_id"
+          ],
+          "schema": [
+            {
+              "id": "deal_id",
+              "displayName": "deal_id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {
+          "handlingExtraData": "error"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cdd0074d-e873-4654-9e90-a2b16b32b8e9",
+      "name": "Read back D00001-D00007",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        672,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      },
+      "executeOnce": true
+    },
+    {
+      "id": "ba7b2ff0-c89b-4db1-aaaf-1798e5ddbd97",
+      "name": "Summarize 7",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst want = ['D00001','D00002','D00003','D00004','D00005','D00006','D00007'];\nconst rows = $('Read back D00001-D00007').all().map(i => i.json).filter(r => want.includes(String(r.deal_id).trim()));\nreturn rows.map(r => ({ json: {\n  deal_id: r.deal_id, deal_shared: r.deal_shared, fu1_done: r.fu1_done, fu2_done: r.fu2_done,\n  next_action: r.next_action, next_due: r.next_due, thread_id: r.thread_id, message_id: r.message_id,\n} }));\n"
+      }
+    }
+  ],
+  "connections": {
+    "Run (press Execute)": {
+      "main": [
+        [
+          {
+            "node": "Build 7 reconcile rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build 7 reconcile rows": {
+      "main": [
+        [
+          {
+            "node": "Update deal_shared=Yes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update deal_shared=Yes": {
+      "main": [
+        [
+          {
+            "node": "Read back D00001-D00007",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read back D00001-D00007": {
+      "main": [
+        [
+          {
+            "node": "Summarize 7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": {},
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "NOLBMsgfJJEnQ3EP",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-01T08:41:33.286Z",
+      "updatedAt": "2026-09-01T08:41:33.286Z"
+    }
+  ],
+  "activeVersion": null
+}

@@ -1,0 +1,552 @@
+{
+  "id": "pgnDpeG9NNxOe64O",
+  "name": "One-off OG-1 — split OG Capital (Shrinidhi) and angel Sayan Ghosh (reused NI-1)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-11T16:56:34.163Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "1730d79a-1eff-45ff-b73c-ea2d1edfa9c5",
+  "versionCounter": 4,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once (set before activating)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "55 22 11 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "hi",
+      "name": "GET INV header",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/INVESTORS!1:1",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "hp",
+      "name": "GET PIPE header",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/PIPELINE!1:1",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "r1",
+      "name": "Read INVESTORS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "INVESTORS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "r3",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cp",
+      "name": "Plan",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nfunction nz(x) { return s(x).toLowerCase().replace(/[^a-z0-9]/g, ''); }\nfunction colLetter(i) { let n = i + 1, out = ''; while (n > 0) { const m = (n - 1) % 26; out = String.fromCharCode(65 + m) + out; n = Math.floor((n - 1) / 26); } return out; }\nconst yes = function (x) { return s(x).toLowerCase() === 'yes'; };\nconst ih = (($('GET INV header').first().json.values || [[]])[0] || []).map(s);\nconst ph = (($('GET PIPE header').first().json.values || [[]])[0] || []).map(s);\nconst IC = {}; for (const h of ['investor', 'contact_person', 'email', 'cc', 'sector', 'stage', 'cheque_inr_cr']) { const i = ih.indexOf(h); if (i < 0) { throw new Error('ABORT: INVESTORS column missing ' + h); } IC[h] = colLetter(i); }\nconst PE = ph.indexOf('email'); if (PE < 0) { throw new Error('ABORT: PIPELINE email column missing'); }\nconst inv = $('Read INVESTORS').all().map(function (i) { return i.json; });\nconst pipe = $input.all().map(function (i) { return i.json; });\nif (inv.length < 200) { throw new Error('ABORT: INVESTORS only ' + inv.length); }\nif (pipe.length < 4600) { throw new Error('ABORT: PIPELINE only ' + pipe.length); }\n// new investors the user added to the composition sheet on 11 Sep (values cleaned for the matcher)\n// user 11 Sep: Sayan Ghosh is a separate angel; OG Capital is a different investor\nconst NEW = [\n  { investor: 'Sayan Ghosh', contact_person: 'Sayan', email: 'sayan@ogcapital.one', cc: '', sector: 'Sector agnostic (prefers SaaS, consumer tech, fintech)', stage: 'Pre-seed, Seed', cheque_inr_cr: '' }\n];\nconst NEW_NI1 = [\n  { investor: 'Gautham Krishnan', contact_person: 'Gautham', email: 'gauthamsdesk@gmail.com', cc: '', sector: 'Sector agnostic', stage: 'Pre-seed, Seed', cheque_inr_cr: '' },\n  { investor: 'Z2O Studio & Fund', contact_person: 'Satyakam', email: 'satyakam@wyser.vc', cc: '', sector: 'Technology / tech-enabled businesses (sector agnostic within tech)', stage: 'Early stage', cheque_inr_cr: 'INR 1-4 Cr' },\n  { investor: 'Pentathlon Ventures', contact_person: 'Sandeep Chawda', email: 'pipeline@pentathlon.vc', cc: '', sector: 'Sector agnostic - B2B focused (preferred: Enterprise AI, HealthTech, FinTech, Cybersecurity, Manufacturing / Logistics)', stage: 'Seed, Pre-Series A', cheque_inr_cr: 'US$500K-1M' },\n  { investor: 'Sorenson Capital', contact_person: 'Grace', email: 'grace@sorensoncap.com', cc: '', sector: 'B2B Software - Cybersecurity, AI, Application Software, DevTools & Infrastructure', stage: 'Early stage to Growth / Pre-IPO', cheque_inr_cr: 'US$1-10M' },\n  { investor: 'Henkel Ventures', contact_person: 'Aman Sharma', email: 'aman.sharma@henkel.com', cc: '', sector: 'Climate Tech, Deep Tech, Enterprise Tech, Consumer Tech - sustainable materials & ingredients, recycling, packaging, industrial tech, AI/software, commerce/MarTech/AdTech', stage: 'Early stage up to Series B', cheque_inr_cr: 'INR 4.5-45 Cr' },\n  { investor: 'Sofinnova Partners', contact_person: 'Mariam Cherifi', email: '', cc: '', sector: 'Life Sciences, Biopharma, Medtech, Digital Medicine, Industrial Biotech', stage: 'Seed, Early stage to Later stage / Growth', cheque_inr_cr: 'INR 15-25 Cr' },\n  { investor: 'InCred Capital', contact_person: 'Saumya', email: 'saumya.mittal@incredcapital.com', cc: '', sector: '', stage: '', cheque_inr_cr: '' }\n];\nconst have = {}; for (const r of inv) { have[nz(r.investor)] = r; }\nconst appends = NEW.filter(function (n) { return !have[nz(n.investor)]; });\nconst skipped = NEW.filter(function (n) { return have[nz(n.investor)]; }).map(function (n) { return n.investor; });\n// user edits in the composition sheet (Antler, SparkSeed)\nconst EDIT = { ogcapital: { contact_person: 'Shrinidhi', email: 'shrinidhi@ogcapital.one', cc: 'pitch@ogcapital.one', cheque_inr_cr: 'US$1-10M', stage: 'Seed to Pre-IPO', sector: 'B2C / ecommerce, retail, media & entertainment, enterprise' } };\nconst EDIT_NI1 = { antler: { contact_person: 'Anshul', email: 'anshul@antler.co', cheque_inr_cr: 'US$425K', stage: 'Day 0, Pre-seed, Seed', sector: 'Sector agnostic - focus: AI, Enterprise SaaS, Consumer, FinTech, Climate, DeepTech, Health' },\n  sparkseedventures: { email: 'ashwani@sparkseedventures.in' } };\nconst data = [], editLog = [];\nfor (const k of Object.keys(EDIT)) { const rs = inv.filter(function (r) { return nz(r.investor) === k; });\n  if (rs.length !== 1) { throw new Error('ABORT: ' + k + ' resolves to ' + rs.length + ' INVESTORS rows'); }\n  const r = rs[0];\n  for (const f of Object.keys(EDIT[k])) { if (s(r[f]) === EDIT[k][f]) { continue; }\n    data.push({ range: 'INVESTORS!' + IC[f] + r.row_number, values: [[EDIT[k][f]]] }); editLog.push([s(r.investor), f, s(r[f]), EDIT[k][f]]); } }\n// queued (unsent, unpaused) deals must carry the new address - outreach reads the email on the PIPELINE row\nconst pdata = [], repointed = [];\nconst NEWMAIL = { ogcapital: 'shrinidhi@ogcapital.one' };\nfor (const p of pipe) { const k = nz(p.investor); if (!NEWMAIL[k] || yes(p.deal_shared) || yes(p.pause)) { continue; }\n  if (s(p.email).toLowerCase() === NEWMAIL[k]) { continue; }\n  pdata.push({ range: 'PIPELINE!' + colLetter(PE) + p.row_number, values: [[NEWMAIL[k]]] }); repointed.push([p.row_number, s(p.deal_id), s(p.startup), s(p.investor), s(p.email)]); }\nif (appends.length > 8) { throw new Error('ABORT: too many appends'); }\nif (repointed.length > 80) { throw new Error('ABORT: ' + repointed.length + ' PIPELINE email changes exceeds guard'); }\nif (!data.length) { data.push({ range: 'INVESTORS!' + IC.investor + '1', values: [['investor']] }); }\nif (!pdata.length) { pdata.push({ range: 'PIPELINE!' + colLetter(PE) + '1', values: [['email']] }); }\nreturn [{ json: { inv_before: inv.length, appends: appends, skipped_existing: skipped, edits: editLog, data: data, pdata: pdata, repointed: repointed } }];"
+      }
+    },
+    {
+      "id": "we",
+      "name": "Write INVESTORS edits",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "position": [
+        1200,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ valueInputOption: 'RAW', data: $('Plan').first().json.data }) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "wp",
+      "name": "Write PIPELINE emails",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "position": [
+        1400,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ valueInputOption: 'RAW', data: $('Plan').first().json.pdata }) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "ea",
+      "name": "Emit new rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const a = $('Plan').first().json.appends || [];\nif (!a.length) { return [{ json: { __none: true } }]; }\nreturn a.map(function (r) { return { json: r }; });"
+      }
+    },
+    {
+      "id": "if1",
+      "name": "Any to add?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1800,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.__none === true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "ap",
+      "name": "Append INVESTORS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "position": [
+        2000,
+        -100
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "INVESTORS"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "ra",
+      "name": "Read INVESTORS after",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        2200,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "INVESTORS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cv",
+      "name": "Verify",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2400,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nfunction nz(x) { return s(x).toLowerCase().replace(/[^a-z0-9]/g, ''); }\nconst plan = $('Plan').first().json;\nconst inv = $input.all().map(function (i) { return i.json; });\nconst want = ['sayanghosh'];\nconst present = want.map(function (k) { const r = inv.filter(function (x) { return nz(x.investor) === k; }); return [k, r.length, r.length ? s(r[0].email) : '']; });\nconst ant = inv.filter(function (x) { return nz(x.investor) === 'antler'; }).map(function (r) { return [r.row_number, s(r.contact_person), s(r.email), s(r.cheque_inr_cr), s(r.stage)]; });\nconst sp = inv.filter(function (x) { return nz(x.investor) === 'ogcapital'; }).map(function (r) { return [r.row_number, s(r.contact_person), s(r.email), s(r.cc), s(r.cheque_inr_cr), s(r.stage), s(r.sector)]; });\nreturn [{ json: { inv_after: inv.length, expected: plan.inv_before + plan.appends.length, present: present, antler: ant, sparkseed: sp, edits: plan.edits, repointed: plan.repointed.length, skipped_existing: plan.skipped_existing,\n  ok: inv.length === plan.inv_before + plan.appends.length && present.every(function (p) { return p[1] === 1; }) } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once (set before activating)": {
+      "main": [
+        [
+          {
+            "node": "GET INV header",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET INV header": {
+      "main": [
+        [
+          {
+            "node": "GET PIPE header",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET PIPE header": {
+      "main": [
+        [
+          {
+            "node": "Read INVESTORS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read INVESTORS": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Plan": {
+      "main": [
+        [
+          {
+            "node": "Write INVESTORS edits",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write INVESTORS edits": {
+      "main": [
+        [
+          {
+            "node": "Write PIPELINE emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write PIPELINE emails": {
+      "main": [
+        [
+          {
+            "node": "Emit new rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Emit new rows": {
+      "main": [
+        [
+          {
+            "node": "Any to add?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Any to add?": {
+      "main": [
+        [
+          {
+            "node": "Append INVESTORS",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Read INVESTORS after",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append INVESTORS": {
+      "main": [
+        [
+          {
+            "node": "Read INVESTORS after",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read INVESTORS after": {
+      "main": [
+        [
+          {
+            "node": "Verify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once (set before activating)": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "pgnDpeG9NNxOe64O",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-11T16:56:34.165Z",
+      "updatedAt": "2026-09-11T16:56:34.165Z"
+    }
+  ],
+  "activeVersion": null
+}

@@ -1,0 +1,1923 @@
+{
+  "id": "2MG95rlJDoFNz8tJ",
+  "name": "Weekly Founder Update — fundraising report (Sat 10:00 IST)",
+  "description": null,
+  "active": true,
+  "activeVersionId": "fb594029-db9d-41b6-ad68-497ed0b08187",
+  "createdAt": "2026-09-10T10:55:39.510Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "fb594029-db9d-41b6-ad68-497ed0b08187",
+  "versionCounter": 17,
+  "sourceWorkflowId": null,
+  "triggerCount": 4,
+  "nodes": [
+    {
+      "id": "wfr-sched",
+      "name": "Every Saturday 10:00 IST",
+      "disabled": false,
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 10 * * 6"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "wfr-wh-prev",
+      "name": "Preview (dry run, no emails)",
+      "webhookId": "b6a1f0d4-3c2e-4a7b-9e51-wfrpreview01",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        200
+      ],
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "weekly-founder-report-preview-8c2e",
+        "responseMode": "lastNode",
+        "responseData": "allEntries",
+        "options": {}
+      }
+    },
+    {
+      "id": "wfr-wh-test",
+      "name": "Test send (to investors@ only)",
+      "webhookId": "c7b2e1f5-4d3f-4b8c-8f62-wfrtestsend1",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        400
+      ],
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "weekly-founder-report-test-8c2e",
+        "responseMode": "onReceived",
+        "options": {}
+      }
+    },
+    {
+      "id": "wfr-m-live",
+      "name": "Mode: live",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return [{ json: { mode: 'live' } }];"
+      }
+    },
+    {
+      "id": "wfr-m-prev",
+      "name": "Mode: preview",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        200
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return [{ json: { mode: 'preview' } }];"
+      }
+    },
+    {
+      "id": "wfr-m-test",
+      "name": "Mode: test",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        400
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const q = ($input.first().json.query) || {};\nreturn [{ json: { mode: 'test', startup: String(q.startup || '').trim() } }];"
+      }
+    },
+    {
+      "id": "wfr-r-pipe",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        440,
+        200
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "wfr-r-st",
+      "name": "Read STARTUPS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        660,
+        200
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "STARTUPS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "wfr-r-fi",
+      "name": "Read Founders Info",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        880,
+        200
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Founders Info"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "wfr-build",
+      "name": "Build weekly reports",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        200
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const s = (v) => String(v == null ? '' : v).trim();\nconst low = (v) => s(v).toLowerCase();\nconst esc = (v) => s(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\nconst tz = 'Asia/Kolkata';\nconst TEST_TO = 'investors@sidanaventures.com';\nconst OWNERS = ['Aditya', 'Chaman', 'Akansha', 'Shradha'];\n// No report at all for a startup with fewer than this many new investors reached in the week\nconst MIN_REACHED = 3;\nconst ownerNames = { Aditya: 'Aditya Mishra', Chaman: 'Chaman Yadav', Akansha: 'Akansha', Shradha: 'Shradhaa' };\n\nconst mode = $('Mode: preview').isExecuted ? 'preview' : ($('Mode: test').isExecuted ? 'test' : ($('Mode: resend').isExecuted ? 'resend' : 'live'));\nconst testStartup = mode === 'test' ? s($('Mode: test').first().json.startup) : (mode === 'resend' ? s($('Mode: resend').first().json.startup) : '');\n// resend = send this week's normal report again to ONE startup's founder (e.g. after an email correction)\nif (mode === 'resend' && !testStartup) throw new Error('resend needs ?startup=<name>');\n\n// Reporting window: Monday..Friday of the most recently completed work week (the Saturday run covers the Mon-Fri just ended)\nconst today = DateTime.now().setZone(tz).startOf('day');\nconst winEnd = today.minus({ days: ((today.weekday - 5 + 7) % 7) || 7 });\nconst winStart = winEnd.minus({ days: 4 });\nconst from = winStart.toISODate();\nconst to = winEnd.toISODate();\nconst weekKey = from + '_' + to;\n\nconst staticData = $getWorkflowStaticData('global');\nif (mode === 'live' && staticData.lastSentWeek === weekKey) {\n  return [{ json: { kind: 'summary', mode, date: today.toISODate(), workflow: 'WEEKLY-live', rows_read: 0, decided: 0, sent: 0, skipped: 0, skip_reasons: 'already sent for window ' + weekKey } }];\n}\n\n// Dates in the sheet come as 2026-09-16, 16-09-2026, 16-09-26, 16/09/2026 or a Sheets serial, optionally followed by a time\nconst parseDate = (x) => {\n  const v = s(x);\n  if (!v) return null;\n  let m, d = null;\n  if ((m = v.match(/^(\\d{4})-(\\d{1,2})-(\\d{1,2})/))) d = DateTime.fromObject({ year: +m[1], month: +m[2], day: +m[3] }, { zone: tz });\n  else if ((m = v.match(/^(\\d{1,2})[-\\/.](\\d{1,2})[-\\/.](\\d{2,4})\\b/))) { let y = +m[3]; if (y < 100) y += 2000; d = DateTime.fromObject({ year: y, month: +m[2], day: +m[1] }, { zone: tz }); }\n  else if (/^\\d{5}(\\.\\d+)?$/.test(v)) d = DateTime.fromISO('1899-12-30', { zone: tz }).plus({ days: Math.floor(+v) });\n  else { for (const f of ['d LLL yyyy', 'd LLLL yyyy', 'LLL d, yyyy', 'LLLL d, yyyy']) { const t = DateTime.fromFormat(v, f, { zone: tz }); if (t.isValid) { d = t; break; } } }\n  return d && d.isValid ? d.startOf('day') : null;\n};\nconst inWin = (x) => { const d = parseDate(x); return !!d && d >= winStart && d <= winEnd; };\n\n// Founders Info lookup (names differ slightly from PIPELINE, e.g. MonitorExam vs Monitor Exam)\nconst norm = (x) => low(x).replace(/[^a-z0-9]/g, '');\nconst lev = (a, b) => {\n  const dp = []; for (let i = 0; i <= a.length; i++) { dp[i] = [i]; }\n  for (let j = 1; j <= b.length; j++) dp[0][j] = j;\n  for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++) dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));\n  return dp[a.length][b.length];\n};\nconst founders = [];\nfor (const it of $('Read Founders Info').all()) {\n  const j = it.json;\n  const name = s(j['Startup']);\n  if (!name) continue;\n  const emails = [...new Set(s(j['Emails']).split(/[,;\\s]+/).map((e) => e.trim().toLowerCase()).filter((e) => /^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(e)))];\n  founders.push({ name, key: norm(name), founder: s(j['Founder Name']), emails });\n}\nconst pick = (arr) => arr.find((f) => f.emails.length) || arr[0];\nconst findFounder = (startup) => {\n  const k = norm(startup);\n  let hit = founders.filter((f) => f.key === k);\n  if (hit.length) return { f: pick(hit), how: 'exact' };\n  hit = founders.filter((f) => f.key.length >= 4 && k.length >= 4 && (f.key.indexOf(k) === 0 || k.indexOf(f.key) === 0));\n  if (hit.length && hit.every((h) => h.key === hit[0].key)) return { f: pick(hit), how: 'prefix' };\n  hit = founders.filter((f) => k.length >= 6 && lev(f.key, k) <= 1);\n  if (hit.length && hit.every((h) => h.key === hit[0].key)) return { f: pick(hit), how: 'fuzzy' };\n  return null;\n};\n\nconst startupOwner = {};\nfor (const it of $('Read STARTUPS').all()) { const n = norm(it.json.startup); if (n && s(it.json.owner)) startupOwner[n] = s(it.json.owner); }\n\n// Aggregate PIPELINE per startup\nconst pipe = $('Read PIPELINE').all().map((i) => i.json);\nconst per = {};\nfor (const r of pipe) {\n  const st = s(r.startup);\n  if (!st || /^test/i.test(s(r.deal_id)) || /^test/i.test(st)) continue;\n  const p = per[st] || (per[st] = { startup: st, owners: {}, reached: 0, followups: 0, passed: [], meetings: [] });\n  const o = s(r.owner); if (o) p.owners[o] = (p.owners[o] || 0) + 1;\n  if (inWin(r.date_shared)) p.reached++;\n  for (const c of ['fu1_date', 'fu2_date', 'fu3_date']) { if (inWin(r[c])) p.followups++; }\n  const resp = low(r.investor_response);\n  const ds = low(r.deal_status);\n  const lcIn = inWin(r.last_contact);\n  const isPass = ['pass', 'passed', 'not relevant'].indexOf(resp) >= 0 || ['passed', 'not relevant'].indexOf(ds) >= 0;\n  if (isPass) {\n    if (lcIn && !p.passed.some((x) => x.investor === s(r.investor))) p.passed.push({ investor: s(r.investor) });\n    continue;\n  }\n  const ms = low(r.meeting_scheduled);\n  const isMeet = ms !== 'no' && (ms === 'yes' || ds.indexOf('meeting') >= 0 || resp.indexOf('meeting') >= 0 || s(r.meeting_date) !== '');\n  if (isMeet) {\n    const md = parseDate(r.meeting_date);\n    // meetings dated this week or later; undated ones only if flagged this week\n    if (md ? md >= winStart : lcIn) {\n      if (!p.meetings.some((x) => x.investor === s(r.investor))) p.meetings.push({ investor: s(r.investor), date: md });\n    }\n  }\n}\n\nconst sig = (owner) => \"<br>--<br><img src='https://drive.google.com/uc?export=view&id=1iLMGooCx6B8bmYJxlYMdNg0YhdSoFAFi' alt='Sidana Ventures' width='120' style='display:block;margin-bottom:8px;border:0;'><div style='font-family:Arial,sans-serif;font-size:13px;color:#333333;line-height:1.4;'><span style='font-weight:bold;color:#1a5fb4;'>\" + esc(ownerNames[owner] || owner) + \"</span><br>Investor Relations<br><span style='font-weight:bold;'>SIDANA VENTURES LLP</span><br>424A Tower B3, Spaze iTech Park, Sector 49, Sohna Road<br>Gurgaon, Haryana 122022<br>+91 85279 02946<br><a href='https://www.sidanaventures.com' style='color:#1a5fb4;'>www.sidanaventures.com</a></div>\";\nconst td = \"style='padding:4px 14px 4px 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#222222;'\";\n\nconst reports = [];\nconst skipped = [];\nlet withActivity = 0;\nconst testPerOwner = {};\nfor (const st of Object.keys(per).sort()) {\n  const p = per[st];\n  if (mode === 'resend' && norm(st) !== norm(testStartup)) continue;\n  if (!(p.reached || p.followups || p.passed.length || p.meetings.length)) continue;\n  withActivity++;\n  if (p.reached < MIN_REACHED) { skipped.push(st + ': only ' + p.reached + ' new investors reached (min ' + MIN_REACHED + ')'); continue; }\n  let owner = startupOwner[norm(st)] || '';\n  if (!owner) { const os = Object.keys(p.owners).sort((a, b) => p.owners[b] - p.owners[a]); owner = os[0] || ''; }\n  if (OWNERS.indexOf(owner) === -1) { skipped.push(st + ': owner-unknown(' + owner + ')'); continue; }\n  const fm = findFounder(st);\n  if (!fm) { skipped.push(st + ': not-in-Founders-Info'); continue; }\n  if (!fm.f.emails.length) { skipped.push(st + ': founder-email-blank'); continue; }\n  if (mode === 'test') {\n    if (testStartup && norm(testStartup) !== norm(st)) continue;\n    if (!testStartup) { if (testPerOwner[owner]) continue; testPerOwner[owner] = true; }\n  }\n\n  p.meetings.sort((a, b) => (a.date ? a.date.toMillis() : 9e15) - (b.date ? b.date.toMillis() : 9e15));\n  const meetLines = p.meetings.map((m) => m.investor + ' - ' + (m.date ? m.date.toFormat('ccc, d LLL yyyy') : 'Date to be confirmed'));\n  const passLines = p.passed.map((x) => x.investor);\n  const greetName = fm.f.founder.replace(/\\(.*?\\)/g, '').trim() || 'Team';\n  const list = (arr, none) => arr.length ? \"<ol style='margin:0 0 14px 0;padding-left:22px;'>\" + arr.map((x) => \"<li style='margin:0 0 4px 0;'>\" + esc(x) + '</li>').join('') + '</ol>' : \"<p style='margin:0 0 14px 0;'>\" + none + '</p>';\n  const body = \"<div style='font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.65;color:#222222;max-width:640px;'>\" +\n    '<p>Hi ' + esc(greetName) + ',</p>' +\n    '<p>Hope you are doing well.</p>' +\n    '<p>We have started sharing weekly updates on our funding activities to increase visibility for all our founders.<br>' +\n    'This initiative will help founders and organizations stay informed about ongoing fundraising activities, investor interest, and opportunities across our network.</p>' +\n    '<p>You can share your queries over this email for any improvement / addition required.</p>' +\n    \"<p style='margin:18px 0 6px 0;'><b>This week's report is as follows:</b></p>\" +\n    \"<table style='border-collapse:collapse;margin:0 0 14px 0;'>\" +\n    '<tr><td ' + td + '>Number of investors reached</td><td ' + td + '><b>' + p.reached + '</b></td></tr>' +\n    '<tr><td ' + td + '>No. of follow-ups done</td><td ' + td + '><b>' + p.followups + '</b></td></tr>' +\n    '<tr><td ' + td + '>Passed deals</td><td ' + td + '><b>' + p.passed.length + '</b></td></tr>' +\n    '<tr><td ' + td + '>Meetings scheduled</td><td ' + td + '><b>' + p.meetings.length + '</b></td></tr>' +\n    '</table>' +\n    \"<p style='margin:18px 0 6px 0;'><b>Meetings scheduled with investors and dates</b> (please check your calendar as well for the same):</p>\" + list(meetLines, 'No meetings scheduled this week.') +\n    \"<p style='margin:18px 0 6px 0;'><b>Investors who passed the deal:</b></p>\" + list(passLines, 'No investor passed this week.') +\n    '<p>Looking forward to creating greater visibility, stronger investor connections, and more funding opportunities.</p>' +\n    '</div>' + sig(owner);\n\n  let toAddr = fm.f.emails.join(', ');\n  let subject = 'Weekly Report | ' + st + ' | Sidana Ventures';\n  let html = body;\n  if (mode === 'test') {\n    html = \"<div style='background:#fff4ce;border:1px solid #e0c060;padding:8px 12px;margin:0 0 14px 0;font-family:Arial,sans-serif;font-size:13px;'>TEST - in the live run this goes to: \" + esc(toAddr) + ' (from ' + esc(owner) + \"'s Gmail)</div>\" + body;\n    subject = '[TEST] ' + subject;\n    toAddr = TEST_TO;\n  }\n  reports.push({ json: {\n    kind: 'report', mode, owner, startup: st, founders_info_row: fm.f.name, match: fm.how, founder_name: fm.f.founder,\n    to: toAddr, subject, html: mode === 'preview' ? '' : html,\n    reached: p.reached, followups: p.followups, passed: p.passed.length, meetings: p.meetings.length,\n    meeting_list: meetLines, passed_list: passLines,\n  } });\n}\n\nif (mode === 'live' && reports.length) staticData.lastSentWeek = weekKey;\n\nconst summary = { kind: 'summary', mode, window: from + ' .. ' + to, date: today.toISODate(), workflow: 'WEEKLY-' + mode,\n  rows_read: pipe.length, decided: withActivity, sent: reports.length, skipped: skipped.length, skip_reasons: skipped.join('; ') };\nreturn reports.concat([{ json: summary }]);"
+      }
+    },
+    {
+      "id": "wfr-if-prev",
+      "name": "Preview?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1320,
+        200
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "pv",
+              "leftValue": "={{ $json.mode }}",
+              "rightValue": "preview",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "wfr-prev-out",
+      "name": "Preview output",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1540,
+        60
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return $input.all();"
+      }
+    },
+    {
+      "id": "wfr-f-rep",
+      "name": "Reports only",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        1540,
+        260
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "k",
+              "leftValue": "={{ $json.kind }}",
+              "rightValue": "report",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "wfr-f-sum",
+      "name": "Summary only",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        1540,
+        480
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "k",
+              "leftValue": "={{ $json.kind }}",
+              "rightValue": "summary",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "wfr-runlog",
+      "name": "Append RUN LOG",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "position": [
+        1760,
+        480
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "RUN LOG"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "date": "={{ $json.date }}",
+            "workflow": "={{ $json.workflow }}",
+            "rows_read": "={{ $json.rows_read }}",
+            "decided": "={{ $json.decided }}",
+            "sent": "={{ $json.sent }}",
+            "skipped": "={{ $json.skipped }}",
+            "skip_reasons": "={{ $json.skip_reasons }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "date",
+              "displayName": "date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "workflow",
+              "displayName": "workflow",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "rows_read",
+              "displayName": "rows_read",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "decided",
+              "displayName": "decided",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "sent",
+              "displayName": "sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "skipped",
+              "displayName": "skipped",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "skip_reasons",
+              "displayName": "skip_reasons",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "wfr-sw",
+      "name": "By owner",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        1760,
+        260
+      ],
+      "parameters": {
+        "mode": "rules",
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "o1",
+                    "leftValue": "={{ $json.owner }}",
+                    "rightValue": "Aditya",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Aditya"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "o2",
+                    "leftValue": "={{ $json.owner }}",
+                    "rightValue": "Chaman",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Chaman"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "o3",
+                    "leftValue": "={{ $json.owner }}",
+                    "rightValue": "Akansha",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Akansha"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "o4",
+                    "leftValue": "={{ $json.owner }}",
+                    "rightValue": "Shradha",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Shradha"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "wfr-g-a",
+      "name": "Gmail — Aditya",
+      "webhookId": "d1e2f3a4-0001-4a1b-9c2d-wfrgmailadit",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "onError": "continueRegularOutput",
+      "position": [
+        2000,
+        80
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "={{ $json.to }}",
+        "subject": "={{ $json.subject }}",
+        "emailType": "html",
+        "message": "={{ $json.html }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mymSHTFVWtsI3Mh7",
+          "name": "Gmail account 3"
+        }
+      }
+    },
+    {
+      "id": "wfr-g-c",
+      "name": "Gmail — Chaman",
+      "webhookId": "d1e2f3a4-0002-4a1b-9c2d-wfrgmailcham",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "onError": "continueRegularOutput",
+      "position": [
+        2000,
+        220
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "={{ $json.to }}",
+        "subject": "={{ $json.subject }}",
+        "emailType": "html",
+        "message": "={{ $json.html }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "hwEqMRn6IxzoYs1R",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "id": "wfr-g-k",
+      "name": "Gmail — Akansha",
+      "webhookId": "d1e2f3a4-0003-4a1b-9c2d-wfrgmailakan",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "onError": "continueRegularOutput",
+      "position": [
+        2000,
+        360
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "={{ $json.to }}",
+        "subject": "={{ $json.subject }}",
+        "emailType": "html",
+        "message": "={{ $json.html }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "9IWD8mWqdARPXloL",
+          "name": "Gmail account 4"
+        }
+      }
+    },
+    {
+      "id": "wfr-g-s",
+      "name": "Gmail — Shradha",
+      "webhookId": "d1e2f3a4-0004-4a1b-9c2d-wfrgmailshra",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "onError": "continueRegularOutput",
+      "position": [
+        2000,
+        500
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "={{ $json.to }}",
+        "subject": "={{ $json.subject }}",
+        "emailType": "html",
+        "message": "={{ $json.html }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "R5K61omYbU9oT5J8",
+          "name": "Gmail account 5"
+        }
+      }
+    },
+    {
+      "id": "wfr-wh-resend",
+      "name": "Resend one startup (real founder)",
+      "webhookId": "b91db954-252c-4b44-9d74-948d2234b54b",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        600
+      ],
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "weekly-founder-report-resend-8c2e",
+        "responseMode": "onReceived",
+        "options": {}
+      }
+    },
+    {
+      "id": "wfr-m-resend",
+      "name": "Mode: resend",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        600
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const q = ($input.first().json.query) || {};\nreturn [{ json: { mode: 'resend', startup: String(q.startup || '').trim() } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Every Saturday 10:00 IST": {
+      "main": [
+        [
+          {
+            "node": "Mode: live",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preview (dry run, no emails)": {
+      "main": [
+        [
+          {
+            "node": "Mode: preview",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Test send (to investors@ only)": {
+      "main": [
+        [
+          {
+            "node": "Mode: test",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mode: live": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mode: preview": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mode: test": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Read STARTUPS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read STARTUPS": {
+      "main": [
+        [
+          {
+            "node": "Read Founders Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Founders Info": {
+      "main": [
+        [
+          {
+            "node": "Build weekly reports",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build weekly reports": {
+      "main": [
+        [
+          {
+            "node": "Preview?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preview?": {
+      "main": [
+        [
+          {
+            "node": "Preview output",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reports only",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Summary only",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reports only": {
+      "main": [
+        [
+          {
+            "node": "By owner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summary only": {
+      "main": [
+        [
+          {
+            "node": "Append RUN LOG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "By owner": {
+      "main": [
+        [
+          {
+            "node": "Gmail — Aditya",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Gmail — Chaman",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Gmail — Akansha",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Gmail — Shradha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resend one startup (real founder)": {
+      "main": [
+        [
+          {
+            "node": "Mode: resend",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mode: resend": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Every Saturday 10:00 IST": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    },
+    "global": {
+      "lastSentWeek": "2026-09-28_2026-10-02"
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "2MG95rlJDoFNz8tJ",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-10T10:55:39.512Z",
+      "updatedAt": "2026-09-10T10:55:39.512Z"
+    }
+  ],
+  "activeVersion": {
+    "versionId": "fb594029-db9d-41b6-ad68-497ed0b08187",
+    "workflowId": "2MG95rlJDoFNz8tJ",
+    "nodes": [
+      {
+        "id": "wfr-sched",
+        "name": "Every Saturday 10:00 IST",
+        "disabled": false,
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.4,
+        "position": [
+          0,
+          0
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "0 10 * * 6"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "wfr-wh-prev",
+        "name": "Preview (dry run, no emails)",
+        "webhookId": "b6a1f0d4-3c2e-4a7b-9e51-wfrpreview01",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          200
+        ],
+        "parameters": {
+          "httpMethod": "GET",
+          "path": "weekly-founder-report-preview-8c2e",
+          "responseMode": "lastNode",
+          "responseData": "allEntries",
+          "options": {}
+        }
+      },
+      {
+        "id": "wfr-wh-test",
+        "name": "Test send (to investors@ only)",
+        "webhookId": "c7b2e1f5-4d3f-4b8c-8f62-wfrtestsend1",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          400
+        ],
+        "parameters": {
+          "httpMethod": "GET",
+          "path": "weekly-founder-report-test-8c2e",
+          "responseMode": "onReceived",
+          "options": {}
+        }
+      },
+      {
+        "id": "wfr-m-live",
+        "name": "Mode: live",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          220,
+          0
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "return [{ json: { mode: 'live' } }];"
+        }
+      },
+      {
+        "id": "wfr-m-prev",
+        "name": "Mode: preview",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          220,
+          200
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "return [{ json: { mode: 'preview' } }];"
+        }
+      },
+      {
+        "id": "wfr-m-test",
+        "name": "Mode: test",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          220,
+          400
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const q = ($input.first().json.query) || {};\nreturn [{ json: { mode: 'test', startup: String(q.startup || '').trim() } }];"
+        }
+      },
+      {
+        "id": "wfr-r-pipe",
+        "name": "Read PIPELINE",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.7,
+        "executeOnce": true,
+        "retryOnFail": true,
+        "maxTries": 5,
+        "waitBetweenTries": 5000,
+        "position": [
+          440,
+          200
+        ],
+        "parameters": {
+          "resource": "sheet",
+          "operation": "read",
+          "documentId": {
+            "__rl": true,
+            "mode": "url",
+            "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+          },
+          "sheetName": {
+            "__rl": true,
+            "mode": "name",
+            "value": "PIPELINE"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "wfr-r-st",
+        "name": "Read STARTUPS",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.7,
+        "executeOnce": true,
+        "retryOnFail": true,
+        "maxTries": 5,
+        "waitBetweenTries": 5000,
+        "position": [
+          660,
+          200
+        ],
+        "parameters": {
+          "resource": "sheet",
+          "operation": "read",
+          "documentId": {
+            "__rl": true,
+            "mode": "url",
+            "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+          },
+          "sheetName": {
+            "__rl": true,
+            "mode": "name",
+            "value": "STARTUPS"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "wfr-r-fi",
+        "name": "Read Founders Info",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.7,
+        "executeOnce": true,
+        "retryOnFail": true,
+        "maxTries": 5,
+        "waitBetweenTries": 5000,
+        "position": [
+          880,
+          200
+        ],
+        "parameters": {
+          "resource": "sheet",
+          "operation": "read",
+          "documentId": {
+            "__rl": true,
+            "mode": "url",
+            "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+          },
+          "sheetName": {
+            "__rl": true,
+            "mode": "name",
+            "value": "Founders Info"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "wfr-build",
+        "name": "Build weekly reports",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1100,
+          200
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const s = (v) => String(v == null ? '' : v).trim();\nconst low = (v) => s(v).toLowerCase();\nconst esc = (v) => s(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\nconst tz = 'Asia/Kolkata';\nconst TEST_TO = 'investors@sidanaventures.com';\nconst OWNERS = ['Aditya', 'Chaman', 'Akansha', 'Shradha'];\n// No report at all for a startup with fewer than this many new investors reached in the week\nconst MIN_REACHED = 3;\nconst ownerNames = { Aditya: 'Aditya Mishra', Chaman: 'Chaman Yadav', Akansha: 'Akansha', Shradha: 'Shradhaa' };\n\nconst mode = $('Mode: preview').isExecuted ? 'preview' : ($('Mode: test').isExecuted ? 'test' : ($('Mode: resend').isExecuted ? 'resend' : 'live'));\nconst testStartup = mode === 'test' ? s($('Mode: test').first().json.startup) : (mode === 'resend' ? s($('Mode: resend').first().json.startup) : '');\n// resend = send this week's normal report again to ONE startup's founder (e.g. after an email correction)\nif (mode === 'resend' && !testStartup) throw new Error('resend needs ?startup=<name>');\n\n// Reporting window: Monday..Friday of the most recently completed work week (the Saturday run covers the Mon-Fri just ended)\nconst today = DateTime.now().setZone(tz).startOf('day');\nconst winEnd = today.minus({ days: ((today.weekday - 5 + 7) % 7) || 7 });\nconst winStart = winEnd.minus({ days: 4 });\nconst from = winStart.toISODate();\nconst to = winEnd.toISODate();\nconst weekKey = from + '_' + to;\n\nconst staticData = $getWorkflowStaticData('global');\nif (mode === 'live' && staticData.lastSentWeek === weekKey) {\n  return [{ json: { kind: 'summary', mode, date: today.toISODate(), workflow: 'WEEKLY-live', rows_read: 0, decided: 0, sent: 0, skipped: 0, skip_reasons: 'already sent for window ' + weekKey } }];\n}\n\n// Dates in the sheet come as 2026-09-16, 16-09-2026, 16-09-26, 16/09/2026 or a Sheets serial, optionally followed by a time\nconst parseDate = (x) => {\n  const v = s(x);\n  if (!v) return null;\n  let m, d = null;\n  if ((m = v.match(/^(\\d{4})-(\\d{1,2})-(\\d{1,2})/))) d = DateTime.fromObject({ year: +m[1], month: +m[2], day: +m[3] }, { zone: tz });\n  else if ((m = v.match(/^(\\d{1,2})[-\\/.](\\d{1,2})[-\\/.](\\d{2,4})\\b/))) { let y = +m[3]; if (y < 100) y += 2000; d = DateTime.fromObject({ year: y, month: +m[2], day: +m[1] }, { zone: tz }); }\n  else if (/^\\d{5}(\\.\\d+)?$/.test(v)) d = DateTime.fromISO('1899-12-30', { zone: tz }).plus({ days: Math.floor(+v) });\n  else { for (const f of ['d LLL yyyy', 'd LLLL yyyy', 'LLL d, yyyy', 'LLLL d, yyyy']) { const t = DateTime.fromFormat(v, f, { zone: tz }); if (t.isValid) { d = t; break; } } }\n  return d && d.isValid ? d.startOf('day') : null;\n};\nconst inWin = (x) => { const d = parseDate(x); return !!d && d >= winStart && d <= winEnd; };\n\n// Founders Info lookup (names differ slightly from PIPELINE, e.g. MonitorExam vs Monitor Exam)\nconst norm = (x) => low(x).replace(/[^a-z0-9]/g, '');\nconst lev = (a, b) => {\n  const dp = []; for (let i = 0; i <= a.length; i++) { dp[i] = [i]; }\n  for (let j = 1; j <= b.length; j++) dp[0][j] = j;\n  for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++) dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));\n  return dp[a.length][b.length];\n};\nconst founders = [];\nfor (const it of $('Read Founders Info').all()) {\n  const j = it.json;\n  const name = s(j['Startup']);\n  if (!name) continue;\n  const emails = [...new Set(s(j['Emails']).split(/[,;\\s]+/).map((e) => e.trim().toLowerCase()).filter((e) => /^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(e)))];\n  founders.push({ name, key: norm(name), founder: s(j['Founder Name']), emails });\n}\nconst pick = (arr) => arr.find((f) => f.emails.length) || arr[0];\nconst findFounder = (startup) => {\n  const k = norm(startup);\n  let hit = founders.filter((f) => f.key === k);\n  if (hit.length) return { f: pick(hit), how: 'exact' };\n  hit = founders.filter((f) => f.key.length >= 4 && k.length >= 4 && (f.key.indexOf(k) === 0 || k.indexOf(f.key) === 0));\n  if (hit.length && hit.every((h) => h.key === hit[0].key)) return { f: pick(hit), how: 'prefix' };\n  hit = founders.filter((f) => k.length >= 6 && lev(f.key, k) <= 1);\n  if (hit.length && hit.every((h) => h.key === hit[0].key)) return { f: pick(hit), how: 'fuzzy' };\n  return null;\n};\n\nconst startupOwner = {};\nfor (const it of $('Read STARTUPS').all()) { const n = norm(it.json.startup); if (n && s(it.json.owner)) startupOwner[n] = s(it.json.owner); }\n\n// Aggregate PIPELINE per startup\nconst pipe = $('Read PIPELINE').all().map((i) => i.json);\nconst per = {};\nfor (const r of pipe) {\n  const st = s(r.startup);\n  if (!st || /^test/i.test(s(r.deal_id)) || /^test/i.test(st)) continue;\n  const p = per[st] || (per[st] = { startup: st, owners: {}, reached: 0, followups: 0, passed: [], meetings: [] });\n  const o = s(r.owner); if (o) p.owners[o] = (p.owners[o] || 0) + 1;\n  if (inWin(r.date_shared)) p.reached++;\n  for (const c of ['fu1_date', 'fu2_date', 'fu3_date']) { if (inWin(r[c])) p.followups++; }\n  const resp = low(r.investor_response);\n  const ds = low(r.deal_status);\n  const lcIn = inWin(r.last_contact);\n  const isPass = ['pass', 'passed', 'not relevant'].indexOf(resp) >= 0 || ['passed', 'not relevant'].indexOf(ds) >= 0;\n  if (isPass) {\n    if (lcIn && !p.passed.some((x) => x.investor === s(r.investor))) p.passed.push({ investor: s(r.investor) });\n    continue;\n  }\n  const ms = low(r.meeting_scheduled);\n  const isMeet = ms !== 'no' && (ms === 'yes' || ds.indexOf('meeting') >= 0 || resp.indexOf('meeting') >= 0 || s(r.meeting_date) !== '');\n  if (isMeet) {\n    const md = parseDate(r.meeting_date);\n    // meetings dated this week or later; undated ones only if flagged this week\n    if (md ? md >= winStart : lcIn) {\n      if (!p.meetings.some((x) => x.investor === s(r.investor))) p.meetings.push({ investor: s(r.investor), date: md });\n    }\n  }\n}\n\nconst sig = (owner) => \"<br>--<br><img src='https://drive.google.com/uc?export=view&id=1iLMGooCx6B8bmYJxlYMdNg0YhdSoFAFi' alt='Sidana Ventures' width='120' style='display:block;margin-bottom:8px;border:0;'><div style='font-family:Arial,sans-serif;font-size:13px;color:#333333;line-height:1.4;'><span style='font-weight:bold;color:#1a5fb4;'>\" + esc(ownerNames[owner] || owner) + \"</span><br>Investor Relations<br><span style='font-weight:bold;'>SIDANA VENTURES LLP</span><br>424A Tower B3, Spaze iTech Park, Sector 49, Sohna Road<br>Gurgaon, Haryana 122022<br>+91 85279 02946<br><a href='https://www.sidanaventures.com' style='color:#1a5fb4;'>www.sidanaventures.com</a></div>\";\nconst td = \"style='padding:4px 14px 4px 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#222222;'\";\n\nconst reports = [];\nconst skipped = [];\nlet withActivity = 0;\nconst testPerOwner = {};\nfor (const st of Object.keys(per).sort()) {\n  const p = per[st];\n  if (mode === 'resend' && norm(st) !== norm(testStartup)) continue;\n  if (!(p.reached || p.followups || p.passed.length || p.meetings.length)) continue;\n  withActivity++;\n  if (p.reached < MIN_REACHED) { skipped.push(st + ': only ' + p.reached + ' new investors reached (min ' + MIN_REACHED + ')'); continue; }\n  let owner = startupOwner[norm(st)] || '';\n  if (!owner) { const os = Object.keys(p.owners).sort((a, b) => p.owners[b] - p.owners[a]); owner = os[0] || ''; }\n  if (OWNERS.indexOf(owner) === -1) { skipped.push(st + ': owner-unknown(' + owner + ')'); continue; }\n  const fm = findFounder(st);\n  if (!fm) { skipped.push(st + ': not-in-Founders-Info'); continue; }\n  if (!fm.f.emails.length) { skipped.push(st + ': founder-email-blank'); continue; }\n  if (mode === 'test') {\n    if (testStartup && norm(testStartup) !== norm(st)) continue;\n    if (!testStartup) { if (testPerOwner[owner]) continue; testPerOwner[owner] = true; }\n  }\n\n  p.meetings.sort((a, b) => (a.date ? a.date.toMillis() : 9e15) - (b.date ? b.date.toMillis() : 9e15));\n  const meetLines = p.meetings.map((m) => m.investor + ' - ' + (m.date ? m.date.toFormat('ccc, d LLL yyyy') : 'Date to be confirmed'));\n  const passLines = p.passed.map((x) => x.investor);\n  const greetName = fm.f.founder.replace(/\\(.*?\\)/g, '').trim() || 'Team';\n  const list = (arr, none) => arr.length ? \"<ol style='margin:0 0 14px 0;padding-left:22px;'>\" + arr.map((x) => \"<li style='margin:0 0 4px 0;'>\" + esc(x) + '</li>').join('') + '</ol>' : \"<p style='margin:0 0 14px 0;'>\" + none + '</p>';\n  const body = \"<div style='font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.65;color:#222222;max-width:640px;'>\" +\n    '<p>Hi ' + esc(greetName) + ',</p>' +\n    '<p>Hope you are doing well.</p>' +\n    '<p>We have started sharing weekly updates on our funding activities to increase visibility for all our founders.<br>' +\n    'This initiative will help founders and organizations stay informed about ongoing fundraising activities, investor interest, and opportunities across our network.</p>' +\n    '<p>You can share your queries over this email for any improvement / addition required.</p>' +\n    \"<p style='margin:18px 0 6px 0;'><b>This week's report is as follows:</b></p>\" +\n    \"<table style='border-collapse:collapse;margin:0 0 14px 0;'>\" +\n    '<tr><td ' + td + '>Number of investors reached</td><td ' + td + '><b>' + p.reached + '</b></td></tr>' +\n    '<tr><td ' + td + '>No. of follow-ups done</td><td ' + td + '><b>' + p.followups + '</b></td></tr>' +\n    '<tr><td ' + td + '>Passed deals</td><td ' + td + '><b>' + p.passed.length + '</b></td></tr>' +\n    '<tr><td ' + td + '>Meetings scheduled</td><td ' + td + '><b>' + p.meetings.length + '</b></td></tr>' +\n    '</table>' +\n    \"<p style='margin:18px 0 6px 0;'><b>Meetings scheduled with investors and dates</b> (please check your calendar as well for the same):</p>\" + list(meetLines, 'No meetings scheduled this week.') +\n    \"<p style='margin:18px 0 6px 0;'><b>Investors who passed the deal:</b></p>\" + list(passLines, 'No investor passed this week.') +\n    '<p>Looking forward to creating greater visibility, stronger investor connections, and more funding opportunities.</p>' +\n    '</div>' + sig(owner);\n\n  let toAddr = fm.f.emails.join(', ');\n  let subject = 'Weekly Report | ' + st + ' | Sidana Ventures';\n  let html = body;\n  if (mode === 'test') {\n    html = \"<div style='background:#fff4ce;border:1px solid #e0c060;padding:8px 12px;margin:0 0 14px 0;font-family:Arial,sans-serif;font-size:13px;'>TEST - in the live run this goes to: \" + esc(toAddr) + ' (from ' + esc(owner) + \"'s Gmail)</div>\" + body;\n    subject = '[TEST] ' + subject;\n    toAddr = TEST_TO;\n  }\n  reports.push({ json: {\n    kind: 'report', mode, owner, startup: st, founders_info_row: fm.f.name, match: fm.how, founder_name: fm.f.founder,\n    to: toAddr, subject, html: mode === 'preview' ? '' : html,\n    reached: p.reached, followups: p.followups, passed: p.passed.length, meetings: p.meetings.length,\n    meeting_list: meetLines, passed_list: passLines,\n  } });\n}\n\nif (mode === 'live' && reports.length) staticData.lastSentWeek = weekKey;\n\nconst summary = { kind: 'summary', mode, window: from + ' .. ' + to, date: today.toISODate(), workflow: 'WEEKLY-' + mode,\n  rows_read: pipe.length, decided: withActivity, sent: reports.length, skipped: skipped.length, skip_reasons: skipped.join('; ') };\nreturn reports.concat([{ json: summary }]);"
+        }
+      },
+      {
+        "id": "wfr-if-prev",
+        "name": "Preview?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          1320,
+          200
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "pv",
+                "leftValue": "={{ $json.mode }}",
+                "rightValue": "preview",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "wfr-prev-out",
+        "name": "Preview output",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1540,
+          60
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "return $input.all();"
+        }
+      },
+      {
+        "id": "wfr-f-rep",
+        "name": "Reports only",
+        "type": "n8n-nodes-base.filter",
+        "typeVersion": 2.2,
+        "position": [
+          1540,
+          260
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "k",
+                "leftValue": "={{ $json.kind }}",
+                "rightValue": "report",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "wfr-f-sum",
+        "name": "Summary only",
+        "type": "n8n-nodes-base.filter",
+        "typeVersion": 2.2,
+        "position": [
+          1540,
+          480
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "k",
+                "leftValue": "={{ $json.kind }}",
+                "rightValue": "summary",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "wfr-runlog",
+        "name": "Append RUN LOG",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.7,
+        "retryOnFail": true,
+        "position": [
+          1760,
+          480
+        ],
+        "parameters": {
+          "resource": "sheet",
+          "operation": "append",
+          "documentId": {
+            "__rl": true,
+            "mode": "url",
+            "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+          },
+          "sheetName": {
+            "__rl": true,
+            "mode": "name",
+            "value": "RUN LOG"
+          },
+          "columns": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "date": "={{ $json.date }}",
+              "workflow": "={{ $json.workflow }}",
+              "rows_read": "={{ $json.rows_read }}",
+              "decided": "={{ $json.decided }}",
+              "sent": "={{ $json.sent }}",
+              "skipped": "={{ $json.skipped }}",
+              "skip_reasons": "={{ $json.skip_reasons }}"
+            },
+            "matchingColumns": [],
+            "schema": [
+              {
+                "id": "date",
+                "displayName": "date",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "workflow",
+                "displayName": "workflow",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "rows_read",
+                "displayName": "rows_read",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "decided",
+                "displayName": "decided",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "sent",
+                "displayName": "sent",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "skipped",
+                "displayName": "skipped",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              },
+              {
+                "id": "skip_reasons",
+                "displayName": "skip_reasons",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": false
+              }
+            ]
+          },
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "wfr-sw",
+        "name": "By owner",
+        "type": "n8n-nodes-base.switch",
+        "typeVersion": 3.2,
+        "position": [
+          1760,
+          260
+        ],
+        "parameters": {
+          "mode": "rules",
+          "rules": {
+            "values": [
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "o1",
+                      "leftValue": "={{ $json.owner }}",
+                      "rightValue": "Aditya",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "Aditya"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "o2",
+                      "leftValue": "={{ $json.owner }}",
+                      "rightValue": "Chaman",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "Chaman"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "o3",
+                      "leftValue": "={{ $json.owner }}",
+                      "rightValue": "Akansha",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "Akansha"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "o4",
+                      "leftValue": "={{ $json.owner }}",
+                      "rightValue": "Shradha",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "Shradha"
+              }
+            ]
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "wfr-g-a",
+        "name": "Gmail — Aditya",
+        "webhookId": "d1e2f3a4-0001-4a1b-9c2d-wfrgmailadit",
+        "type": "n8n-nodes-base.gmail",
+        "typeVersion": 2.2,
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 5000,
+        "onError": "continueRegularOutput",
+        "position": [
+          2000,
+          80
+        ],
+        "parameters": {
+          "resource": "message",
+          "operation": "send",
+          "sendTo": "={{ $json.to }}",
+          "subject": "={{ $json.subject }}",
+          "emailType": "html",
+          "message": "={{ $json.html }}",
+          "options": {
+            "appendAttribution": false
+          }
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "mymSHTFVWtsI3Mh7",
+            "name": "Gmail account 3"
+          }
+        }
+      },
+      {
+        "id": "wfr-g-c",
+        "name": "Gmail — Chaman",
+        "webhookId": "d1e2f3a4-0002-4a1b-9c2d-wfrgmailcham",
+        "type": "n8n-nodes-base.gmail",
+        "typeVersion": 2.2,
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 5000,
+        "onError": "continueRegularOutput",
+        "position": [
+          2000,
+          220
+        ],
+        "parameters": {
+          "resource": "message",
+          "operation": "send",
+          "sendTo": "={{ $json.to }}",
+          "subject": "={{ $json.subject }}",
+          "emailType": "html",
+          "message": "={{ $json.html }}",
+          "options": {
+            "appendAttribution": false
+          }
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "hwEqMRn6IxzoYs1R",
+            "name": "Gmail account 2"
+          }
+        }
+      },
+      {
+        "id": "wfr-g-k",
+        "name": "Gmail — Akansha",
+        "webhookId": "d1e2f3a4-0003-4a1b-9c2d-wfrgmailakan",
+        "type": "n8n-nodes-base.gmail",
+        "typeVersion": 2.2,
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 5000,
+        "onError": "continueRegularOutput",
+        "position": [
+          2000,
+          360
+        ],
+        "parameters": {
+          "resource": "message",
+          "operation": "send",
+          "sendTo": "={{ $json.to }}",
+          "subject": "={{ $json.subject }}",
+          "emailType": "html",
+          "message": "={{ $json.html }}",
+          "options": {
+            "appendAttribution": false
+          }
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "9IWD8mWqdARPXloL",
+            "name": "Gmail account 4"
+          }
+        }
+      },
+      {
+        "id": "wfr-g-s",
+        "name": "Gmail — Shradha",
+        "webhookId": "d1e2f3a4-0004-4a1b-9c2d-wfrgmailshra",
+        "type": "n8n-nodes-base.gmail",
+        "typeVersion": 2.2,
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 5000,
+        "onError": "continueRegularOutput",
+        "position": [
+          2000,
+          500
+        ],
+        "parameters": {
+          "resource": "message",
+          "operation": "send",
+          "sendTo": "={{ $json.to }}",
+          "subject": "={{ $json.subject }}",
+          "emailType": "html",
+          "message": "={{ $json.html }}",
+          "options": {
+            "appendAttribution": false
+          }
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "R5K61omYbU9oT5J8",
+            "name": "Gmail account 5"
+          }
+        }
+      },
+      {
+        "id": "wfr-wh-resend",
+        "name": "Resend one startup (real founder)",
+        "webhookId": "b91db954-252c-4b44-9d74-948d2234b54b",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          600
+        ],
+        "parameters": {
+          "httpMethod": "GET",
+          "path": "weekly-founder-report-resend-8c2e",
+          "responseMode": "onReceived",
+          "options": {}
+        }
+      },
+      {
+        "id": "wfr-m-resend",
+        "name": "Mode: resend",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          220,
+          600
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const q = ($input.first().json.query) || {};\nreturn [{ json: { mode: 'resend', startup: String(q.startup || '').trim() } }];"
+        }
+      }
+    ],
+    "connections": {
+      "Every Saturday 10:00 IST": {
+        "main": [
+          [
+            {
+              "node": "Mode: live",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Preview (dry run, no emails)": {
+        "main": [
+          [
+            {
+              "node": "Mode: preview",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Test send (to investors@ only)": {
+        "main": [
+          [
+            {
+              "node": "Mode: test",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Mode: live": {
+        "main": [
+          [
+            {
+              "node": "Read PIPELINE",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Mode: preview": {
+        "main": [
+          [
+            {
+              "node": "Read PIPELINE",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Mode: test": {
+        "main": [
+          [
+            {
+              "node": "Read PIPELINE",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Read PIPELINE": {
+        "main": [
+          [
+            {
+              "node": "Read STARTUPS",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Read STARTUPS": {
+        "main": [
+          [
+            {
+              "node": "Read Founders Info",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Read Founders Info": {
+        "main": [
+          [
+            {
+              "node": "Build weekly reports",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build weekly reports": {
+        "main": [
+          [
+            {
+              "node": "Preview?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Preview?": {
+        "main": [
+          [
+            {
+              "node": "Preview output",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Reports only",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Summary only",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Reports only": {
+        "main": [
+          [
+            {
+              "node": "By owner",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Summary only": {
+        "main": [
+          [
+            {
+              "node": "Append RUN LOG",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "By owner": {
+        "main": [
+          [
+            {
+              "node": "Gmail — Aditya",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Gmail — Chaman",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Gmail — Akansha",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Gmail — Shradha",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Resend one startup (real founder)": {
+        "main": [
+          [
+            {
+              "node": "Mode: resend",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Mode: resend": {
+        "main": [
+          [
+            {
+              "node": "Read PIPELINE",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "Sidana Ventures",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "createdAt": "2026-09-19T06:39:19.330Z",
+    "updatedAt": "2026-09-19T06:39:19.330Z",
+    "workflowPublishHistory": [
+      {
+        "id": 1715,
+        "workflowId": "2MG95rlJDoFNz8tJ",
+        "versionId": "fb594029-db9d-41b6-ad68-497ed0b08187",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-09-19T06:39:19.521Z"
+      }
+    ]
+  }
+}

@@ -1,0 +1,188 @@
+{
+  "id": "IcFOEMBUvX8okON1",
+  "name": "One-off BG-2 — delete 5 off-mandate BlueGreen pending rows",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-07T05:15:44.358Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "32e374f8-bedb-4077-a3e6-7c28e3189c10",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "trg1",
+      "name": "Run once 11:00 IST 7 Sep",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 11 7 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "rd1",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cd1",
+      "name": "Resolve rows (desc)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// BlueGreen pending rows that no longer fit the new mandate.\n// SkillBytes/Springbase.ai/AI Signal Labs/Orbit AI/Vira Jal -> SaaS/DeepTech, dropped from thesis.\nconst TARGETS = ['D00544','D01192','D01257','D01289','D01819'];\nfunction s(v) { return String(v == null ? '' : v).trim(); }\n\nconst rows = $input.all().map(function (i) { return i.json; });\nif (rows.length < 500) { throw new Error('ABORT: PIPELINE returned only ' + rows.length + ' rows'); }\n\nconst out = [];\nfor (const t of TARGETS) {\n  const hits = rows.filter(function (r) { return s(r.deal_id) === t; });\n  if (hits.length !== 1) { throw new Error('ABORT: expected 1 row for ' + t + ', found ' + hits.length); }\n  const h = hits[0];\n  if (s(h.investor) !== 'BlueGreen Ventures') { throw new Error('ABORT: ' + t + ' is not BlueGreen (' + s(h.investor) + ')'); }\n  if (s(h.deal_shared).toLowerCase() === 'yes') { throw new Error('ABORT: ' + t + ' has deal_shared=Yes - refusing to delete a sent row'); }\n  if (!h.row_number) { throw new Error('ABORT: no row_number for ' + t); }\n  out.push({ json: { row_number: Number(h.row_number), deal_id: t, startup: s(h.startup) } });\n}\nif (out.length !== TARGETS.length) { throw new Error('ABORT: resolved ' + out.length + ' of ' + TARGETS.length); }\nout.sort(function (a, b) { return b.json.row_number - a.json.row_number; });\nfor (let i = 1; i < out.length; i++) {\n  if (out[i].json.row_number === out[i - 1].json.row_number) { throw new Error('ABORT: duplicate row_number'); }\n}\nreturn out;"
+      }
+    },
+    {
+      "id": "dl1",
+      "name": "Delete rows (desc)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "delete",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        },
+        "toDelete": "rows",
+        "startIndex": "={{ $json.row_number }}",
+        "numberToDelete": 1
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Run once 11:00 IST 7 Sep": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Resolve rows (desc)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve rows (desc)": {
+      "main": [
+        [
+          {
+            "node": "Delete rows (desc)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once 11:00 IST 7 Sep": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "IcFOEMBUvX8okON1",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-07T05:15:44.360Z",
+      "updatedAt": "2026-09-07T05:15:44.360Z"
+    }
+  ],
+  "activeVersion": null
+}

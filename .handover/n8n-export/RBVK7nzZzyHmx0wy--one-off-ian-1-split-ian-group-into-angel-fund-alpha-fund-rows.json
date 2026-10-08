@@ -1,0 +1,264 @@
+{
+  "id": "RBVK7nzZzyHmx0wy",
+  "name": "One-off IAN-1 — split IAN Group into Angel Fund + Alpha Fund rows",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-07T10:08:42.834Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "4c34feb9-7122-470f-b670-50778d78e3b4",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "trg1",
+      "name": "Run once 15:46 IST 7 Sep",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "46 15 7 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "rd1",
+      "name": "Read INVESTORS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "INVESTORS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cd1",
+      "name": "Locate old IAN row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const OLD = 'IAN Group (Indian Angel Network)';\nfunction s(v) { return String(v == null ? '' : v).trim(); }\nconst rows = $input.all().map(function (i) { return i.json; });\nif (rows.length < 100) { throw new Error('ABORT: INVESTORS returned only ' + rows.length + ' rows'); }\n\nconst hits = rows.filter(function (r) { return s(r.investor) === OLD; });\nif (hits.length !== 1) { throw new Error('ABORT: expected 1 INVESTORS row for ' + OLD + ', found ' + hits.length); }\nconst h = hits[0];\nif (!h.row_number) { throw new Error('ABORT: no row_number'); }\n\n// Guard: the split rows must not already exist (re-run safety)\nfor (const n of ['IAN Group - Angel Fund', 'IAN Group - Alpha Fund']) {\n  if (rows.some(function (r) { return s(r.investor) === n; })) { throw new Error('ABORT: ' + n + ' already exists'); }\n}\n\nreturn [{ json: {\n  row_number: Number(h.row_number),\n  carried_last_contacted: s(h.last_contacted_any),\n  carried_contacted_by: s(h.contacted_by)\n}}];"
+      }
+    },
+    {
+      "id": "dl1",
+      "name": "Delete old IAN row",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "delete",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "INVESTORS"
+        },
+        "toDelete": "rows",
+        "startIndex": "={{ $json.row_number }}",
+        "numberToDelete": 1
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cd2",
+      "name": "Build two fund rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// IAN Group runs two distinct funds (corrections sheet, 2026-09-07). One row cannot hold both:\n// merging them would let a 20 Cr raise match the Angel consumer thesis and a 3 Cr deeptech deal\n// look eligible for Alpha. Split so each fund matches on its own stage and cheque band.\nconst prev = $('Locate old IAN row').first().json;\nreturn [\n  { json: {\n    investor: 'IAN Group - Angel Fund',\n    contact_person: 'Brendon',\n    email: 'brendon@iangroup.vc',\n    cc: '',\n    sector: 'Sector agnostic; mainly DeepTech, SaaS, Consumer (D2C, niche products, new category building), Healthcare (medical devices, biotech)',\n    stage: 'Pre-seed to Seed',\n    cheque_inr_cr: 'INR 2-6 Cr',\n    last_contacted_any: prev.carried_last_contacted,\n    contacted_by: prev.carried_contacted_by,\n    do_not_contact: ''\n  }},\n  { json: {\n    investor: 'IAN Group - Alpha Fund',\n    contact_person: 'Brendon',\n    email: 'brendon@iangroup.vc',\n    cc: '',\n    sector: 'Tech focus: DeepTech, AI, Enterprise, SaaS, emerging SaaS',\n    stage: 'Pre-Series A to Series A',\n    cheque_inr_cr: 'INR 15-30 Cr',\n    last_contacted_any: '',\n    contacted_by: '',\n    do_not_contact: ''\n  }}\n];"
+      }
+    },
+    {
+      "id": "ap1",
+      "name": "Append two fund rows",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "position": [
+        1100,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "INVESTORS"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Run once 15:46 IST 7 Sep": {
+      "main": [
+        [
+          {
+            "node": "Read INVESTORS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read INVESTORS": {
+      "main": [
+        [
+          {
+            "node": "Locate old IAN row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Locate old IAN row": {
+      "main": [
+        [
+          {
+            "node": "Delete old IAN row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete old IAN row": {
+      "main": [
+        [
+          {
+            "node": "Build two fund rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build two fund rows": {
+      "main": [
+        [
+          {
+            "node": "Append two fund rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once 15:46 IST 7 Sep": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "RBVK7nzZzyHmx0wy",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-07T10:08:42.837Z",
+      "updatedAt": "2026-09-07T10:08:42.837Z"
+    }
+  ],
+  "activeVersion": null
+}

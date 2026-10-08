@@ -1,0 +1,199 @@
+{
+  "id": "AD0FIb29J3eJIUv2",
+  "name": "One-off MT-1 — dump deal-flow meetings sheet (gid 275166776)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-10T09:06:17.480Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "5ccdc341-27eb-4a16-949b-06b92bd709bb",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once 14:42 IST 10 Sep",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "42 14 10 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "h1",
+      "name": "GET sheet metadata",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1d-wSnDCnC_c9_rqD652Zayu6An-dipeVyC7lCD_TD0Y?fields=sheets.properties(sheetId,title,gridProperties)",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "c1",
+      "name": "Pick tab",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const meta = $input.first().json;\nconst sheets = (meta.sheets || []).map(function (x) { return x.properties; });\nconst want = sheets.filter(function (p) { return String(p.sheetId) === '275166776'; })[0];\nif (!want) { throw new Error('ABORT: gid 275166776 not found. Tabs: ' + JSON.stringify(sheets.map(function (p) { return p.sheetId + '=' + p.title; }))); }\nreturn [{ json: { title: want.title, range: \"'\" + want.title.replace(/'/g, \"''\") + \"'!A1:BZ500\",\n  tabs: sheets.map(function (p) { return p.sheetId + ' = ' + p.title + ' (' + (p.gridProperties ? p.gridProperties.rowCount + 'x' + p.gridProperties.columnCount : '?') + ')'; }) } }];"
+      }
+    },
+    {
+      "id": "h2",
+      "name": "GET values",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/1d-wSnDCnC_c9_rqD652Zayu6An-dipeVyC7lCD_TD0Y/values/' + encodeURIComponent($json.range) }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "c2",
+      "name": "Dump grid",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const pick = $('Pick tab').first().json;\nconst vals = $input.first().json.values || [];\nconst rows = [];\nlet maxCols = 0;\nfor (let i = 0; i < vals.length; i++) {\n  const r = vals[i].map(function (c) { return String(c == null ? '' : c).replace(/\\s+/g, ' ').trim(); });\n  while (r.length && r[r.length - 1] === '') { r.pop(); }\n  if (r.length > maxCols) { maxCols = r.length; }\n  rows.push((i + 1) + ': ' + r.join(' | '));\n}\nreturn [{ json: { tab: pick.title, all_tabs: pick.tabs, row_count: vals.length, max_cols: maxCols, grid: rows } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once 14:42 IST 10 Sep": {
+      "main": [
+        [
+          {
+            "node": "GET sheet metadata",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET sheet metadata": {
+      "main": [
+        [
+          {
+            "node": "Pick tab",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick tab": {
+      "main": [
+        [
+          {
+            "node": "GET values",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET values": {
+      "main": [
+        [
+          {
+            "node": "Dump grid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once 14:42 IST 10 Sep": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "AD0FIb29J3eJIUv2",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-10T09:06:17.484Z",
+      "updatedAt": "2026-09-10T09:06:17.484Z"
+    }
+  ],
+  "activeVersion": null
+}

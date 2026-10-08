@@ -1,0 +1,2737 @@
+{
+  "id": "OiHvfYKKK9mOld2g",
+  "name": "MAIL-HISTORY — 6 mailboxes into mail_log, resolve + classify (hourly 9-22, full sweep 22:30, backfill webhook)",
+  "description": null,
+  "active": true,
+  "activeVersionId": "d3d1a182-95df-4e3a-a6ba-8fdd37fdc496",
+  "createdAt": "2026-10-01T08:13:44.173Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "d3d1a182-95df-4e3a-a6ba-8fdd37fdc496",
+  "versionCounter": 7,
+  "sourceWorkflowId": null,
+  "triggerCount": 3,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "8834bbce-9ed6-4239-9b66-aa7f2f1e31c5",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        400
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-mailhist-5b1f",
+        "responseMode": "onReceived",
+        "options": {}
+      }
+    },
+    {
+      "id": "l2",
+      "name": "List 2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        240,
+        0
+      ],
+      "parameters": {
+        "url": "https://gmail.googleapis.com/gmail/v1/users/me/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ $json.body.q }}"
+            },
+            {
+              "name": "maxResults",
+              "value": "500"
+            }
+          ]
+        },
+        "options": {
+          "pagination": {
+            "pagination": {
+              "paginationMode": "updateAParameterInEachRequest",
+              "parameters": {
+                "parameters": [
+                  {
+                    "type": "qs",
+                    "name": "pageToken",
+                    "value": "={{ $response.body.nextPageToken }}"
+                  }
+                ]
+              },
+              "paginationCompleteWhen": "other",
+              "completeExpression": "={{ !$response.body.nextPageToken }}",
+              "limitPagesFetched": true,
+              "maxRequests": 40,
+              "requestInterval": 200
+            }
+          }
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "hwEqMRn6IxzoYs1R",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "id": "i2",
+      "name": "Ids 2",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const out = [];\nfor (const it of $input.all()) {\n  for (const m of (it.json.messages || [])) out.push({ json: { id: m.id } });\n}\nreturn out;"
+      }
+    },
+    {
+      "id": "g2",
+      "name": "Get 2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        680,
+        0
+      ],
+      "parameters": {
+        "url": "=https://gmail.googleapis.com/gmail/v1/users/me/messages/{{ $json.id }}?format=metadata&metadataHeaders=From&metadataHeaders=To&metadataHeaders=Cc&metadataHeaders=Subject&metadataHeaders=Date",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 25,
+              "batchInterval": 150
+            }
+          }
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "hwEqMRn6IxzoYs1R",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "id": "s2",
+      "name": "Shape 2",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const H = (m, n) => {\n  const hs = (m.payload && m.payload.headers) || [];\n  const h = hs.find((x) => String(x.name).toLowerCase() === n);\n  return h ? String(h.value) : null;\n};\nconst addrs = (v) => {\n  if (!v) return null;\n  const f = String(v).match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}/g);\n  return f ? Array.from(new Set(f.map((x) => x.toLowerCase()))).join(',') : null;\n};\nconst rows = [];\nfor (const it of $input.all()) {\n  const m = it.json;\n  if (!m || !m.id) continue;\n  const from = addrs(H(m, 'from'));\n  rows.push({\n    gmail_id: m.id,\n    thread_id: m.threadId || null,\n    mailbox: from,\n    from_email: from,\n    to_emails: addrs(H(m, 'to')),\n    cc_emails: addrs(H(m, 'cc')),\n    subject: H(m, 'subject'),\n    snippet: m.snippet || null,\n    sent_at: m.internalDate ? new Date(Number(m.internalDate)).toISOString() : null,\n  });\n}\nconst out = [];\nfor (let i = 0; i < rows.length; i += 400) out.push({ json: { chunk: rows.slice(i, i + 400) } });\nreturn out;"
+      }
+    },
+    {
+      "id": "w2",
+      "name": "Write 2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        1120,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://elwaquzawoscotlojtnv.supabase.co/rest/v1/mail_log?on_conflict=gmail_id",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.chunk) }}",
+        "options": {}
+      },
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "ntQxeHO20ZUMASMg",
+          "name": "Supabase service"
+        }
+      }
+    },
+    {
+      "id": "l3",
+      "name": "List 3",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        240,
+        200
+      ],
+      "parameters": {
+        "url": "https://gmail.googleapis.com/gmail/v1/users/me/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ $json.body.q }}"
+            },
+            {
+              "name": "maxResults",
+              "value": "500"
+            }
+          ]
+        },
+        "options": {
+          "pagination": {
+            "pagination": {
+              "paginationMode": "updateAParameterInEachRequest",
+              "parameters": {
+                "parameters": [
+                  {
+                    "type": "qs",
+                    "name": "pageToken",
+                    "value": "={{ $response.body.nextPageToken }}"
+                  }
+                ]
+              },
+              "paginationCompleteWhen": "other",
+              "completeExpression": "={{ !$response.body.nextPageToken }}",
+              "limitPagesFetched": true,
+              "maxRequests": 40,
+              "requestInterval": 200
+            }
+          }
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mymSHTFVWtsI3Mh7",
+          "name": "Gmail account 3"
+        }
+      }
+    },
+    {
+      "id": "i3",
+      "name": "Ids 3",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        200
+      ],
+      "parameters": {
+        "jsCode": "const out = [];\nfor (const it of $input.all()) {\n  for (const m of (it.json.messages || [])) out.push({ json: { id: m.id } });\n}\nreturn out;"
+      }
+    },
+    {
+      "id": "g3",
+      "name": "Get 3",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        680,
+        200
+      ],
+      "parameters": {
+        "url": "=https://gmail.googleapis.com/gmail/v1/users/me/messages/{{ $json.id }}?format=metadata&metadataHeaders=From&metadataHeaders=To&metadataHeaders=Cc&metadataHeaders=Subject&metadataHeaders=Date",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 25,
+              "batchInterval": 150
+            }
+          }
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mymSHTFVWtsI3Mh7",
+          "name": "Gmail account 3"
+        }
+      }
+    },
+    {
+      "id": "s3",
+      "name": "Shape 3",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        200
+      ],
+      "parameters": {
+        "jsCode": "const H = (m, n) => {\n  const hs = (m.payload && m.payload.headers) || [];\n  const h = hs.find((x) => String(x.name).toLowerCase() === n);\n  return h ? String(h.value) : null;\n};\nconst addrs = (v) => {\n  if (!v) return null;\n  const f = String(v).match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}/g);\n  return f ? Array.from(new Set(f.map((x) => x.toLowerCase()))).join(',') : null;\n};\nconst rows = [];\nfor (const it of $input.all()) {\n  const m = it.json;\n  if (!m || !m.id) continue;\n  const from = addrs(H(m, 'from'));\n  rows.push({\n    gmail_id: m.id,\n    thread_id: m.threadId || null,\n    mailbox: from,\n    from_email: from,\n    to_emails: addrs(H(m, 'to')),\n    cc_emails: addrs(H(m, 'cc')),\n    subject: H(m, 'subject'),\n    snippet: m.snippet || null,\n    sent_at: m.internalDate ? new Date(Number(m.internalDate)).toISOString() : null,\n  });\n}\nconst out = [];\nfor (let i = 0; i < rows.length; i += 400) out.push({ json: { chunk: rows.slice(i, i + 400) } });\nreturn out;"
+      }
+    },
+    {
+      "id": "w3",
+      "name": "Write 3",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        1120,
+        200
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://elwaquzawoscotlojtnv.supabase.co/rest/v1/mail_log?on_conflict=gmail_id",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.chunk) }}",
+        "options": {}
+      },
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "ntQxeHO20ZUMASMg",
+          "name": "Supabase service"
+        }
+      }
+    },
+    {
+      "id": "l4",
+      "name": "List 4",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        240,
+        400
+      ],
+      "parameters": {
+        "url": "https://gmail.googleapis.com/gmail/v1/users/me/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ $json.body.q }}"
+            },
+            {
+              "name": "maxResults",
+              "value": "500"
+            }
+          ]
+        },
+        "options": {
+          "pagination": {
+            "pagination": {
+              "paginationMode": "updateAParameterInEachRequest",
+              "parameters": {
+                "parameters": [
+                  {
+                    "type": "qs",
+                    "name": "pageToken",
+                    "value": "={{ $response.body.nextPageToken }}"
+                  }
+                ]
+              },
+              "paginationCompleteWhen": "other",
+              "completeExpression": "={{ !$response.body.nextPageToken }}",
+              "limitPagesFetched": true,
+              "maxRequests": 40,
+              "requestInterval": 200
+            }
+          }
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "9IWD8mWqdARPXloL",
+          "name": "Gmail account 4"
+        }
+      }
+    },
+    {
+      "id": "i4",
+      "name": "Ids 4",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        400
+      ],
+      "parameters": {
+        "jsCode": "const out = [];\nfor (const it of $input.all()) {\n  for (const m of (it.json.messages || [])) out.push({ json: { id: m.id } });\n}\nreturn out;"
+      }
+    },
+    {
+      "id": "g4",
+      "name": "Get 4",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        680,
+        400
+      ],
+      "parameters": {
+        "url": "=https://gmail.googleapis.com/gmail/v1/users/me/messages/{{ $json.id }}?format=metadata&metadataHeaders=From&metadataHeaders=To&metadataHeaders=Cc&metadataHeaders=Subject&metadataHeaders=Date",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 25,
+              "batchInterval": 150
+            }
+          }
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "9IWD8mWqdARPXloL",
+          "name": "Gmail account 4"
+        }
+      }
+    },
+    {
+      "id": "s4",
+      "name": "Shape 4",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        400
+      ],
+      "parameters": {
+        "jsCode": "const H = (m, n) => {\n  const hs = (m.payload && m.payload.headers) || [];\n  const h = hs.find((x) => String(x.name).toLowerCase() === n);\n  return h ? String(h.value) : null;\n};\nconst addrs = (v) => {\n  if (!v) return null;\n  const f = String(v).match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}/g);\n  return f ? Array.from(new Set(f.map((x) => x.toLowerCase()))).join(',') : null;\n};\nconst rows = [];\nfor (const it of $input.all()) {\n  const m = it.json;\n  if (!m || !m.id) continue;\n  const from = addrs(H(m, 'from'));\n  rows.push({\n    gmail_id: m.id,\n    thread_id: m.threadId || null,\n    mailbox: from,\n    from_email: from,\n    to_emails: addrs(H(m, 'to')),\n    cc_emails: addrs(H(m, 'cc')),\n    subject: H(m, 'subject'),\n    snippet: m.snippet || null,\n    sent_at: m.internalDate ? new Date(Number(m.internalDate)).toISOString() : null,\n  });\n}\nconst out = [];\nfor (let i = 0; i < rows.length; i += 400) out.push({ json: { chunk: rows.slice(i, i + 400) } });\nreturn out;"
+      }
+    },
+    {
+      "id": "w4",
+      "name": "Write 4",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        1120,
+        400
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://elwaquzawoscotlojtnv.supabase.co/rest/v1/mail_log?on_conflict=gmail_id",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.chunk) }}",
+        "options": {}
+      },
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "ntQxeHO20ZUMASMg",
+          "name": "Supabase service"
+        }
+      }
+    },
+    {
+      "id": "l5",
+      "name": "List 5",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        240,
+        600
+      ],
+      "parameters": {
+        "url": "https://gmail.googleapis.com/gmail/v1/users/me/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ $json.body.q }}"
+            },
+            {
+              "name": "maxResults",
+              "value": "500"
+            }
+          ]
+        },
+        "options": {
+          "pagination": {
+            "pagination": {
+              "paginationMode": "updateAParameterInEachRequest",
+              "parameters": {
+                "parameters": [
+                  {
+                    "type": "qs",
+                    "name": "pageToken",
+                    "value": "={{ $response.body.nextPageToken }}"
+                  }
+                ]
+              },
+              "paginationCompleteWhen": "other",
+              "completeExpression": "={{ !$response.body.nextPageToken }}",
+              "limitPagesFetched": true,
+              "maxRequests": 40,
+              "requestInterval": 200
+            }
+          }
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "R5K61omYbU9oT5J8",
+          "name": "Gmail account 5"
+        }
+      }
+    },
+    {
+      "id": "i5",
+      "name": "Ids 5",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        600
+      ],
+      "parameters": {
+        "jsCode": "const out = [];\nfor (const it of $input.all()) {\n  for (const m of (it.json.messages || [])) out.push({ json: { id: m.id } });\n}\nreturn out;"
+      }
+    },
+    {
+      "id": "g5",
+      "name": "Get 5",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        680,
+        600
+      ],
+      "parameters": {
+        "url": "=https://gmail.googleapis.com/gmail/v1/users/me/messages/{{ $json.id }}?format=metadata&metadataHeaders=From&metadataHeaders=To&metadataHeaders=Cc&metadataHeaders=Subject&metadataHeaders=Date",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 25,
+              "batchInterval": 150
+            }
+          }
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "R5K61omYbU9oT5J8",
+          "name": "Gmail account 5"
+        }
+      }
+    },
+    {
+      "id": "s5",
+      "name": "Shape 5",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        600
+      ],
+      "parameters": {
+        "jsCode": "const H = (m, n) => {\n  const hs = (m.payload && m.payload.headers) || [];\n  const h = hs.find((x) => String(x.name).toLowerCase() === n);\n  return h ? String(h.value) : null;\n};\nconst addrs = (v) => {\n  if (!v) return null;\n  const f = String(v).match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}/g);\n  return f ? Array.from(new Set(f.map((x) => x.toLowerCase()))).join(',') : null;\n};\nconst rows = [];\nfor (const it of $input.all()) {\n  const m = it.json;\n  if (!m || !m.id) continue;\n  const from = addrs(H(m, 'from'));\n  rows.push({\n    gmail_id: m.id,\n    thread_id: m.threadId || null,\n    mailbox: from,\n    from_email: from,\n    to_emails: addrs(H(m, 'to')),\n    cc_emails: addrs(H(m, 'cc')),\n    subject: H(m, 'subject'),\n    snippet: m.snippet || null,\n    sent_at: m.internalDate ? new Date(Number(m.internalDate)).toISOString() : null,\n  });\n}\nconst out = [];\nfor (let i = 0; i < rows.length; i += 400) out.push({ json: { chunk: rows.slice(i, i + 400) } });\nreturn out;"
+      }
+    },
+    {
+      "id": "w5",
+      "name": "Write 5",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        1120,
+        600
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://elwaquzawoscotlojtnv.supabase.co/rest/v1/mail_log?on_conflict=gmail_id",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.chunk) }}",
+        "options": {}
+      },
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "ntQxeHO20ZUMASMg",
+          "name": "Supabase service"
+        }
+      }
+    },
+    {
+      "id": "l6",
+      "name": "List 6",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        240,
+        800
+      ],
+      "parameters": {
+        "url": "https://gmail.googleapis.com/gmail/v1/users/me/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ $json.body.q }}"
+            },
+            {
+              "name": "maxResults",
+              "value": "500"
+            }
+          ]
+        },
+        "options": {
+          "pagination": {
+            "pagination": {
+              "paginationMode": "updateAParameterInEachRequest",
+              "parameters": {
+                "parameters": [
+                  {
+                    "type": "qs",
+                    "name": "pageToken",
+                    "value": "={{ $response.body.nextPageToken }}"
+                  }
+                ]
+              },
+              "paginationCompleteWhen": "other",
+              "completeExpression": "={{ !$response.body.nextPageToken }}",
+              "limitPagesFetched": true,
+              "maxRequests": 40,
+              "requestInterval": 200
+            }
+          }
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "s4YYut2fC7u8aQWl",
+          "name": "Gmail account 6"
+        }
+      }
+    },
+    {
+      "id": "i6",
+      "name": "Ids 6",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        800
+      ],
+      "parameters": {
+        "jsCode": "const out = [];\nfor (const it of $input.all()) {\n  for (const m of (it.json.messages || [])) out.push({ json: { id: m.id } });\n}\nreturn out;"
+      }
+    },
+    {
+      "id": "g6",
+      "name": "Get 6",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        680,
+        800
+      ],
+      "parameters": {
+        "url": "=https://gmail.googleapis.com/gmail/v1/users/me/messages/{{ $json.id }}?format=metadata&metadataHeaders=From&metadataHeaders=To&metadataHeaders=Cc&metadataHeaders=Subject&metadataHeaders=Date",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 25,
+              "batchInterval": 150
+            }
+          }
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "s4YYut2fC7u8aQWl",
+          "name": "Gmail account 6"
+        }
+      }
+    },
+    {
+      "id": "s6",
+      "name": "Shape 6",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        800
+      ],
+      "parameters": {
+        "jsCode": "const H = (m, n) => {\n  const hs = (m.payload && m.payload.headers) || [];\n  const h = hs.find((x) => String(x.name).toLowerCase() === n);\n  return h ? String(h.value) : null;\n};\nconst addrs = (v) => {\n  if (!v) return null;\n  const f = String(v).match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}/g);\n  return f ? Array.from(new Set(f.map((x) => x.toLowerCase()))).join(',') : null;\n};\nconst rows = [];\nfor (const it of $input.all()) {\n  const m = it.json;\n  if (!m || !m.id) continue;\n  const from = addrs(H(m, 'from'));\n  rows.push({\n    gmail_id: m.id,\n    thread_id: m.threadId || null,\n    mailbox: from,\n    from_email: from,\n    to_emails: addrs(H(m, 'to')),\n    cc_emails: addrs(H(m, 'cc')),\n    subject: H(m, 'subject'),\n    snippet: m.snippet || null,\n    sent_at: m.internalDate ? new Date(Number(m.internalDate)).toISOString() : null,\n  });\n}\nconst out = [];\nfor (let i = 0; i < rows.length; i += 400) out.push({ json: { chunk: rows.slice(i, i + 400) } });\nreturn out;"
+      }
+    },
+    {
+      "id": "w6",
+      "name": "Write 6",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        1120,
+        800
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://elwaquzawoscotlojtnv.supabase.co/rest/v1/mail_log?on_conflict=gmail_id",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.chunk) }}",
+        "options": {}
+      },
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "ntQxeHO20ZUMASMg",
+          "name": "Supabase service"
+        }
+      }
+    },
+    {
+      "id": "sch",
+      "name": "Nightly",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -460,
+        400
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "30 22 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "dq",
+      "name": "Daily window",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -240,
+        400
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Three days of overlap, deliberately. A missed run, a late Gmail sync or a\n// clock skew would otherwise leave a permanent hole in the history, and\n// gmail_id is the primary key so re-reading a message costs nothing.\nreturn [{ json: { body: { q: '(in:sent OR in:inbox) newer_than:3d -category:promotions -category:social' } } }];"
+      }
+    },
+    {
+      "id": "rz",
+      "name": "Resolve",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        1340,
+        400
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://elwaquzawoscotlojtnv.supabase.co/rest/v1/rpc/resolve_mail",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={}",
+        "options": {
+          "timeout": 300000
+        }
+      },
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "ntQxeHO20ZUMASMg",
+          "name": "Supabase service"
+        }
+      }
+    },
+    {
+      "id": "cl",
+      "name": "Classify",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        1560,
+        400
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://elwaquzawoscotlojtnv.supabase.co/rest/v1/rpc/classify_replies",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={}",
+        "options": {
+          "timeout": 300000
+        }
+      },
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "ntQxeHO20ZUMASMg",
+          "name": "Supabase service"
+        }
+      }
+    },
+    {
+      "id": "sch2",
+      "name": "Hourly 9-22",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -460,
+        620
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "20 9-22 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "hw",
+      "name": "Hourly window",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -240,
+        620
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// One day during working hours: enough overlap to survive a skipped run,\n// small enough to re-read cheaply every hour. The 22:30 run still sweeps\n// three days, so a longer outage is caught by that rather than by making\n// every hourly pass expensive.\nreturn [{ json: { body: { q: '(in:sent OR in:inbox) newer_than:1d -category:promotions -category:social' } } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "List 2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "List 3",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "List 4",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "List 5",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "List 6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List 2": {
+      "main": [
+        [
+          {
+            "node": "Ids 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ids 2": {
+      "main": [
+        [
+          {
+            "node": "Get 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get 2": {
+      "main": [
+        [
+          {
+            "node": "Shape 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Shape 2": {
+      "main": [
+        [
+          {
+            "node": "Write 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List 3": {
+      "main": [
+        [
+          {
+            "node": "Ids 3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ids 3": {
+      "main": [
+        [
+          {
+            "node": "Get 3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get 3": {
+      "main": [
+        [
+          {
+            "node": "Shape 3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Shape 3": {
+      "main": [
+        [
+          {
+            "node": "Write 3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List 4": {
+      "main": [
+        [
+          {
+            "node": "Ids 4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ids 4": {
+      "main": [
+        [
+          {
+            "node": "Get 4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get 4": {
+      "main": [
+        [
+          {
+            "node": "Shape 4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Shape 4": {
+      "main": [
+        [
+          {
+            "node": "Write 4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List 5": {
+      "main": [
+        [
+          {
+            "node": "Ids 5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ids 5": {
+      "main": [
+        [
+          {
+            "node": "Get 5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get 5": {
+      "main": [
+        [
+          {
+            "node": "Shape 5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Shape 5": {
+      "main": [
+        [
+          {
+            "node": "Write 5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List 6": {
+      "main": [
+        [
+          {
+            "node": "Ids 6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ids 6": {
+      "main": [
+        [
+          {
+            "node": "Get 6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get 6": {
+      "main": [
+        [
+          {
+            "node": "Shape 6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Shape 6": {
+      "main": [
+        [
+          {
+            "node": "Write 6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Nightly": {
+      "main": [
+        [
+          {
+            "node": "Daily window",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily window": {
+      "main": [
+        [
+          {
+            "node": "List 2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "List 3",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "List 4",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "List 5",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "List 6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write 2": {
+      "main": [
+        [
+          {
+            "node": "Resolve",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write 3": {
+      "main": [
+        [
+          {
+            "node": "Resolve",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write 4": {
+      "main": [
+        [
+          {
+            "node": "Resolve",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write 5": {
+      "main": [
+        [
+          {
+            "node": "Resolve",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write 6": {
+      "main": [
+        [
+          {
+            "node": "Resolve",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve": {
+      "main": [
+        [
+          {
+            "node": "Classify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hourly 9-22": {
+      "main": [
+        [
+          {
+            "node": "Hourly window",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hourly window": {
+      "main": [
+        [
+          {
+            "node": "List 2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "List 3",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "List 4",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "List 5",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "List 6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "none",
+    "executionTimeout": 3000,
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Nightly": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    },
+    "node:Hourly 9-22": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "OiHvfYKKK9mOld2g",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-10-01T08:13:44.175Z",
+      "updatedAt": "2026-10-01T08:13:44.175Z"
+    }
+  ],
+  "activeVersion": {
+    "versionId": "d3d1a182-95df-4e3a-a6ba-8fdd37fdc496",
+    "workflowId": "OiHvfYKKK9mOld2g",
+    "nodes": [
+      {
+        "id": "wh",
+        "name": "Webhook",
+        "webhookId": "8834bbce-9ed6-4239-9b66-aa7f2f1e31c5",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          400
+        ],
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "sidana-mailhist-5b1f",
+          "responseMode": "onReceived",
+          "options": {}
+        }
+      },
+      {
+        "id": "l2",
+        "name": "List 2",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          240,
+          0
+        ],
+        "parameters": {
+          "url": "https://gmail.googleapis.com/gmail/v1/users/me/messages",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "gmailOAuth2",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "q",
+                "value": "={{ $json.body.q }}"
+              },
+              {
+                "name": "maxResults",
+                "value": "500"
+              }
+            ]
+          },
+          "options": {
+            "pagination": {
+              "pagination": {
+                "paginationMode": "updateAParameterInEachRequest",
+                "parameters": {
+                  "parameters": [
+                    {
+                      "type": "qs",
+                      "name": "pageToken",
+                      "value": "={{ $response.body.nextPageToken }}"
+                    }
+                  ]
+                },
+                "paginationCompleteWhen": "other",
+                "completeExpression": "={{ !$response.body.nextPageToken }}",
+                "limitPagesFetched": true,
+                "maxRequests": 40,
+                "requestInterval": 200
+              }
+            }
+          }
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "hwEqMRn6IxzoYs1R",
+            "name": "Gmail account 2"
+          }
+        }
+      },
+      {
+        "id": "i2",
+        "name": "Ids 2",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          460,
+          0
+        ],
+        "parameters": {
+          "jsCode": "const out = [];\nfor (const it of $input.all()) {\n  for (const m of (it.json.messages || [])) out.push({ json: { id: m.id } });\n}\nreturn out;"
+        }
+      },
+      {
+        "id": "g2",
+        "name": "Get 2",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          680,
+          0
+        ],
+        "parameters": {
+          "url": "=https://gmail.googleapis.com/gmail/v1/users/me/messages/{{ $json.id }}?format=metadata&metadataHeaders=From&metadataHeaders=To&metadataHeaders=Cc&metadataHeaders=Subject&metadataHeaders=Date",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "gmailOAuth2",
+          "options": {
+            "batching": {
+              "batch": {
+                "batchSize": 25,
+                "batchInterval": 150
+              }
+            }
+          }
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "hwEqMRn6IxzoYs1R",
+            "name": "Gmail account 2"
+          }
+        }
+      },
+      {
+        "id": "s2",
+        "name": "Shape 2",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          900,
+          0
+        ],
+        "parameters": {
+          "jsCode": "const H = (m, n) => {\n  const hs = (m.payload && m.payload.headers) || [];\n  const h = hs.find((x) => String(x.name).toLowerCase() === n);\n  return h ? String(h.value) : null;\n};\nconst addrs = (v) => {\n  if (!v) return null;\n  const f = String(v).match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}/g);\n  return f ? Array.from(new Set(f.map((x) => x.toLowerCase()))).join(',') : null;\n};\nconst rows = [];\nfor (const it of $input.all()) {\n  const m = it.json;\n  if (!m || !m.id) continue;\n  const from = addrs(H(m, 'from'));\n  rows.push({\n    gmail_id: m.id,\n    thread_id: m.threadId || null,\n    mailbox: from,\n    from_email: from,\n    to_emails: addrs(H(m, 'to')),\n    cc_emails: addrs(H(m, 'cc')),\n    subject: H(m, 'subject'),\n    snippet: m.snippet || null,\n    sent_at: m.internalDate ? new Date(Number(m.internalDate)).toISOString() : null,\n  });\n}\nconst out = [];\nfor (let i = 0; i < rows.length; i += 400) out.push({ json: { chunk: rows.slice(i, i + 400) } });\nreturn out;"
+        }
+      },
+      {
+        "id": "w2",
+        "name": "Write 2",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          1120,
+          0
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://elwaquzawoscotlojtnv.supabase.co/rest/v1/mail_log?on_conflict=gmail_id",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpCustomAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Prefer",
+                "value": "resolution=merge-duplicates"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json.chunk) }}",
+          "options": {}
+        },
+        "credentials": {
+          "httpCustomAuth": {
+            "id": "ntQxeHO20ZUMASMg",
+            "name": "Supabase service"
+          }
+        }
+      },
+      {
+        "id": "l3",
+        "name": "List 3",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          240,
+          200
+        ],
+        "parameters": {
+          "url": "https://gmail.googleapis.com/gmail/v1/users/me/messages",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "gmailOAuth2",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "q",
+                "value": "={{ $json.body.q }}"
+              },
+              {
+                "name": "maxResults",
+                "value": "500"
+              }
+            ]
+          },
+          "options": {
+            "pagination": {
+              "pagination": {
+                "paginationMode": "updateAParameterInEachRequest",
+                "parameters": {
+                  "parameters": [
+                    {
+                      "type": "qs",
+                      "name": "pageToken",
+                      "value": "={{ $response.body.nextPageToken }}"
+                    }
+                  ]
+                },
+                "paginationCompleteWhen": "other",
+                "completeExpression": "={{ !$response.body.nextPageToken }}",
+                "limitPagesFetched": true,
+                "maxRequests": 40,
+                "requestInterval": 200
+              }
+            }
+          }
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "mymSHTFVWtsI3Mh7",
+            "name": "Gmail account 3"
+          }
+        }
+      },
+      {
+        "id": "i3",
+        "name": "Ids 3",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          460,
+          200
+        ],
+        "parameters": {
+          "jsCode": "const out = [];\nfor (const it of $input.all()) {\n  for (const m of (it.json.messages || [])) out.push({ json: { id: m.id } });\n}\nreturn out;"
+        }
+      },
+      {
+        "id": "g3",
+        "name": "Get 3",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          680,
+          200
+        ],
+        "parameters": {
+          "url": "=https://gmail.googleapis.com/gmail/v1/users/me/messages/{{ $json.id }}?format=metadata&metadataHeaders=From&metadataHeaders=To&metadataHeaders=Cc&metadataHeaders=Subject&metadataHeaders=Date",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "gmailOAuth2",
+          "options": {
+            "batching": {
+              "batch": {
+                "batchSize": 25,
+                "batchInterval": 150
+              }
+            }
+          }
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "mymSHTFVWtsI3Mh7",
+            "name": "Gmail account 3"
+          }
+        }
+      },
+      {
+        "id": "s3",
+        "name": "Shape 3",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          900,
+          200
+        ],
+        "parameters": {
+          "jsCode": "const H = (m, n) => {\n  const hs = (m.payload && m.payload.headers) || [];\n  const h = hs.find((x) => String(x.name).toLowerCase() === n);\n  return h ? String(h.value) : null;\n};\nconst addrs = (v) => {\n  if (!v) return null;\n  const f = String(v).match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}/g);\n  return f ? Array.from(new Set(f.map((x) => x.toLowerCase()))).join(',') : null;\n};\nconst rows = [];\nfor (const it of $input.all()) {\n  const m = it.json;\n  if (!m || !m.id) continue;\n  const from = addrs(H(m, 'from'));\n  rows.push({\n    gmail_id: m.id,\n    thread_id: m.threadId || null,\n    mailbox: from,\n    from_email: from,\n    to_emails: addrs(H(m, 'to')),\n    cc_emails: addrs(H(m, 'cc')),\n    subject: H(m, 'subject'),\n    snippet: m.snippet || null,\n    sent_at: m.internalDate ? new Date(Number(m.internalDate)).toISOString() : null,\n  });\n}\nconst out = [];\nfor (let i = 0; i < rows.length; i += 400) out.push({ json: { chunk: rows.slice(i, i + 400) } });\nreturn out;"
+        }
+      },
+      {
+        "id": "w3",
+        "name": "Write 3",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          1120,
+          200
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://elwaquzawoscotlojtnv.supabase.co/rest/v1/mail_log?on_conflict=gmail_id",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpCustomAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Prefer",
+                "value": "resolution=merge-duplicates"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json.chunk) }}",
+          "options": {}
+        },
+        "credentials": {
+          "httpCustomAuth": {
+            "id": "ntQxeHO20ZUMASMg",
+            "name": "Supabase service"
+          }
+        }
+      },
+      {
+        "id": "l4",
+        "name": "List 4",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          240,
+          400
+        ],
+        "parameters": {
+          "url": "https://gmail.googleapis.com/gmail/v1/users/me/messages",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "gmailOAuth2",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "q",
+                "value": "={{ $json.body.q }}"
+              },
+              {
+                "name": "maxResults",
+                "value": "500"
+              }
+            ]
+          },
+          "options": {
+            "pagination": {
+              "pagination": {
+                "paginationMode": "updateAParameterInEachRequest",
+                "parameters": {
+                  "parameters": [
+                    {
+                      "type": "qs",
+                      "name": "pageToken",
+                      "value": "={{ $response.body.nextPageToken }}"
+                    }
+                  ]
+                },
+                "paginationCompleteWhen": "other",
+                "completeExpression": "={{ !$response.body.nextPageToken }}",
+                "limitPagesFetched": true,
+                "maxRequests": 40,
+                "requestInterval": 200
+              }
+            }
+          }
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "9IWD8mWqdARPXloL",
+            "name": "Gmail account 4"
+          }
+        }
+      },
+      {
+        "id": "i4",
+        "name": "Ids 4",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          460,
+          400
+        ],
+        "parameters": {
+          "jsCode": "const out = [];\nfor (const it of $input.all()) {\n  for (const m of (it.json.messages || [])) out.push({ json: { id: m.id } });\n}\nreturn out;"
+        }
+      },
+      {
+        "id": "g4",
+        "name": "Get 4",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          680,
+          400
+        ],
+        "parameters": {
+          "url": "=https://gmail.googleapis.com/gmail/v1/users/me/messages/{{ $json.id }}?format=metadata&metadataHeaders=From&metadataHeaders=To&metadataHeaders=Cc&metadataHeaders=Subject&metadataHeaders=Date",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "gmailOAuth2",
+          "options": {
+            "batching": {
+              "batch": {
+                "batchSize": 25,
+                "batchInterval": 150
+              }
+            }
+          }
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "9IWD8mWqdARPXloL",
+            "name": "Gmail account 4"
+          }
+        }
+      },
+      {
+        "id": "s4",
+        "name": "Shape 4",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          900,
+          400
+        ],
+        "parameters": {
+          "jsCode": "const H = (m, n) => {\n  const hs = (m.payload && m.payload.headers) || [];\n  const h = hs.find((x) => String(x.name).toLowerCase() === n);\n  return h ? String(h.value) : null;\n};\nconst addrs = (v) => {\n  if (!v) return null;\n  const f = String(v).match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}/g);\n  return f ? Array.from(new Set(f.map((x) => x.toLowerCase()))).join(',') : null;\n};\nconst rows = [];\nfor (const it of $input.all()) {\n  const m = it.json;\n  if (!m || !m.id) continue;\n  const from = addrs(H(m, 'from'));\n  rows.push({\n    gmail_id: m.id,\n    thread_id: m.threadId || null,\n    mailbox: from,\n    from_email: from,\n    to_emails: addrs(H(m, 'to')),\n    cc_emails: addrs(H(m, 'cc')),\n    subject: H(m, 'subject'),\n    snippet: m.snippet || null,\n    sent_at: m.internalDate ? new Date(Number(m.internalDate)).toISOString() : null,\n  });\n}\nconst out = [];\nfor (let i = 0; i < rows.length; i += 400) out.push({ json: { chunk: rows.slice(i, i + 400) } });\nreturn out;"
+        }
+      },
+      {
+        "id": "w4",
+        "name": "Write 4",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          1120,
+          400
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://elwaquzawoscotlojtnv.supabase.co/rest/v1/mail_log?on_conflict=gmail_id",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpCustomAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Prefer",
+                "value": "resolution=merge-duplicates"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json.chunk) }}",
+          "options": {}
+        },
+        "credentials": {
+          "httpCustomAuth": {
+            "id": "ntQxeHO20ZUMASMg",
+            "name": "Supabase service"
+          }
+        }
+      },
+      {
+        "id": "l5",
+        "name": "List 5",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          240,
+          600
+        ],
+        "parameters": {
+          "url": "https://gmail.googleapis.com/gmail/v1/users/me/messages",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "gmailOAuth2",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "q",
+                "value": "={{ $json.body.q }}"
+              },
+              {
+                "name": "maxResults",
+                "value": "500"
+              }
+            ]
+          },
+          "options": {
+            "pagination": {
+              "pagination": {
+                "paginationMode": "updateAParameterInEachRequest",
+                "parameters": {
+                  "parameters": [
+                    {
+                      "type": "qs",
+                      "name": "pageToken",
+                      "value": "={{ $response.body.nextPageToken }}"
+                    }
+                  ]
+                },
+                "paginationCompleteWhen": "other",
+                "completeExpression": "={{ !$response.body.nextPageToken }}",
+                "limitPagesFetched": true,
+                "maxRequests": 40,
+                "requestInterval": 200
+              }
+            }
+          }
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "R5K61omYbU9oT5J8",
+            "name": "Gmail account 5"
+          }
+        }
+      },
+      {
+        "id": "i5",
+        "name": "Ids 5",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          460,
+          600
+        ],
+        "parameters": {
+          "jsCode": "const out = [];\nfor (const it of $input.all()) {\n  for (const m of (it.json.messages || [])) out.push({ json: { id: m.id } });\n}\nreturn out;"
+        }
+      },
+      {
+        "id": "g5",
+        "name": "Get 5",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          680,
+          600
+        ],
+        "parameters": {
+          "url": "=https://gmail.googleapis.com/gmail/v1/users/me/messages/{{ $json.id }}?format=metadata&metadataHeaders=From&metadataHeaders=To&metadataHeaders=Cc&metadataHeaders=Subject&metadataHeaders=Date",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "gmailOAuth2",
+          "options": {
+            "batching": {
+              "batch": {
+                "batchSize": 25,
+                "batchInterval": 150
+              }
+            }
+          }
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "R5K61omYbU9oT5J8",
+            "name": "Gmail account 5"
+          }
+        }
+      },
+      {
+        "id": "s5",
+        "name": "Shape 5",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          900,
+          600
+        ],
+        "parameters": {
+          "jsCode": "const H = (m, n) => {\n  const hs = (m.payload && m.payload.headers) || [];\n  const h = hs.find((x) => String(x.name).toLowerCase() === n);\n  return h ? String(h.value) : null;\n};\nconst addrs = (v) => {\n  if (!v) return null;\n  const f = String(v).match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}/g);\n  return f ? Array.from(new Set(f.map((x) => x.toLowerCase()))).join(',') : null;\n};\nconst rows = [];\nfor (const it of $input.all()) {\n  const m = it.json;\n  if (!m || !m.id) continue;\n  const from = addrs(H(m, 'from'));\n  rows.push({\n    gmail_id: m.id,\n    thread_id: m.threadId || null,\n    mailbox: from,\n    from_email: from,\n    to_emails: addrs(H(m, 'to')),\n    cc_emails: addrs(H(m, 'cc')),\n    subject: H(m, 'subject'),\n    snippet: m.snippet || null,\n    sent_at: m.internalDate ? new Date(Number(m.internalDate)).toISOString() : null,\n  });\n}\nconst out = [];\nfor (let i = 0; i < rows.length; i += 400) out.push({ json: { chunk: rows.slice(i, i + 400) } });\nreturn out;"
+        }
+      },
+      {
+        "id": "w5",
+        "name": "Write 5",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          1120,
+          600
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://elwaquzawoscotlojtnv.supabase.co/rest/v1/mail_log?on_conflict=gmail_id",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpCustomAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Prefer",
+                "value": "resolution=merge-duplicates"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json.chunk) }}",
+          "options": {}
+        },
+        "credentials": {
+          "httpCustomAuth": {
+            "id": "ntQxeHO20ZUMASMg",
+            "name": "Supabase service"
+          }
+        }
+      },
+      {
+        "id": "l6",
+        "name": "List 6",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          240,
+          800
+        ],
+        "parameters": {
+          "url": "https://gmail.googleapis.com/gmail/v1/users/me/messages",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "gmailOAuth2",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "q",
+                "value": "={{ $json.body.q }}"
+              },
+              {
+                "name": "maxResults",
+                "value": "500"
+              }
+            ]
+          },
+          "options": {
+            "pagination": {
+              "pagination": {
+                "paginationMode": "updateAParameterInEachRequest",
+                "parameters": {
+                  "parameters": [
+                    {
+                      "type": "qs",
+                      "name": "pageToken",
+                      "value": "={{ $response.body.nextPageToken }}"
+                    }
+                  ]
+                },
+                "paginationCompleteWhen": "other",
+                "completeExpression": "={{ !$response.body.nextPageToken }}",
+                "limitPagesFetched": true,
+                "maxRequests": 40,
+                "requestInterval": 200
+              }
+            }
+          }
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "s4YYut2fC7u8aQWl",
+            "name": "Gmail account 6"
+          }
+        }
+      },
+      {
+        "id": "i6",
+        "name": "Ids 6",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          460,
+          800
+        ],
+        "parameters": {
+          "jsCode": "const out = [];\nfor (const it of $input.all()) {\n  for (const m of (it.json.messages || [])) out.push({ json: { id: m.id } });\n}\nreturn out;"
+        }
+      },
+      {
+        "id": "g6",
+        "name": "Get 6",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          680,
+          800
+        ],
+        "parameters": {
+          "url": "=https://gmail.googleapis.com/gmail/v1/users/me/messages/{{ $json.id }}?format=metadata&metadataHeaders=From&metadataHeaders=To&metadataHeaders=Cc&metadataHeaders=Subject&metadataHeaders=Date",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "gmailOAuth2",
+          "options": {
+            "batching": {
+              "batch": {
+                "batchSize": 25,
+                "batchInterval": 150
+              }
+            }
+          }
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "s4YYut2fC7u8aQWl",
+            "name": "Gmail account 6"
+          }
+        }
+      },
+      {
+        "id": "s6",
+        "name": "Shape 6",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          900,
+          800
+        ],
+        "parameters": {
+          "jsCode": "const H = (m, n) => {\n  const hs = (m.payload && m.payload.headers) || [];\n  const h = hs.find((x) => String(x.name).toLowerCase() === n);\n  return h ? String(h.value) : null;\n};\nconst addrs = (v) => {\n  if (!v) return null;\n  const f = String(v).match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}/g);\n  return f ? Array.from(new Set(f.map((x) => x.toLowerCase()))).join(',') : null;\n};\nconst rows = [];\nfor (const it of $input.all()) {\n  const m = it.json;\n  if (!m || !m.id) continue;\n  const from = addrs(H(m, 'from'));\n  rows.push({\n    gmail_id: m.id,\n    thread_id: m.threadId || null,\n    mailbox: from,\n    from_email: from,\n    to_emails: addrs(H(m, 'to')),\n    cc_emails: addrs(H(m, 'cc')),\n    subject: H(m, 'subject'),\n    snippet: m.snippet || null,\n    sent_at: m.internalDate ? new Date(Number(m.internalDate)).toISOString() : null,\n  });\n}\nconst out = [];\nfor (let i = 0; i < rows.length; i += 400) out.push({ json: { chunk: rows.slice(i, i + 400) } });\nreturn out;"
+        }
+      },
+      {
+        "id": "w6",
+        "name": "Write 6",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          1120,
+          800
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://elwaquzawoscotlojtnv.supabase.co/rest/v1/mail_log?on_conflict=gmail_id",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpCustomAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Prefer",
+                "value": "resolution=merge-duplicates"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json.chunk) }}",
+          "options": {}
+        },
+        "credentials": {
+          "httpCustomAuth": {
+            "id": "ntQxeHO20ZUMASMg",
+            "name": "Supabase service"
+          }
+        }
+      },
+      {
+        "id": "sch",
+        "name": "Nightly",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          -460,
+          400
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "30 22 * * *"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "dq",
+        "name": "Daily window",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -240,
+          400
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "// Three days of overlap, deliberately. A missed run, a late Gmail sync or a\n// clock skew would otherwise leave a permanent hole in the history, and\n// gmail_id is the primary key so re-reading a message costs nothing.\nreturn [{ json: { body: { q: '(in:sent OR in:inbox) newer_than:3d -category:promotions -category:social' } } }];"
+        }
+      },
+      {
+        "id": "rz",
+        "name": "Resolve",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          1340,
+          400
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://elwaquzawoscotlojtnv.supabase.co/rest/v1/rpc/resolve_mail",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpCustomAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={}",
+          "options": {
+            "timeout": 300000
+          }
+        },
+        "credentials": {
+          "httpCustomAuth": {
+            "id": "ntQxeHO20ZUMASMg",
+            "name": "Supabase service"
+          }
+        }
+      },
+      {
+        "id": "cl",
+        "name": "Classify",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          1560,
+          400
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://elwaquzawoscotlojtnv.supabase.co/rest/v1/rpc/classify_replies",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpCustomAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={}",
+          "options": {
+            "timeout": 300000
+          }
+        },
+        "credentials": {
+          "httpCustomAuth": {
+            "id": "ntQxeHO20ZUMASMg",
+            "name": "Supabase service"
+          }
+        }
+      },
+      {
+        "id": "sch2",
+        "name": "Hourly 9-22",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          -460,
+          620
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "20 9-22 * * *"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "hw",
+        "name": "Hourly window",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -240,
+          620
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "// One day during working hours: enough overlap to survive a skipped run,\n// small enough to re-read cheaply every hour. The 22:30 run still sweeps\n// three days, so a longer outage is caught by that rather than by making\n// every hourly pass expensive.\nreturn [{ json: { body: { q: '(in:sent OR in:inbox) newer_than:1d -category:promotions -category:social' } } }];"
+        }
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "List 2",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "List 3",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "List 4",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "List 5",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "List 6",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "List 2": {
+        "main": [
+          [
+            {
+              "node": "Ids 2",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Ids 2": {
+        "main": [
+          [
+            {
+              "node": "Get 2",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get 2": {
+        "main": [
+          [
+            {
+              "node": "Shape 2",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Shape 2": {
+        "main": [
+          [
+            {
+              "node": "Write 2",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "List 3": {
+        "main": [
+          [
+            {
+              "node": "Ids 3",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Ids 3": {
+        "main": [
+          [
+            {
+              "node": "Get 3",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get 3": {
+        "main": [
+          [
+            {
+              "node": "Shape 3",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Shape 3": {
+        "main": [
+          [
+            {
+              "node": "Write 3",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "List 4": {
+        "main": [
+          [
+            {
+              "node": "Ids 4",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Ids 4": {
+        "main": [
+          [
+            {
+              "node": "Get 4",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get 4": {
+        "main": [
+          [
+            {
+              "node": "Shape 4",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Shape 4": {
+        "main": [
+          [
+            {
+              "node": "Write 4",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "List 5": {
+        "main": [
+          [
+            {
+              "node": "Ids 5",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Ids 5": {
+        "main": [
+          [
+            {
+              "node": "Get 5",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get 5": {
+        "main": [
+          [
+            {
+              "node": "Shape 5",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Shape 5": {
+        "main": [
+          [
+            {
+              "node": "Write 5",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "List 6": {
+        "main": [
+          [
+            {
+              "node": "Ids 6",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Ids 6": {
+        "main": [
+          [
+            {
+              "node": "Get 6",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get 6": {
+        "main": [
+          [
+            {
+              "node": "Shape 6",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Shape 6": {
+        "main": [
+          [
+            {
+              "node": "Write 6",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Nightly": {
+        "main": [
+          [
+            {
+              "node": "Daily window",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Daily window": {
+        "main": [
+          [
+            {
+              "node": "List 2",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "List 3",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "List 4",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "List 5",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "List 6",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Write 2": {
+        "main": [
+          [
+            {
+              "node": "Resolve",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Write 3": {
+        "main": [
+          [
+            {
+              "node": "Resolve",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Write 4": {
+        "main": [
+          [
+            {
+              "node": "Resolve",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Write 5": {
+        "main": [
+          [
+            {
+              "node": "Resolve",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Write 6": {
+        "main": [
+          [
+            {
+              "node": "Resolve",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Resolve": {
+        "main": [
+          [
+            {
+              "node": "Classify",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Hourly 9-22": {
+        "main": [
+          [
+            {
+              "node": "Hourly window",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Hourly window": {
+        "main": [
+          [
+            {
+              "node": "List 2",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "List 3",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "List 4",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "List 5",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "List 6",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "Sidana Ventures",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "createdAt": "2026-10-01T12:46:28.492Z",
+    "updatedAt": "2026-10-01T12:46:28.492Z",
+    "workflowPublishHistory": [
+      {
+        "id": 10836,
+        "workflowId": "OiHvfYKKK9mOld2g",
+        "versionId": "d3d1a182-95df-4e3a-a6ba-8fdd37fdc496",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-10-01T12:46:28.607Z"
+      }
+    ]
+  }
+}

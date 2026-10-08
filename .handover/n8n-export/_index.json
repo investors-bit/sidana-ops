@@ -1,0 +1,3233 @@
+[
+  {
+    "id": "04qPLHnbKyU920po",
+    "name": "REPLY-SEND-MB2B — one guarded in-thread reply from Chaman's mailbox (dealflow@) (webhook, one-off)",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T11:42:03.689Z",
+    "file": "04qPLHnbKyU920po--reply-send-mb2b-one-guarded-in-thread-reply-from-chaman-s-mailbox-deal.json"
+  },
+  {
+    "id": "06HDdyVsRmaOZJvB",
+    "name": "One-off — DELETE Climate Angels from PIPELINE + INVESTORS",
+    "active": false,
+    "archived": false,
+    "nodes": 7,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "06HDdyVsRmaOZJvB--one-off-delete-climate-angels-from-pipeline-investors.json"
+  },
+  {
+    "id": "0C2ZckSfWg2feBhC",
+    "name": "One-off RMW-1 (read-only) — 10 Sep re-match watch: ERROR LOG + corrections + INVESTORS + tracker + STARTUPS + PIPELINE",
+    "active": false,
+    "archived": false,
+    "nodes": 8,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "0C2ZckSfWg2feBhC--one-off-rmw-1-read-only-10-sep-re-match-watch-error-log-corrections-in.json"
+  },
+  {
+    "id": "0EgrQntO24thHEWm",
+    "name": "One-off DX-2 — read-only: why PIPELINE column E won't keep emails on 32 rows (formula / validation / protection)",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "0EgrQntO24thHEWm--one-off-dx-2-read-only-why-pipeline-column-e-won-t-keep-emails-on-32-r.json"
+  },
+  {
+    "id": "0WQEGITDy4byufoz",
+    "name": "READ6 (read-only) — tracker + pipeline state for the 6 remaining investors",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "0WQEGITDy4byufoz--read6-read-only-tracker-pipeline-state-for-the-6-remaining-investors.json"
+  },
+  {
+    "id": "0eIyXW4j6YrzpAS7",
+    "name": "One-off PS-1 — pause all queued Sahaj deals (user 14 Sep)",
+    "active": false,
+    "archived": false,
+    "nodes": 7,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "0eIyXW4j6YrzpAS7--one-off-ps-1-pause-all-queued-sahaj-deals-user-14-sep.json"
+  },
+  {
+    "id": "0zrzir1Kq58uzSZP",
+    "name": "One-off FI-7 — drop bouncing founder addresses (Starz AI, Flyment, Recex)",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "0zrzir1Kq58uzSZP--one-off-fi-7-drop-bouncing-founder-addresses-starz-ai-flyment-recex.json"
+  },
+  {
+    "id": "11bdYVjuKCkOk4sH",
+    "name": "CAL-READ — events from the 4 Google Calendars for a date range (webhook, read-only)",
+    "active": false,
+    "archived": false,
+    "nodes": 7,
+    "updatedAt": "2026-10-07T12:14:42.227Z",
+    "file": "11bdYVjuKCkOk4sH--cal-read-events-from-the-4-google-calendars-for-a-date-range-webhook-r.json"
+  },
+  {
+    "id": "13mvTJoergXgRrQb",
+    "name": "One-off — Send 15 corrected deals now",
+    "active": false,
+    "archived": false,
+    "nodes": 20,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "13mvTJoergXgRrQb--one-off-send-15-corrected-deals-now.json"
+  },
+  {
+    "id": "18p9gqRU3AsnuuiQ",
+    "name": "TEST — One real email (Shradha, throwaway row)",
+    "active": false,
+    "archived": false,
+    "nodes": 13,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "18p9gqRU3AsnuuiQ--test-one-real-email-shradha-throwaway-row.json"
+  },
+  {
+    "id": "1PEjleJNPz4qo9iB",
+    "name": "One-off CP-2 — find and read the Composition tab (read only)",
+    "active": false,
+    "archived": false,
+    "nodes": 7,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "1PEjleJNPz4qo9iB--one-off-cp-2-find-and-read-the-composition-tab-read-only.json"
+  },
+  {
+    "id": "1XaMY7toWQxi1XYF",
+    "name": "One-off TC-1 (read-only) — impact of pending thesis changes: queued deals + startup revenue (17 Sep)",
+    "active": false,
+    "archived": false,
+    "nodes": 3,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "1XaMY7toWQxi1XYF--one-off-tc-1-read-only-impact-of-pending-thesis-changes-queued-deals-s.json"
+  },
+  {
+    "id": "1ZvStMtiOHDKJmn1",
+    "name": "DEAL-SEND-NOW — resend a sent deal email to one new investor from Chaman's inbox (webhook, one-off)",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "1ZvStMtiOHDKJmn1--deal-send-now-resend-a-sent-deal-email-to-one-new-investor-from-chaman.json"
+  },
+  {
+    "id": "1geGQnSb5sIR5NLX",
+    "name": "One-off READ — Shradhaa Gmail signature (16 Sep)",
+    "active": false,
+    "archived": false,
+    "nodes": 3,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "1geGQnSb5sIR5NLX--one-off-read-shradhaa-gmail-signature-16-sep.json"
+  },
+  {
+    "id": "1tJmiO0O0tdlt875",
+    "name": "One-off LIOC-1 (read-only) — STARTUPS A:F+L, INVESTORS A, ONBOARDING F for linkedin-outreach-cycle (1 Oct)",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "1tJmiO0O0tdlt875--one-off-lioc-1-read-only-startups-a-f-l-investors-a-onboarding-f-for-l.json"
+  },
+  {
+    "id": "20JMNoDvqLllQtFe",
+    "name": "SHEET-GRID — widen a tab by N columns (one-off, guarded)",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "20JMNoDvqLllQtFe--sheet-grid-widen-a-tab-by-n-columns-one-off-guarded.json"
+  },
+  {
+    "id": "24xpf4MOVCX7toQw",
+    "name": "READ (read-only) — investor runway per startup at current pace",
+    "active": false,
+    "archived": false,
+    "nodes": 3,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "24xpf4MOVCX7toQw--read-read-only-investor-runway-per-startup-at-current-pace.json"
+  },
+  {
+    "id": "2EP6EYO5MrCZs1AW",
+    "name": "One-off RMW17-1 (read-only) — 17 Sep re-match watch: flags, corrections, dup check, meetings",
+    "active": false,
+    "archived": false,
+    "nodes": 10,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "2EP6EYO5MrCZs1AW--one-off-rmw17-1-read-only-17-sep-re-match-watch-flags-corrections-dup-.json"
+  },
+  {
+    "id": "2MG95rlJDoFNz8tJ",
+    "name": "Weekly Founder Update — fundraising report (Sat 10:00 IST)",
+    "active": true,
+    "archived": false,
+    "nodes": 22,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "2MG95rlJDoFNz8tJ--weekly-founder-update-fundraising-report-sat-10-00-ist.json"
+  },
+  {
+    "id": "2N8upCa4hfw1bEsY",
+    "name": "One-off TEST — PeerCapital onboarding email to rakesh@ (16 Sep)",
+    "active": false,
+    "archived": false,
+    "nodes": 3,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "2N8upCa4hfw1bEsY--one-off-test-peercapital-onboarding-email-to-rakesh-16-sep.json"
+  },
+  {
+    "id": "3Lhi15wzSU8NbDjh",
+    "name": "READ (read-only) — WR-0 founders tab + PIPELINE weekly preview",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "3Lhi15wzSU8NbDjh--read-read-only-wr-0-founders-tab-pipeline-weekly-preview.json"
+  },
+  {
+    "id": "3WwvjCAlllCYWuDf",
+    "name": "One-off EL-READ (read-only) — unresolved THESIS-WATCH rows in ERROR LOG (29 Sep 17:30 run)",
+    "active": false,
+    "archived": false,
+    "nodes": 3,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "3WwvjCAlllCYWuDf--one-off-el-read-read-only-unresolved-thesis-watch-rows-in-error-log-29.json"
+  },
+  {
+    "id": "3bRVbemdjZV99nSc",
+    "name": "Investor Email Verification & Enrichment",
+    "active": false,
+    "archived": true,
+    "nodes": 11,
+    "updatedAt": "2026-08-29T16:38:46.000Z",
+    "file": "3bRVbemdjZV99nSc--investor-email-verification-enrichment.json"
+  },
+  {
+    "id": "3bX3nUPwuocUqUGN",
+    "name": "TEST-ONCE — Fireflies missed-meeting dry run (no email; delete after 23 Sep)",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "3bX3nUPwuocUqUGN--test-once-fireflies-missed-meeting-dry-run-no-email-delete-after-23-se.json"
+  },
+  {
+    "id": "3e1KWxLmAc9uR6uS",
+    "name": "One-off RO-DAY — daily outreach snapshot: shares, follow-ups, replies, meetings (read-only)",
+    "active": false,
+    "archived": false,
+    "nodes": 8,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "3e1KWxLmAc9uR6uS--one-off-ro-day-daily-outreach-snapshot-shares-follow-ups-replies-meeti.json"
+  },
+  {
+    "id": "3gCgsliaKwSCMcxE",
+    "name": "ONB-FU-WRITE — guarded ONBOARDING writes for sent_date / fu1 / fu2 columns only (webhook)",
+    "active": true,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "3gCgsliaKwSCMcxE--onb-fu-write-guarded-onboarding-writes-for-sent-date-fu1-fu2-columns-o.json"
+  },
+  {
+    "id": "3rbSE5jxRd432TXZ",
+    "name": "REPLY-SEND-MB3-ATT — guarded in-thread reply WITH attachment from Aditya's mailbox (webhook)",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "3rbSE5jxRd432TXZ--reply-send-mb3-att-guarded-in-thread-reply-with-attachment-from-aditya.json"
+  },
+  {
+    "id": "40PTrM2Cg4pNnuIh",
+    "name": "One-off READ — verify ONBOARDING tab import (16 Sep)",
+    "active": false,
+    "archived": false,
+    "nodes": 3,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "40PTrM2Cg4pNnuIh--one-off-read-verify-onboarding-tab-import-16-sep.json"
+  },
+  {
+    "id": "45MYFSN5CqAOCWX5",
+    "name": "Pilot Sheet Inspector (read-only)",
+    "active": false,
+    "archived": true,
+    "nodes": 4,
+    "updatedAt": "2026-08-29T16:37:25.000Z",
+    "file": "45MYFSN5CqAOCWX5--pilot-sheet-inspector-read-only.json"
+  },
+  {
+    "id": "4Ld6pRE79QUfSHpm",
+    "name": "One-off DN-1 — DNC Capital-A + Windrose (inactive), drop debt investors' deals, list missing email/contact/thesis",
+    "active": false,
+    "archived": false,
+    "nodes": 11,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "4Ld6pRE79QUfSHpm--one-off-dn-1-dnc-capital-a-windrose-inactive-drop-debt-investors-deals.json"
+  },
+  {
+    "id": "4Yd3oTWu0oKO73A0",
+    "name": "TASK-HEARTBEAT — alert when the laptop tasks stop running (hourly 11-18 IST weekdays)",
+    "active": true,
+    "archived": false,
+    "nodes": 7,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "4Yd3oTWu0oKO73A0--task-heartbeat-alert-when-the-laptop-tasks-stop-running-hourly-11-18-i.json"
+  },
+  {
+    "id": "4t0veD9KLFlHxLhK",
+    "name": "ONB-FU-SWEEP — sent \"Sidana Ventures\" intros per mailbox: recipient → earliest send ts + threadId (webhook, read-only)",
+    "active": true,
+    "archived": false,
+    "nodes": 16,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "4t0veD9KLFlHxLhK--onb-fu-sweep-sent-sidana-ventures-intros-per-mailbox-recipient-earlies.json"
+  },
+  {
+    "id": "4uYlHfoW1TtUIJKI",
+    "name": "One-off DRM-4 — apply Riceberg + Siana mandates, resolve their THESIS-WATCH flags",
+    "active": false,
+    "archived": false,
+    "nodes": 9,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "4uYlHfoW1TtUIJKI--one-off-drm-4-apply-riceberg-siana-mandates-resolve-their-thesis-watch.json"
+  },
+  {
+    "id": "50KXPqMi5R8ewfVs",
+    "name": "Reply Detection — Aditya",
+    "active": true,
+    "archived": false,
+    "nodes": 26,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "50KXPqMi5R8ewfVs--reply-detection-aditya.json"
+  },
+  {
+    "id": "53zmFRLYHyZeoRk3",
+    "name": "One-off PH-1 — Physis Capital: Jatin left, Parnika thesis (agnostic + consumer ARR 15 Cr) (17 Sep)",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "53zmFRLYHyZeoRk3--one-off-ph-1-physis-capital-jatin-left-parnika-thesis-agnostic-consume.json"
+  },
+  {
+    "id": "5EbpG3nMUfRgAp9A",
+    "name": "BACKFILL-SHARES — DONE 1 Oct, do NOT re-run (inserts, does not clear)",
+    "active": false,
+    "archived": false,
+    "nodes": 7,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "5EbpG3nMUfRgAp9A--backfill-shares-done-1-oct-do-not-re-run-inserts-does-not-clear.json"
+  },
+  {
+    "id": "5HUHsplDRaNBtJKA",
+    "name": "DIAG — Pre-flight (read-only)",
+    "active": false,
+    "archived": false,
+    "nodes": 7,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "5HUHsplDRaNBtJKA--diag-pre-flight-read-only.json"
+  },
+  {
+    "id": "5UYiGWpmcHni14io",
+    "name": "SHEET-BATCH-FORMAT — apply Sheets API batchUpdate requests to an existing sheet (webhook, one-off)",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "5UYiGWpmcHni14io--sheet-batch-format-apply-sheets-api-batchupdate-requests-to-an-existin.json"
+  },
+  {
+    "id": "5dkKnJ1DTcGb6Ilq",
+    "name": "CAL-EMAILS — calendar invite/response emails in a mailbox for a date range (webhook, read-only)",
+    "active": false,
+    "archived": false,
+    "nodes": 14,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "5dkKnJ1DTcGb6Ilq--cal-emails-calendar-invite-response-emails-in-a-mailbox-for-a-date-ran.json"
+  },
+  {
+    "id": "5lJIuuyjglh3Kx8u",
+    "name": "One-off RP-1 — strict vs sector-only match report by meeting group (read only)",
+    "active": false,
+    "archived": false,
+    "nodes": 7,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "5lJIuuyjglh3Kx8u--one-off-rp-1-strict-vs-sector-only-match-report-by-meeting-group-read-.json"
+  },
+  {
+    "id": "634n71tAB1tpxjt7",
+    "name": "One-off PZ-1 — re-pause 2 A2D Ventures deals released by mistake (D03919, D04126)",
+    "active": false,
+    "archived": false,
+    "nodes": 7,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "634n71tAB1tpxjt7--one-off-pz-1-re-pause-2-a2d-ventures-deals-released-by-mistake-d03919-.json"
+  },
+  {
+    "id": "63MiUKRg3UokNXnl",
+    "name": "One-off FR-1 — fix 32 blank-email deals: rewrite E (USER_ENTERED), then replace any row that won't hold its email",
+    "active": false,
+    "archived": false,
+    "nodes": 16,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "63MiUKRg3UokNXnl--one-off-fr-1-fix-32-blank-email-deals-rewrite-e-user-entered-then-repl.json"
+  },
+  {
+    "id": "6GTtrAMQk4N7NZoU",
+    "name": "One-off — Reset bounced deals (Fireside, Flipkart)",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "6GTtrAMQk4N7NZoU--one-off-reset-bounced-deals-fireside-flipkart.json"
+  },
+  {
+    "id": "6YZYqVrjifScmtYM",
+    "name": "READ (read-only) — investors matched per startup",
+    "active": false,
+    "archived": false,
+    "nodes": 3,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "6YZYqVrjifScmtYM--read-read-only-investors-matched-per-startup.json"
+  },
+  {
+    "id": "6h8djasGGb93kBla",
+    "name": "One-off RW-3 — dump raw raise values from STARTUPS",
+    "active": false,
+    "archived": false,
+    "nodes": 3,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "6h8djasGGb93kBla--one-off-rw-3-dump-raw-raise-values-from-startups.json"
+  },
+  {
+    "id": "6iWmw1W7RRLENzqw",
+    "name": "One-off RMW-3 — 10 Sep re-match: Riceberg, Siana, DSG, Blinc, Prath (delete 49 / pause 2 / re-point 6 / add 1 / resolve 5)",
+    "active": false,
+    "archived": false,
+    "nodes": 24,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "6iWmw1W7RRLENzqw--one-off-rmw-3-10-sep-re-match-riceberg-siana-dsg-blinc-prath-delete-49.json"
+  },
+  {
+    "id": "6p8emBCBwrIlH18f",
+    "name": "ONB-FU-MERGE — list / targeted-unmerge ONBOARDING merges blocking follow-up writes (webhook)",
+    "active": true,
+    "archived": false,
+    "nodes": 7,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "6p8emBCBwrIlH18f--onb-fu-merge-list-targeted-unmerge-onboarding-merges-blocking-follow-u.json"
+  },
+  {
+    "id": "6rgRv3s9RbuaAN3u",
+    "name": "One-off TR-31 — TEST HARNESS: patched Build email on 60 sample deals (no send, read only)",
+    "active": false,
+    "archived": false,
+    "nodes": 11,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "6rgRv3s9RbuaAN3u--one-off-tr-31-test-harness-patched-build-email-on-60-sample-deals-no-s.json"
+  },
+  {
+    "id": "75XxnuqMFhWs7AIl",
+    "name": "One-off RO-LINKEDIN — NEW_INVESTORS all tabs read (read-only, 30 Sep)",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "75XxnuqMFhWs7AIl--one-off-ro-linkedin-new-investors-all-tabs-read-read-only-30-sep.json"
+  },
+  {
+    "id": "75ZbeF7cc4SGndyv",
+    "name": "BOUNCE-WATCH — detect bounced investor addresses across all 5 mailboxes (daily 20:00 IST)",
+    "active": true,
+    "archived": false,
+    "nodes": 11,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "75ZbeF7cc4SGndyv--bounce-watch-detect-bounced-investor-addresses-across-all-5-mailboxes-.json"
+  },
+  {
+    "id": "79Ify3BOaVBwwf2n",
+    "name": "SCHEDULED-CANCEL — trash specific scheduled sends in Shradha's mailbox (webhook, one-off 19 Sep)",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "79Ify3BOaVBwwf2n--scheduled-cancel-trash-specific-scheduled-sends-in-shradha-s-mailbox-w.json"
+  },
+  {
+    "id": "7AHibjZoWQ1u8wPd",
+    "name": "PIPE-BATCH-FIX — guarded multi-row PIPELINE update (webhook, one-off)",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T10:45:08.381Z",
+    "file": "7AHibjZoWQ1u8wPd--pipe-batch-fix-guarded-multi-row-pipeline-update-webhook-one-off.json"
+  },
+  {
+    "id": "7G5gX5kJtVfMnLxG",
+    "name": "CLOCK — scratch (no trigger, keep: read server time)",
+    "active": false,
+    "archived": false,
+    "nodes": 2,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "7G5gX5kJtVfMnLxG--clock-scratch-no-trigger-keep-read-server-time.json"
+  },
+  {
+    "id": "7JmYofPYknVOU2RB",
+    "name": "SENT-ADDRS — recipient/sender addresses from one mailbox, all 4, paged (webhook, read-only)",
+    "active": false,
+    "archived": false,
+    "nodes": 14,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "7JmYofPYknVOU2RB--sent-addrs-recipient-sender-addresses-from-one-mailbox-all-4-paged-web.json"
+  },
+  {
+    "id": "84aVT3FQtd8a0rw2",
+    "name": "One-off AN-2 — passed investors vs corrections (name-normalised)",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "84aVT3FQtd8a0rw2--one-off-an-2-passed-investors-vs-corrections-name-normalised.json"
+  },
+  {
+    "id": "88gjxNGGKB145QIo",
+    "name": "One-off — FIX STARTUPS header back to 'startup'",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "88gjxNGGKB145QIo--one-off-fix-startups-header-back-to-startup.json"
+  },
+  {
+    "id": "89ElaGZZXuIHJ5rM",
+    "name": "CHECK (read-only) — replies on the 7 already-sent duplicate rows",
+    "active": false,
+    "archived": false,
+    "nodes": 3,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "89ElaGZZXuIHJ5rM--check-read-only-replies-on-the-7-already-sent-duplicate-rows.json"
+  },
+  {
+    "id": "8n9UK2ASzCKHY145",
+    "name": "One-off AI-1 — add 6 investors + fill 3 emails, match new/cleared investors (tiered, capped), release Loyal VC holds",
+    "active": false,
+    "archived": false,
+    "nodes": 19,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "8n9UK2ASzCKHY145--one-off-ai-1-add-6-investors-fill-3-emails-match-new-cleared-investors.json"
+  },
+  {
+    "id": "9FK1JeaeGlsI9Dcw",
+    "name": "STATS (read-only) — PIPELINE deal_shared breakdown",
+    "active": false,
+    "archived": false,
+    "nodes": 3,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "9FK1JeaeGlsI9Dcw--stats-read-only-pipeline-deal-shared-breakdown.json"
+  },
+  {
+    "id": "9GE35r7AoGYp6d4G",
+    "name": "One-off CAL-14U — invite 14U Capital, Fri 25 Sep 15:00 IST, from investors@ calendar",
+    "active": false,
+    "archived": false,
+    "nodes": 7,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "9GE35r7AoGYp6d4G--one-off-cal-14u-invite-14u-capital-fri-25-sep-15-00-ist-from-investors.json"
+  },
+  {
+    "id": "9eNTluFk32eHDtjl",
+    "name": "One-off TR-15 — remove duplicate deal pairs (delete unsent, silence already-sent)",
+    "active": false,
+    "archived": false,
+    "nodes": 9,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "9eNTluFk32eHDtjl--one-off-tr-15-remove-duplicate-deal-pairs-delete-unsent-silence-alread.json"
+  },
+  {
+    "id": "9ieM1arHMorGbSOq",
+    "name": "One-off RMW-2 (read-only) — scan all tracker + meetings tabs for flagged-firm mentions",
+    "active": false,
+    "archived": false,
+    "nodes": 8,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "9ieM1arHMorGbSOq--one-off-rmw-2-read-only-scan-all-tracker-meetings-tabs-for-flagged-fir.json"
+  },
+  {
+    "id": "9rSfwLiXjn0Ay2tm",
+    "name": "One-off RW-2 — score each startup's untapped investor pool",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "9rSfwLiXjn0Ay2tm--one-off-rw-2-score-each-startup-s-untapped-investor-pool.json"
+  },
+  {
+    "id": "9vPagaXKBoAn3N7Q",
+    "name": "Send Lustr Deal to Investors",
+    "active": false,
+    "archived": true,
+    "nodes": 4,
+    "updatedAt": "2026-08-29T16:37:36.000Z",
+    "file": "9vPagaXKBoAn3N7Q--send-lustr-deal-to-investors.json"
+  },
+  {
+    "id": "9wA3PxaKn46RvtJr",
+    "name": "One-off RMW17-2 (read-only) — 17 Sep: mail-correction carry-through + flagged investors (Blinc, Siana, PiperSireca, DSG) detail",
+    "active": false,
+    "archived": false,
+    "nodes": 9,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "9wA3PxaKn46RvtJr--one-off-rmw17-2-read-only-17-sep-mail-correction-carry-through-flagged.json"
+  },
+  {
+    "id": "9ys1UJNKGR4Z0Rzl",
+    "name": "One-off — Scan memo tails",
+    "active": false,
+    "archived": false,
+    "nodes": 3,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "9ys1UJNKGR4Z0Rzl--one-off-scan-memo-tails.json"
+  },
+  {
+    "id": "AD0FIb29J3eJIUv2",
+    "name": "One-off MT-1 — dump deal-flow meetings sheet (gid 275166776)",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "AD0FIb29J3eJIUv2--one-off-mt-1-dump-deal-flow-meetings-sheet-gid-275166776.json"
+  },
+  {
+    "id": "AI43kudplo2uMCUF",
+    "name": "GMAIL-SEARCH — list messages matching a query in one mailbox (webhook, read-only, one-off)",
+    "active": true,
+    "archived": false,
+    "nodes": 16,
+    "updatedAt": "2026-10-07T12:37:43.791Z",
+    "file": "AI43kudplo2uMCUF--gmail-search-list-messages-matching-a-query-in-one-mailbox-webhook-rea.json"
+  },
+  {
+    "id": "AP9Lk0aiwrwOPhD7",
+    "name": "ONB-FU-SEND-MB5 — guarded in-thread follow-up from Shradhaa's mailbox, dry verdict in response (webhook)",
+    "active": true,
+    "archived": false,
+    "nodes": 8,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "AP9Lk0aiwrwOPhD7--onb-fu-send-mb5-guarded-in-thread-follow-up-from-shradhaa-s-mailbox-dr.json"
+  },
+  {
+    "id": "AThaYLvKpJ0cf6Fp",
+    "name": "One-off FD-1 — read-only: Founders Info tab (founder gender for women-only funds)",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "AThaYLvKpJ0cf6Fp--one-off-fd-1-read-only-founders-info-tab-founder-gender-for-women-only.json"
+  },
+  {
+    "id": "AbCzttqDVFAP4zDh",
+    "name": "Deal Tracker Consolidation",
+    "active": false,
+    "archived": false,
+    "nodes": 15,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "AbCzttqDVFAP4zDh--deal-tracker-consolidation.json"
+  },
+  {
+    "id": "AzRBZfXBqAPVQiXr",
+    "name": "One-off RO-PREREV — pre-revenue startups: shares, passes, meetings (read-only, 29 Sep)",
+    "active": false,
+    "archived": false,
+    "nodes": 9,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "AzRBZfXBqAPVQiXr--one-off-ro-prerev-pre-revenue-startups-shares-passes-meetings-read-onl.json"
+  },
+  {
+    "id": "B8adaIYUYFpZX2vG",
+    "name": "One-off CG-5 — append INVESTOR_CRITERIA row for Dexter Ventures (investor-stated thesis)",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "B8adaIYUYFpZX2vG--one-off-cg-5-append-investor-criteria-row-for-dexter-ventures-investor.json"
+  },
+  {
+    "id": "B9JTfejImQtDqWqx",
+    "name": "One-off DR-1 — dry run: new tiered rules (5+ strict; under-5 sector+cheque, stage ±1)",
+    "active": false,
+    "archived": false,
+    "nodes": 7,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "B9JTfejImQtDqWqx--one-off-dr-1-dry-run-new-tiered-rules-5-strict-under-5-sector-cheque-s.json"
+  },
+  {
+    "id": "BAkgem7Zu6uVyoFL",
+    "name": "Fundraising Outreach — Workflow D (Shradha)",
+    "active": true,
+    "archived": false,
+    "nodes": 37,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "BAkgem7Zu6uVyoFL--fundraising-outreach-workflow-d-shradha.json"
+  },
+  {
+    "id": "BJpNnsCgqkn2IGG1",
+    "name": "One-off CL-1 — classify every sent deal: strict or why not, and how it performed (read only)",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "BJpNnsCgqkn2IGG1--one-off-cl-1-classify-every-sent-deal-strict-or-why-not-and-how-it-per.json"
+  },
+  {
+    "id": "BVdsiGJ5x0NVRb1E",
+    "name": "One-off BOUNCE-APPEND — guarded append to BOUNCES keyed by header (webhook, 5 Oct)",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "BVdsiGJ5x0NVRb1E--one-off-bounce-append-guarded-append-to-bounces-keyed-by-header-webhoo.json"
+  },
+  {
+    "id": "BekwOQb44K7IXGB7",
+    "name": "One-off TC-P1 (read-only) — Piper Serica: every PIPELINE row + ERROR LOG history (17 Sep)",
+    "active": false,
+    "archived": false,
+    "nodes": 3,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "BekwOQb44K7IXGB7--one-off-tc-p1-read-only-piper-serica-every-pipeline-row-error-log-hist.json"
+  },
+  {
+    "id": "Bl0cEJCAEHJJSibl",
+    "name": "One-off TR-26 — additive pre-revenue reach: add idea/pre-seed investors, drop nothing",
+    "active": false,
+    "archived": false,
+    "nodes": 14,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "Bl0cEJCAEHJJSibl--one-off-tr-26-additive-pre-revenue-reach-add-idea-pre-seed-investors-d.json"
+  },
+  {
+    "id": "BltcIQ0KTHaZEBhk",
+    "name": "One-off LIRW-1 (read-only) — LI_OUTREACH + STARTUPS + INVESTORS for linkedin-reply-watch (1 Oct)",
+    "active": true,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "BltcIQ0KTHaZEBhk--one-off-lirw-1-read-only-li-outreach-startups-investors-for-linkedin-r.json"
+  },
+  {
+    "id": "BmrTeRuGTrRXuXDT",
+    "name": "ONB-RC-DIAG (read + single test write) — why ONBOARDING cells will not hold values (30 Sep)",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "BmrTeRuGTrRXuXDT--onb-rc-diag-read-single-test-write-why-onboarding-cells-will-not-hold-.json"
+  },
+  {
+    "id": "BuQvLzXygV92j0jk",
+    "name": "GMAIL-ATT — fetch one Gmail attachment as base64 from Shradhaa's mailbox (webhook, one-off)",
+    "active": true,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T10:25:14.689Z",
+    "file": "BuQvLzXygV92j0jk--gmail-att-fetch-one-gmail-attachment-as-base64-from-shradhaa-s-mailbox.json"
+  },
+  {
+    "id": "CIOwYtNUu1tDxJck",
+    "name": "READ (read-only) — MindWox: PIPELINE vs 4 mailboxes vs 4 calendars",
+    "active": false,
+    "archived": false,
+    "nodes": 11,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "CIOwYtNUu1tDxJck--read-read-only-mindwox-pipeline-vs-4-mailboxes-vs-4-calendars.json"
+  },
+  {
+    "id": "CMg1pnm6WTAQ0yDH",
+    "name": "One-off — Cosmicport audit (read-only)",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "CMg1pnm6WTAQ0yDH--one-off-cosmicport-audit-read-only.json"
+  },
+  {
+    "id": "CciQZfnMPZzsQqnP",
+    "name": "ENGINE-0 (read-only) — extract all INVESTORS + STARTUPS for structured criteria pre-fill (17 Sep)",
+    "active": false,
+    "archived": false,
+    "nodes": 9,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "CciQZfnMPZzsQqnP--engine-0-read-only-extract-all-investors-startups-for-structured-crite.json"
+  },
+  {
+    "id": "CeevYpF1ntAFuS26",
+    "name": "AUTO — apply Thesis corrections to INVESTORS + flag re-match (weekdays 18:45 IST)",
+    "active": false,
+    "archived": false,
+    "nodes": 7,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "CeevYpF1ntAFuS26--auto-apply-thesis-corrections-to-investors-flag-re-match-weekdays-18-4.json"
+  },
+  {
+    "id": "CoGpcjLwexoFVuAq",
+    "name": "One-off FQ-1 — deals per investor per day across the 4 mailboxes (read only)",
+    "active": false,
+    "archived": false,
+    "nodes": 3,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "CoGpcjLwexoFVuAq--one-off-fq-1-deals-per-investor-per-day-across-the-4-mailboxes-read-on.json"
+  },
+  {
+    "id": "CvpguLofcfY4rpMr",
+    "name": "CAL-PATCH — change an existing calendar event (attendees / time), guarded (webhook, one-off)",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "CvpguLofcfY4rpMr--cal-patch-change-an-existing-calendar-event-attendees-time-guarded-web.json"
+  },
+  {
+    "id": "D260RXB6Qm0BvZ0t",
+    "name": "One-off — Pause 2 Kaizenvest rows already shared (Deal Tracker)",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "D260RXB6Qm0BvZ0t--one-off-pause-2-kaizenvest-rows-already-shared-deal-tracker.json"
+  },
+  {
+    "id": "D77M44hCt4fiB341",
+    "name": "LI-OUTREACH-WRITE — guarded cell updates + append for LI_OUTREACH (webhook, owned by linkedin-outreach-cycle)",
+    "active": true,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T06:32:55.896Z",
+    "file": "D77M44hCt4fiB341--li-outreach-write-guarded-cell-updates-append-for-li-outreach-webhook-.json"
+  },
+  {
+    "id": "DI4Rxqd1cdyHOS4h",
+    "name": "One-off — Preview memo restyle (headings black + 14px)",
+    "active": false,
+    "archived": false,
+    "nodes": 3,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "DI4Rxqd1cdyHOS4h--one-off-preview-memo-restyle-headings-black-14px.json"
+  },
+  {
+    "id": "DN70ZwPW12KzVG4H",
+    "name": "REPLY-SEND-MB2 — one guarded in-thread reply from Chaman's mailbox (dealflow@) (webhook, one-off)",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "DN70ZwPW12KzVG4H--reply-send-mb2-one-guarded-in-thread-reply-from-chaman-s-mailbox-dealf.json"
+  },
+  {
+    "id": "DSCWwN6lZNwtpW31",
+    "name": "One-off — Update BlackSoil contact (Ravi)",
+    "active": false,
+    "archived": false,
+    "nodes": 8,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "DSCWwN6lZNwtpW31--one-off-update-blacksoil-contact-ravi.json"
+  },
+  {
+    "id": "DUkKY4OhFL0la0yt",
+    "name": "Reply Detection — Akansha",
+    "active": false,
+    "archived": true,
+    "nodes": 27,
+    "updatedAt": "2026-09-01T16:26:11.000Z",
+    "file": "DUkKY4OhFL0la0yt--reply-detection-akansha.json"
+  },
+  {
+    "id": "DhuFq3mHzBDglwG8",
+    "name": "Deal Tracker Dedupe Cleanup",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "DhuFq3mHzBDglwG8--deal-tracker-dedupe-cleanup.json"
+  },
+  {
+    "id": "Ds9o7maIFj6av2UJ",
+    "name": "One-off WP-1 — women-only funds: drop deals to startups without a woman in the cap table",
+    "active": false,
+    "archived": false,
+    "nodes": 7,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "Ds9o7maIFj6av2UJ--one-off-wp-1-women-only-funds-drop-deals-to-startups-without-a-woman-i.json"
+  },
+  {
+    "id": "DwD1Gc3eAAqNTFQ6",
+    "name": "READ (read-only) — find founder addresses for Indie Stori / Doffair / RemoteMore across MB2,4,5",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "DwD1Gc3eAAqNTFQ6--read-read-only-find-founder-addresses-for-indie-stori-doffair-remotemo.json"
+  },
+  {
+    "id": "DyWw5BdB0GJxIPCB",
+    "name": "One-off DX-1 — read-only: PIPELINE rows for 32 release-check deal IDs",
+    "active": false,
+    "archived": false,
+    "nodes": 3,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "DyWw5BdB0GJxIPCB--one-off-dx-1-read-only-pipeline-rows-for-32-release-check-deal-ids.json"
+  },
+  {
+    "id": "Ea1BMydoRwSMW30k",
+    "name": "TRIGGER-WATCH — re-contact investors whose stated condition is now met (Mondays 09:00 IST)",
+    "active": true,
+    "archived": false,
+    "nodes": 11,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "Ea1BMydoRwSMW30k--trigger-watch-re-contact-investors-whose-stated-condition-is-now-met-m.json"
+  },
+  {
+    "id": "F4xXHRFIr3gS2VHc",
+    "name": "ENGINE-DAILY — match engine: pause off-thesis deals, 2/day inbox cap, new matches (weekdays 07:30 IST)",
+    "active": true,
+    "archived": false,
+    "nodes": 12,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "F4xXHRFIr3gS2VHc--engine-daily-match-engine-pause-off-thesis-deals-2-day-inbox-cap-new-m.json"
+  },
+  {
+    "id": "FAwtJYmFsYV5MlYB",
+    "name": "One-off FQ-2 — simulate investor cap (5/week, 5/day) → deals per startup per week (read only)",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "FAwtJYmFsYV5MlYB--one-off-fq-2-simulate-investor-cap-5-week-5-day-deals-per-startup-per-.json"
+  },
+  {
+    "id": "FJe1d0xRL1G0tdh2",
+    "name": "NEW-SEND-MB2 — one guarded new email from Chaman's mailbox (dealflow@) (webhook, one-off)",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "FJe1d0xRL1G0tdh2--new-send-mb2-one-guarded-new-email-from-chaman-s-mailbox-dealflow-webh.json"
+  },
+  {
+    "id": "FQwG6jeOLfYlTv6W",
+    "name": "One-off BG-3 — add 20 new BlueGreen PIPELINE rows (new mandate)",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "FQwG6jeOLfYlTv6W--one-off-bg-3-add-20-new-bluegreen-pipeline-rows-new-mandate.json"
+  },
+  {
+    "id": "FS0huElEuzzDZQnC",
+    "name": "One-off TR-16 — add angel Gautam Kapur to INVESTORS",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "FS0huElEuzzDZQnC--one-off-tr-16-add-angel-gautam-kapur-to-investors.json"
+  },
+  {
+    "id": "FlxOTKWmZqJnJ7ek",
+    "name": "One-off PAUSE-3 — investor HOLD until thesis (last used 22 Sep for Equanimity; originally Chiratae/Blume/Orios)",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "FlxOTKWmZqJnJ7ek--one-off-pause-3-investor-hold-until-thesis-last-used-22-sep-for-equani.json"
+  },
+  {
+    "id": "G0jFPAIrYwntZG4z",
+    "name": "One-off TR-23 — name the second mandate row for Accel and Yali (email untouched)",
+    "active": false,
+    "archived": false,
+    "nodes": 7,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "G0jFPAIrYwntZG4z--one-off-tr-23-name-the-second-mandate-row-for-accel-and-yali-email-unt.json"
+  },
+  {
+    "id": "GBdg9wdyKi44amwV",
+    "name": "One-off FE-1 — fill blank PIPELINE emails from INVESTORS (active unsent rows only)",
+    "active": false,
+    "archived": false,
+    "nodes": 8,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "GBdg9wdyKi44amwV--one-off-fe-1-fill-blank-pipeline-emails-from-investors-active-unsent-r.json"
+  },
+  {
+    "id": "GWeOfvKczzVyaTuX",
+    "name": "One-off RD-1 — re-date queued deals: max 5 new deals per investor per week",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "GWeOfvKczzVyaTuX--one-off-rd-1-re-date-queued-deals-max-5-new-deals-per-investor-per-wee.json"
+  },
+  {
+    "id": "GeXSmrOTVeS7c9ib",
+    "name": "NEW-SEND-MB5 — one guarded new email from Shradhaa's mailbox (webhook, one-off)",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T11:55:49.249Z",
+    "file": "GeXSmrOTVeS7c9ib--new-send-mb5-one-guarded-new-email-from-shradhaa-s-mailbox-webhook-one.json"
+  },
+  {
+    "id": "GfblrLvEY0tvo84x",
+    "name": "One-off — List contacted today (read-only)",
+    "active": false,
+    "archived": false,
+    "nodes": 3,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "GfblrLvEY0tvo84x--one-off-list-contacted-today-read-only.json"
+  },
+  {
+    "id": "Gkc662bRUD0nIYOL",
+    "name": "FF-LOOKUP — light index of fireflies_transcripts, no transcript bodies (webhook, one-off)",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "Gkc662bRUD0nIYOL--ff-lookup-light-index-of-fireflies-transcripts-no-transcript-bodies-we.json"
+  },
+  {
+    "id": "GlnVE9WE9CiwvmtJ",
+    "name": "One-off RW-6 — runway + gaps + tiered (5-meeting) headroom + per-investor view (read only)",
+    "active": false,
+    "archived": false,
+    "nodes": 7,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "GlnVE9WE9CiwvmtJ--one-off-rw-6-runway-gaps-tiered-5-meeting-headroom-per-investor-view-r.json"
+  },
+  {
+    "id": "H59N7BFpMTHalt90",
+    "name": "One-off MT-3 — replace priority with match_type; drop queued deals that break the strategy",
+    "active": false,
+    "archived": false,
+    "nodes": 10,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "H59N7BFpMTHalt90--one-off-mt-3-replace-priority-with-match-type-drop-queued-deals-that-b.json"
+  },
+  {
+    "id": "HSJUIyDt0xsDA2M0",
+    "name": "One-off — Test read access to correction sheet",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "HSJUIyDt0xsDA2M0--one-off-test-read-access-to-correction-sheet.json"
+  },
+  {
+    "id": "HgA7X7lgkGBVGLWQ",
+    "name": "CAL-SYNC — 4 calendars into cal_events, resolve into meetings (hourly 9-22 IST + backfill webhook)",
+    "active": true,
+    "archived": false,
+    "nodes": 16,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "HgA7X7lgkGBVGLWQ--cal-sync-4-calendars-into-cal-events-resolve-into-meetings-hourly-9-22.json"
+  },
+  {
+    "id": "HssOpEnBBfI09fgn",
+    "name": "One-off — Set do_not_contact on NORTHERN ARC",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "HssOpEnBBfI09fgn--one-off-set-do-not-contact-on-northern-arc.json"
+  },
+  {
+    "id": "I8VWdHLb6fxhciqN",
+    "name": "SYNC-BOOK — hourly Sheets to Supabase (startups + investors)",
+    "active": true,
+    "archived": false,
+    "nodes": 7,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "I8VWdHLb6fxhciqN--sync-book-hourly-sheets-to-supabase-startups-investors.json"
+  },
+  {
+    "id": "I9bZsGJfNuyr2b77",
+    "name": "FIREFLIES-SYNC — pull meeting transcripts into data table fireflies_transcripts (daily 17:30 IST + backfill webhook)",
+    "active": true,
+    "archived": false,
+    "nodes": 8,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "I9bZsGJfNuyr2b77--fireflies-sync-pull-meeting-transcripts-into-data-table-fireflies-tran.json"
+  },
+  {
+    "id": "IRQsh3bSPEznQNid",
+    "name": "One-off RAISE-FIX — Bon Cuisine 20 -> 25 Cr in STARTUPS + STARTUP_PROFILE (guarded, webhook)",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "IRQsh3bSPEznQNid--one-off-raise-fix-bon-cuisine-20-25-cr-in-startups-startup-profile-gua.json"
+  },
+  {
+    "id": "ISNLJyk05m1Tc2nT",
+    "name": "One-off — My Soul PIPELINE rows (34 investors)",
+    "active": false,
+    "archived": false,
+    "nodes": 9,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "ISNLJyk05m1Tc2nT--one-off-my-soul-pipeline-rows-34-investors.json"
+  },
+  {
+    "id": "IZUdLrjjXoxEWXil",
+    "name": "ONB-FU-SENT — one mailbox: sent/inbox message metadata for ONBOARDING follow-ups (webhook, read-only)",
+    "active": true,
+    "archived": false,
+    "nodes": 16,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "IZUdLrjjXoxEWXil--onb-fu-sent-one-mailbox-sent-inbox-message-metadata-for-onboarding-fol.json"
+  },
+  {
+    "id": "IZWrpdYGlWlfRWsh",
+    "name": "One-off FI-6 — fix Orbis Lives founder email (bounce) in Founders Info",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "IZWrpdYGlWlfRWsh--one-off-fi-6-fix-orbis-lives-founder-email-bounce-in-founders-info.json"
+  },
+  {
+    "id": "IavaEQc4c3zDVjut",
+    "name": "VERIFY + STATS (read-only) — post-cleanup state and weekly send rate",
+    "active": false,
+    "archived": false,
+    "nodes": 3,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "IavaEQc4c3zDVjut--verify-stats-read-only-post-cleanup-state-and-weekly-send-rate.json"
+  },
+  {
+    "id": "IbFDifjONlJkIkyn",
+    "name": "One-off FI-5 — add Train Rex to Founders Info",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "IbFDifjONlJkIkyn--one-off-fi-5-add-train-rex-to-founders-info.json"
+  },
+  {
+    "id": "IcFOEMBUvX8okON1",
+    "name": "One-off BG-2 — delete 5 off-mandate BlueGreen pending rows",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "IcFOEMBUvX8okON1--one-off-bg-2-delete-5-off-mandate-bluegreen-pending-rows.json"
+  },
+  {
+    "id": "IfPTBOdMWN73ULyY",
+    "name": "One-off DRM-3 — delete 21 off-mandate pending rows (Riceberg, Siana)",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "IfPTBOdMWN73ULyY--one-off-drm-3-delete-21-off-mandate-pending-rows-riceberg-siana.json"
+  },
+  {
+    "id": "IikjJZEn5TY1IT6B",
+    "name": "One-off MAIL-0 (read-only) — which Gmail account is which owner + PIPELINE reply stats (17 Sep)",
+    "active": false,
+    "archived": false,
+    "nodes": 7,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "IikjJZEn5TY1IT6B--one-off-mail-0-read-only-which-gmail-account-is-which-owner-pipeline-r.json"
+  },
+  {
+    "id": "Ij7BZo9Ahq9KBD8p",
+    "name": "ONB-FU-SCAN (read-only) — true send dates from Gmail + follow-up due list (webhook)",
+    "active": false,
+    "archived": false,
+    "nodes": 17,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "Ij7BZo9Ahq9KBD8p--onb-fu-scan-read-only-true-send-dates-from-gmail-follow-up-due-list-we.json"
+  },
+  {
+    "id": "IwOhrlvav6Mcr04q",
+    "name": "Investor Cleanup Rows 10-14",
+    "active": false,
+    "archived": true,
+    "nodes": 3,
+    "updatedAt": "2026-08-29T16:38:54.000Z",
+    "file": "IwOhrlvav6Mcr04q--investor-cleanup-rows-10-14.json"
+  },
+  {
+    "id": "JwKCKcCCOjaIs6mm",
+    "name": "One-off — Red text for passed deals (PIPELINE conditional format)",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "JwKCKcCCOjaIs6mm--one-off-red-text-for-passed-deals-pipeline-conditional-format.json"
+  },
+  {
+    "id": "KImr1mdpBBlIhuPN",
+    "name": "Fireflies missed-meeting check — weekday 21:00 IST (imported 23 Sep)",
+    "active": true,
+    "archived": false,
+    "nodes": 9,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "KImr1mdpBBlIhuPN--fireflies-missed-meeting-check-weekday-21-00-ist-imported-23-sep.json"
+  },
+  {
+    "id": "KIomcePOm57RLwim",
+    "name": "One-off VR-1 — verify investor cap after re-date (read only)",
+    "active": false,
+    "archived": false,
+    "nodes": 3,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "KIomcePOm57RLwim--one-off-vr-1-verify-investor-cap-after-re-date-read-only.json"
+  },
+  {
+    "id": "KYfmnvCYUpwVUE4S",
+    "name": "Founder Fundraising Emails",
+    "active": false,
+    "archived": true,
+    "nodes": 4,
+    "updatedAt": "2026-08-29T16:37:40.000Z",
+    "file": "KYfmnvCYUpwVUE4S--founder-fundraising-emails.json"
+  },
+  {
+    "id": "KtLxu5IT61lKKktO",
+    "name": "One-off KAE-1 — diagnose Kae Capital stop state",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "KtLxu5IT61lKKktO--one-off-kae-1-diagnose-kae-capital-stop-state.json"
+  },
+  {
+    "id": "L0HraxA2cK0vivcz",
+    "name": "One-off AN-3 — passed vs corrections (values API, bypasses metadata 503)",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "L0HraxA2cK0vivcz--one-off-an-3-passed-vs-corrections-values-api-bypasses-metadata-503.json"
+  },
+  {
+    "id": "L0awoBVpgUgKG2M6",
+    "name": "One-off — HOLD Aroa Venture Partners in Onboarding sheet (16 Sep)",
+    "active": false,
+    "archived": false,
+    "nodes": 3,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "L0awoBVpgUgKG2M6--one-off-hold-aroa-venture-partners-in-onboarding-sheet-16-sep.json"
+  },
+  {
+    "id": "L72g9j4IrRJuUgRJ",
+    "name": "One-off — Restore today shares",
+    "active": false,
+    "archived": false,
+    "nodes": 3,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "L72g9j4IrRJuUgRJ--one-off-restore-today-shares.json"
+  },
+  {
+    "id": "LRgpbZijdrDEPpxj",
+    "name": "REPLY-SEND-MB5 — one guarded in-thread reply from Shradhaa's mailbox (webhook, one-off)",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T11:56:05.500Z",
+    "file": "LRgpbZijdrDEPpxj--reply-send-mb5-one-guarded-in-thread-reply-from-shradhaa-s-mailbox-web.json"
+  },
+  {
+    "id": "LXjRuRa9iT8qLxcs",
+    "name": "One-off TR-29 — PREVIEW raise removal for 16 pre-revenue memos, all investors (read only)",
+    "active": false,
+    "archived": false,
+    "nodes": 8,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "LXjRuRa9iT8qLxcs--one-off-tr-29-preview-raise-removal-for-16-pre-revenue-memos-all-inves.json"
+  },
+  {
+    "id": "LdYlMTwHKBy1HgvU",
+    "name": "ONB-REPLY-SWEEP (read-only) — match ONBOARDING replies across all 5 mailboxes (webhook)",
+    "active": false,
+    "archived": false,
+    "nodes": 18,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "LdYlMTwHKBy1HgvU--onb-reply-sweep-read-only-match-onboarding-replies-across-all-5-mailbo.json"
+  },
+  {
+    "id": "LsvRxa0JnOVeaYvc",
+    "name": "THESIS-ASK-MON — 3 investment-focus emails from Shradhaa (fires once Mon 21 Sep 10:00 IST)",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "LsvRxa0JnOVeaYvc--thesis-ask-mon-3-investment-focus-emails-from-shradhaa-fires-once-mon-.json"
+  },
+  {
+    "id": "LvZy50jcPhGP1MQE",
+    "name": "ENGINE-AUDIT (read-only) — run the match engine over every queued + follow-up deal in PIPELINE (17 Sep)",
+    "active": false,
+    "archived": false,
+    "nodes": 7,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "LvZy50jcPhGP1MQE--engine-audit-read-only-run-the-match-engine-over-every-queued-follow-u.json"
+  },
+  {
+    "id": "MAc0biVrJTqkijta",
+    "name": "One-off — Add PIPELINE rows for 8 new investors (rows 173-185)",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "MAc0biVrJTqkijta--one-off-add-pipeline-rows-for-8-new-investors-rows-173-185.json"
+  },
+  {
+    "id": "MC5II7A6DHSojAmS",
+    "name": "One-off — remove THESIS-WATCH test flags from ERROR LOG",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "MC5II7A6DHSojAmS--one-off-remove-thesis-watch-test-flags-from-error-log.json"
+  },
+  {
+    "id": "MMZLODhqSUDWJIHQ",
+    "name": "ONB-DESK — why LI sends nothing (7 Oct)",
+    "active": true,
+    "archived": false,
+    "nodes": 3,
+    "updatedAt": "2026-10-07T10:20:31.423Z",
+    "file": "MMZLODhqSUDWJIHQ--onb-desk-why-li-sends-nothing-7-oct.json"
+  },
+  {
+    "id": "MUyqFXjc9chR8FPV",
+    "name": "READ (read-only) — IAN meeting rows: Luxova, Nexcore, EosNox",
+    "active": false,
+    "archived": false,
+    "nodes": 3,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "MUyqFXjc9chR8FPV--read-read-only-ian-meeting-rows-luxova-nexcore-eosnox.json"
+  },
+  {
+    "id": "MtdtZDWa4YnoJP0z",
+    "name": "CAL-PATCH-MB4 — patch an event on Akansha's calendar (clone of CAL-PATCH, akansha@ credential)",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "MtdtZDWa4YnoJP0z--cal-patch-mb4-patch-an-event-on-akansha-s-calendar-clone-of-cal-patch-.json"
+  },
+  {
+    "id": "MzlapX61OosgQFJQ",
+    "name": "CRIT-PATCH — apply field patches to INVESTOR_CRITERIA rows from a local POST (activate only while patching)",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T09:49:10.929Z",
+    "file": "MzlapX61OosgQFJQ--crit-patch-apply-field-patches-to-investor-criteria-rows-from-a-local-.json"
+  },
+  {
+    "id": "N23y1FkUguqfpw9r",
+    "name": "RW-1006 health sweep (read-only, one-off)",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "N23y1FkUguqfpw9r--rw-1006-health-sweep-read-only-one-off.json"
+  },
+  {
+    "id": "NAQR29LsoNJMrLtX",
+    "name": "SHEET-CELL-FIX — guarded cell updates + find/replace on pilot sheet (webhook, one-off)",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T12:14:27.563Z",
+    "file": "NAQR29LsoNJMrLtX--sheet-cell-fix-guarded-cell-updates-find-replace-on-pilot-sheet-webhoo.json"
+  },
+  {
+    "id": "NFS5X4I4l7iwGlVh",
+    "name": "One-off CG-4 — confirm PENDING/HOLD rows that have a researched thesis (user-authorised 23 Sep)",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "NFS5X4I4l7iwGlVh--one-off-cg-4-confirm-pending-hold-rows-that-have-a-researched-thesis-u.json"
+  },
+  {
+    "id": "NOLBMsgfJJEnQ3EP",
+    "name": "FIX — Reconcile 7 sent rows (deal_shared=Yes)",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "NOLBMsgfJJEnQ3EP--fix-reconcile-7-sent-rows-deal-shared-yes.json"
+  },
+  {
+    "id": "NRRYgucsYKuuDwgn",
+    "name": "DIAG — memo tails (read-only)",
+    "active": false,
+    "archived": false,
+    "nodes": 3,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "NRRYgucsYKuuDwgn--diag-memo-tails-read-only.json"
+  },
+  {
+    "id": "NeJLa70VYHtoiNBB",
+    "name": "One-off IAN-2 — repoint existing IAN PIPELINE rows to Angel Fund",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "NeJLa70VYHtoiNBB--one-off-ian-2-repoint-existing-ian-pipeline-rows-to-angel-fund.json"
+  },
+  {
+    "id": "NfuXW9W3f7u1epQR",
+    "name": "One-off ONB-ADD-FIRSTBRIDGE [SPENT 6 Oct, wrote INVESTORS 306 + CRITERIA 307, do NOT re-run]",
+    "active": false,
+    "archived": false,
+    "nodes": 7,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "NfuXW9W3f7u1epQR--one-off-onb-add-firstbridge-spent-6-oct-wrote-investors-306-criteria-3.json"
+  },
+  {
+    "id": "Nvn4GUAVq4iplQHC",
+    "name": "ONB-FU-SHEETS (read-only) — ONBOARDING + INVESTORS dnc + BOUNCES + STARTUPS for follow-up planning (webhook)",
+    "active": true,
+    "archived": false,
+    "nodes": 7,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "Nvn4GUAVq4iplQHC--onb-fu-sheets-read-only-onboarding-investors-dnc-bounces-startups-for-.json"
+  },
+  {
+    "id": "O7Bs6ONa39naj6tv",
+    "name": "One-off CAL-0 (read-only) — can the 4 Gmail logins read Google Calendar? (17 Sep)",
+    "active": false,
+    "archived": false,
+    "nodes": 7,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "O7Bs6ONa39naj6tv--one-off-cal-0-read-only-can-the-4-gmail-logins-read-google-calendar-17.json"
+  },
+  {
+    "id": "OQy2mZezBAjWlNvO",
+    "name": "One-off FIX — backfill sent_date + thread_id for 17 Sep sends from Gmail Sent",
+    "active": false,
+    "archived": false,
+    "nodes": 8,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "OQy2mZezBAjWlNvO--one-off-fix-backfill-sent-date-thread-id-for-17-sep-sends-from-gmail-s.json"
+  },
+  {
+    "id": "OWCxDiXorQZJ6HHe",
+    "name": "One-off — Update NORTHERN ARC mandate in INVESTORS",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "OWCxDiXorQZJ6HHe--one-off-update-northern-arc-mandate-in-investors.json"
+  },
+  {
+    "id": "OfRN2my8aA40BMvR",
+    "name": "NEW-SEND-MB2 — one guarded new email from Chaman's mailbox (dealflow@) (webhook, one-off)",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "OfRN2my8aA40BMvR--new-send-mb2-one-guarded-new-email-from-chaman-s-mailbox-dealflow-webh.json"
+  },
+  {
+    "id": "OiHvfYKKK9mOld2g",
+    "name": "MAIL-HISTORY — 6 mailboxes into mail_log, resolve + classify (hourly 9-22, full sweep 22:30, backfill webhook)",
+    "active": true,
+    "archived": false,
+    "nodes": 32,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "OiHvfYKKK9mOld2g--mail-history-6-mailboxes-into-mail-log-resolve-classify-hourly-9-22-fu.json"
+  },
+  {
+    "id": "PCBDv3s2KbnrBTsu",
+    "name": "One-off SIX-2 — add matches for the 6 investors + Siana cheque",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "PCBDv3s2KbnrBTsu--one-off-six-2-add-matches-for-the-6-investors-siana-cheque.json"
+  },
+  {
+    "id": "PJoOvXxxycF9fHrs",
+    "name": "READ (read-only) — rows with investor_response and their threads",
+    "active": false,
+    "archived": false,
+    "nodes": 3,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "PJoOvXxxycF9fHrs--read-read-only-rows-with-investor-response-and-their-threads.json"
+  },
+  {
+    "id": "PRXEfYrOz5s2JNS8",
+    "name": "One-off CG-6 — activate the 14 no-code rows: real sectors_in codes, AGNOSTIC where the firm says so (user-authorised 23 Sep)",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "PRXEfYrOz5s2JNS8--one-off-cg-6-activate-the-14-no-code-rows-real-sectors-in-codes-agnost.json"
+  },
+  {
+    "id": "PRyFwzrtRhhMDcRY",
+    "name": "SLICE-ADD — write Slice rows to STARTUPS + STARTUP_PROFILE (webhook, one-off)",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "PRyFwzrtRhhMDcRY--slice-add-write-slice-rows-to-startups-startup-profile-webhook-one-off.json"
+  },
+  {
+    "id": "PhprMV9TxqtE6qTG",
+    "name": "One-off DUP-1 — delete 27 tracker-duplicate pending rows",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "PhprMV9TxqtE6qTG--one-off-dup-1-delete-27-tracker-duplicate-pending-rows.json"
+  },
+  {
+    "id": "Pme6FbIOUfuKpnXI",
+    "name": "NEW-SEND-MB4 — one guarded new email from Akansha's mailbox (webhook, one-off)",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T10:15:12.579Z",
+    "file": "Pme6FbIOUfuKpnXI--new-send-mb4-one-guarded-new-email-from-akansha-s-mailbox-webhook-one-.json"
+  },
+  {
+    "id": "PnxcEaAPJxfQQ3sI",
+    "name": "BACKFILL-MATCHES — PIPELINE pairs into matches (idempotent, upserts)",
+    "active": false,
+    "archived": false,
+    "nodes": 7,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "PnxcEaAPJxfQQ3sI--backfill-matches-pipeline-pairs-into-matches-idempotent-upserts.json"
+  },
+  {
+    "id": "PrM3n2w3He9Oe7pd",
+    "name": "One-off CK-2 — list do_not_contact investors (read only)",
+    "active": false,
+    "archived": false,
+    "nodes": 3,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "PrM3n2w3He9Oe7pd--one-off-ck-2-list-do-not-contact-investors-read-only.json"
+  },
+  {
+    "id": "Py68xnSHnVXTvuhJ",
+    "name": "One-off RW-1 — per-startup investor runway after Kae stop",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "Py68xnSHnVXTvuhJ--one-off-rw-1-per-startup-investor-runway-after-kae-stop.json"
+  },
+  {
+    "id": "Q9uQeK6N6Yt21NfI",
+    "name": "One-off TR-11 — Hem Angels contact = Aditya only; mark VOLD x Sekhsaria manually shared",
+    "active": false,
+    "archived": false,
+    "nodes": 8,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "Q9uQeK6N6Yt21NfI--one-off-tr-11-hem-angels-contact-aditya-only-mark-vold-x-sekhsaria-man.json"
+  },
+  {
+    "id": "QC7cBKoGNQUnfU9p",
+    "name": "ONB-RC-UNMERGE — unmerge the 8 ONBOARDING ranges blocking reply-capture writes (30 Sep, one-off)",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "QC7cBKoGNQUnfU9p--onb-rc-unmerge-unmerge-the-8-onboarding-ranges-blocking-reply-capture-.json"
+  },
+  {
+    "id": "QCPbWFuiM0FpGiwZ",
+    "name": "One-off — Strip closing line (write-back)",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "QCPbWFuiM0FpGiwZ--one-off-strip-closing-line-write-back.json"
+  },
+  {
+    "id": "QLHy1K3kGqMBDnV8",
+    "name": "One-off BG-1 — update BlueGreen mandate in INVESTORS + stop 7 follow-ups",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "QLHy1K3kGqMBDnV8--one-off-bg-1-update-bluegreen-mandate-in-investors-stop-7-follow-ups.json"
+  },
+  {
+    "id": "QgiGt0dAh2QNScab",
+    "name": "NEW-SEND-MB3 — one guarded new email from Aditya's mailbox (investors@) (webhook, one-off)",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T10:15:18.610Z",
+    "file": "QgiGt0dAh2QNScab--new-send-mb3-one-guarded-new-email-from-aditya-s-mailbox-investors-web.json"
+  },
+  {
+    "id": "QlAhsckqgHJv1Vwg",
+    "name": "One-off EX-1 — Eximius Ventures: remove InsurTech from sectors (user 14 Sep)",
+    "active": false,
+    "archived": false,
+    "nodes": 7,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "QlAhsckqgHJv1Vwg--one-off-ex-1-eximius-ventures-remove-insurtech-from-sectors-user-14-se.json"
+  },
+  {
+    "id": "R3U6KHRBsflX2e3g",
+    "name": "One-off — Count today sends",
+    "active": false,
+    "archived": false,
+    "nodes": 3,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "R3U6KHRBsflX2e3g--one-off-count-today-sends.json"
+  },
+  {
+    "id": "R9lBdoncjdrEVZ90",
+    "name": "One-off FU-RAJUL — follow-up reply in thread from dealflow@ (5 Oct)",
+    "active": false,
+    "archived": false,
+    "nodes": 8,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "R9lBdoncjdrEVZ90--one-off-fu-rajul-follow-up-reply-in-thread-from-dealflow-5-oct.json"
+  },
+  {
+    "id": "RAXmy91eYJppJkhV",
+    "name": "One-off — Clear GLOBAL_PAUSE",
+    "active": false,
+    "archived": false,
+    "nodes": 3,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "RAXmy91eYJppJkhV--one-off-clear-global-pause.json"
+  },
+  {
+    "id": "RBVK7nzZzyHmx0wy",
+    "name": "One-off IAN-1 — split IAN Group into Angel Fund + Alpha Fund rows",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "RBVK7nzZzyHmx0wy--one-off-ian-1-split-ian-group-into-angel-fund-alpha-fund-rows.json"
+  },
+  {
+    "id": "RGiaAc3oNYUxloJm",
+    "name": "One-off ONB-STATE-READ (read-only) — ONBOARDING AQ:AV + LI_OUTREACH V:AA engine state (5 Oct)",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T12:14:25.970Z",
+    "file": "RGiaAc3oNYUxloJm--one-off-onb-state-read-read-only-onboarding-aq-av-li-outreach-v-aa-eng.json"
+  },
+  {
+    "id": "RH4bdJLq5LT3dQMb",
+    "name": "One-off TW-1 — apply 11 Sep thesis corrections, drop 29 keyword-only deals, hold Equentis, resolve flags",
+    "active": false,
+    "archived": false,
+    "nodes": 11,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "RH4bdJLq5LT3dQMb--one-off-tw-1-apply-11-sep-thesis-corrections-drop-29-keyword-only-deal.json"
+  },
+  {
+    "id": "SBqFYiGTGoPtSwXg",
+    "name": "One-off HS-1 — hold queued deals for investors with no stage in INVESTORS",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "SBqFYiGTGoPtSwXg--one-off-hs-1-hold-queued-deals-for-investors-with-no-stage-in-investor.json"
+  },
+  {
+    "id": "SPB9YWeyg6PmE4NW",
+    "name": "One-off IAN-4 — fresh matches for Angel + Alpha funds",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "SPB9YWeyg6PmE4NW--one-off-ian-4-fresh-matches-for-angel-alpha-funds.json"
+  },
+  {
+    "id": "ST2ZSrUkTXVz14ep",
+    "name": "One-off FI-1 — fill 7 investors' blank email/contact/thesis from the team's info sheet (blank cells only)",
+    "active": false,
+    "archived": false,
+    "nodes": 7,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "ST2ZSrUkTXVz14ep--one-off-fi-1-fill-7-investors-blank-email-contact-thesis-from-the-team.json"
+  },
+  {
+    "id": "STxiIdY3w0efPDGK",
+    "name": "Reply Detection — Chaman",
+    "active": true,
+    "archived": false,
+    "nodes": 26,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "STxiIdY3w0efPDGK--reply-detection-chaman.json"
+  },
+  {
+    "id": "SV10R73wItQId0zj",
+    "name": "One-off FA-2 — append 32 new investors to INVESTORS (dedup, DNC preserved)",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "SV10R73wItQId0zj--one-off-fa-2-append-32-new-investors-to-investors-dedup-dnc-preserved.json"
+  },
+  {
+    "id": "SW5Pj4TGE0SWRROU",
+    "name": "One-off TR-30 — PREVIEW v2 raise cleaner (structure-preserving), 16 all-investor + 27 angel (read only)",
+    "active": false,
+    "archived": false,
+    "nodes": 11,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "SW5Pj4TGE0SWRROU--one-off-tr-30-preview-v2-raise-cleaner-structure-preserving-16-all-inv.json"
+  },
+  {
+    "id": "SewceinoOu1byPFu",
+    "name": "One-off TC-2 — apply 17 Sep thesis rules: Hem / Vertex / Zeren / DMI stops + INVESTORS updates (user-approved)",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "SewceinoOu1byPFu--one-off-tc-2-apply-17-sep-thesis-rules-hem-vertex-zeren-dmi-stops-inve.json"
+  },
+  {
+    "id": "T29l4xoxbdsFNDCz",
+    "name": "REPLY-SEND-MB5 — guarded in-thread reply from Shradhaa's mailbox (webhook)",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T07:12:40.314Z",
+    "file": "T29l4xoxbdsFNDCz--reply-send-mb5-guarded-in-thread-reply-from-shradhaa-s-mailbox-webhook.json"
+  },
+  {
+    "id": "TGw5QUJLVLQsiNNe",
+    "name": "One-off IAN-3 — record IAN meetings (Luxova, Nexcore) + create EosNox row",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "TGw5QUJLVLQsiNNe--one-off-ian-3-record-ian-meetings-luxova-nexcore-create-eosnox-row.json"
+  },
+  {
+    "id": "TJUMpe2il97RIJi3",
+    "name": "Fundraising Outreach — Workflow A (Aditya)",
+    "active": true,
+    "archived": false,
+    "nodes": 37,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "TJUMpe2il97RIJi3--fundraising-outreach-workflow-a-aditya.json"
+  },
+  {
+    "id": "ThiWDFPpKOu9iLnF",
+    "name": "ONB-1 — Investor Onboarding Send (5 mailboxes, 70/day)",
+    "active": true,
+    "archived": false,
+    "nodes": 36,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "ThiWDFPpKOu9iLnF--onb-1-investor-onboarding-send-5-mailboxes-70-day.json"
+  },
+  {
+    "id": "TrX1IxVeZwtxE4bP",
+    "name": "Fundraising Outreach — Person 1",
+    "active": false,
+    "archived": true,
+    "nodes": 18,
+    "updatedAt": "2026-08-29T16:37:32.000Z",
+    "file": "TrX1IxVeZwtxE4bP--fundraising-outreach-person-1.json"
+  },
+  {
+    "id": "UGh6miDL0QrbW1P3",
+    "name": "ONB-FU-READ — ONBOARDING + INVESTORS + BOUNCES + STARTUPS for onboarding-followups (webhook, read-only)",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "UGh6miDL0QrbW1P3--onb-fu-read-onboarding-investors-bounces-startups-for-onboarding-follo.json"
+  },
+  {
+    "id": "UTI1y9Otxi9kgL6G",
+    "name": "One-off KX-1 — purge unsent sub-70 rows for the six startups",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "UTI1y9Otxi9kgL6G--one-off-kx-1-purge-unsent-sub-70-rows-for-the-six-startups.json"
+  },
+  {
+    "id": "UVQvCGO7gZSj5Xip",
+    "name": "One-off ENGINE-INSPECT (read-only) — headers, queue shape, tracker tab name (17 Sep)",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "UVQvCGO7gZSj5Xip--one-off-engine-inspect-read-only-headers-queue-shape-tracker-tab-name-.json"
+  },
+  {
+    "id": "UcruauKER2e5Pgw6",
+    "name": "DEAL-REPLIES — read reply metadata for given PIPELINE threads, one mailbox per call (webhook, read-only, one-off)",
+    "active": false,
+    "archived": false,
+    "nodes": 8,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "UcruauKER2e5Pgw6--deal-replies-read-reply-metadata-for-given-pipeline-threads-one-mailbo.json"
+  },
+  {
+    "id": "UhHR8aNInr5n7h8T",
+    "name": "One-off RM-2 — resolve THESIS-WATCH flags after re-match",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "UhHR8aNInr5n7h8T--one-off-rm-2-resolve-thesis-watch-flags-after-re-match.json"
+  },
+  {
+    "id": "Uq1xLMUb2ieJ4GqY",
+    "name": "READ-STATE (read-only) — investor activation counts, ignores filter views",
+    "active": false,
+    "archived": false,
+    "nodes": 3,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "Uq1xLMUb2ieJ4GqY--read-state-read-only-investor-activation-counts-ignores-filter-views.json"
+  },
+  {
+    "id": "UwSkZ8zBVmp18KwF",
+    "name": "REPLY-SEND-MB4-ATT — guarded in-thread reply WITH attachments from Akansha's mailbox (webhook)",
+    "active": true,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T10:25:53.453Z",
+    "file": "UwSkZ8zBVmp18KwF--reply-send-mb4-att-guarded-in-thread-reply-with-attachments-from-akans.json"
+  },
+  {
+    "id": "V0NmD52cFC0HmJB4",
+    "name": "INTERNAL-SEND — one new email from Aditya's mailbox to Sidana team addresses only (webhook, dry-run first)",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T12:00:27.433Z",
+    "file": "V0NmD52cFC0HmJB4--internal-send-one-new-email-from-aditya-s-mailbox-to-sidana-team-addre.json"
+  },
+  {
+    "id": "VPJoYaVLQUNeiz6N",
+    "name": "One-off ADD-INV — append LinkedIn investors to INVESTORS + CRITERIA (last: 8i Ventures 25 Sep)",
+    "active": false,
+    "archived": false,
+    "nodes": 8,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "VPJoYaVLQUNeiz6N--one-off-add-inv-append-linkedin-investors-to-investors-criteria-last-8.json"
+  },
+  {
+    "id": "Vd7nRntD4SxPRrvb",
+    "name": "One-off AA-1 — apply audit to INVESTORS (38 stage fills + 16 clearly-wrong fixes; correction sheet already excluded)",
+    "active": false,
+    "archived": false,
+    "nodes": 7,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "Vd7nRntD4SxPRrvb--one-off-aa-1-apply-audit-to-investors-38-stage-fills-16-clearly-wrong-.json"
+  },
+  {
+    "id": "WX7sWksseapdEPht",
+    "name": "NEW-SEND-MB3 — one guarded new email from Aditya's mailbox (investors@) (webhook, one-off)",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "WX7sWksseapdEPht--new-send-mb3-one-guarded-new-email-from-aditya-s-mailbox-investors-web.json"
+  },
+  {
+    "id": "Wh4xkyLyqMksTlPo",
+    "name": "NEW-SEND-MB4 — one guarded new email from Akansha's mailbox (webhook, one-off)",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "Wh4xkyLyqMksTlPo--new-send-mb4-one-guarded-new-email-from-akansha-s-mailbox-webhook-one-.json"
+  },
+  {
+    "id": "WzZjnoOzOH0ohbhR",
+    "name": "One-off CAL-MUCKER — Mucker Capital intro invite from investors@ calendar (webhook, 30 Sep)",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "WzZjnoOzOH0ohbhR--one-off-cal-mucker-mucker-capital-intro-invite-from-investors-calendar.json"
+  },
+  {
+    "id": "XUksDVaFexCu799r",
+    "name": "ASK-SEND — send queued thesis-check replies inside the latest deal thread (weekdays 11:00 IST)",
+    "active": true,
+    "archived": false,
+    "nodes": 24,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "XUksDVaFexCu799r--ask-send-send-queued-thesis-check-replies-inside-the-latest-deal-threa.json"
+  },
+  {
+    "id": "XYwBv4v3zQau0rbq",
+    "name": "SENT-HISTORY — emails ever sent to each investor inbox per mailbox + first date (webhook, read-only)",
+    "active": false,
+    "archived": false,
+    "nodes": 15,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "XYwBv4v3zQau0rbq--sent-history-emails-ever-sent-to-each-investor-inbox-per-mailbox-first.json"
+  },
+  {
+    "id": "XZwKnnFk5IKTHyLf",
+    "name": "SUPABASE-CHECK — table counts + recent shares (POST the webhook)",
+    "active": true,
+    "archived": false,
+    "nodes": 7,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "XZwKnnFk5IKTHyLf--supabase-check-table-counts-recent-shares-post-the-webhook.json"
+  },
+  {
+    "id": "Xxm8diNvKUoYhlqY",
+    "name": "One-off MATCH — Liftt into PIPELINE (28 Sep)",
+    "active": false,
+    "archived": false,
+    "nodes": 14,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "Xxm8diNvKUoYhlqY--one-off-match-liftt-into-pipeline-28-sep.json"
+  },
+  {
+    "id": "Y2nyKyUYO42mwTbA",
+    "name": "One-off TS-TEST (read-only) — dry test of the Thesis row-diff against the snapshot (17 Sep)",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "Y2nyKyUYO42mwTbA--one-off-ts-test-read-only-dry-test-of-the-thesis-row-diff-against-the-.json"
+  },
+  {
+    "id": "Y6Gf3UGge28Wt1Rv",
+    "name": "One-off — DELETE Cosmicport from PIPELINE + STARTUPS",
+    "active": false,
+    "archived": false,
+    "nodes": 7,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "Y6Gf3UGge28Wt1Rv--one-off-delete-cosmicport-from-pipeline-startups.json"
+  },
+  {
+    "id": "YLKMwcmYpZxwQdw9",
+    "name": "ONB-REPLY-WRITE — record classified ONBOARDING replies (AD:AL + status + review_note), guarded (webhook)",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "YLKMwcmYpZxwQdw9--onb-reply-write-record-classified-onboarding-replies-ad-al-status-revi.json"
+  },
+  {
+    "id": "YO9gZXzvpGNMzPlb",
+    "name": "Reply Detection — Shradha",
+    "active": true,
+    "archived": false,
+    "nodes": 26,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "YO9gZXzvpGNMzPlb--reply-detection-shradha.json"
+  },
+  {
+    "id": "YsEbcgJ1jEfCj0t7",
+    "name": "One-off CA-1 — clear do_not_contact on Climate Angels (user 11 Sep)",
+    "active": false,
+    "archived": false,
+    "nodes": 7,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "YsEbcgJ1jEfCj0t7--one-off-ca-1-clear-do-not-contact-on-climate-angels-user-11-sep.json"
+  },
+  {
+    "id": "YuI0oOBJ62paICSX",
+    "name": "One-off TX-2 — match Tronix.AI and add PIPELINE rows",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "YuI0oOBJ62paICSX--one-off-tx-2-match-tronix-ai-and-add-pipeline-rows.json"
+  },
+  {
+    "id": "ZOMx3fqUdYYRdZJa",
+    "name": "FF-EXPORT — read-only export of investor-meeting transcripts from fireflies_transcripts (webhook, paged)",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "ZOMx3fqUdYYRdZJa--ff-export-read-only-export-of-investor-meeting-transcripts-from-firefl.json"
+  },
+  {
+    "id": "ZTLhc0DPqJEHv9pX",
+    "name": "ONB-RC-THREADS (read-only) — read Iron Pillar (admin@) + Navam (shradhaa@) threads for prior-reply check (30 Sep)",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "ZTLhc0DPqJEHv9pX--onb-rc-threads-read-only-read-iron-pillar-admin-navam-shradhaa-threads.json"
+  },
+  {
+    "id": "Zd0OvIW59isaRq2Z",
+    "name": "One-off MS-1 — priority: My Soul to DSG Consumer Partners in tomorrow's run (15 Sep)",
+    "active": false,
+    "archived": false,
+    "nodes": 11,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "Zd0OvIW59isaRq2Z--one-off-ms-1-priority-my-soul-to-dsg-consumer-partners-in-tomorrow-s-r.json"
+  },
+  {
+    "id": "Zdz2UBenSg85W1MK",
+    "name": "One-off DTF-1 — correct Deal Tracker row 108 (Atomic): EosNox passed 14 Sep, remove from Picked/Interested",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "Zdz2UBenSg85W1MK--one-off-dtf-1-correct-deal-tracker-row-108-atomic-eosnox-passed-14-sep.json"
+  },
+  {
+    "id": "Zhg11bMJUku1Wavj",
+    "name": "REPLY-SEND — one guarded in-thread reply (now mailbox 3 / Aditya; 22 Sep SucSEED)",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "Zhg11bMJUku1Wavj--reply-send-one-guarded-in-thread-reply-now-mailbox-3-aditya-22-sep-suc.json"
+  },
+  {
+    "id": "Zvj2LlgUpnIsMP93",
+    "name": "CLEANUP — Delete TEST-ADITYA-001 row",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "Zvj2LlgUpnIsMP93--cleanup-delete-test-aditya-001-row.json"
+  },
+  {
+    "id": "ZyTqd07izBI5Trmw",
+    "name": "One-off TEST SEND — final PeerCapital email with signature to investors@ (16 Sep)",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "ZyTqd07izBI5Trmw--one-off-test-send-final-peercapital-email-with-signature-to-investors-.json"
+  },
+  {
+    "id": "aDI9pNidxR0A0fY7",
+    "name": "One-off TR-24 — extract revenue figures from the 8 unclassified startups' memos (read only)",
+    "active": false,
+    "archived": false,
+    "nodes": 3,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "aDI9pNidxR0A0fY7--one-off-tr-24-extract-revenue-figures-from-the-8-unclassified-startups.json"
+  },
+  {
+    "id": "aEH8eCHOW6fH2waO",
+    "name": "One-off RMW16-1 (read-only) — 16 Sep re-match watch: flags, corrections, dup check, meetings",
+    "active": false,
+    "archived": false,
+    "nodes": 10,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "aEH8eCHOW6fH2waO--one-off-rmw16-1-read-only-16-sep-re-match-watch-flags-corrections-dup-.json"
+  },
+  {
+    "id": "al3C1vfFavzNi34B",
+    "name": "One-off — Dump CONFIG owner keys",
+    "active": false,
+    "archived": false,
+    "nodes": 3,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "al3C1vfFavzNi34B--one-off-dump-config-owner-keys.json"
+  },
+  {
+    "id": "alhsZdEIg0WZpMSg",
+    "name": "One-off TC-2D (DRY RUN, read-only) — proposed stops: Hem / Vertex / Zeren / DMI Sparkle + Dexter view (17 Sep)",
+    "active": false,
+    "archived": false,
+    "nodes": 3,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "alhsZdEIg0WZpMSg--one-off-tc-2d-dry-run-read-only-proposed-stops-hem-vertex-zeren-dmi-sp.json"
+  },
+  {
+    "id": "araMljqgtKiNCALY",
+    "name": "One-off CAL-SHIPPIN — Shippin (Internal SV Meeting) Mon 5 Oct 13:00 IST",
+    "active": false,
+    "archived": false,
+    "nodes": 7,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "araMljqgtKiNCALY--one-off-cal-shippin-shippin-internal-sv-meeting-mon-5-oct-13-00-ist.json"
+  },
+  {
+    "id": "b4oA56veAQ9J1oet",
+    "name": "One-off — Snapshot today shares",
+    "active": false,
+    "archived": false,
+    "nodes": 3,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "b4oA56veAQ9J1oet--one-off-snapshot-today-shares.json"
+  },
+  {
+    "id": "bIf7voSVSMgdg0BQ",
+    "name": "Pilot Helper — Set PLT-002 next_due",
+    "active": false,
+    "archived": true,
+    "nodes": 3,
+    "updatedAt": "2026-08-28T20:49:20.000Z",
+    "file": "bIf7voSVSMgdg0BQ--pilot-helper-set-plt-002-next-due.json"
+  },
+  {
+    "id": "bKMx3DEmVdE48d02",
+    "name": "One-off RMW17-3 — 17 Sep: PiperSireca + DSG re-match, resolve 4 flags, mail-correction carry-through",
+    "active": false,
+    "archived": false,
+    "nodes": 17,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "bKMx3DEmVdE48d02--one-off-rmw17-3-17-sep-pipersireca-dsg-re-match-resolve-4-flags-mail-c.json"
+  },
+  {
+    "id": "bUfXuRB13SvUmwV1",
+    "name": "SCRATCH-QREFILL-READ",
+    "active": true,
+    "archived": false,
+    "nodes": 3,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "bUfXuRB13SvUmwV1--scratch-qrefill-read.json"
+  },
+  {
+    "id": "bcdEk1DcSfrCHaUe",
+    "name": "One-off — Preview closing strip",
+    "active": false,
+    "archived": false,
+    "nodes": 3,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "bcdEk1DcSfrCHaUe--one-off-preview-closing-strip.json"
+  },
+  {
+    "id": "bn71hxk8JXFH9HXj",
+    "name": "SHEET-WRITE-TABS — clear and rewrite named tabs on an existing Google Sheet (webhook, one-off)",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "bn71hxk8JXFH9HXj--sheet-write-tabs-clear-and-rewrite-named-tabs-on-an-existing-google-sh.json"
+  },
+  {
+    "id": "buO2rlUO80B5ZgbB",
+    "name": "REPLY-SEND-MB6 — guarded in-thread reply from Bhawna's mailbox (admin@) (webhook)",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "buO2rlUO80B5ZgbB--reply-send-mb6-guarded-in-thread-reply-from-bhawna-s-mailbox-admin-web.json"
+  },
+  {
+    "id": "bxoAaqBwh6eBjkbJ",
+    "name": "One-off DR-3 — drop 15 Elevation partner deals that mix the partners' sectors (reused DR-2)",
+    "active": false,
+    "archived": false,
+    "nodes": 7,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "bxoAaqBwh6eBjkbJ--one-off-dr-3-drop-15-elevation-partner-deals-that-mix-the-partners-sec.json"
+  },
+  {
+    "id": "bzJOdCWqa7Mn1xqU",
+    "name": "One-off TX-1 — add Tronix.AI to STARTUPS + dump investor criteria",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "bzJOdCWqa7Mn1xqU--one-off-tx-1-add-tronix-ai-to-startups-dump-investor-criteria.json"
+  },
+  {
+    "id": "cWn4OtaMZEB9b60K",
+    "name": "One-off BCA-1 — append PIPELINE row Bon Cuisine x Atomic Capital (ENGINE OVERRIDE, 25 Sep)",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "cWn4OtaMZEB9b60K--one-off-bca-1-append-pipeline-row-bon-cuisine-x-atomic-capital-engine-.json"
+  },
+  {
+    "id": "cl9U8BpxSTgn0MuD",
+    "name": "One-off CK-4 — list Swishin + BITS BIoCyTIH rows and why each is paused (read only)",
+    "active": false,
+    "archived": false,
+    "nodes": 3,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "cl9U8BpxSTgn0MuD--one-off-ck-4-list-swishin-bits-biocytih-rows-and-why-each-is-paused-re.json"
+  },
+  {
+    "id": "dZhM6Ly4HMnZqZFH",
+    "name": "Investor Fix Row 21",
+    "active": false,
+    "archived": true,
+    "nodes": 3,
+    "updatedAt": "2026-08-29T16:38:38.000Z",
+    "file": "dZhM6Ly4HMnZqZFH--investor-fix-row-21.json"
+  },
+  {
+    "id": "e12rRFwZFhnVPfqs",
+    "name": "One-off — Dump memo styles",
+    "active": false,
+    "archived": false,
+    "nodes": 3,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "e12rRFwZFhnVPfqs--one-off-dump-memo-styles.json"
+  },
+  {
+    "id": "e7t5wXZ7UZhLBTNK",
+    "name": "One-off KAE-2 — pause Kae Capital's unsent queued rows",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "e7t5wXZ7UZhLBTNK--one-off-kae-2-pause-kae-capital-s-unsent-queued-rows.json"
+  },
+  {
+    "id": "eAG6CU8DbJXSLfrK",
+    "name": "READ (read-only) — investors who passed vs corrections received",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "eAG6CU8DbJXSLfrK--read-read-only-investors-who-passed-vs-corrections-received.json"
+  },
+  {
+    "id": "eqagPl5ZxOgIf8HV",
+    "name": "One-off DRM-5 — verify re-match writes (read-only)",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "eqagPl5ZxOgIf8HV--one-off-drm-5-verify-re-match-writes-read-only.json"
+  },
+  {
+    "id": "f0vgo1QmYnREvDls",
+    "name": "HEALTH-CHECK — criteria + startup profile + new-investor gaps (webhook, read-only)",
+    "active": false,
+    "archived": false,
+    "nodes": 3,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "f0vgo1QmYnREvDls--health-check-criteria-startup-profile-new-investor-gaps-webhook-read-o.json"
+  },
+  {
+    "id": "fLffMOvo3rC57gd9",
+    "name": "One-off CA-2 — drop 4 Climate Angels deals that only matched on a keyword (not climate)",
+    "active": false,
+    "archived": false,
+    "nodes": 7,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "fLffMOvo3rC57gd9--one-off-ca-2-drop-4-climate-angels-deals-that-only-matched-on-a-keywor.json"
+  },
+  {
+    "id": "fmqKTt6NnKwZAQdK",
+    "name": "REPLY-SEND-MB3 — one guarded in-thread reply from Aditya's mailbox (investors@) (webhook, one-off)",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T10:10:02.972Z",
+    "file": "fmqKTt6NnKwZAQdK--reply-send-mb3-one-guarded-in-thread-reply-from-aditya-s-mailbox-inves.json"
+  },
+  {
+    "id": "funHcdvs4dhxXnii",
+    "name": "BACKFILL-REPLIES — investor responses and passes from PIPELINE (one-off)",
+    "active": false,
+    "archived": false,
+    "nodes": 7,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "funHcdvs4dhxXnii--backfill-replies-investor-responses-and-passes-from-pipeline-one-off.json"
+  },
+  {
+    "id": "gA6BxmBEpiMgz8p9",
+    "name": "One-off EL-1 — split Elevation Capital into 5 partner rows and re-point its queued deals",
+    "active": false,
+    "archived": false,
+    "nodes": 12,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "gA6BxmBEpiMgz8p9--one-off-el-1-split-elevation-capital-into-5-partner-rows-and-re-point-.json"
+  },
+  {
+    "id": "gK00sYw0C9WJsyH3",
+    "name": "AUTO — apply Mail corrections to INVESTORS (weekdays 18:40 IST)",
+    "active": true,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "gK00sYw0C9WJsyH3--auto-apply-mail-corrections-to-investors-weekdays-18-40-ist.json"
+  },
+  {
+    "id": "gS9DXz4E3gMzcXYP",
+    "name": "DAILY-REPORT — 6 PM weekday deal report to Rakesh (shares, responses, passes, meetings, interested-no-meeting)",
+    "active": true,
+    "archived": false,
+    "nodes": 14,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "gS9DXz4E3gMzcXYP--daily-report-6-pm-weekday-deal-report-to-rakesh-shares-responses-passe.json"
+  },
+  {
+    "id": "gX5nwT2QQJEtLWtn",
+    "name": "REPLY-SEND-MB4-ATT — guarded in-thread reply WITH attachment from Akansha's mailbox (webhook)",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "gX5nwT2QQJEtLWtn--reply-send-mb4-att-guarded-in-thread-reply-with-attachment-from-akansh.json"
+  },
+  {
+    "id": "gbVzDsfzQSxic3gd",
+    "name": "One-off CG-7 — rename row 272 to Verge HealthTech Fund (INVESTORS + INVESTOR_CRITERIA, guarded)",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "gbVzDsfzQSxic3gd--one-off-cg-7-rename-row-272-to-verge-healthtech-fund-investors-investo.json"
+  },
+  {
+    "id": "gnAse0umD53aJwQT",
+    "name": "TEST — One real email (Aditya, throwaway row)",
+    "active": false,
+    "archived": false,
+    "nodes": 13,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "gnAse0umD53aJwQT--test-one-real-email-aditya-throwaway-row.json"
+  },
+  {
+    "id": "gyFkGtGi7gJml7kz",
+    "name": "One-off READ — LI_OUTREACH status (30 Sep)",
+    "active": true,
+    "archived": false,
+    "nodes": 3,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "gyFkGtGi7gJml7kz--one-off-read-li-outreach-status-30-sep.json"
+  },
+  {
+    "id": "hQ0alr8QkOjUXK6f",
+    "name": "One-off PHASE 2 — delete 28 Deal Tracker duplicate rows",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "hQ0alr8QkOjUXK6f--one-off-phase-2-delete-28-deal-tracker-duplicate-rows.json"
+  },
+  {
+    "id": "hkfzoES5lKCFSZud",
+    "name": "One-off RM-1 — re-match Zeren, a99 VC, DSG Consumer Partners",
+    "active": false,
+    "archived": false,
+    "nodes": 10,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "hkfzoES5lKCFSZud--one-off-rm-1-re-match-zeren-a99-vc-dsg-consumer-partners.json"
+  },
+  {
+    "id": "i3PX5DCufizvkb7P",
+    "name": "AUDIT (read-only) — PIPELINE pending rows vs Deal Tracker history",
+    "active": false,
+    "archived": false,
+    "nodes": 3,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "i3PX5DCufizvkb7P--audit-read-only-pipeline-pending-rows-vs-deal-tracker-history.json"
+  },
+  {
+    "id": "i5UR6NuDTE1o6Jj9",
+    "name": "One-off CG-1 — fill blank sector_mode / sectors_in in INVESTOR_CRITERIA (guarded, blank-only)",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "i5UR6NuDTE1o6Jj9--one-off-cg-1-fill-blank-sector-mode-sectors-in-in-investor-criteria-gu.json"
+  },
+  {
+    "id": "iaLOUW7C8IB6FldZ",
+    "name": "One-off — Restyle memo (headings black + 14px) write-back",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "iaLOUW7C8IB6FldZ--one-off-restyle-memo-headings-black-14px-write-back.json"
+  },
+  {
+    "id": "ie4jsYGKXRpLWslG",
+    "name": "ONB-FU-PEEK (read-only) — raw ONBOARDING!AB + AM window (webhook)",
+    "active": true,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "ie4jsYGKXRpLWslG--onb-fu-peek-read-only-raw-onboarding-ab-am-window-webhook.json"
+  },
+  {
+    "id": "ih9uNg5p65talITo",
+    "name": "ENGINE-UPLOAD — write INVESTOR_CRITERIA + STARTUP_PROFILE tabs from a local POST (activate only while uploading)",
+    "active": false,
+    "archived": false,
+    "nodes": 7,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "ih9uNg5p65talITo--engine-upload-write-investor-criteria-startup-profile-tabs-from-a-loca.json"
+  },
+  {
+    "id": "j1sbVcy1x80wLhIR",
+    "name": "One-off DRM-1 — read ERROR LOG + Thesis corrections + INVESTORS",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "j1sbVcy1x80wLhIR--one-off-drm-1-read-error-log-thesis-corrections-investors.json"
+  },
+  {
+    "id": "jS6xKLHPGGnQTozW",
+    "name": "MAIL-MINE — extract investor email threads from the 4 mailboxes into the Mail Mine sheet (webhook, activate only while mining)",
+    "active": false,
+    "archived": false,
+    "nodes": 28,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "jS6xKLHPGGnQTozW--mail-mine-extract-investor-email-threads-from-the-4-mailboxes-into-the.json"
+  },
+  {
+    "id": "jVVRssFPKY4GFrOz",
+    "name": "PIPE-READ — PIPELINE rows with investor response / meeting fields (webhook, read-only)",
+    "active": false,
+    "archived": false,
+    "nodes": 3,
+    "updatedAt": "2026-10-07T11:40:28.976Z",
+    "file": "jVVRssFPKY4GFrOz--pipe-read-pipeline-rows-with-investor-response-meeting-fields-webhook-.json"
+  },
+  {
+    "id": "jZPS0jNUhiagPLN3",
+    "name": "REPLY-SEND-MB4 — guarded in-thread reply from Akansha's mailbox (webhook, one-off)",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T10:10:04.513Z",
+    "file": "jZPS0jNUhiagPLN3--reply-send-mb4-guarded-in-thread-reply-from-akansha-s-mailbox-webhook-.json"
+  },
+  {
+    "id": "jZY9pozyB7WNS9zR",
+    "name": "One-off IA-2 — India Accelerator: drop Priyanshu, set Vasu thesis; Vertex US$3M cheque; Z47 no EdTech (17 Sep)",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "jZY9pozyB7WNS9zR--one-off-ia-2-india-accelerator-drop-priyanshu-set-vasu-thesis-vertex-u.json"
+  },
+  {
+    "id": "jbrwBYNl17XAQClL",
+    "name": "Fundraising Outreach — Workflow B (Chaman)",
+    "active": true,
+    "archived": false,
+    "nodes": 37,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "jbrwBYNl17XAQClL--fundraising-outreach-workflow-b-chaman.json"
+  },
+  {
+    "id": "jtZdLCYYGbzoGKWI",
+    "name": "ONB-PROBE — read only state check (5 Oct)",
+    "active": true,
+    "archived": false,
+    "nodes": 3,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "jtZdLCYYGbzoGKWI--onb-probe-read-only-state-check-5-oct.json"
+  },
+  {
+    "id": "jvAi8n6sVjfAA86L",
+    "name": "AUDIT2 (read-only) — FULL Deal Tracker vs all pending PIPELINE rows",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "jvAi8n6sVjfAA86L--audit2-read-only-full-deal-tracker-vs-all-pending-pipeline-rows.json"
+  },
+  {
+    "id": "k0XYTgU4qZYDrCpJ",
+    "name": "One-off CS-AUDIT (read-only) — are Mail + Thesis corrections fully carried through? (17 Sep)",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "k0XYTgU4qZYDrCpJ--one-off-cs-audit-read-only-are-mail-thesis-corrections-fully-carried-t.json"
+  },
+  {
+    "id": "k6hrJCFtZENYvmcz",
+    "name": "ONB-RC-READ (read-only) — INVESTORS names + STARTUPS raise bands + ONBOARDING lookups (30 Sep reply capture)",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "k6hrJCFtZENYvmcz--onb-rc-read-read-only-investors-names-startups-raise-bands-onboarding-.json"
+  },
+  {
+    "id": "kIvRBzTxALgmNRkR",
+    "name": "NEW-SEND-MB5 — one guarded new email from Shradhaa's mailbox (webhook, one-off)",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T12:00:25.799Z",
+    "file": "kIvRBzTxALgmNRkR--new-send-mb5-one-guarded-new-email-from-shradhaa-s-mailbox-webhook-one.json"
+  },
+  {
+    "id": "kKELZ9mJc82oIFYT",
+    "name": "One-off CS-1 — apply corrections sheet to INVESTORS (mail + contact + thesis)",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "kKELZ9mJc82oIFYT--one-off-cs-1-apply-corrections-sheet-to-investors-mail-contact-thesis.json"
+  },
+  {
+    "id": "kLA5jXvVOqqxJzE9",
+    "name": "One-off RM-2 — remove Susquehanna from INVESTORS + drop its deals (reused RM-1)",
+    "active": false,
+    "archived": false,
+    "nodes": 16,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "kLA5jXvVOqqxJzE9--one-off-rm-2-remove-susquehanna-from-investors-drop-its-deals-reused-r.json"
+  },
+  {
+    "id": "kLEDuTxx0kaCRuRU",
+    "name": "One-off — Audit sent deals on corrected emails",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "kLEDuTxx0kaCRuRU--one-off-audit-sent-deals-on-corrected-emails.json"
+  },
+  {
+    "id": "kLuZxPFL3PHxfwrA",
+    "name": "One-off — Add Bajaj Finserv (Equity) + 10 matched PIPELINE rows",
+    "active": false,
+    "archived": false,
+    "nodes": 9,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "kLuZxPFL3PHxfwrA--one-off-add-bajaj-finserv-equity-10-matched-pipeline-rows.json"
+  },
+  {
+    "id": "keUczDoVkwwp9GGT",
+    "name": "One-off SIX-1 — remove off-mandate rows for the 6 investors",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "keUczDoVkwwp9GGT--one-off-six-1-remove-off-mandate-rows-for-the-6-investors.json"
+  },
+  {
+    "id": "l0mrPo975PptkopW",
+    "name": "One-off — stop all follow-ups on 6 sent duplicate rows",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "l0mrPo975PptkopW--one-off-stop-all-follow-ups-on-6-sent-duplicate-rows.json"
+  },
+  {
+    "id": "lAlTSC4DqORu5HyV",
+    "name": "One-off RM-13 — remove the 13 never-replied investors from all outreach (webhook, dry first)",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "lAlTSC4DqORu5HyV--one-off-rm-13-remove-the-13-never-replied-investors-from-all-outreach-.json"
+  },
+  {
+    "id": "lajyU752yjJFg4oW",
+    "name": "TEST — Threaded follow-up (FU1, reuses TEST row)",
+    "active": false,
+    "archived": false,
+    "nodes": 13,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "lajyU752yjJFg4oW--test-threaded-follow-up-fu1-reuses-test-row.json"
+  },
+  {
+    "id": "lcn7YUT5OOLQA9lH",
+    "name": "One-off NEWINV-ANGEL — restructure 'Angel Investors Reached over mail' tab (29 Sep)",
+    "active": false,
+    "archived": false,
+    "nodes": 11,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "lcn7YUT5OOLQA9lH--one-off-newinv-angel-restructure-angel-investors-reached-over-mail-tab.json"
+  },
+  {
+    "id": "llTBsxuKyQ1Sjz5R",
+    "name": "One-off CG-2 — fill researched thesis into INVESTORS + INVESTOR_CRITERIA (webhook payload, blank-only)",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "llTBsxuKyQ1Sjz5R--one-off-cg-2-fill-researched-thesis-into-investors-investor-criteria-w.json"
+  },
+  {
+    "id": "lmQbKMQFUHJrFyFs",
+    "name": "One-off ONB-HANDOVER-READ (read-only) — INVESTORS + INVESTOR_CRITERIA matches + STARTUPS book (5 Oct)",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "lmQbKMQFUHJrFyFs--one-off-onb-handover-read-read-only-investors-investor-criteria-matche.json"
+  },
+  {
+    "id": "lo01XVYxXoW2TNVI",
+    "name": "One-off DK-1 — list startups + resolve deck links (read only)",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "lo01XVYxXoW2TNVI--one-off-dk-1-list-startups-resolve-deck-links-read-only.json"
+  },
+  {
+    "id": "lsyD3m2yftgWxdFi",
+    "name": "VERIFY (read-only) — confirm D03010 deleted, neighbours intact",
+    "active": false,
+    "archived": false,
+    "nodes": 3,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "lsyD3m2yftgWxdFi--verify-read-only-confirm-d03010-deleted-neighbours-intact.json"
+  },
+  {
+    "id": "m1C0zJbd3zdMUbx1",
+    "name": "SHEET-READ — batchGet ranges from pilot / allocation sheets (webhook, read-only, one-off)",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T12:12:56.481Z",
+    "file": "m1C0zJbd3zdMUbx1--sheet-read-batchget-ranges-from-pilot-allocation-sheets-webhook-read-o.json"
+  },
+  {
+    "id": "m5wzSnMT08lm3oHK",
+    "name": "NEW-SEND-MB4 — one guarded new email from Akansha's mailbox (webhook, one-off)",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "m5wzSnMT08lm3oHK--new-send-mb4-one-guarded-new-email-from-akansha-s-mailbox-webhook-one-.json"
+  },
+  {
+    "id": "mA6J7QnZBBMSs21c",
+    "name": "One-off — Replay INITIAL date gate",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "mA6J7QnZBBMSs21c--one-off-replay-initial-date-gate.json"
+  },
+  {
+    "id": "mT8FH010gfFQQJWN",
+    "name": "One-off TR-27 — PREVIEW the angel memo sanitiser output (read only, no send)",
+    "active": false,
+    "archived": false,
+    "nodes": 3,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "mT8FH010gfFQQJWN--one-off-tr-27-preview-the-angel-memo-sanitiser-output-read-only-no-sen.json"
+  },
+  {
+    "id": "mTUeFd8PZkiKBXfx",
+    "name": "ONB-FU-MERGEPROBE — which ONBOARDING columns are merged (webhook, read-only)",
+    "active": true,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "mTUeFd8PZkiKBXfx--onb-fu-mergeprobe-which-onboarding-columns-are-merged-webhook-read-onl.json"
+  },
+  {
+    "id": "mYwia4xCbQAz6fcS",
+    "name": "READ (read-only) — BlueGreen Ventures existing PIPELINE rows",
+    "active": false,
+    "archived": false,
+    "nodes": 3,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "mYwia4xCbQAz6fcS--read-read-only-bluegreen-ventures-existing-pipeline-rows.json"
+  },
+  {
+    "id": "mYyafqzm5tZssFoV",
+    "name": "One-off ASK-0 (read-only) — firms that already gave a thesis on the Corrections sheet (17 Sep)",
+    "active": false,
+    "archived": false,
+    "nodes": 3,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "mYyafqzm5tZssFoV--one-off-ask-0-read-only-firms-that-already-gave-a-thesis-on-the-correc.json"
+  },
+  {
+    "id": "msxuuKOriWua0TRf",
+    "name": "One-off NEWINV-FO — Family Offices tab: celebrity, Asian FOs, Swiss investors (29 Sep)",
+    "active": false,
+    "archived": false,
+    "nodes": 10,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "msxuuKOriWua0TRf--one-off-newinv-fo-family-offices-tab-celebrity-asian-fos-swiss-investo.json"
+  },
+  {
+    "id": "n3NnZ386C0P9HNxc",
+    "name": "Fundraising Outreach — Workflow C (Akansha)",
+    "active": true,
+    "archived": false,
+    "nodes": 37,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "n3NnZ386C0P9HNxc--fundraising-outreach-workflow-c-akansha.json"
+  },
+  {
+    "id": "nZA6SIDR5c34CPFj",
+    "name": "One-off RW-4 — audit existing matches for the six USD-K startups",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "nZA6SIDR5c34CPFj--one-off-rw-4-audit-existing-matches-for-the-six-usd-k-startups.json"
+  },
+  {
+    "id": "nmoS6OmXs3EXqV9f",
+    "name": "One-off READ — onboarding replies in Shradhaa inbox (18 Sep)",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "nmoS6OmXs3EXqV9f--one-off-read-onboarding-replies-in-shradhaa-inbox-18-sep.json"
+  },
+  {
+    "id": "nvqwbjatmUl35U5G",
+    "name": "READ (read-only) — BOUNCE SWEEP: founder addresses failing across all 4 mailboxes",
+    "active": false,
+    "archived": false,
+    "nodes": 7,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "nvqwbjatmUl35U5G--read-read-only-bounce-sweep-founder-addresses-failing-across-all-4-mai.json"
+  },
+  {
+    "id": "nw0yjE3ALRnuNlSa",
+    "name": "CAL-PATCH — rename/update one calendar event (webhook, one-off)",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "nw0yjE3ALRnuNlSa--cal-patch-rename-update-one-calendar-event-webhook-one-off.json"
+  },
+  {
+    "id": "nxijGog7DYyo2Co4",
+    "name": "One-off FI-8 — add found founder addresses (Indie Stori, Serve Amigo)",
+    "active": true,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "nxijGog7DYyo2Co4--one-off-fi-8-add-found-founder-addresses-indie-stori-serve-amigo.json"
+  },
+  {
+    "id": "oGvKr1AOnQR7lS9A",
+    "name": "One-off TR-28 — release the held angel x pre-revenue deals now the sanitiser is live",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "oGvKr1AOnQR7lS9A--one-off-tr-28-release-the-held-angel-x-pre-revenue-deals-now-the-sanit.json"
+  },
+  {
+    "id": "oLKd1xf1PlJZ9wOU",
+    "name": "One-off MK-1 — mark held deals with what to fill (stage / email / name)",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "oLKd1xf1PlJZ9wOU--one-off-mk-1-mark-held-deals-with-what-to-fill-stage-email-name.json"
+  },
+  {
+    "id": "oVBxUiufyQXZ9pO4",
+    "name": "One-off — Email corrections (Fireside, Debtworks)",
+    "active": false,
+    "archived": false,
+    "nodes": 8,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "oVBxUiufyQXZ9pO4--one-off-email-corrections-fireside-debtworks.json"
+  },
+  {
+    "id": "owN41PYCAm9XebNa",
+    "name": "One-off TR-20 — hold the 2 near-term angel x pre-revenue deals until the memo sanitiser is live",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "owN41PYCAm9XebNa--one-off-tr-20-hold-the-2-near-term-angel-x-pre-revenue-deals-until-the.json"
+  },
+  {
+    "id": "p2AcvTSivfr9OYDb",
+    "name": "One-off IA-1 (read-only) — India Accelerator: INVESTORS, criteria, PIPELINE, corrections rows (17 Sep)",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "p2AcvTSivfr9OYDb--one-off-ia-1-read-only-india-accelerator-investors-criteria-pipeline-c.json"
+  },
+  {
+    "id": "p9SMIu3X5veRhcEa",
+    "name": "One-off RW-5 — runway + gaps + strict headroom after full re-match",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "p9SMIu3X5veRhcEa--one-off-rw-5-runway-gaps-strict-headroom-after-full-re-match.json"
+  },
+  {
+    "id": "pZxzwaj8FaV0rvCM",
+    "name": "One-off TR-19 — which angel x pre-revenue deals are queued (read only)",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "pZxzwaj8FaV0rvCM--one-off-tr-19-which-angel-x-pre-revenue-deals-are-queued-read-only.json"
+  },
+  {
+    "id": "pgnDpeG9NNxOe64O",
+    "name": "One-off OG-1 — split OG Capital (Shrinidhi) and angel Sayan Ghosh (reused NI-1)",
+    "active": false,
+    "archived": false,
+    "nodes": 13,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "pgnDpeG9NNxOe64O--one-off-og-1-split-og-capital-shrinidhi-and-angel-sayan-ghosh-reused-n.json"
+  },
+  {
+    "id": "pk3xhkDoHJpkiEIP",
+    "name": "One-off CR-1 — read Corrections sheet tabs (read only)",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "pk3xhkDoHJpkiEIP--one-off-cr-1-read-corrections-sheet-tabs-read-only.json"
+  },
+  {
+    "id": "pqLfAmMEPO42I9Ys",
+    "name": "Reply Detection — Chaman",
+    "active": false,
+    "archived": true,
+    "nodes": 27,
+    "updatedAt": "2026-09-01T16:26:10.000Z",
+    "file": "pqLfAmMEPO42I9Ys--reply-detection-chaman.json"
+  },
+  {
+    "id": "pwROVjT9JIy9nHJa",
+    "name": "ATTACH-GET — read-only: fetch one Gmail attachment (base64) from a mailbox (webhook, one-off)",
+    "active": false,
+    "archived": false,
+    "nodes": 8,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "pwROVjT9JIy9nHJa--attach-get-read-only-fetch-one-gmail-attachment-base64-from-a-mailbox-.json"
+  },
+  {
+    "id": "q1a7dZAHzFKLbq5X",
+    "name": "One-off LOR-1 — clear L'Oreal pipeline rows + record true thesis",
+    "active": false,
+    "archived": false,
+    "nodes": 8,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "q1a7dZAHzFKLbq5X--one-off-lor-1-clear-l-oreal-pipeline-rows-record-true-thesis.json"
+  },
+  {
+    "id": "q24zJzoQprk25R3n",
+    "name": "One-off NR-1 — investors with no reply to shared deals (read only)",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "q24zJzoQprk25R3n--one-off-nr-1-investors-with-no-reply-to-shared-deals-read-only.json"
+  },
+  {
+    "id": "qjXBZpolaz5VIaeQ",
+    "name": "One-off NEWINV-ANGEL — Angel Investors tab: home-services / laundry angels (29 Sep)",
+    "active": false,
+    "archived": false,
+    "nodes": 10,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "qjXBZpolaz5VIaeQ--one-off-newinv-angel-angel-investors-tab-home-services-laundry-angels-.json"
+  },
+  {
+    "id": "qk8BCT8dWOogQtas",
+    "name": "One-off ST-1 — perfect-match count, meetings per startup, series-stage + seed investors",
+    "active": false,
+    "archived": false,
+    "nodes": 8,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "qk8BCT8dWOogQtas--one-off-st-1-perfect-match-count-meetings-per-startup-series-stage-see.json"
+  },
+  {
+    "id": "qp4PTTpe4QNu2Pux",
+    "name": "ONB-FU-SWEEP2 — sent intro send-dates per mailbox: byEmail + byFirm(from subject) maps (webhook, read-only)",
+    "active": true,
+    "archived": false,
+    "nodes": 16,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "qp4PTTpe4QNu2Pux--onb-fu-sweep2-sent-intro-send-dates-per-mailbox-byemail-byfirm-from-su.json"
+  },
+  {
+    "id": "raauoz7Av3cTFyqn",
+    "name": "One-off RMW23-2 (read-only) — 23 Sep 17:30: ERROR LOG unresolved + INVESTORS vs CRITERIA gaps",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "raauoz7Av3cTFyqn--one-off-rmw23-2-read-only-23-sep-17-30-error-log-unresolved-investors-.json"
+  },
+  {
+    "id": "riWwU1NdWJjmac3T",
+    "name": "One-off CK-3 — per-startup queue cover after re-dating (read only)",
+    "active": false,
+    "archived": false,
+    "nodes": 3,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "riWwU1NdWJjmac3T--one-off-ck-3-per-startup-queue-cover-after-re-dating-read-only.json"
+  },
+  {
+    "id": "s7JSBOViexnLAwJd",
+    "name": "One-off INV-1 — innovative/niche startups for Swishin + BITS BIoCyTIH (user 14 Sep)",
+    "active": false,
+    "archived": false,
+    "nodes": 11,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "s7JSBOViexnLAwJd--one-off-inv-1-innovative-niche-startups-for-swishin-bits-biocytih-user.json"
+  },
+  {
+    "id": "sNVKE8ox0dfm6Et7",
+    "name": "One-off TR-25 — stage re-grade DRY RUN: what opens, what drops (read only)",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "sNVKE8ox0dfm6Et7--one-off-tr-25-stage-re-grade-dry-run-what-opens-what-drops-read-only.json"
+  },
+  {
+    "id": "sOqXP1XBDvDLTIz9",
+    "name": "DEAL-OPS-SETUP — create DEAL_OPS tab on pilot sheet (webhook, one-off)",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "sOqXP1XBDvDLTIz9--deal-ops-setup-create-deal-ops-tab-on-pilot-sheet-webhook-one-off.json"
+  },
+  {
+    "id": "tTUVbx5dz8ajKUSz",
+    "name": "One-off — TVS correction + resend, Flipkart correction",
+    "active": false,
+    "archived": false,
+    "nodes": 8,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "tTUVbx5dz8ajKUSz--one-off-tvs-correction-resend-flipkart-correction.json"
+  },
+  {
+    "id": "uFAFX9fosT1oUVD1",
+    "name": "ONB-TRACK — match Calendly bookings to onboarding recipients (daily 19:30 IST)",
+    "active": true,
+    "archived": false,
+    "nodes": 12,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "uFAFX9fosT1oUVD1--onb-track-match-calendly-bookings-to-onboarding-recipients-daily-19-30.json"
+  },
+  {
+    "id": "uHbP2eLYI37O2Xe3",
+    "name": "Reply Detection — Akansha",
+    "active": true,
+    "archived": false,
+    "nodes": 26,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "uHbP2eLYI37O2Xe3--reply-detection-akansha.json"
+  },
+  {
+    "id": "uIfY8vIKFOOjsIR3",
+    "name": "One-off — Resend 3 BlackSoil deals to Ravi (today 17:15 IST)",
+    "active": false,
+    "archived": false,
+    "nodes": 13,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "uIfY8vIKFOOjsIR3--one-off-resend-3-blacksoil-deals-to-ravi-today-17-15-ist.json"
+  },
+  {
+    "id": "uS7Sc8v7TnEXwHim",
+    "name": "One-off FULL-2 — strict re-match across all startups, throughput-paced",
+    "active": false,
+    "archived": false,
+    "nodes": 7,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "uS7Sc8v7TnEXwHim--one-off-full-2-strict-re-match-across-all-startups-throughput-paced.json"
+  },
+  {
+    "id": "uVZYNehglgzw763P",
+    "name": "AUTO — detect Thesis-tab changes (field drift + FULL-ROW snapshot diff) and flag for re-match (weekdays 18:45 IST)",
+    "active": true,
+    "archived": false,
+    "nodes": 13,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "uVZYNehglgzw763P--auto-detect-thesis-tab-changes-field-drift-full-row-snapshot-diff-and-.json"
+  },
+  {
+    "id": "ul0FKRZCofFxM0eL",
+    "name": "One-off MT-2 — combined meeting count + sector-only candidates for <5 meetings (dry run)",
+    "active": false,
+    "archived": false,
+    "nodes": 7,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "ul0FKRZCofFxM0eL--one-off-mt-2-combined-meeting-count-sector-only-candidates-for-5-meeti.json"
+  },
+  {
+    "id": "uoYPlCSfZ8yzVlM6",
+    "name": "CAL-CREATE — one guarded meeting invite on the dealflow@ calendar (webhook, one-off; 21 Sep Orbis Lives <> Colossa)",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T09:28:04.818Z",
+    "file": "uoYPlCSfZ8yzVlM6--cal-create-one-guarded-meeting-invite-on-the-dealflow-calendar-webhook.json"
+  },
+  {
+    "id": "uqkKNOqJu9PHauzr",
+    "name": "One-off RD-2 — re-date queued deals: minimum 5 per startup per week, investor caps kept",
+    "active": false,
+    "archived": false,
+    "nodes": 7,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "uqkKNOqJu9PHauzr--one-off-rd-2-re-date-queued-deals-minimum-5-per-startup-per-week-inves.json"
+  },
+  {
+    "id": "vEymxXZYridkIrmP",
+    "name": "One-off TS-BASE — create THESIS SNAPSHOT tab and write today's baseline of the whole Thesis tab (17 Sep)",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "vEymxXZYridkIrmP--one-off-ts-base-create-thesis-snapshot-tab-and-write-today-s-baseline-.json"
+  },
+  {
+    "id": "va1t09FLAwJa7T0X",
+    "name": "One-off KX-2 — re-match the six startups at score 70+",
+    "active": false,
+    "archived": false,
+    "nodes": 7,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "va1t09FLAwJa7T0X--one-off-kx-2-re-match-the-six-startups-at-score-70.json"
+  },
+  {
+    "id": "vdNiikxRdEEd6pl7",
+    "name": "One-off CP-3 — read every tab of InvestorCompositionList20260911 (Google Sheet, read only)",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "vdNiikxRdEEd6pl7--one-off-cp-3-read-every-tab-of-investorcompositionlist20260911-google-.json"
+  },
+  {
+    "id": "vrQzVIcfhe4gXxh3",
+    "name": "One-off TR-1 — apply tiered rules: pause mismatches, delete dead + duplicates, add strict + stage-lenient (capped)",
+    "active": false,
+    "archived": false,
+    "nodes": 15,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "vrQzVIcfhe4gXxh3--one-off-tr-1-apply-tiered-rules-pause-mismatches-delete-dead-duplicate.json"
+  },
+  {
+    "id": "w23ggcoqf781Rw4U",
+    "name": "DEAL-OPS-DAILY — chase open document requests + daily deal-ops summary (weekdays 10:00 IST)",
+    "active": true,
+    "archived": false,
+    "nodes": 11,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "w23ggcoqf781Rw4U--deal-ops-daily-chase-open-document-requests-daily-deal-ops-summary-wee.json"
+  },
+  {
+    "id": "wEFbaHTzt578p4GW",
+    "name": "One-off RO-MB2 — read dealflow@ messages by Gmail query (read-only)",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "wEFbaHTzt578p4GW--one-off-ro-mb2-read-dealflow-messages-by-gmail-query-read-only.json"
+  },
+  {
+    "id": "wcXjlWbrLPU1PLZw",
+    "name": "REPLY-SEND-MB3 — guarded in-thread reply from Aditya's mailbox (investors@) (webhook)",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T06:17:55.470Z",
+    "file": "wcXjlWbrLPU1PLZw--reply-send-mb3-guarded-in-thread-reply-from-aditya-s-mailbox-investors.json"
+  },
+  {
+    "id": "witsOm19m4nNrnso",
+    "name": "One-off LIRW-2 (read-only) — LI_OUTREACH via native Sheets node for linkedin-reply-watch (1 Oct)",
+    "active": false,
+    "archived": false,
+    "nodes": 3,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "witsOm19m4nNrnso--one-off-lirw-2-read-only-li-outreach-via-native-sheets-node-for-linked.json"
+  },
+  {
+    "id": "wrAowfyuCdcN5cJG",
+    "name": "One-off PR-1 — why do rows have priority under 50 (read only)",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "wrAowfyuCdcN5cJG--one-off-pr-1-why-do-rows-have-priority-under-50-read-only.json"
+  },
+  {
+    "id": "wrJsWWqsCJMEQot8",
+    "name": "One-off TR-21 — Michele x pre-revenue: report all, hold anything due before 24 Sep",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "wrJsWWqsCJMEQot8--one-off-tr-21-michele-x-pre-revenue-report-all-hold-anything-due-befor.json"
+  },
+  {
+    "id": "x3YJaACA5gEOJM8T",
+    "name": "ASK-QUEUE-SEED — create THESIS_ASK tab and write queue rows from a local POST (activate only while seeding)",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "x3YJaACA5gEOJM8T--ask-queue-seed-create-thesis-ask-tab-and-write-queue-rows-from-a-local.json"
+  },
+  {
+    "id": "xNcijAk82IpKM7eu",
+    "name": "PIPE-ROW-FIX — guarded single-row PIPELINE update (webhook, one-off)",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "xNcijAk82IpKM7eu--pipe-row-fix-guarded-single-row-pipeline-update-webhook-one-off.json"
+  },
+  {
+    "id": "xUlwnGHI9ypfITsN",
+    "name": "One-off DRM-2 — read tracker + STARTUPS + PIPELINE for re-match",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "xUlwnGHI9ypfITsN--one-off-drm-2-read-tracker-startups-pipeline-for-re-match.json"
+  },
+  {
+    "id": "y6NHL8RjZXjIi4SN",
+    "name": "READ (read-only) — unpaired investor headroom for the 19 short-runway startups",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "y6NHL8RjZXjIi4SN--read-read-only-unpaired-investor-headroom-for-the-19-short-runway-star.json"
+  },
+  {
+    "id": "yOrCIgz4nroQKvIb",
+    "name": "One-off — Set GLOBAL_PAUSE",
+    "active": false,
+    "archived": false,
+    "nodes": 3,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "yOrCIgz4nroQKvIb--one-off-set-global-pause.json"
+  },
+  {
+    "id": "yTLodUeaDiUaoCsa",
+    "name": "One-off PHASE 1 — delete single test row D03010 (verify index semantics)",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "yTLodUeaDiUaoCsa--one-off-phase-1-delete-single-test-row-d03010-verify-index-semantics.json"
+  },
+  {
+    "id": "yer85yobEG0qgAUQ",
+    "name": "Investor Cell Cleanup",
+    "active": false,
+    "archived": true,
+    "nodes": 4,
+    "updatedAt": "2026-08-29T16:38:42.000Z",
+    "file": "yer85yobEG0qgAUQ--investor-cell-cleanup.json"
+  },
+  {
+    "id": "yuZmVeKhmVSe7pvv",
+    "name": "One-off HC (read-only) — criteria health check both sides + STEP 0b new-investor gaps (last: 28 Sep 14:30 run)",
+    "active": false,
+    "archived": false,
+    "nodes": 3,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "yuZmVeKhmVSe7pvv--one-off-hc-read-only-criteria-health-check-both-sides-step-0b-new-inve.json"
+  },
+  {
+    "id": "yyv26k6Frzh9kIB3",
+    "name": "CRIT-READ — INVESTOR_CRITERIA + INVESTORS rows for named investors (webhook, read-only)",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T06:05:26.136Z",
+    "file": "yyv26k6Frzh9kIB3--crit-read-investor-criteria-investors-rows-for-named-investors-webhook.json"
+  },
+  {
+    "id": "z8WgbwWRBIBzFL41",
+    "name": "One-off FULL-1 — strict match audit across all startups (dry run)",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "z8WgbwWRBIBzFL41--one-off-full-1-strict-match-audit-across-all-startups-dry-run.json"
+  },
+  {
+    "id": "zA6h8ERvK519c4el",
+    "name": "One-off — add investor to INVESTORS (reusable; last: RTP Global 22 Sep)",
+    "active": false,
+    "archived": false,
+    "nodes": 8,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "zA6h8ERvK519c4el--one-off-add-investor-to-investors-reusable-last-rtp-global-22-sep.json"
+  },
+  {
+    "id": "zBKvv2l9YQhVLYgu",
+    "name": "One-off CP-1 — investor composition by type and cheque band (read only)",
+    "active": false,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "zBKvv2l9YQhVLYgu--one-off-cp-1-investor-composition-by-type-and-cheque-band-read-only.json"
+  },
+  {
+    "id": "zKSJVFxWAi1gPxer",
+    "name": "One-off FA-1 — fill angel thesis (Alex, Ignacio, Ishan, Jonathan) into blank INVESTORS cells",
+    "active": false,
+    "archived": false,
+    "nodes": 7,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "zKSJVFxWAi1gPxer--one-off-fa-1-fill-angel-thesis-alex-ignacio-ishan-jonathan-into-blank-.json"
+  },
+  {
+    "id": "zOaAei6jyMvJZfzA",
+    "name": "SHEET-CREATE-SHARE — create a Google Sheet from JSON and set anyone-with-link viewer (webhook, one-off)",
+    "active": false,
+    "archived": false,
+    "nodes": 7,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "zOaAei6jyMvJZfzA--sheet-create-share-create-a-google-sheet-from-json-and-set-anyone-with.json"
+  },
+  {
+    "id": "zPI9DmHVnvZddl3L",
+    "name": "One-off — Audit TVS / Climate Angels / Flipkart / M Ventures",
+    "active": false,
+    "archived": false,
+    "nodes": 5,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "zPI9DmHVnvZddl3L--one-off-audit-tvs-climate-angels-flipkart-m-ventures.json"
+  },
+  {
+    "id": "zilfOS3WggSR5FfR",
+    "name": "ONB-RC-ADDINV — append Iron Pillar to INVESTORS, guarded (30 Sep, one-off)",
+    "active": false,
+    "archived": false,
+    "nodes": 8,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "zilfOS3WggSR5FfR--onb-rc-addinv-append-iron-pillar-to-investors-guarded-30-sep-one-off.json"
+  },
+  {
+    "id": "zk7nf19x9HAlHifB",
+    "name": "One-off — set IN44 stage to MVP-early traction in INVESTORS (21 Sep)",
+    "active": false,
+    "archived": false,
+    "nodes": 6,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "zk7nf19x9HAlHifB--one-off-set-in44-stage-to-mvp-early-traction-in-investors-21-sep.json"
+  },
+  {
+    "id": "zwxXecdM2YFCmbch",
+    "name": "DB-READ — read-only Supabase queries for the cloud routine (webhook)",
+    "active": true,
+    "archived": false,
+    "nodes": 4,
+    "updatedAt": "2026-10-07T05:56:00.558Z",
+    "file": "zwxXecdM2YFCmbch--db-read-read-only-supabase-queries-for-the-cloud-routine-webhook.json"
+  }
+]

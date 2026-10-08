@@ -1,0 +1,168 @@
+{
+  "id": "kLEDuTxx0kaCRuRU",
+  "name": "One-off — Audit sent deals on corrected emails",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-04T11:12:18.496Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "fa8f0b0a-a4e2-4836-81e2-19588e94552b",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run (press Execute)",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "t2",
+      "name": "Audit at 17:00 IST",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        200
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 17 4 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "n1",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "position": [
+        224,
+        100
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "n2",
+      "name": "Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        100
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const FIRMS = [\n  { key: 'Fireside Ventures', re: /^fireside ventures$/i },\n  { key: 'Flipkart Ventures', re: /^flipkart ventures$/i },\n  { key: 'Blinc Invest',      re: /^blinc invest$/i },\n  { key: 'M Venture Partners',re: /^m venture partners$/i },\n  { key: 'Debtworks DEBT',    re: /^debtworks/i },\n];\nconst yes = (x) => String(x || '').trim().toLowerCase() === 'yes';\nconst out = {};\nfor (const f of FIRMS) { out[f.key] = { total: 0, sent: 0, unsent: 0, with_reply: 0, sent_rows: [] }; }\n\nfor (const p of $('Read PIPELINE').all()) {\n  const inv = String(p.json.investor || '').trim();\n  for (const f of FIRMS) {\n    if (!f.re.test(inv)) continue;\n    const o = out[f.key];\n    o.total++;\n    if (String(p.json.investor_response || '').trim() !== '') { o.with_reply++; }\n    if (yes(p.json.deal_shared)) {\n      o.sent++;\n      o.sent_rows.push({ deal_id: p.json.deal_id, startup: p.json.startup, owner: p.json.owner, date_shared: p.json.date_shared, next_action: p.json.next_action, next_due: p.json.next_due, resp: p.json.investor_response });\n    } else { o.unsent++; }\n  }\n}\nreturn [{ json: out }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run (press Execute)": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Audit at 17:00 IST": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Audit at 17:00 IST": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "kLEDuTxx0kaCRuRU",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-04T11:12:18.499Z",
+      "updatedAt": "2026-09-04T11:12:18.499Z"
+    }
+  ],
+  "activeVersion": null
+}

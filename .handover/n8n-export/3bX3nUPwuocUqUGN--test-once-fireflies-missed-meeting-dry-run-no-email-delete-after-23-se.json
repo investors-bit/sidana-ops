@@ -1,0 +1,241 @@
+{
+  "id": "3bX3nUPwuocUqUGN",
+  "name": "TEST-ONCE — Fireflies missed-meeting dry run (no email; delete after 23 Sep)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-23T14:32:12.893Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "e05e2c31-f0be-4a6a-aace-ac0ad07a6657",
+  "versionCounter": 4,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Test hook",
+      "webhookId": "b3f7a1c9-4e28-4d61-9a05-7c2e8f0d5b34",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -400,
+        300
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-ff-missed-test-5a9c3e7b12",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "window",
+      "name": "Today's window",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -180,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const IST = 5.5 * 3600000;\nconst nowIst = new Date(Date.now() + IST);\nconst y = nowIst.getUTCFullYear(), m = nowIst.getUTCMonth(), d = nowIst.getUTCDate();\nconst startMs = Date.UTC(y, m, d, 0, 0, 0) - IST;\nconst endMs = Date.UTC(y, m, d, 23, 59, 59) - IST;\nconst label = new Date(startMs + IST).toISOString().slice(0, 10);\nreturn [{ json: { startISO: new Date(startMs).toISOString(), endISO: new Date(endMs).toISOString(), startMs, endMs, dateLabel: label } }];"
+      }
+    },
+    {
+      "id": "calendar",
+      "name": "Get today's calendar events",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "alwaysOutputData": true,
+      "position": [
+        60,
+        200
+      ],
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "primary",
+          "mode": "list"
+        },
+        "returnAll": true,
+        "timeMin": "={{ $json.startISO }}",
+        "timeMax": "={{ $json.endISO }}",
+        "options": {
+          "timeMin": "={{ $json.startISO }}",
+          "timeMax": "={{ $json.endISO }}",
+          "singleEvents": true,
+          "orderBy": "startTime"
+        }
+      },
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "FMaJN0wYxb8FWUZs",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "id": "fireflies",
+      "name": "Get today's Fireflies transcripts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        60,
+        420
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.fireflies.ai/graphql",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ query: 'query Transcripts($fromDate: DateTime, $toDate: DateTime, $limit: Int) { transcripts(fromDate: $fromDate, toDate: $toDate, limit: $limit) { id title date } }', variables: { fromDate: $('Today\\'s window').first().json.startISO, toDate: $('Today\\'s window').first().json.endISO, limit: 50 } }) }}",
+        "options": {
+          "timeout": 60000,
+          "response": {
+            "response": {
+              "neverError": true,
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "SoEEYEKCE2qu0hbJ",
+          "name": "Fireflies Key (paste key only)"
+        }
+      }
+    },
+    {
+      "id": "merge",
+      "name": "Merge",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        320,
+        300
+      ],
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      }
+    },
+    {
+      "id": "compare",
+      "name": "Compare",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        540,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const win = $('Today\\'s window').first().json;\nconst events = $('Get today\\'s calendar events').all().map(i => i.json).filter(e => e && e.id);\nconst raw = $('Get today\\'s Fireflies transcripts').first().json;\nconst status = raw && raw.statusCode;\nconst payload = (raw && raw.body) || raw || {};\nconst ffErrors = payload.errors ? JSON.stringify(payload.errors).slice(0, 400) : '';\nconst transcripts = (payload.data && payload.data.transcripts) || [];\nconst norm = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');\nconst ffTitles = transcripts.map(t => norm(t.title)).filter(Boolean);\nconst hasLink = e => Boolean(e.hangoutLink || e.conferenceData || /zoom\\.us|meet\\.google|teams\\.microsoft|whereby|webex/i.test([e.location, e.description].filter(Boolean).join(' ')));\n// the Google Calendar node's timeMin/timeMax did not bind, so enforce the IST day here\nconst inWindow = e => { if (!e.start || !e.start.dateTime) return false; const t = new Date(e.start.dateTime).getTime(); return t >= win.startMs && t <= win.endMs; };\nconst isRealMeeting = e => { if (!e.start || !e.start.dateTime || !e.end || !e.end.dateTime) return false; const mins = (new Date(e.end.dateTime) - new Date(e.start.dateTime)) / 60000; return mins >= 10; };\nconst considered = events.filter(e => inWindow(e) && isRealMeeting(e) && hasLink(e));\nconst missed = considered.filter(e => { const t = norm(e.summary); if (!t) return true; return !ffTitles.some(f => f.includes(t) || t.includes(f)); }).map(e => ({ title: e.summary || '(no title)', time: e.start.dateTime, organiser: (e.organizer && e.organizer.email) || '' }));\nreturn [{ json: { dateLabel: win.dateLabel, window: win.startISO + ' -> ' + win.endISO, ff_status: status, ff_errors: ffErrors, calendarEventsReturned: events.length, meetingsToday: considered.length, consideredTitles: considered.map(e => e.summary), transcriptsFound: transcripts.length, transcriptTitles: transcripts.map(t => t.title), missedCount: missed.length, missed } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Test hook": {
+      "main": [
+        [
+          {
+            "node": "Today's window",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Today's window": {
+      "main": [
+        [
+          {
+            "node": "Get today's calendar events",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get today's Fireflies transcripts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get today's calendar events": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get today's Fireflies transcripts": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Compare",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "3bX3nUPwuocUqUGN",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-23T14:32:12.895Z",
+      "updatedAt": "2026-09-23T14:32:12.895Z"
+    }
+  ],
+  "activeVersion": null
+}

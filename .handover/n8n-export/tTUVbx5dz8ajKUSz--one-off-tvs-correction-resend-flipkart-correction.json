@@ -1,0 +1,365 @@
+{
+  "id": "tTUVbx5dz8ajKUSz",
+  "name": "One-off — TVS correction + resend, Flipkart correction",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-04T10:44:57.932Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "938eca42-d3a4-4164-83c3-3323bfb2fef3",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run (press Execute)",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "t2",
+      "name": "Apply at 16:28 IST",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        200
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "28 16 4 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "n1",
+      "name": "Read INVESTORS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        224,
+        100
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "INVESTORS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "n2",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        448,
+        100
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "n3",
+      "name": "Build INVESTORS updates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        100
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const FIX = [\n  { match: /^tvs capital funds$/i,  contact_person: 'Gaurav', email: 'Gaurav.Sekhri@herocorp.com' },\n  { match: /^flipkart ventures$/i,  contact_person: 'Parrth', email: 'partth.mahajan@flipkart.com' },\n];\nconst out = [];\nfor (const v of $('Read INVESTORS').all()) {\n  const name = String(v.json.investor || '').trim();\n  for (const f of FIX) {\n    if (f.match.test(name)) { out.push({ json: { investor: name, contact_person: f.contact_person, email: f.email } }); }\n  }\n}\nif (out.length !== FIX.length) { throw new Error('Expected ' + FIX.length + ' INVESTORS matches, found ' + out.length + ' - aborting'); }\nreturn out;"
+      }
+    },
+    {
+      "id": "n4",
+      "name": "Update INVESTORS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "position": [
+        896,
+        100
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "INVESTORS"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "investor"
+          ],
+          "schema": [
+            {
+              "id": "investor",
+              "displayName": "investor",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {
+          "handlingExtraData": "error"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "n5",
+      "name": "Build PIPELINE updates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        100
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const TVS_EMAIL = 'Gaurav.Sekhri@herocorp.com';\nconst FLIP_EMAIL = 'partth.mahajan@flipkart.com';\nconst RESEND_DUE = '2026-09-05';\nconst yes = (x) => String(x || '').trim().toLowerCase() === 'yes';\n\nconst out = [];\nlet tvsReset = 0, tvsEmailOnly = 0, flip = 0;\n\nfor (const p of $('Read PIPELINE').all()) {\n  const inv = String(p.json.investor || '').trim();\n  const id = String(p.json.deal_id || '').trim();\n\n  if (/^tvs capital funds$/i.test(inv)) {\n    if (yes(p.json.deal_shared)) {\n      // bounced - reset so it goes out fresh to the working address\n      tvsReset++;\n      out.push({ json: {\n        deal_id: id, email: TVS_EMAIL,\n        deal_shared: 'No', date_shared: '', channel: '', thread_id: '', message_id: '',\n        fu1_done: '', fu1_date: '', fu2_done: '', fu2_date: '', fu3_done: '', fu3_date: '',\n        last_contact: '', next_action: 'Initial', next_due: RESEND_DUE,\n      } });\n    } else {\n      tvsEmailOnly++;\n      out.push({ json: { deal_id: id, email: TVS_EMAIL } });\n    }\n    continue;\n  }\n\n  if (/^flipkart ventures$/i.test(inv)) {\n    flip++;\n    out.push({ json: { deal_id: id, email: FLIP_EMAIL } });\n  }\n}\n\nif (out.length === 0) { throw new Error('No rows matched - aborting'); }\nif (tvsReset > 10) { throw new Error('Sanity check: ' + tvsReset + ' TVS resets is more than expected'); }\nif (out.length > 60) { throw new Error('Sanity check: ' + out.length + ' rows is more than expected'); }\nreturn out;"
+      }
+    },
+    {
+      "id": "n6",
+      "name": "Update PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "position": [
+        1344,
+        100
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "deal_id"
+          ],
+          "schema": [
+            {
+              "id": "deal_id",
+              "displayName": "deal_id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {
+          "handlingExtraData": "error"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Run (press Execute)": {
+      "main": [
+        [
+          {
+            "node": "Read INVESTORS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apply at 16:28 IST": {
+      "main": [
+        [
+          {
+            "node": "Read INVESTORS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read INVESTORS": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Build INVESTORS updates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build INVESTORS updates": {
+      "main": [
+        [
+          {
+            "node": "Update INVESTORS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update INVESTORS": {
+      "main": [
+        [
+          {
+            "node": "Build PIPELINE updates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build PIPELINE updates": {
+      "main": [
+        [
+          {
+            "node": "Update PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update PIPELINE": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Apply at 16:28 IST": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "tTUVbx5dz8ajKUSz",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-04T10:44:57.935Z",
+      "updatedAt": "2026-09-04T10:44:57.935Z"
+    }
+  ],
+  "activeVersion": null
+}

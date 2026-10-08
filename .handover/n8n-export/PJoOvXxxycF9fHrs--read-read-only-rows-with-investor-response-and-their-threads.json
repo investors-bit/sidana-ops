@@ -1,0 +1,144 @@
+{
+  "id": "PJoOvXxxycF9fHrs",
+  "name": "READ (read-only) — rows with investor_response and their threads",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-08T05:07:14.444Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "3357d602-2e6d-4091-93f6-f9b0dbbf604b",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "trg1",
+      "name": "Run once 10:50 IST 8 Sep",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "50 10 8 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "rd1",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cd1",
+      "name": "Responded rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nconst rows = $input.all().map(function (i) { return i.json; });\nif (rows.length < 500) { throw new Error('ABORT: PIPELINE returned only ' + rows.length + ' rows'); }\n\nconst cols = Object.keys(rows[0] || {});\nconst hasDateCol = cols.some(function (c) { return c.toLowerCase().indexOf('response_date') >= 0 || c.toLowerCase().indexOf('response date') >= 0; });\n\nconst resp = rows.filter(function (r) { return s(r.investor_response) !== ''; });\nconst withThread = resp.filter(function (r) { return s(r.thread_id) !== ''; });\n\nconst byResp = {};\nfor (const r of resp) { const k = s(r.investor_response); byResp[k] = (byResp[k] || 0) + 1; }\n\nreturn [{ json: {\n  total_rows: rows.length,\n  existing_columns: cols,\n  response_date_column_exists: hasDateCol,\n  rows_with_investor_response: resp.length,\n  of_those_with_thread_id: withThread.length,\n  of_those_WITHOUT_thread_id: resp.length - withThread.length,\n  response_values: byResp,\n  sample: resp.slice(0, 12).map(function (r) {\n    return { deal_id: s(r.deal_id), investor: s(r.investor), startup: s(r.startup),\n             investor_response: s(r.investor_response), last_contact: s(r.last_contact),\n             thread_id: s(r.thread_id) ? 'yes' : 'NO' };\n  })\n}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once 10:50 IST 8 Sep": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Responded rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once 10:50 IST 8 Sep": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "PJoOvXxxycF9fHrs",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-08T05:07:14.446Z",
+      "updatedAt": "2026-09-08T05:07:14.446Z"
+    }
+  ],
+  "activeVersion": null
+}

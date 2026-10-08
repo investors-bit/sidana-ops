@@ -1,0 +1,214 @@
+{
+  "id": "UVQvCGO7gZSj5Xip",
+  "name": "One-off ENGINE-INSPECT (read-only) — headers, queue shape, tracker tab name (17 Sep)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-17T06:41:42.984Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "a1022cf4-d8f8-40dd-b644-0007a4708da4",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "13 12 17 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "g1",
+      "name": "GET pilot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=PIPELINE!A1:AJ6000&ranges=INVESTORS!A1:AD3&ranges=STARTUPS!A1:AD3&ranges=%27ERROR%20LOG%27!A1:L4&ranges=CONFIG!A1:E40&ranges=%27RUN%20LOG%27!A1:J3",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "g2",
+      "name": "GET tracker meta",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1WzrrPelm2HsJNXOUNIEOuRajp70CUY-RrzBOs9LENjs?fields=sheets.properties(sheetId,title,gridProperties.rowCount)",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "g3",
+      "name": "GET pilot meta",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4?fields=sheets.properties(sheetId,title,gridProperties)",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "c1",
+      "name": "Shape",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v){return String(v==null?'':v).trim();}\nconst vr=$('GET pilot').first().json.valueRanges||[];\nconst pipe=(vr[0]||{}).values||[];const h=(pipe[0]||[]).map(s);const X={};h.forEach((k,i)=>X[k]=i);\nconst sample=[];for(const r of [1,2,pipe.length-2,pipe.length-1]){const row=pipe[r]||[];const o={};h.forEach((k,i)=>{o[k]=s(row[i]).slice(0,80);});sample.push(o);}\n// queue shape: unsent unpaused rows by next_due and owner\nconst byDay={};const naVals={};const pauseVals={};const sharedVals={};let maxId='';\nfor(let r=1;r<pipe.length;r++){const row=pipe[r]||[];const na=s(row[X.next_action]);naVals[na.slice(0,40)]=(naVals[na.slice(0,40)]||0)+1;pauseVals[s(row[X.pause])]=(pauseVals[s(row[X.pause])]||0)+1;sharedVals[s(row[X.deal_shared])]=(sharedVals[s(row[X.deal_shared])]||0)+1;\n const id=s(row[X.deal_id]);if(id>maxId)maxId=id;\n if(!/^yes$/i.test(s(row[X.deal_shared]))&&!/^yes$/i.test(s(row[X.pause]))){const d=s(row[X.next_due]).slice(0,10);const k=d+' '+s(row[X.owner]);byDay[k]=(byDay[k]||0)+1;}}\nconst days=Object.keys(byDay).sort().slice(0,120).map(k=>k+'='+byDay[k]);\nreturn [{json:{pipeline_rows:pipe.length,header:h,sample,maxId,next_action_values:naVals,pause_values:pauseVals,deal_shared_values:sharedVals,queue_by_day_owner:days,investors_hdr:((vr[1]||{}).values||[]),startups_hdr:((vr[2]||{}).values||[]),errorlog:((vr[3]||{}).values||[]),config:((vr[4]||{}).values||[]),runlog:((vr[5]||{}).values||[]),tracker_tabs:$('GET tracker meta').first().json.sheets.map(x=>x.properties.sheetId+':'+x.properties.title),pilot_tabs:$('GET pilot meta').first().json.sheets.map(x=>x.properties.sheetId+':'+x.properties.title+':'+x.properties.gridProperties.rowCount+'x'+x.properties.gridProperties.columnCount)}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once": {
+      "main": [
+        [
+          {
+            "node": "GET pilot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET pilot": {
+      "main": [
+        [
+          {
+            "node": "GET tracker meta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET tracker meta": {
+      "main": [
+        [
+          {
+            "node": "GET pilot meta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET pilot meta": {
+      "main": [
+        [
+          {
+            "node": "Shape",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "UVQvCGO7gZSj5Xip",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-17T06:41:42.987Z",
+      "updatedAt": "2026-09-17T06:41:42.987Z"
+    }
+  ],
+  "activeVersion": null
+}

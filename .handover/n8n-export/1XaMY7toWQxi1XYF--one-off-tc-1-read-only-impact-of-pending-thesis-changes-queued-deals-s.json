@@ -1,0 +1,143 @@
+{
+  "id": "1XaMY7toWQxi1XYF",
+  "name": "One-off TC-1 (read-only) — impact of pending thesis changes: queued deals + startup revenue (17 Sep)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-17T04:55:35.178Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "bcfb13f8-cfcf-4e69-af68-a0e9a878a04a",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once (set before activating)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "32 10 17 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "gp",
+      "name": "GET pilot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=STARTUPS!A1:L400&ranges=PIPELINE!A1:AJ6000&ranges=INVESTORS!A1:Z400",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "an",
+      "name": "Impact",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nfunction nz(x) { return s(x).toLowerCase().replace(/[^a-z0-9]/g, ''); }\nfunction idx(h) { const o = {}; (h || []).forEach(function (k, i) { o[nz(k)] = i; }); return o; }\nconst v = $('GET pilot').first().json.valueRanges || [];\nconst st = (v[0] || {}).values || [], pipe = (v[1] || {}).values || [], inv = (v[2] || {}).values || [];\nif (st.length < 40 || pipe.length < 500 || inv.length < 100) { throw new Error('ABORT short read'); }\nconst SH = idx(st[0]), PH = idx(pipe[0]), IH = idx(inv[0]);\nconst startups = {};\nfor (let r = 1; r < st.length; r++) { const row = st[r] || []; const n = s(row[SH.startup]); if (!n) { continue; }\n  startups[nz(n)] = { n: n, active: s(row[SH.active]), stage: s(row[SH.stage]), raise: s(row[SH.raiseinrcr]), rev: s(row[SH.revenue]).replace(/\\s+/g, ' ').slice(0, 70), sector: s(row[SH.sector]).slice(0, 60) }; }\nconst TARGET = ['PiperSireca', 'DSG Consumer Partners', 'Hem Angels', 'Vertex Ventures', 'Atomic Capital', 'Zeren Capital', 'Dexter Ventures', 'Equentis'];\nconst out = {};\nTARGET.forEach(function (t) { out[t] = { investors_row: '', queued_live: {}, queued_live_total: 0, paused_or_dropped: 0, sent: 0, sent_no_response_followups_live: 0 }; });\nfor (let r = 1; r < inv.length; r++) { const row = inv[r] || []; const n = s(row[IH.investor]); const t = TARGET.find(function (x) { return nz(x) === nz(n); }); if (t) { out[t].investors_row = [s(row[IH.stage]), s(row[IH.chequeinrcr]), s(row[IH.sector]).slice(0, 90), 'dnc=' + s(row[IH.donotcontact])].join(' | '); } }\nconst used = {};\nfor (let r = 1; r < pipe.length; r++) { const row = pipe[r] || []; const iv = s(row[PH.investor]); const t = TARGET.find(function (x) { return nz(x) === nz(iv); }); if (!t) { continue; }\n  const sent = /^yes$/i.test(s(row[PH.dealshared])); const paused = /^yes$/i.test(s(row[PH.pause])); const su = s(row[PH.startup]); const o = out[t];\n  if (sent) { o.sent++; if (!paused && !s(row[PH.investorresponse]) && /follow/i.test(s(row[PH.nextaction]))) { o.sent_no_response_followups_live++; } }\n  else if (paused) { o.paused_or_dropped++; }\n  else { o.queued_live_total++; o.queued_live[su] = (o.queued_live[su] || 0) + 1; used[nz(su)] = 1; } }\nObject.keys(out).forEach(function (t) { out[t].queued_live = Object.keys(out[t].queued_live).map(function (k) { return k + (out[t].queued_live[k] > 1 ? ' x' + out[t].queued_live[k] : ''); }); });\nconst revTable = Object.keys(used).map(function (k) { const x = startups[k]; return x ? [x.n, x.stage, x.raise, x.rev, x.sector] : [k, 'NOT IN STARTUPS']; });\nreturn [{ json: { investors: out, startups_in_those_queues: revTable } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once (set before activating)": {
+      "main": [
+        [
+          {
+            "node": "GET pilot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET pilot": {
+      "main": [
+        [
+          {
+            "node": "Impact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once (set before activating)": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "1XaMY7toWQxi1XYF",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-17T04:55:35.181Z",
+      "updatedAt": "2026-09-17T04:55:35.181Z"
+    }
+  ],
+  "activeVersion": null
+}

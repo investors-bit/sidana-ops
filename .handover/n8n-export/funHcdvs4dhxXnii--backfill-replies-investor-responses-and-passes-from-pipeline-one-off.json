@@ -1,0 +1,293 @@
+{
+  "id": "funHcdvs4dhxXnii",
+  "name": "BACKFILL-REPLIES — investor responses and passes from PIPELINE (one-off)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-10-01T07:42:55.696Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "55ace406-f346-4085-a834-7f2186d244a9",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Run",
+      "webhookId": "d7a6a6cc-af3e-4cbb-bc9a-a0a77d2b8088",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-backfill-replies-5a9d",
+        "responseMode": "lastNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "pl",
+      "name": "GET pipeline",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "position": [
+        180,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=PIPELINE!A1:AI8000",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {
+          "timeout": 180000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "gs",
+      "name": "GET startup ids",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        360,
+        0
+      ],
+      "parameters": {
+        "url": "https://elwaquzawoscotlojtnv.supabase.co/rest/v1/startups?select=id,name&limit=2000",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "ntQxeHO20ZUMASMg",
+          "name": "Supabase service"
+        }
+      }
+    },
+    {
+      "id": "gi",
+      "name": "GET investor ids",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        540,
+        0
+      ],
+      "parameters": {
+        "url": "https://elwaquzawoscotlojtnv.supabase.co/rest/v1/investors?select=id,name&limit=2000",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "ntQxeHO20ZUMASMg",
+          "name": "Supabase service"
+        }
+      }
+    },
+    {
+      "id": "bd",
+      "name": "Build replies",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// One row per investor_response in PIPELINE.\n// received_at is NOT NULL, and PIPELINE has no reply-date column, so the date\n// is taken in this order and the source is recorded so nothing is passed off\n// as more precise than it is:\n//   1. a date written inside the response text itself\n//   2. last_contact\n//   3. the latest follow-up or share date\n// A row with none of those is skipped rather than given a made-up date.\nconst vr = $('GET pipeline').first().json.valueRanges[0].values;\nconst h = vr[0];\nconst rows = vr.slice(1).map(function (r) { var o = {}; h.forEach(function (k, i) { o[k] = r[i] === undefined ? '' : r[i]; }); return o; });\nconst nz = function (s) { return String(s == null ? '' : s).toLowerCase().replace(/[^a-z0-9]/g, ''); };\nconst sMap = {}; for (const s of ($('GET startup ids').first().json.body || [])) { sMap[nz(s.name)] = s.id; }\nconst iMap = {}; for (const i of ($('GET investor ids').first().json.body || [])) { iMap[nz(i.name)] = i.id; }\nconst ISO = /^\\d{4}-\\d{2}-\\d{2}$/;\nconst MON = { jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12' };\n\nfunction dateFromText(t) {\n  t = String(t || '');\n  let m = /(\\d{4})-(\\d{2})-(\\d{2})/.exec(t);\n  if (m) return m[0];\n  m = /(\\d{1,2})\\s*([A-Za-z]{3})[a-z]*\\s*(\\d{4})?/.exec(t);\n  if (m && MON[m[2].toLowerCase()]) {\n    const y = m[3] || '2026';\n    return y + '-' + MON[m[2].toLowerCase()] + '-' + ('0' + m[1]).slice(-2);\n  }\n  return null;\n}\nfunction kindOf(t) {\n  t = String(t || '').toLowerCase();\n  if (/bounce|no longer at|undeliver|mailer-daemon/.test(t)) return 'bounce';\n  if (/out of office|ooo\\b|on leave|vacation/.test(t)) return 'out_of_office';\n  if (/pass|not for us|not align|unable to move|not the right fit|will not particip|declin|not interested/.test(t)) return 'pass';\n  if (/interest|keen|meeting|call|reviewing|revert|get back|allow us some time|understand more|share the deck|send the deck|mis|intro/.test(t)) return 'interested';\n  return 'unclear';\n}\nconst out = []; const src = { in_text: 0, last_contact: 0, send_date: 0 };\nlet skipped_noid = 0, skipped_nodate = 0, none = 0;\nfor (const r of rows) {\n  const resp = String(r.investor_response || '').trim();\n  if (!resp) { none++; continue; }\n  const sid = sMap[nz(r.startup)], iid = iMap[nz(r.investor)];\n  if (!sid || !iid) { skipped_noid++; continue; }\n  let d = dateFromText(resp); let how = 'in_text';\n  if (!d) {\n    const lc = String(r.last_contact || '').trim();\n    if (ISO.test(lc)) { d = lc; how = 'last_contact'; }\n  }\n  if (!d) {\n    const cands = [r.fu3_date, r.fu2_date, r.fu1_date, r.date_shared]\n      .map(function (x) { return String(x || '').trim(); }).filter(function (x) { return ISO.test(x); });\n    if (cands.length) { d = cands[0]; how = 'send_date'; }\n  }\n  if (!d || !ISO.test(d)) { skipped_nodate++; continue; }\n  src[how] += 1;\n  const reason = String(r.pass_reason || '').trim() || null;\n  out.push({ investor_id: iid, startup_id: sid, received_at: d + 'T12:00:00+05:30',\n             kind: kindOf(resp + ' ' + (reason || '')), reason: reason, raw_snippet: resp.slice(0, 900) });\n}\nconst CH = 400; const chunks = [];\nconst meta = { total: out.length, src: src, skipped_noid: skipped_noid, skipped_nodate: skipped_nodate,\n  kinds: out.reduce(function (a, x) { a[x.kind] = (a[x.kind] || 0) + 1; return a; }, {}) };\nfor (let i = 0; i < out.length; i += CH) { chunks.push({ json: Object.assign({ rows: out.slice(i, i + CH) }, meta) }); }\nreturn chunks.length ? chunks : [{ json: Object.assign({ rows: [] }, meta) }];"
+      }
+    },
+    {
+      "id": "po",
+      "name": "Insert chunk",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        900,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://elwaquzawoscotlojtnv.supabase.co/rest/v1/replies",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.rows) }}",
+        "options": {
+          "timeout": 120000,
+          "response": {
+            "response": {
+              "neverError": true,
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "ntQxeHO20ZUMASMg",
+          "name": "Supabase service"
+        }
+      }
+    },
+    {
+      "id": "rp",
+      "name": "Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1080,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b = $('Build replies').first().json;\nconst items = $input.all();\nconst bad = items.filter(function (i) { return !(i.json.statusCode >= 200 && i.json.statusCode < 300); });\nreturn [{ json: { replies_built: b.total, by_kind: b.kinds, date_source: b.src,\n  chunks: items.length, statuses: items.map(function (i) { return i.json.statusCode; }),\n  failed: bad.length, errors: bad.map(function (i) { return JSON.stringify(i.json.body).slice(0, 220); }).slice(0, 3),\n  skipped_name_not_found: b.skipped_noid, skipped_no_date: b.skipped_nodate } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run": {
+      "main": [
+        [
+          {
+            "node": "GET pipeline",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET pipeline": {
+      "main": [
+        [
+          {
+            "node": "GET startup ids",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET startup ids": {
+      "main": [
+        [
+          {
+            "node": "GET investor ids",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET investor ids": {
+      "main": [
+        [
+          {
+            "node": "Build replies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build replies": {
+      "main": [
+        [
+          {
+            "node": "Insert chunk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert chunk": {
+      "main": [
+        [
+          {
+            "node": "Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "funHcdvs4dhxXnii",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-10-01T07:42:55.698Z",
+      "updatedAt": "2026-10-01T07:42:55.698Z"
+    }
+  ],
+  "activeVersion": null
+}

@@ -1,0 +1,1009 @@
+{
+  "id": "6iWmw1W7RRLENzqw",
+  "name": "One-off RMW-3 — 10 Sep re-match: Riceberg, Siana, DSG, Blinc, Prath (delete 49 / pause 2 / re-point 6 / add 1 / resolve 5)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-10T14:30:01.319Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "8e89b083-98f4-4203-8a73-13057a4987a8",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "3 20 10 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "r0",
+      "name": "Read Deal Tracker",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1WzrrPelm2HsJNXOUNIEOuRajp70CUY-RrzBOs9LENjs/edit"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1WzrrPelm2HsJNXOUNIEOuRajp70CUY-RrzBOs9LENjs/edit#gid=189973839"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "r1",
+      "name": "Read INVESTORS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "INVESTORS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "r2",
+      "name": "Read STARTUPS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "STARTUPS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "r3",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "r4",
+      "name": "Read ERROR LOG",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        1000,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "ERROR LOG"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "h0",
+      "name": "GET pilot metadata",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        1200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4?fields=sheets.properties(sheetId,title)",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "h00",
+      "name": "GET ERROR LOG header",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        1400,
+        0
+      ],
+      "parameters": {
+        "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/' + encodeURIComponent(\"'ERROR LOG'!A1:Z1\") }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "c0",
+      "name": "Plan",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Re-match for the five THESIS-WATCH flags raised 2026-09-10 18:45 IST. ALL validation happens here,\n// before any write. Any surprise -> throw, nothing is written.\nfunction s(v){return String(v==null?'':v).trim();}\nfunction nz(x){return s(x).toLowerCase().replace(/[^a-z0-9]/g,'');}\nconst trk=$('Read Deal Tracker').all().map(i=>i.json);\nconst inv=$('Read INVESTORS').all().map(i=>i.json);\nconst st=$('Read STARTUPS').all().map(i=>i.json);\nconst pipe=$('Read PIPELINE').all().map(i=>i.json);\nconst el=$('Read ERROR LOG').all().map(i=>i.json);\nif(pipe.length<500){throw new Error('ABORT: PIPELINE only '+pipe.length+' rows');}\nif(pipe.length<3700){throw new Error('ABORT: PIPELINE '+pipe.length+' rows, expected about 3783');}\nif(inv.length<150){throw new Error('ABORT: INVESTORS only '+inv.length+' rows');}\nif(st.length<50){throw new Error('ABORT: STARTUPS only '+st.length+' rows');}\nif(el.length<2500){throw new Error('ABORT: ERROR LOG only '+el.length+' rows');}\n\n// ---- Deal Tracker must be complete ----\nconst tcols=Object.keys(trk[0]||{});\nlet cInv=null;const cDeals=[];\nfor(const c of tcols){const l=c.toLowerCase();\n  if(!cInv&&(l.indexOf('investor')>=0||l.indexOf('vc name')>=0)){cInv=c;}\n  if(l.indexOf('deals shared')>=0||l.indexOf('latest deal')>=0||l.indexOf('picked')>=0){cDeals.push(c);}}\nif(!cInv||cDeals.length!==3){throw new Error('ABORT: tracker deal columns not found: '+JSON.stringify(tcols));}\nconst dist={};for(const r of trk){const k=nz(r[cInv]);if(k){dist[k]=1;}}\nconst nDist=Object.keys(dist).length;\nif(trk.length<240||nDist<235){throw new Error('ABORT: Deal Tracker looks truncated - '+trk.length+' rows / '+nDist+' investors (expected ~247 / 240+)');}\n// tracker investor names carry suffixes ('Blinc Invest(New)', 'Prath Ventures(Satvik)') - match by prefix\nfunction trkBlob(prefix){let b='';for(const r of trk){if(nz(r[cInv]).indexOf(prefix)!==0){continue;}for(const c of cDeals){b+=' '+s(r[c]);}}return nz(b);}\nconst TX=[['dsgconsumer','DSG Consumer Partners',[\"Sugar's Daddy\",'LUSTR','Luxova','Healthy Master']],\n  ['prathventur','Prath Ventures',[\"Sugar's Daddy\",'LUSTR','Healthy Master','My Soul']],\n  ['sianacapital','Siana Capital',['EosNox']],\n  ['blincinvest','Blinc Invest',['YUNO','LearningPad','SkillBytes']]];\nconst trkExcluded=[];\nfor(const t of TX){const b=trkBlob(t[0]);for(const su of t[2]){if(b.indexOf(nz(su))>=0){trkExcluded.push(t[1]+' x '+su);}}}\n// deletions justified ONLY by the tracker must be confirmed by it right now\nconst MUST=['Blinc Invest x YUNO','Blinc Invest x LearningPad','Blinc Invest x SkillBytes','Prath Ventures x My Soul','Prath Ventures x Healthy Master'];\nfor(const m of MUST){if(trkExcluded.indexOf(m)<0){throw new Error('ABORT: tracker no longer shows '+m+' - duplicate deletion not justified');}}\n\n// ---- PIPELINE targets ----\nconst DEL=[\n ['D03426','Riceberg Ventures','RECEX'],['D03473','Riceberg Ventures','Lex Protector'],['D03549','Riceberg Ventures','SureChain'],\n ['D03604','Riceberg Ventures','Vilva AI'],['D03612','Riceberg Ventures','Bon Cuisine'],['D03618','Riceberg Ventures','EosNox'],\n ['D03620','Riceberg Ventures','Fuski.AI'],['D03633','Riceberg Ventures','MonitorExam'],['D03669','Riceberg Ventures','GroCliq'],\n ['D03705','Riceberg Ventures','CLIKD'],['D03715','Riceberg Ventures','HYRGPT'],['D03730','Riceberg Ventures','Road Athena'],\n ['D03733','Riceberg Ventures','Spintly'],['D03764','Riceberg Ventures','MentorCloud'],['D03768','Riceberg Ventures','Opulytics'],\n ['D03800','Riceberg Ventures','LearningPad'],['D03845','Riceberg Ventures','Orbit AI'],['D03853','Riceberg Ventures','Talent Recruit'],\n ['D03882','Riceberg Ventures','SkillBytes'],['D03884','Riceberg Ventures','Springbase.ai'],['D03904','Riceberg Ventures','MindWox'],\n ['D03609','Siana Capital','AI Signal Labs'],['D03653','Siana Capital','YUNO'],['D03666','Siana Capital','Fuski.AI'],\n ['D03714','Siana Capital','GroCliq'],['D03758','Siana Capital','HYRGPT'],['D03802','Siana Capital','MentorCloud'],\n ['D03838','Siana Capital','LearningPad'],['D03878','Siana Capital','Orbit AI'],['D03885','Siana Capital','Talent Recruit'],\n ['D03912','Siana Capital','SkillBytes'],['D04062','Siana Capital','Healthy Master'],['D04121','Siana Capital','Sahaj'],\n ['D03066','DSG Consumer Partners','Orbo AI'],['D03068','DSG Consumer Partners','SureChain'],['D00941','DSG Consumer Partners','Fydo'],\n ['D03445','Blinc Invest','YUNO'],['D03472','Blinc Invest','LearningPad'],['D03544','Blinc Invest','SkillBytes'],\n ['D01189','Blinc Invest','Vira Jal'],['D00419','Blinc Invest','Bon Cuisine'],\n ['D00510','Prath Ventures','Bon Cuisine'],['D01214','Prath Ventures','Spintly'],['D01550','Prath Ventures','Vira Jal'],\n ['D02346','Prath Ventures','Xproguard'],['D02893','Prath Ventures','My Soul'],['D03909','Prath Ventures','Orbo AI'],\n ['D04025','Prath Ventures','Healthy Master'],['D04088','Prath Ventures','Sahaj']];\nconst PAU=[['D00163','DSG Consumer Partners','Bon Cuisine','B2B corporate-cafeteria business; DSG invests only in B2C propositions'],\n ['D00108','Blinc Invest','LUSTR','luxury-jewellery D2C; outside Blinc mandate (AI, EdTech, FinTech, HRTech, SaaS)']];\nconst EM=[['D00340','Prath Ventures','VOLD Energy'],['D01008','Prath Ventures','Chayan Karo'],['D01075','Prath Ventures','Fydo'],\n ['D03169','Prath Ventures','Washtro'],['D03700','Prath Ventures','bezgoFresh'],['D03902','Prath Ventures','Luxova']];\nconst KEEP=['D01284','D01498','D00877','D02877','D03062','D03069','D00878','D00914','D01018','D01077','D01254','D01269','D02254'];\nif(DEL.length!==49||PAU.length!==2||EM.length!==6){throw new Error('ABORT: target list sizes changed');}\n\nconst byId={};for(const p of pipe){const id=s(p.deal_id);if(!id){continue;}(byId[id]=byId[id]||[]).push(p);}\nfunction one(id,invName,su){const h=byId[id]||[];if(h.length!==1){throw new Error('ABORT: '+id+' resolves to '+h.length+' rows');}\n  const r=h[0];if(s(r.investor)!==invName){throw new Error('ABORT: '+id+' is '+s(r.investor)+', expected '+invName);}\n  if(nz(r.startup)!==nz(su)){throw new Error('ABORT: '+id+' is '+s(r.startup)+', expected '+su);}\n  if(!r.row_number||Number(r.row_number)<2){throw new Error('ABORT: bad row_number for '+id);}return r;}\nconst seen={};function once(id){if(seen[id]){throw new Error('ABORT: '+id+' targeted twice');}seen[id]=1;}\n\nconst delItems=[];\nfor(const d of DEL){once(d[0]);const r=one(d[0],d[1],d[2]);\n  if(s(r.deal_shared).toLowerCase()==='yes'){throw new Error('ABORT: '+d[0]+' has deal_shared=Yes - refusing to delete');}\n  if(s(r.investor_response)!==''){throw new Error('ABORT: '+d[0]+' has an investor_response');}\n  if(s(r.thread_id)!==''){throw new Error('ABORT: '+d[0]+' has a thread_id');}\n  delItems.push({row_number:Number(r.row_number),deal_id:d[0],investor:d[1],startup:s(r.startup)});}\ndelItems.sort((a,b)=>b.row_number-a.row_number);\nfor(let i=1;i<delItems.length;i++){if(delItems[i].row_number===delItems[i-1].row_number){throw new Error('ABORT: duplicate row_number');}}\n\nconst pauseItems=[];\nfor(const p of PAU){once(p[0]);const r=one(p[0],p[1],p[2]);\n  if(s(r.deal_shared).toLowerCase()!=='yes'){throw new Error('ABORT: '+p[0]+' is not a sent row');}\n  if(s(r.investor_response)!==''){throw new Error('ABORT: '+p[0]+' has a response - leave alone');}\n  if(s(r.pause)!==''){throw new Error('ABORT: '+p[0]+' already paused');}\n  const prev=s(r.notes);\n  pauseItems.push({deal_id:p[0],pause:'Yes',next_action:'Stopped - off updated mandate',notes:(prev?prev+' | ':'')+'Follow-ups stopped 2026-09-10 (re-match): '+p[3]});}\n\nconst emailItems=[];\nfor(const e of EM){once(e[0]);const r=one(e[0],e[1],e[2]);\n  if(s(r.deal_shared).toLowerCase()==='yes'){throw new Error('ABORT: '+e[0]+' already sent - keep its address');}\n  if(s(r.investor_response)!==''){throw new Error('ABORT: '+e[0]+' has a response');}\n  if(s(r.email).toLowerCase()!=='ria@prathventures.com'){throw new Error('ABORT: '+e[0]+' email is '+s(r.email));}\n  emailItems.push({deal_id:e[0],email:'ashna@prathventures.com'});}\nfor(const k of KEEP){once(k);}\n\n// every unsent row of the five investors must be accounted for (delete / re-point / deliberate keep)\nconst FIVE=['Riceberg Ventures','Siana Capital','DSG Consumer Partners','Blinc Invest','Prath Ventures'];\nfor(const p of pipe){if(FIVE.indexOf(s(p.investor))<0){continue;}if(s(p.deal_shared).toLowerCase()==='yes'){continue;}\n  if(!seen[s(p.deal_id)]){throw new Error('ABORT: unexpected unsent row '+s(p.deal_id)+' '+s(p.investor)+' x '+s(p.startup)+' - state changed since review');}}\n\n// ---- INVESTORS updates (all five resolve to exactly one existing row; never create) ----\nfunction invRow(name){const h=inv.filter(r=>s(r.investor)===name);if(h.length!==1){throw new Error('ABORT: '+h.length+' INVESTORS rows named '+name);}\n  if(s(h[0].do_not_contact).toLowerCase()==='yes'){throw new Error('ABORT: '+name+' is do_not_contact');}return h[0];}\nfor(const n of FIVE){invRow(n);}\nfunction full(r,o){return Object.assign({investor:s(r.investor),contact_person:s(r.contact_person),email:s(r.email),sector:s(r.sector),stage:s(r.stage),cheque_inr_cr:s(r.cheque_inr_cr)},o);}\nconst invItems=[\n full(invRow('Siana Capital'),{sector:'B2B deep-tech business models; Deep-tech, IP-led innovation: HealthTech, Battery Tech, Biotech, MedTech'}),\n full(invRow('Prath Ventures'),{email:'ashna@prathventures.com',sector:'Consumer: consumer brands, consumer tech, allied services (may include manufacturing)',stage:'Seed, Pre-Series A, Series A'})];\n\n// ---- one new match: DACBY x Prath Ventures (85) ----\nconst sr=st.filter(r=>nz(r.startup)==='dacby');\nif(sr.length!==1){throw new Error('ABORT: '+sr.length+' STARTUPS rows for DACBY');}\nif(s(sr[0].active).toLowerCase()!=='yes'){throw new Error('ABORT: DACBY not active');}\nconst owner=s(sr[0].owner);if(!owner){throw new Error('ABORT: DACBY has no owner');}\nconst firm={};const PE={'ria@prathventures.com':1,'ashna@prathventures.com':1};\nfor(const r of inv){if(nz(r.investor).indexOf('prathventur')===0){firm[nz(r.investor)]=1;}\n  for(const e of s(r.email).toLowerCase().split(/[,;\\s]+/)){if(PE[e]){firm[nz(r.investor)]=1;}}}\nfor(const p of pipe){if(firm[nz(p.investor)]&&nz(p.startup).indexOf('dacby')>=0){throw new Error('ABORT: DACBY already paired with Prath in PIPELINE ('+s(p.deal_id)+')');}}\nfor(const r of trk){if(nz(r[cInv]).indexOf('prathventur')!==0){continue;}if(nz(Object.values(r).join(' ')).indexOf('dacby')>=0){throw new Error('ABORT: Deal Tracker shows DACBY already with Prath');}}\nlet maxN=0;for(const p of pipe){const id=s(p.deal_id);if(id.charAt(0)==='D'){const v=parseInt(id.slice(1),10);if(!isNaN(v)&&v>maxN){maxN=v;}}}\nif(maxN<4000){throw new Error('ABORT: max deal_id looks wrong: '+maxN);}\nlet pad=String(maxN+1);while(pad.length<5){pad='0'+pad;}\nconst newId='D'+pad;if(byId[newId]){throw new Error('ABORT: '+newId+' exists');}\nconst newRow={deal_id:newId,startup:s(sr[0].startup),owner:owner,investor:'Prath Ventures',email:'ashna@prathventures.com',cc:'',priority:85,deal_shared:'No',next_action:'Initial',next_due:'2026-09-15',notes:'Very High match (85)'};\n\n// ---- ERROR LOG flags to resolve (Elevation Capital deliberately left open) ----\nconst FLAGS={\n 'Riceberg Ventures':'No mandate change - Thesis tab holds a pass reply; record already foundational-AI-only. Deleted 21 off-mandate unsent rows added by the 10 Sep strict re-match.',\n 'Siana Capital':'Sector now B2B deep-tech + IP-led health/battery/bio/medtech. Deleted 12 off-mandate unsent rows (10 Sep strict re-match). No new 70+ matches.',\n 'DSG Consumer':'Alias: DSG Consumer = existing row DSG Consumer Partners. No thesis change (B2C only). Deleted 3 B2B unsent rows; paused Bon Cuisine follow-ups.',\n 'Blinc invests':'Alias: Blinc invests = existing row Blinc Invest. Thesis-tab row is blank, nothing to apply. Deleted 3 tracker-duplicate + 2 off-mandate unsent rows; paused LUSTR follow-ups.',\n 'Prath Ventures':'Email -> ashna@prathventures.com; sector consumer brands/tech/allied services; stage Seed-Series A. Deleted 8 unsent rows (6 off-mandate, 2 tracker duplicates), re-pointed 6 unsent rows to Ashna, added DACBY '+newId+'.'};\nconst fl=el.filter(r=>s(r.workflow)==='THESIS-WATCH'&&s(r.resolved)===''&&FLAGS[s(r.investor)]!==undefined);\nif(fl.length!==5){throw new Error('ABORT: expected 5 open flags, found '+fl.length);}\nconst sf={};for(const r of fl){if(sf[s(r.investor)]){throw new Error('ABORT: two open flags for '+s(r.investor));}sf[s(r.investor)]=1;if(!r.row_number){throw new Error('ABORT: flag without row_number');}}\nconst hdr=((($('GET ERROR LOG header').first().json.values)||[])[0]||[]).map(x=>s(x).toLowerCase());\nconst ri=hdr.indexOf('resolved'),di=hdr.indexOf('details');\nif(ri<0||di<0||ri>25||di>25||hdr.indexOf('workflow')<0||hdr.indexOf('investor')<0){throw new Error('ABORT: ERROR LOG header unexpected: '+JSON.stringify(hdr));}\nconst L=i=>String.fromCharCode(65+i);\nconst resolveBody={valueInputOption:'RAW',data:[]};\nfor(const r of fl){resolveBody.data.push({range:\"'ERROR LOG'!\"+L(ri)+r.row_number,values:[['Yes']]});\n  resolveBody.data.push({range:\"'ERROR LOG'!\"+L(di)+r.row_number,values:[[(s(r.details)+' || RESOLVED 2026-09-10 re-match watch: '+FLAGS[s(r.investor)]).slice(0,1800)]]});}\n\n// ---- atomic delete request (descending, applied in order by the Sheets API) ----\nconst shs=((($('GET pilot metadata').first().json.sheets)||[])).map(x=>x.properties);\nconst pl=shs.filter(p=>p.title==='PIPELINE');if(pl.length!==1){throw new Error('ABORT: PIPELINE tab not found');}\nconst body={requests:delItems.map(d=>({deleteDimension:{range:{sheetId:pl[0].sheetId,dimension:'ROWS',startIndex:d.row_number-1,endIndex:d.row_number}}}))};\n\nreturn [{json:{body:body,del:delItems,pause:pauseItems,email:emailItems,inv:invItems,newRow:newRow,resolveBody:resolveBody,flags:fl.map(r=>({row_number:r.row_number,investor:s(r.investor)})),\n stats:{pipeline_before:pipe.length,tracker_rows:trk.length,tracker_distinct_investors:nDist,max_deal_before:maxN,trk_excluded:trkExcluded,pipeline_sheet_id:pl[0].sheetId,resolved_col:L(ri),details_col:L(di)}}}];"
+      }
+    },
+    {
+      "id": "h1",
+      "name": "DELETE 49 rows (atomic)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1800,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "c1",
+      "name": "Emit INVESTORS updates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const r=$input.first().json;\nif(!r||!Array.isArray(r.replies)||r.replies.length!==49){throw new Error('ABORT: delete batch returned '+JSON.stringify(r).slice(0,300));}\nreturn $('Plan').first().json.inv.map(j=>({json:j}));"
+      }
+    },
+    {
+      "id": "w1",
+      "name": "Update INVESTORS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "position": [
+        2200,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "INVESTORS"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "investor"
+          ],
+          "schema": [
+            {
+              "id": "investor",
+              "displayName": "investor",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "c2",
+      "name": "Emit pauses",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2400,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return $('Plan').first().json.pause.map(j=>({json:j}));"
+      }
+    },
+    {
+      "id": "w2",
+      "name": "Update PIPELINE pauses",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "position": [
+        2600,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "deal_id"
+          ],
+          "schema": [
+            {
+              "id": "deal_id",
+              "displayName": "deal_id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "c3",
+      "name": "Emit email re-points",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2800,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return $('Plan').first().json.email.map(j=>({json:j}));"
+      }
+    },
+    {
+      "id": "w3",
+      "name": "Update PIPELINE emails",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "position": [
+        3000,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "deal_id"
+          ],
+          "schema": [
+            {
+              "id": "deal_id",
+              "displayName": "deal_id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "c4",
+      "name": "Emit new row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3200,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return [{json:$('Plan').first().json.newRow}];"
+      }
+    },
+    {
+      "id": "w4",
+      "name": "Append PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        3400,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "c6",
+      "name": "Emit resolve body",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3600,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return [{json:{body:$('Plan').first().json.resolveBody}}];"
+      }
+    },
+    {
+      "id": "h3",
+      "name": "Resolve 5 ERROR LOG flags",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "position": [
+        3800,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "r7",
+      "name": "Read PIPELINE after",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        4000,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "r8",
+      "name": "Read INVESTORS after",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        4200,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "INVESTORS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "r9",
+      "name": "Read ERROR LOG after",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        4400,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "ERROR LOG"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "c7",
+      "name": "Verify",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4600,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v){return String(v==null?'':v).trim();}\nconst P=$('Plan').first().json;\nconst pipe=$('Read PIPELINE after').all().map(i=>i.json);\nconst inv=$('Read INVESTORS after').all().map(i=>i.json);\nconst el=$('Read ERROR LOG after').all().map(i=>i.json);\nconst ids={};for(const p of pipe){const id=s(p.deal_id);(ids[id]=ids[id]||[]).push(p);}\nconst out={pipeline_before:P.stats.pipeline_before,pipeline_after:pipe.length,expected_after:P.stats.pipeline_before-P.del.length+1,\n tracker_rows:P.stats.tracker_rows,tracker_distinct_investors:P.stats.tracker_distinct_investors,trk_excluded:P.stats.trk_excluded,max_deal_before:P.stats.max_deal_before};\nout.deleted_still_present=P.del.filter(d=>ids[d.deal_id]).map(d=>d.deal_id);\nout.pauses=P.pause.map(x=>{const r=(ids[x.deal_id]||[])[0];return x.deal_id+': pause='+(r?s(r.pause):'MISSING')+' next_action='+(r?s(r.next_action):'');});\nout.emails=P.email.map(x=>{const r=(ids[x.deal_id]||[])[0];return x.deal_id+': '+(r?s(r.email):'MISSING');});\nout.new_row=(ids[P.newRow.deal_id]||[]).map(r=>({row_number:r.row_number,deal_id:s(r.deal_id),startup:s(r.startup),investor:s(r.investor),email:s(r.email),owner:s(r.owner),priority:s(r.priority),next_due:s(r.next_due),next_action:s(r.next_action),deal_shared:s(r.deal_shared),notes:s(r.notes)}));\nout.investors=inv.filter(r=>['Siana Capital','Prath Ventures'].indexOf(s(r.investor))>=0).map(r=>({row_number:r.row_number,investor:s(r.investor),contact_person:s(r.contact_person),email:s(r.email),sector:s(r.sector),stage:s(r.stage),cheque:s(r.cheque_inr_cr)}));\nout.thesis_flags=el.filter(r=>s(r.workflow)==='THESIS-WATCH'&&(s(r.resolved)===''||s(r.timestamp)==='2026-09-10')).map(r=>({row_number:r.row_number,timestamp:s(r.timestamp),investor:s(r.investor),resolved:s(r.resolved)}));\nconst unresolvedFive=out.thesis_flags.filter(f=>f.resolved===''&&f.investor!=='Elevation Capital');\nout.ok=out.pipeline_after===out.expected_after&&out.deleted_still_present.length===0&&out.new_row.length===1&&\n out.pauses.every(x=>x.indexOf('pause=Yes')>=0)&&out.emails.every(x=>x.indexOf('ashna@prathventures.com')>=0)&&unresolvedFive.length===0;\nreturn [{json:out}];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once": {
+      "main": [
+        [
+          {
+            "node": "Read Deal Tracker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Deal Tracker": {
+      "main": [
+        [
+          {
+            "node": "Read INVESTORS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read INVESTORS": {
+      "main": [
+        [
+          {
+            "node": "Read STARTUPS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read STARTUPS": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Read ERROR LOG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read ERROR LOG": {
+      "main": [
+        [
+          {
+            "node": "GET pilot metadata",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET pilot metadata": {
+      "main": [
+        [
+          {
+            "node": "GET ERROR LOG header",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET ERROR LOG header": {
+      "main": [
+        [
+          {
+            "node": "Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Plan": {
+      "main": [
+        [
+          {
+            "node": "DELETE 49 rows (atomic)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DELETE 49 rows (atomic)": {
+      "main": [
+        [
+          {
+            "node": "Emit INVESTORS updates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Emit INVESTORS updates": {
+      "main": [
+        [
+          {
+            "node": "Update INVESTORS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update INVESTORS": {
+      "main": [
+        [
+          {
+            "node": "Emit pauses",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Emit pauses": {
+      "main": [
+        [
+          {
+            "node": "Update PIPELINE pauses",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update PIPELINE pauses": {
+      "main": [
+        [
+          {
+            "node": "Emit email re-points",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Emit email re-points": {
+      "main": [
+        [
+          {
+            "node": "Update PIPELINE emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update PIPELINE emails": {
+      "main": [
+        [
+          {
+            "node": "Emit new row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Emit new row": {
+      "main": [
+        [
+          {
+            "node": "Append PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Emit resolve body",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Emit resolve body": {
+      "main": [
+        [
+          {
+            "node": "Resolve 5 ERROR LOG flags",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve 5 ERROR LOG flags": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE after",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE after": {
+      "main": [
+        [
+          {
+            "node": "Read INVESTORS after",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read INVESTORS after": {
+      "main": [
+        [
+          {
+            "node": "Read ERROR LOG after",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read ERROR LOG after": {
+      "main": [
+        [
+          {
+            "node": "Verify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "6iWmw1W7RRLENzqw",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-10T14:30:01.320Z",
+      "updatedAt": "2026-09-10T14:30:01.320Z"
+    }
+  ],
+  "activeVersion": null
+}

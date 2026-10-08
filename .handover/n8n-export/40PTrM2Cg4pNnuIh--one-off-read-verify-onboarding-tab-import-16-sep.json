@@ -1,0 +1,133 @@
+{
+  "id": "40PTrM2Cg4pNnuIh",
+  "name": "One-off READ — verify ONBOARDING tab import (16 Sep)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-16T11:57:42.605Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "478e46f8-e5fc-43a4-9d2a-286771c672db",
+  "versionCounter": 7,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "c3000001-0000-4000-8000-000000000001",
+      "name": "Webhook",
+      "webhookId": "a9b8c7d6-e5f4-4a3b-9c2d-1e0f9a8b7c6d",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "onb-verify-import-4c2e8b",
+        "responseMode": "lastNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "c3000001-0000-4000-8000-000000000002",
+      "name": "Read ONBOARDING",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        240,
+        300
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "id",
+          "value": "38341156"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "c3000001-0000-4000-8000-000000000003",
+      "name": "Summarise",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const items = $input.all().map(i => i.json);\nif (!items.length || items[0].error) {\n  return [{ json: { ok: false, error: items[0] ? (items[0].error.message || JSON.stringify(items[0].error)) : 'no rows returned' } }];\n}\nconst need = ['rank','send_order','send_day','tier','status','firm','contact','email','subject','body_html','contact_status','sent_date','thread_id'];\nconst headers = Object.keys(items[0]);\nconst missing = need.filter(h => !headers.includes(h));\nconst status = {};\nfor (const r of items) { const s = String(r.status || '').trim() || '(blank)'; status[s] = (status[s] || 0) + 1; }\nconst q = items.filter(r => String(r.status).trim() === 'QUEUED').sort((a,b) => Number(a.send_order) - Number(b.send_order));\nconst first12 = q.slice(0, 12).map(r => [r.send_order, r.rank, r.firm, r.contact, String(r.email||'').includes('@') ? 'email ok' : 'NO EMAIL', String(r.body_html||'').length].join(' | '));\nconst aroa = items.filter(r => String(r.firm).startsWith('Aroa')).map(r => ({ rank: r.rank, status: r.status, contact: r.contact, send_order: r.send_order }));\nconst sentAlready = items.filter(r => String(r.sent_date||'').trim()).length;\nconst badBody = q.filter(r => !String(r.body_html||'').includes('calendly.com/investors-sidanaventures/30min')).length;\nconst oldSubject = items.filter(r => String(r.subject||'').includes('curated Indian dealflow')).length;\nconst fund2026 = items.filter(r => String(r.body_html||'').includes('fund</b> in 2026')).length;\nconst rakesh = items.filter(r => String(r.body_html||'').includes('linkedin.com/in/rakeshsidana')).length;\nconst sentRows = items.filter(r => String(r.status).trim() === 'SENT').map(r => [r.send_order, r.firm, r.contact, r.sent_date, r.thread_id ? 'thread ok' : 'NO THREAD'].join(' | '));\nconst errRows = items.filter(r => String(r.status).trim() === 'SEND_ERROR').map(r => [r.firm, r.notes].join(' | '));\nconst r2 = items.find(r => String(r.rank) === '2') || {};\nconst raw_rank2 = {};\nfor (const [k, v] of Object.entries(r2)) { if (!['body_html','evidence_urls','portfolio_companies','positioning','sector_on_file','contact_bio','recent_deal','stage_on_file'].includes(k)) raw_rank2[JSON.stringify(k)] = v; }\nreturn [{ json: { raw_rank2, sent_rows: sentRows, error_rows: errRows, ok: true, rows: items.length, header_count: headers.length, missing_headers: missing, status, sent_already: sentAlready, queued_missing_calendly: badBody, rows_with_old_subject: oldSubject, rows_with_2026_fund: fund2026, rows_with_rakesh_linkedin: rakesh, aroa, first12 } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Read ONBOARDING": {
+      "main": [
+        [
+          {
+            "node": "Summarise",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Read ONBOARDING",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "40PTrM2Cg4pNnuIh",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-16T11:57:42.610Z",
+      "updatedAt": "2026-09-16T11:57:42.610Z"
+    }
+  ],
+  "activeVersion": null
+}

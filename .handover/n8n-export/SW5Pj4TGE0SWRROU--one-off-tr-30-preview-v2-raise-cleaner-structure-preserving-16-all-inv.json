@@ -1,0 +1,343 @@
+{
+  "id": "SW5Pj4TGE0SWRROU",
+  "name": "One-off TR-30 — PREVIEW v2 raise cleaner (structure-preserving), 16 all-investor + 27 angel (read only)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-16T08:32:02.187Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "69f5064a-5a12-4075-ae9b-6610c974d4ca",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once (set before activating)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "9 14 16 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "gs",
+      "name": "GET sheets",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=STARTUPS!A1:N400&ranges=TEMPLATES!A1:Z50",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "an",
+      "name": "Analyse",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s0(v){return String(v==null?'':v);}\nfunction s(v){return s0(v).trim();}\nfunction nz(x){return s(x).toLowerCase().replace(/[^a-z0-9]/g,'');}\nconst vr=$('GET sheets').first().json.valueRanges||[];\nconst st=(vr[0]||{}).values||[];\nconst tpl=(vr[1]||{}).values||[];\nif(st.length<40||tpl.length<2){throw new Error('ABORT: short read');}\nconst _R = (function () {\nconst AMT = String.raw`(?:(?:₹|\\brs\\.?|\\binr|\\busd|us\\$|\\$|€|\\beur|£)\\s*\\d[\\d.,]*(?:\\s*(?:cr\\b|crores?\\b|lakhs?\\b|lacs?\\b|l\\b|mn\\b|m\\b|million\\b|k\\b|bn\\b|billion\\b))?|\\d[\\d.,]*\\s*(?:cr\\b|crores?\\b|lakhs?\\b|lacs?\\b|mn\\b|million\\b|bn\\b|billion\\b)|\\d[\\d.,]*(?:m|k|l)\\b)`;\nconst KW = String.raw`(?:\\brais(?:e|es|ing)\\b|\\bfund\\s*-?\\s*rais(?:e|es|ing)\\b|\\bfundrais(?:e|es|ing)\\b|\\b(?:fund|funds|funding|investment|capital)\\s*(?:ask|sought|required|requirement|needed)\\b|\\bthe\\s+ask\\b|\\bask\\s*[:\\-–—]|\\basking\\s+for\\b|\\bseeking\\b|\\b(?:round|raise|ticket|cheque|check)\\s*size\\b|\\bminimum\\s+(?:ticket|cheque|check)\\b|\\b(?:current|this|proposed|ongoing)\\s+round\\b)`;\nconst AMT1 = new RegExp(AMT, 'i');\nconst AMTG = new RegExp(AMT, 'gi');\nconst OWN_A = new RegExp(KW + '[^.<|]{0,60}?' + AMT, 'i');\nconst OWN_B = /(?:\\brais(?:e|es|ing)\\b|\\bfund(?:ing)?\\s*ask\\b)[^.<|]{0,15}?\\d/i;\nconst AMT_ROUND = new RegExp(AMT + String.raw`[^.<|]{0,30}?\\b(?:round|raise|fundraise|ask)\\b`, 'i');\nconst PAST = /\\braised\\b|\\bclosed\\b|\\bsecured\\b|\\bled by\\b|\\bbacked by\\b|\\bfunded by\\b/i;\nconst PRE = /pre-?\\s*revenue|pre-?\\s*launch|pre-?\\s*monetis|pre-?\\s*monetiz/i;\nconst HEAD = /^(?:the\\s+)?(?:funding\\s+ask|fund\\s*ask|ask|investment\\s+ask|fundrais(?:e|ing)(?:\\s+details)?|funding\\s+round|current\\s+round|round(?:\\s+details|\\s+size)?|raise|raising|deal\\s+terms)\\s*[:\\-–—]?$/i;\nconst SPLIT_SRC = String.raw`(?<=[.!?])(?<!\\b(?:Rs|RS|rs|No|no|vs|Vs|Pvt|PVT|Ltd|LTD|Inc|approx|Approx|Dr|Mr|Ms|Mrs|St|Co|etc|e\\.g|i\\.e)\\.)\\s+(?=[^a-z\\s])`;\nconst BLOCKTAG = /^<\\/?(?:div|p|li|ul|ol|h[1-6]|table|tbody|thead|tr|td|th|section|blockquote|hr|br)\\b/i;\nconst ENT = {nbsp:' ',amp:'&',bull:'•',rsquo:'’',lsquo:'‘',rdquo:'”',ldquo:'“',quot:'“',apos:'’',mdash:'—',ndash:'–',hellip:'…',lt:'‹',gt:'›',middot:'·',rarr:'→',times:'×',deg:'°',trade:'™',reg:'®',copy:'©',euro:'€',pound:'£',rupee:'₹'};\nfunction classify(x) { if (OWN_A.test(x) || OWN_B.test(x)) { return 'own'; } if (AMT_ROUND.test(x)) { return PAST.test(x) ? 'context' : 'own'; } return null; }\nfunction kill(x, mode) { const c = classify(x); if (c === 'own') { return true; } return mode === 'angel' && (c === 'context' || PRE.test(x)); }\nfunction build(html) { const P = [], S = [], E = []; const n = html.length; let i = 0;\n while (i < n) { const ch = html[i];\n  if (ch === '<') { const j = html.indexOf('>', i); if (j >= 0) { if (BLOCKTAG.test(html.slice(i, j + 1))) { P.push('\\n'); S.push(i); E.push(j + 1); } i = j + 1; continue; } }\n  if (ch === '&') { const m = /^&(#\\d{1,7}|#x[0-9a-f]{1,6}|[a-z]{2,10});/i.exec(html.slice(i, i + 14)); if (m) { const k = m[1]; let d; if (k[0] === '#') { const cp = (k[1] === 'x' || k[1] === 'X') ? parseInt(k.slice(2), 16) : parseInt(k.slice(1), 10); try { d = String.fromCodePoint(cp); } catch (e) { d = ' '; } } else { d = ENT[k.toLowerCase()]; if (d === undefined) { d = ' '; } } for (let q = 0; q < d.length; q++) { P.push(d[q]); S.push(i); E.push(i + m[0].length); } i += m[0].length; continue; } }\n  P.push(/\\s/.test(ch) ? ' ' : ch); S.push(i); E.push(i + 1); i++; }\n return { t: P.join(''), S: S, E: E }; }\nfunction lines(t) { const out = []; let ls = 0;\n for (let k = 0; k <= t.length; k++) { if (k === t.length || t[k] === '\\n') { if (k > ls) { out.push({ s: ls, e: k }); } ls = k + 1; } }\n for (const L of out) { L.segs = []; const lt = t.slice(L.s, L.e); const re = /\\s*\\|\\s*/g; let last = 0, m;\n  while ((m = re.exec(lt)) !== null) { L.segs.push({ s: L.s + last, e: L.s + m.index, sepEnd: L.s + m.index + m[0].length }); last = m.index + m[0].length; }\n  L.segs.push({ s: L.s + last, e: L.e, sepEnd: L.e });\n  for (const G of L.segs) { G.sents = []; const gt = t.slice(G.s, G.e); const sp = new RegExp(SPLIT_SRC, 'g'); let p = 0, x;\n   while ((x = sp.exec(gt)) !== null) { G.sents.push({ s: G.s + p, e: G.s + x.index, next: G.s + x.index + x[0].length }); p = x.index + x[0].length; }\n   G.sents.push({ s: G.s + p, e: G.e, next: G.e }); } }\n return out; }\nfunction pureAmt(x) { if (x.length > 60 || !AMT1.test(x)) { return false; } return x.replace(AMTG, ' ').replace(/[^a-z]/gi, '').length <= 15; }\nfunction headingLike(x) { return x.length <= 40 && /[a-z]/i.test(x) && !/[.!?:;,|]/.test(x) && !AMT1.test(x); }\nfunction analyse(html, mode) { const B = build(html); const t = B.t; const L = lines(t); const removed = []; const R = [];\n const lt = L.map(function (o) { return t.slice(o.s, o.e).trim(); });\n const gone = L.map(function () { return false; });\n const heads = [];\n for (let a = 0; a < L.length; a++) { if (!lt[a] || !HEAD.test(lt[a])) { continue; } const sect = [];\n  for (let b = a + 1; b < L.length; b++) { if (!lt[b]) { continue; } if (headingLike(lt[b])) { break; } sect.push(b); }\n  heads.push({ a: a, sect: sect });\n  for (const c of sect) { if (pureAmt(lt[c])) { gone[c] = true; removed.push(lt[a] + ' => ' + lt[c]); } } }\n for (let a = 0; a < L.length; a++) { if (!lt[a] || gone[a]) { continue; } const segs = L[a].segs; let any = false;\n  for (const G of segs) { let hasText = false, allKill = true;\n   for (const X of G.sents) { const x = t.slice(X.s, X.e).trim(); if (!x) { continue; } hasText = true; if (kill(x, mode)) { X.gone = true; any = true; removed.push(x.slice(0, 240)); } else { allKill = false; } }\n   G.hasText = hasText; G.gone = hasText && allKill; }\n  if (!any) { continue; }\n  const withText = segs.filter(function (G) { return G.hasText; });\n  if (withText.every(function (G) { return G.gone; })) { gone[a] = true; continue; }\n  for (let gi = 0; gi < segs.length; gi++) { const G = segs[gi]; if (!G.hasText) { continue; }\n   if (G.gone) { let prevKept = false; for (let k = 0; k < gi; k++) { if (segs[k].hasText && !segs[k].gone) { prevKept = true; } } R.push(prevKept ? [segs[gi - 1].e, G.e] : [G.s, G.sepEnd]); continue; }\n   for (const X of G.sents) { if (X.gone) { R.push([X.s, X.next]); } } } }\n for (const h of heads) { if (gone[h.a] || !h.sect.length) { continue; } if (h.sect.some(function (c) { return gone[c]; }) && h.sect.every(function (c) { return gone[c]; })) { gone[h.a] = true; removed.push('heading: ' + lt[h.a]); } }\n for (let a = 0; a < L.length; a++) { if (gone[a]) { R.push([L[a].s, L[a].e]); } }\n return { B: B, R: R, removed: removed }; }\nfunction tidy(h) { let prev = null, k = 0;\n while (h !== prev && k < 10) { prev = h; k++;\n  h = h.replace(/<(li|p|div|h[1-6]|td|th|b|strong|em|i|u|span|a|font|small)\\b[^>]*>(?:\\s|&nbsp;|<br\\s*\\/?>|⁣)*⁣(?:\\s|&nbsp;|<br\\s*\\/?>|⁣)*<\\/\\1>/gi, '⁣');\n  h = h.replace(/<(ul|ol|tr|tbody|table)\\b[^>]*>(?:\\s|⁣)*⁣(?:\\s|⁣)*<\\/\\1>/gi, '⁣');\n  h = h.replace(/(<hr\\b[^>]*>)(?:\\s|⁣)*⁣(?:\\s|⁣)*<hr\\b[^>]*>/gi, '$1');\n  h = h.replace(/(<br\\s*\\/?>)(?:\\s|⁣)*⁣(?:\\s|⁣)*<br\\s*\\/?>/gi, '$1'); }\n h = h.replace(/<hr\\b[^>]*>(?:\\s|⁣)*⁣(?:\\s|⁣)*$/i, '');\n h = h.replace(/^(?:\\s|⁣)*⁣(?:\\s|⁣)*<hr\\b[^>]*>/i, '');\n return h.replace(/⁣/g, ''); }\nfunction apply(html, B, R) { const hr = [];\n for (const r of R) { let a = r[0], b = r[1]; while (a < b && B.t[a] === '\\n') { a++; } while (b > a && B.t[b - 1] === '\\n') { b--; } if (b <= a) { continue; } hr.push([B.S[a], B.E[b - 1]]); }\n hr.sort(function (x, y) { return x[0] - y[0]; });\n const m = []; for (const r of hr) { if (m.length && r[0] <= m[m.length - 1][1]) { m[m.length - 1][1] = Math.max(m[m.length - 1][1], r[1]); } else { m.push([r[0], r[1]]); } }\n let out = html; for (let k = m.length - 1; k >= 0; k--) { const sl = out.slice(m[k][0], m[k][1]); const tags = (sl.match(/<[^>]*>/g) || []).join(''); out = out.slice(0, m[k][0]) + '⁣' + tags + '⁣' + out.slice(m[k][1]); }\n return tidy(out); }\nfunction bal(h) { return ['div','p','li','ul','ol','b','strong','em','span','a','table','tr','td','h1','h2','h3','h4','h5','h6'].map(function (tg) { return (h.match(new RegExp(String.raw`<${tg}\\b`, 'gi')) || []).length - (h.match(new RegExp(String.raw`<\\/${tg}>`, 'gi')) || []).length; }).join(','); }\nfunction clean(html, mode) { const src = String(html == null ? '' : html); const A = analyse(src, mode); if (!A.R.length) { return { html: src, removed: A.removed, residual: [], balanced: true, changed: false }; } const out = apply(src, A.B, A.R); return { html: out, removed: A.removed, residual: analyse(out, mode).removed, balanced: bal(out) === bal(src), changed: out !== src }; }\nfunction subject(x) { return String(x == null ? '' : x).replace(/\\s*\\|\\s*Rais(?:e|es|ing)\\b[^|]*$/i, '').trim(); }\nfunction subjOk(x, mode) { return !kill(x, mode) && !/\\brais(?:e|es|ing)\\b/i.test(x); }\nfunction plain(html) { return build(String(html == null ? '' : html)).t.replace(/\\s*\\n[\\s\\n]*/g, ' ▮ ').replace(/ {2,}/g, ' ').trim(); }\nreturn { clean: clean, subject: subject, subjOk: subjOk, kill: kill, plain: plain };\n})();\nconst SIXTEEN=['Body & Beyond','Outlanders','Koncite','Washtro','Fire Armor','Tronix.AI','Springbase.ai','Formverse','ServeAmigo','MonitorExam','Pixelence','Fuski.AI','Vilva AI','SkillBytes','Orbit AI','Vira Jal'];\nconst OTHER11=['Opulytics','Train Rex','Xproguard','Indie Stori','Appli','Luxova','AI Signal Labs','Desi Machines','Doffair','bezgoFresh','Chayan Karo'];\nconst sh=(st[0]||[]).map(s); const S={}; sh.forEach(function(h,i){S[h]=i;});\nconst th=(tpl[0]||[]).map(s); const T={}; th.forEach(function(h,i){T[h]=i;});\nlet subjTpl=''; for(let r=1;r<tpl.length;r++){const row=tpl[r]||[]; if(s(row[T.template_id])==='INITIAL'){subjTpl=s(row[T.subject]);}}\nconst byName={}; for(let r=1;r<st.length;r++){const row=st[r]||[]; const n=s(row[S.startup]); if(n){byName[nz(n)]=row;}}\nconst summary=[], texts={};\nfunction run(n,mode){const row=byName[nz(n)]; if(!row){summary.push({startup:n,mode:mode,missing:true});return;} const memo=s0(row[S.memo_html]); let c; try{c=_R.clean(memo,mode);}catch(e){summary.push({startup:n,mode:mode,error:String((e&&e.stack)||e).slice(0,500)});return;}\n const sj=_R.subject(subjTpl.split('{{StartupName}}').join(n).split('{{Sector}}').join(s(row[S.sector])).split('{{FundraiseAmount}}').join(s(row[S.raise_inr_cr])));\n summary.push({startup:n,mode:mode,removed:c.removed,residual:c.residual,balanced:c.balanced,changed:c.changed,len_before:memo.length,len_after:c.html.length,hr_before:(memo.match(/<hr\\b/gi)||[]).length,hr_after:(c.html.match(/<hr\\b/gi)||[]).length,subject:sj,subject_ok:_R.subjOk(sj,mode)});\n texts[n+'|'+mode]=_R.plain(c.html);}\nSIXTEEN.forEach(function(n){run(n,'all');});\nSIXTEEN.concat(OTHER11).forEach(function(n){run(n,'angel');});\nreturn [{json:{summary:summary,texts:texts,order16:SIXTEEN,order11:OTHER11}}];"
+      }
+    },
+    {
+      "id": "sm",
+      "name": "Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return [{ json: { summary: $('Analyse').first().json.summary } }];"
+      }
+    },
+    {
+      "id": "x1",
+      "name": "Text16 1-4",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const j = $('Analyse').first().json; return [{ json: { memos: j.order16.slice(0, 4).map(function (n) { return { startup: n, text: j.texts[n + '|all'] }; }) } }];"
+      }
+    },
+    {
+      "id": "x2",
+      "name": "Text16 5-8",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const j = $('Analyse').first().json; return [{ json: { memos: j.order16.slice(4, 8).map(function (n) { return { startup: n, text: j.texts[n + '|all'] }; }) } }];"
+      }
+    },
+    {
+      "id": "x3",
+      "name": "Text16 9-12",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const j = $('Analyse').first().json; return [{ json: { memos: j.order16.slice(8, 12).map(function (n) { return { startup: n, text: j.texts[n + '|all'] }; }) } }];"
+      }
+    },
+    {
+      "id": "x4",
+      "name": "Text16 13-16",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1400,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const j = $('Analyse').first().json; return [{ json: { memos: j.order16.slice(12, 16).map(function (n) { return { startup: n, text: j.texts[n + '|all'] }; }) } }];"
+      }
+    },
+    {
+      "id": "x5",
+      "name": "Angel11 1-4",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const j = $('Analyse').first().json; return [{ json: { memos: j.order11.slice(0, 4).map(function (n) { return { startup: n, text: j.texts[n + '|angel'] }; }) } }];"
+      }
+    },
+    {
+      "id": "x6",
+      "name": "Angel11 5-8",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1800,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const j = $('Analyse').first().json; return [{ json: { memos: j.order11.slice(4, 8).map(function (n) { return { startup: n, text: j.texts[n + '|angel'] }; }) } }];"
+      }
+    },
+    {
+      "id": "x7",
+      "name": "Angel11 9-11",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const j = $('Analyse').first().json; return [{ json: { memos: j.order11.slice(8, 11).map(function (n) { return { startup: n, text: j.texts[n + '|angel'] }; }) } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once (set before activating)": {
+      "main": [
+        [
+          {
+            "node": "GET sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET sheets": {
+      "main": [
+        [
+          {
+            "node": "Analyse",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyse": {
+      "main": [
+        [
+          {
+            "node": "Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summary": {
+      "main": [
+        [
+          {
+            "node": "Text16 1-4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text16 1-4": {
+      "main": [
+        [
+          {
+            "node": "Text16 5-8",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text16 5-8": {
+      "main": [
+        [
+          {
+            "node": "Text16 9-12",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text16 9-12": {
+      "main": [
+        [
+          {
+            "node": "Text16 13-16",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text16 13-16": {
+      "main": [
+        [
+          {
+            "node": "Angel11 1-4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Angel11 1-4": {
+      "main": [
+        [
+          {
+            "node": "Angel11 5-8",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Angel11 5-8": {
+      "main": [
+        [
+          {
+            "node": "Angel11 9-11",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once (set before activating)": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "SW5Pj4TGE0SWRROU",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-16T08:32:02.190Z",
+      "updatedAt": "2026-09-16T08:32:02.190Z"
+    }
+  ],
+  "activeVersion": null
+}

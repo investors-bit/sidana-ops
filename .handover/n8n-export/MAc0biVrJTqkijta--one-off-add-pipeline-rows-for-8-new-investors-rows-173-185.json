@@ -1,0 +1,195 @@
+{
+  "id": "MAc0biVrJTqkijta",
+  "name": "One-off — Add PIPELINE rows for 8 new investors (rows 173-185)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-06T15:38:26.855Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "bd8570c5-1263-4c48-8888-806dcb66c3fd",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "trg1",
+      "name": "Run once 21:25 IST 6 Sep",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "25 21 6 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "rd1",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cd1",
+      "name": "Build new rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const DATA = {\"Mint VC\":{\"e\":\"partnerdeals@vcmint.com\",\"m\":[[\"Body & Beyond\",\"Aditya\",80,\"2026-09-08\"],[\"Doffair\",\"Chaman\",80,\"2026-09-08\"],[\"EkoSight\",\"Chaman\",80,\"2026-09-09\"],[\"Ela Greens\",\"Chaman\",80,\"2026-09-09\"],[\"Fire Armor\",\"Chaman\",80,\"2026-09-10\"],[\"Fydo\",\"Shradha\",80,\"2026-09-10\"],[\"Glazia Windoors\",\"Chaman\",80,\"2026-09-11\"],[\"Indie Stori\",\"Aditya\",80,\"2026-09-11\"],[\"Koncite\",\"Akansha\",80,\"2026-09-14\"],[\"LUSTR\",\"Aditya\",80,\"2026-09-14\"],[\"Nexcore\",\"Akansha\",80,\"2026-09-15\"],[\"Outlanders\",\"Shradha\",80,\"2026-09-15\"],[\"Shippin\",\"Chaman\",80,\"2026-09-16\"],[\"Starz AI\",\"Akansha\",80,\"2026-09-16\"],[\"Sugar's Daddy\",\"Aditya\",80,\"2026-09-17\"],[\"Washtro\",\"Chaman\",80,\"2026-09-17\"],[\"bezgoFresh\",\"Chaman\",80,\"2026-09-18\"]]},\"Target Global VC\":{\"e\":\"asevenyuk@targetglobal.vc\",\"m\":[[\"LearningPad\",\"Aditya\",100,\"2026-09-08\"],[\"MentorCloud\",\"Shradha\",100,\"2026-09-08\"],[\"Orbo AI\",\"Shradha\",100,\"2026-09-09\"],[\"Spintly\",\"Shradha\",100,\"2026-09-09\"],[\"Talent Recruit\",\"Akansha\",100,\"2026-09-10\"],[\"AI Signal Labs\",\"Shradha\",88,\"2026-09-10\"],[\"Flyment\",\"Chaman\",88,\"2026-09-11\"],[\"MindWox\",\"Akansha\",88,\"2026-09-11\"],[\"Ulai\",\"Shradha\",88,\"2026-09-14\"],[\"Alt F Coworking\",\"Chaman\",85,\"2026-09-14\"],[\"SkillBytes\",\"Aditya\",85,\"2026-09-15\"]]},\"PiperSireca\":{\"e\":\"amit@piperserica.com\",\"m\":[[\"AI Signal Labs\",\"Shradha\",100,\"2026-09-08\"],[\"Formverse\",\"Akansha\",100,\"2026-09-08\"],[\"Fydo\",\"Shradha\",100,\"2026-09-09\"],[\"Glazia Windoors\",\"Chaman\",100,\"2026-09-09\"],[\"MindWox\",\"Akansha\",100,\"2026-09-10\"],[\"My Soul\",\"Aditya\",100,\"2026-09-10\"],[\"Nexcore\",\"Akansha\",100,\"2026-09-11\"],[\"Orbis Lives\",\"Chaman\",100,\"2026-09-11\"],[\"Sahaj\",\"Shradha\",100,\"2026-09-14\"],[\"SureChain\",\"Shradha\",100,\"2026-09-14\"],[\"Ulai\",\"Shradha\",100,\"2026-09-15\"],[\"Healthy Master\",\"Aditya\",88,\"2026-09-15\"],[\"Fire Armor\",\"Chaman\",85,\"2026-09-16\"],[\"Pixelence\",\"Akansha\",85,\"2026-09-16\"],[\"ServeAmigo\",\"Shradha\",85,\"2026-09-17\"]]},\"A2D Ventures\":{\"e\":\"issaree@a2dventures.com\",\"m\":[[\"Appli\",\"Akansha\",88,\"2026-09-08\"],[\"Body & Beyond\",\"Aditya\",88,\"2026-09-08\"],[\"CLIKD\",\"Aditya\",88,\"2026-09-09\"],[\"Caffena Coffee\",\"Aditya\",88,\"2026-09-09\"],[\"Chayan Karo\",\"Shradha\",88,\"2026-09-10\"],[\"Desi Machines\",\"Chaman\",88,\"2026-09-10\"],[\"Doffair\",\"Chaman\",88,\"2026-09-11\"],[\"EkoSight\",\"Chaman\",88,\"2026-09-11\"],[\"Ela Greens\",\"Chaman\",88,\"2026-09-14\"],[\"Fydo\",\"Shradha\",88,\"2026-09-14\"],[\"Glazia Windoors\",\"Chaman\",88,\"2026-09-15\"],[\"GroCliq\",\"Akansha\",88,\"2026-09-15\"],[\"Indie Stori\",\"Aditya\",88,\"2026-09-16\"],[\"Koncite\",\"Akansha\",88,\"2026-09-16\"],[\"LUSTR\",\"Aditya\",88,\"2026-09-17\"],[\"Lex Protector\",\"Akansha\",88,\"2026-09-17\"],[\"Luxova\",\"Aditya\",88,\"2026-09-18\"],[\"MonitorExam\",\"Aditya\",88,\"2026-09-18\"],[\"My Soul\",\"Aditya\",88,\"2026-09-21\"],[\"Opulytics\",\"Akansha\",88,\"2026-09-21\"],[\"Road Athena\",\"Chaman\",88,\"2026-09-22\"],[\"Shippin\",\"Chaman\",88,\"2026-09-22\"],[\"Springbase.ai\",\"Akansha\",88,\"2026-09-23\"],[\"Starz AI\",\"Akansha\",88,\"2026-09-23\"],[\"Sugar's Daddy\",\"Aditya\",88,\"2026-09-24\"],[\"SureChain\",\"Shradha\",88,\"2026-09-24\"],[\"VOLD Energy\",\"Aditya\",88,\"2026-09-25\"],[\"Vilva AI\",\"Shradha\",88,\"2026-09-25\"],[\"Washtro\",\"Chaman\",88,\"2026-09-28\"],[\"Xproguard\",\"Akansha\",88,\"2026-09-28\"],[\"YUNO\",\"Aditya\",88,\"2026-09-29\"],[\"bezgoFresh\",\"Chaman\",88,\"2026-09-29\"],[\"Fire Armor\",\"Chaman\",80,\"2026-09-30\"],[\"Formverse\",\"Akansha\",80,\"2026-09-30\"],[\"Fuski.AI\",\"Akansha\",80,\"2026-10-01\"],[\"HYRGPT\",\"Akansha\",80,\"2026-10-01\"],[\"Nexcore\",\"Akansha\",80,\"2026-10-02\"],[\"Orbis Lives\",\"Chaman\",80,\"2026-10-02\"],[\"Outlanders\",\"Shradha\",80,\"2026-10-05\"],[\"Pixelence\",\"Akansha\",80,\"2026-10-05\"],[\"RECEX\",\"Akansha\",80,\"2026-10-06\"],[\"ServeAmigo\",\"Shradha\",80,\"2026-10-06\"],[\"MindWox\",\"Akansha\",76,\"2026-10-07\"],[\"Sahaj\",\"Shradha\",76,\"2026-10-07\"],[\"Ulai\",\"Shradha\",76,\"2026-10-08\"]]},\"Pranaventures\":{\"e\":\"huzaif@pranaventures.in\",\"m\":[[\"LearningPad\",\"Aditya\",100,\"2026-09-08\"],[\"MentorCloud\",\"Shradha\",100,\"2026-09-08\"],[\"VOLD Energy\",\"Aditya\",100,\"2026-09-09\"],[\"YUNO\",\"Aditya\",100,\"2026-09-09\"],[\"Appli\",\"Akansha\",88,\"2026-09-10\"],[\"Fuski.AI\",\"Akansha\",85,\"2026-09-10\"],[\"Orbit AI\",\"Shradha\",85,\"2026-09-11\"],[\"SkillBytes\",\"Aditya\",85,\"2026-09-11\"],[\"Vira Jal\",\"Shradha\",85,\"2026-09-14\"]]},\"Kaizenvest\":{\"e\":\"nishant.hinge@kaizenvest.com\",\"m\":[[\"HYRGPT\",\"Akansha\",100,\"2026-09-08\"],[\"LearningPad\",\"Aditya\",100,\"2026-09-08\"],[\"MentorCloud\",\"Shradha\",100,\"2026-09-09\"],[\"Sahaj\",\"Shradha\",100,\"2026-09-09\"],[\"Talent Recruit\",\"Akansha\",100,\"2026-09-10\"],[\"YUNO\",\"Aditya\",100,\"2026-09-10\"],[\"Appli\",\"Akansha\",88,\"2026-09-11\"],[\"Fuski.AI\",\"Akansha\",85,\"2026-09-11\"],[\"Orbit AI\",\"Shradha\",85,\"2026-09-14\"],[\"SkillBytes\",\"Aditya\",85,\"2026-09-14\"]]},\"Yali Capital\":{\"e\":\"kram@yali.vc\",\"m\":[[\"AI Signal Labs\",\"Shradha\",100,\"2026-09-08\"],[\"MindWox\",\"Akansha\",100,\"2026-09-08\"],[\"Ulai\",\"Shradha\",100,\"2026-09-09\"]]}};\n\nconst existing = $input.all().map(function (i) { return i.json; });\nif (existing.length < 500) { throw new Error('ABORT: PIPELINE returned only ' + existing.length + ' rows - refusing to append'); }\n\nlet maxN = 0;\nfor (const r of existing) {\n  const id = String(r.deal_id == null ? '' : r.deal_id).trim();\n  if (id.charAt(0) === 'D') {\n    const n = parseInt(id.slice(1), 10);\n    if (!isNaN(n) && n > maxN) { maxN = n; }\n  }\n}\nif (maxN === 0) { throw new Error('ABORT: could not determine max deal_id'); }\n\nconst seen = {};\nfor (const r of existing) {\n  const k = String(r.startup == null ? '' : r.startup).trim().toLowerCase() + '||' + String(r.investor == null ? '' : r.investor).trim().toLowerCase();\n  seen[k] = true;\n}\n\nconst out = [];\nlet n = maxN;\nlet skipped = 0;\nfor (const inv of Object.keys(DATA)) {\n  const email = DATA[inv].e;\n  for (const row of DATA[inv].m) {\n    const startup = row[0], owner = row[1], score = row[2], due = row[3];\n    const key = startup.trim().toLowerCase() + '||' + inv.trim().toLowerCase();\n    if (seen[key]) { skipped++; continue; }\n    seen[key] = true;\n    n++;\n    let pad = String(n);\n    while (pad.length < 5) { pad = '0' + pad; }\n    out.push({ json: {\n      deal_id: 'D' + pad,\n      startup: startup,\n      owner: owner,\n      investor: inv,\n      email: email,\n      cc: '',\n      priority: score,\n      deal_shared: 'No',\n      next_action: 'Initial',\n      next_due: due,\n      notes: (score >= 85 ? 'Very High' : 'High') + ' match (' + score + ')'\n    }});\n  }\n}\n\nif (out.length === 0) { throw new Error('ABORT: 0 new rows - all pairs already exist (skipped ' + skipped + ')'); }\nif (out.length > 150) { throw new Error('ABORT: ' + out.length + ' rows exceeds guard of 150'); }\nreturn out;"
+      }
+    },
+    {
+      "id": "ap1",
+      "name": "Append PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Run once 21:25 IST 6 Sep": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Build new rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build new rows": {
+      "main": [
+        [
+          {
+            "node": "Append PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once 21:25 IST 6 Sep": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "MAc0biVrJTqkijta",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-06T15:38:26.859Z",
+      "updatedAt": "2026-09-06T15:38:26.859Z"
+    }
+  ],
+  "activeVersion": null
+}

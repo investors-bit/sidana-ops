@@ -1,0 +1,203 @@
+{
+  "id": "k6hrJCFtZENYvmcz",
+  "name": "ONB-RC-READ (read-only) — INVESTORS names + STARTUPS raise bands + ONBOARDING lookups (30 Sep reply capture)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-30T11:27:26.559Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "71bcd498-a888-4125-bfd9-b4a602125ae6",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "b762b386-bcf0-4101-ae1c-5590beae7973",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "onb-rc-read-30sep",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "ri",
+      "name": "Read INVESTORS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/INVESTORS!A1:BB1200?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "rs",
+      "name": "Read STARTUPS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/STARTUPS!A1:Z200?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "ro",
+      "name": "Read ONBOARDING",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/ONBOARDING!A1:AM900?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "o",
+      "name": "Out",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function sh(n){var j={};try{j=$(n).first().json||{};}catch(e){return [];}return j.values||[];}\nfunction norm(s){return String(s||'').toLowerCase().replace(/[^a-z0-9]/g,'');}\n\nvar ir=sh('Read INVESTORS');var ih=(ir[0]||[]).map(function(x){return String(x||'').trim();});var ilc=ih.map(function(x){return x.toLowerCase();});\nfunction ic(n){return ilc.indexOf(n);}\nvar iN=ic('investor_name');if(iN<0)iN=ic('firm');if(iN<0)iN=0;\nvar iE=ic('email');var iD=ic('do_not_contact');var iS=ic('sectors');if(iS<0)iS=ic('sector');var iSt=ic('stage');var iC=ic('cheque_cr');if(iC<0)iC=ic('cheque');\nvar inv=[];\nfor(var a=1;a<ir.length;a++){var r=ir[a]||[];var nm=String(r[iN]||'').trim();if(!nm)continue;inv.push({row:a+1,name:nm,norm:norm(nm),email:iE>=0?String(r[iE]||'').trim():'',dnc:iD>=0?String(r[iD]||'').trim():'',sector:iS>=0?String(r[iS]||'').slice(0,90):'',stage:iSt>=0?String(r[iSt]||'').slice(0,60):'',cheque:iC>=0?String(r[iC]||'').slice(0,40):''});}\nvar targets=['ironpillar','in44capital','liftt','lumikai','navamcapital','forefrontventurepartners'];\nvar hits={};for(var t=0;t<targets.length;t++){hits[targets[t]]=[];for(var b=0;b<inv.length;b++){var nn=inv[b].norm;if(nn.indexOf(targets[t])>-1||targets[t].indexOf(nn)>-1&&nn.length>3)hits[targets[t]].push(inv[b]);}}\n\nvar sr=sh('Read STARTUPS');var shh=(sr[0]||[]).map(function(x){return String(x||'').trim().toLowerCase();});\nvar cS=shh.indexOf('startup'),cSec=shh.indexOf('sector'),cStg=shh.indexOf('stage'),cR=shh.indexOf('raise_inr_cr'),cRev=shh.indexOf('revenue'),cA=shh.indexOf('active'),cRec=shh.indexOf('recommended_raise_cr');\nvar su=[];\nfor(var e=1;e<sr.length;e++){var q=sr[e]||[];var nm2=String(q[cS]||'').trim();if(!nm2)continue;\n var raw=String(q[cR]||'').trim();var num=parseFloat(raw.replace(/[^0-9.]/g,''));if(isNaN(num))num=null;\n su.push({startup:nm2,sector:String(q[cSec]||'').trim(),stage:String(q[cStg]||'').trim(),raise_raw:raw,raise_cr:num,revenue:String(q[cRev]||'').trim().slice(0,40),active:String(q[cA]||'').trim(),rec:cRec>=0?String(q[cRec]||'').trim():''});}\nvar act=su.filter(function(x){return !/^(no|false|0)$/i.test(x.active);});\nfunction cnt(arr,f){var n=0;for(var i=0;i<arr.length;i++)if(f(arr[i]))n++;return n;}\nvar bands={total:su.length,active:act.length,\n active_ge_100cr:cnt(act,function(x){return x.raise_cr!==null&&x.raise_cr>=100;}),\n active_ge_50cr:cnt(act,function(x){return x.raise_cr!==null&&x.raise_cr>=50;}),\n active_ge_1p5cr:cnt(act,function(x){return x.raise_cr!==null&&x.raise_cr>=1.5;}),\n active_ge_0p5cr:cnt(act,function(x){return x.raise_cr!==null&&x.raise_cr>=0.5;}),\n active_0p5_to_1p5:cnt(act,function(x){return x.raise_cr!==null&&x.raise_cr>=0.5&&x.raise_cr<=1.5;}),\n active_blank_raise:cnt(act,function(x){return x.raise_cr===null;}),\n active_max_raise:act.reduce(function(m,x){return (x.raise_cr!==null&&x.raise_cr>m)?x.raise_cr:m;},0)};\nvar sectors={};for(var s2=0;s2<act.length;s2++){var k=act[s2].sector||'(blank)';sectors[k]=(sectors[k]||0)+1;}\nvar stages={};for(var s3=0;s3<act.length;s3++){var k2=act[s3].stage||'(blank)';stages[k2]=(stages[k2]||0)+1;}\n\nvar orr=sh('Read ONBOARDING');var oh=(orr[0]||[]).map(function(x){return String(x||'').trim().toLowerCase();});\nvar oF=oh.indexOf('firm'),oE=oh.indexOf('email'),oC=oh.indexOf('contact'),oS=oh.indexOf('status'),oOc=oh.indexOf('outcome'),oRN=oh.indexOf('review_note'),oSj=oh.indexOf('subject'),oTh=oh.indexOf('thread_id'),oSd=oh.indexOf('sent_date');\nvar look=['lumikai','ironpillar','in44','liftt','lightrock'];var found=[];\nfor(var f2=1;f2<orr.length;f2++){var w=orr[f2]||[];var blob=norm(String(w[oF]||'')+' '+String(w[oE]||'')+' '+String(w[oSj]||''));\n for(var g=0;g<look.length;g++){if(blob.indexOf(look[g])>-1){found.push({row:f2+1,key:look[g],firm:String(w[oF]||''),contact:String(w[oC]||''),email:String(w[oE]||''),status:String(w[oS]||''),outcome:String(w[oOc]||''),sent_date:String(w[oSd]||''),thread_id:String(w[oTh]||''),review_note:String(w[oRN]||'').slice(0,200),subject:String(w[oSj]||'').slice(0,120)});break;}}}\n\nreturn [{json:{investorsHeader:ih,investorsCount:inv.length,dupHits:hits,startupsHeader:shh,bands:bands,sectors:sectors,stages:stages,startupsAll:act.map(function(x){return x.startup+' | '+x.sector+' | '+x.stage+' | '+x.raise_raw;}),onboardingLookups:found}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Read INVESTORS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read INVESTORS": {
+      "main": [
+        [
+          {
+            "node": "Read STARTUPS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read STARTUPS": {
+      "main": [
+        [
+          {
+            "node": "Read ONBOARDING",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read ONBOARDING": {
+      "main": [
+        [
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "k6hrJCFtZENYvmcz",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-30T11:27:26.563Z",
+      "updatedAt": "2026-09-30T11:27:26.563Z"
+    }
+  ],
+  "activeVersion": null
+}

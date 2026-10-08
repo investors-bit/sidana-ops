@@ -1,0 +1,225 @@
+{
+  "id": "DwD1Gc3eAAqNTFQ6",
+  "name": "READ (read-only) — find founder addresses for Indie Stori / Doffair / RemoteMore across MB2,4,5",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-25T05:51:32.139Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "18eb5696-28a9-44a1-8805-6877c0e5c102",
+  "versionCounter": 5,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "fa-wh",
+      "name": "Webhook",
+      "webhookId": "c2d3e4f5-5555-4c6d-9e0f-findaddr00001",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "find-founder-addr-3names-7k1x",
+        "responseMode": "lastNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "fa-m2",
+      "name": "MB2 Chaman",
+      "webhookId": "c2d3e4f5-5555-4c6d-9e0f-fagmail002",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "onError": "continueRegularOutput",
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 20,
+        "simple": false,
+        "filters": {
+          "q": "subject:\"Update on Investor Outreach\" OR (from:indaditya47@gmail.com OR from:virattrivedi034@gmail.com newer_than:5d)"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "hwEqMRn6IxzoYs1R",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "id": "fa-m4",
+      "name": "MB4 Akansha",
+      "webhookId": "c2d3e4f5-5555-4c6d-9e0f-fagmail004",
+      "disabled": false,
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "onError": "continueRegularOutput",
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 20,
+        "simple": false,
+        "filters": {
+          "q": "subject:\"Update on Investor Outreach\" OR (from:indaditya47@gmail.com OR from:virattrivedi034@gmail.com newer_than:5d)"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "9IWD8mWqdARPXloL",
+          "name": "Gmail account 4"
+        }
+      }
+    },
+    {
+      "id": "fa-m5",
+      "name": "MB5 Shradhaa",
+      "webhookId": "c2d3e4f5-5555-4c6d-9e0f-fagmail005",
+      "disabled": false,
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "onError": "continueRegularOutput",
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 20,
+        "simple": false,
+        "filters": {
+          "q": "subject:\"Update on Investor Outreach\" OR (from:indaditya47@gmail.com OR from:virattrivedi034@gmail.com newer_than:5d)"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "R5K61omYbU9oT5J8",
+          "name": "Gmail account 5"
+        }
+      }
+    },
+    {
+      "id": "fa-out",
+      "name": "Candidate addresses",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const s = (v) => String(v == null ? '' : v).trim();\nconst low = (v) => s(v).toLowerCase();\nconst boxes = [['Chaman dealflow@', 'MB2 Chaman'], ['Akansha', 'MB4 Akansha'], ['Shradhaa', 'MB5 Shradhaa']];\nconst out = [];\nfor (const [label, node] of boxes) {\n  let items = [];\n  try { items = $(node).all(); } catch (e) { continue; }\n  for (const it of items) {\n    const m = it.json || {};\n    if (m.error || !m.id) continue;\n    const h = {};\n    for (const k in (m.headers || {})) h[low(k)] = m.headers[k];\n    const subj = s(h.subject);\n    if (!/update on investor outreach/i.test(subj)) continue;\n    let body = s(m.text || m.textPlain || m.snippet).replace(/\\r/g, '');\n    body = body.split(/\\n\\s*On .{10,90} wrote:/)[0].slice(0, 900);\n    out.push({ mailbox: label, date: s(h.date), from: s(h.from), to: s(h.to), cc: s(h.cc), subject: subj, body });\n  }\n}\nout.sort((a, b) => new Date(a.date) - new Date(b.date));\nreturn [{ json: { thread_messages_found: out.length, messages: out } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "MB2 Chaman",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MB2 Chaman": {
+      "main": [
+        [
+          {
+            "node": "MB4 Akansha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MB4 Akansha": {
+      "main": [
+        [
+          {
+            "node": "MB5 Shradhaa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MB5 Shradhaa": {
+      "main": [
+        [
+          {
+            "node": "Candidate addresses",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "DwD1Gc3eAAqNTFQ6",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-25T05:51:32.141Z",
+      "updatedAt": "2026-09-25T05:51:32.141Z"
+    }
+  ],
+  "activeVersion": null
+}

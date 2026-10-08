@@ -1,0 +1,235 @@
+{
+  "id": "6GTtrAMQk4N7NZoU",
+  "name": "One-off — Reset bounced deals (Fireside, Flipkart)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-04T12:11:27.056Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "d3df4530-fcc2-4a5f-96e1-cad6adb02c9d",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run (press Execute)",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "t2",
+      "name": "Apply at 17:52 IST",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        200
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "52 17 4 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "n1",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        224,
+        100
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "n2",
+      "name": "Build resets",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        100
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const FIRMS = [/^fireside ventures$/i, /^flipkart ventures$/i];\nconst RESEND_DUE = '2026-09-05';\nconst yes = (x) => String(x || '').trim().toLowerCase() === 'yes';\nconst blank = (x) => String(x || '').trim() === '';\n\nconst out = [];\nconst detail = [];\nfor (const p of $('Read PIPELINE').all()) {\n  const inv = String(p.json.investor || '').trim();\n  if (!FIRMS.some((re) => re.test(inv))) { continue; }\n  if (!yes(p.json.deal_shared)) { continue; }          // never sent - nothing to reset\n  if (!blank(p.json.investor_response)) { continue; }  // they replied - address worked, leave alone\n  if (!blank(p.json.pause)) { continue; }\n  const id = String(p.json.deal_id || '').trim();\n  detail.push(id + ' ' + p.json.startup + ' / ' + inv + ' (' + p.json.owner + ')');\n  out.push({ json: {\n    deal_id: id,\n    deal_shared: 'No', date_shared: '', channel: '', thread_id: '', message_id: '',\n    fu1_done: '', fu1_date: '', fu2_done: '', fu2_date: '', fu3_done: '', fu3_date: '',\n    last_contact: '', next_action: 'Initial', next_due: RESEND_DUE,\n  } });\n}\n\nif (out.length === 0) { throw new Error('No rows to reset - aborting'); }\nif (out.length > 15) { throw new Error('Sanity check: ' + out.length + ' resets is more than expected'); }\nconsole.log('Resetting ' + out.length + ': ' + detail.join(' | '));\nreturn out;"
+      }
+    },
+    {
+      "id": "n3",
+      "name": "Update PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        672,
+        100
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "deal_id"
+          ],
+          "schema": [
+            {
+              "id": "deal_id",
+              "displayName": "deal_id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {
+          "handlingExtraData": "error"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Run (press Execute)": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apply at 17:52 IST": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Build resets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build resets": {
+      "main": [
+        [
+          {
+            "node": "Update PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Apply at 17:52 IST": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "6GTtrAMQk4N7NZoU",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-04T12:11:27.059Z",
+      "updatedAt": "2026-09-04T12:11:27.059Z"
+    }
+  ],
+  "activeVersion": null
+}

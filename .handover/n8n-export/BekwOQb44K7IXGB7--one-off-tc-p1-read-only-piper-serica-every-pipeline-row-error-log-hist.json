@@ -1,0 +1,143 @@
+{
+  "id": "BekwOQb44K7IXGB7",
+  "name": "One-off TC-P1 (read-only) — Piper Serica: every PIPELINE row + ERROR LOG history (17 Sep)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-17T05:06:28.166Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "18089e20-a073-43bd-949d-54b473c6b628",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once (set before activating)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "43 10 17 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "gp",
+      "name": "GET pilot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=PIPELINE!A1:AJ6000&ranges=%27ERROR%20LOG%27!A1:J5000&ranges=%27RUN%20LOG%27!A1:J3000",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "an",
+      "name": "Piper",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nconst v = $('GET pilot').first().json.valueRanges || [];\nconst pipe = (v[0] || {}).values || [], elog = (v[1] || {}).values || [];\nif (pipe.length < 500) { throw new Error('ABORT short read'); }\nconst ph = (pipe[0] || []).map(s);\nconst rows = [];\nfor (let r = 1; r < pipe.length; r++) { const row = pipe[r] || []; if (!/piper/i.test(row.join(' '))) { continue; }\n  const o = { sheet_row: r + 1 }; ph.forEach(function (h, i) { const val = s(row[i]); if (val && h !== 'thread_id' && h !== 'message_id') { o[h] = val.slice(0, 160); } }); rows.push(o); }\nconst eh = (elog[0] || []).map(s);\nconst el = [];\nfor (let r = 1; r < elog.length; r++) { const row = elog[r] || []; if (!/piper/i.test(row.join(' '))) { continue; } const o = { sheet_row: r + 1 }; eh.forEach(function (h, i) { if (s(row[i])) { o[h] = s(row[i]).slice(0, 300); } }); el.push(o); }\nreturn [{ json: { pipeline_header: ph, piper_pipeline_rows: rows, piper_error_log: el } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once (set before activating)": {
+      "main": [
+        [
+          {
+            "node": "GET pilot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET pilot": {
+      "main": [
+        [
+          {
+            "node": "Piper",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once (set before activating)": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "BekwOQb44K7IXGB7",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-17T05:06:28.169Z",
+      "updatedAt": "2026-09-17T05:06:28.169Z"
+    }
+  ],
+  "activeVersion": null
+}

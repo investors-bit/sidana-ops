@@ -1,0 +1,283 @@
+{
+  "id": "G0jFPAIrYwntZG4z",
+  "name": "One-off TR-23 — name the second mandate row for Accel and Yali (email untouched)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-15T15:05:25.473Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "ccf487d6-b728-4947-b085-e63410a15e67",
+  "versionCounter": 5,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once (set before activating)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "58 20 15 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "gi",
+      "name": "GET INVESTORS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/INVESTORS!A1:J400",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "gp",
+      "name": "GET PIPELINE",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/PIPELINE!A1:AJ6000",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cp",
+      "name": "Plan",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nfunction nz(x) { return s(x).toLowerCase().replace(/[^a-z0-9]/g, ''); }\nconst TODAY = '2026-09-15';\nconst inv = $('GET INVESTORS').first().json.values || [];\nconst pipe = $('GET PIPELINE').first().json.values || [];\nif (inv.length < 200) { throw new Error('ABORT: INVESTORS only ' + inv.length); }\nif (pipe.length < 500) { throw new Error('ABORT: PIPELINE only ' + pipe.length); }\nconst ih = (inv[0] || []).map(s);\nconst I = {}; ['investor','contact_person','email','sector','stage','cheque_inr_cr','do_not_contact'].forEach(function (n) { I[n] = ih.indexOf(n); if (I[n] < 0) { throw new Error('ABORT: INVESTORS missing ' + n); } });\n\n// the second mandate row of each firm gets a name of its own; the FIRST row keeps the bare name\n// so every existing PIPELINE row still resolves. Capital-A excluded (inactive, user 2026-09-15).\nconst PLAN = { accel: 'Accel - Seed Programme', yalicapital: 'Yali Capital - Defence & IP' };\n\nconst groups = {};\nfor (let r = 1; r < inv.length; r++) { const row = inv[r] || []; const n = s(row[I.investor]); if (!n) { continue; }\n  const k = nz(n); if (!PLAN[k]) { continue; }\n  (groups[k] = groups[k] || []).push({ row: r + 1, name: n, contact: s(row[I.contact_person]), email: s(row[I.email]).toLowerCase(),\n    sector: s(row[I.sector]), stage: s(row[I.stage]), cheque: s(row[I.cheque_inr_cr]) }); }\n\nconst updates = [], renamed = [];\nfor (const k of Object.keys(PLAN)) { const g = groups[k];\n  if (!g || g.length !== 2) { throw new Error('ABORT: expected exactly 2 rows for ' + k + ', found ' + (g ? g.length : 0)); }\n  const emails = {}; g.forEach(function (x) { emails[x.email] = 1; });\n  if (Object.keys(emails).length !== 1) { throw new Error('ABORT: ' + k + ' rows do not share one email: ' + JSON.stringify(Object.keys(emails)) + ' - renaming would risk sending to the wrong address'); }\n  if (!g[0].email) { throw new Error('ABORT: ' + k + ' has no email'); }\n  const second = g[1];\n  if (nz(second.name) !== k) { throw new Error('ABORT: second row already renamed for ' + k + ': ' + second.name); }\n  updates.push({ range: 'INVESTORS!A' + second.row, values: [[PLAN[k]]] });\n  renamed.push({ firm: g[0].name, kept_row: g[0].row, kept_name: g[0].name, kept_thesis: g[0].sector + ' | ' + g[0].stage + ' | ' + g[0].cheque,\n    renamed_row: second.row, new_name: PLAN[k], renamed_thesis: second.sector + ' | ' + second.stage + ' | ' + second.cheque,\n    shared_email: g[0].email }); }\nif (renamed.length !== 2) { throw new Error('ABORT: expected 2 renames, got ' + renamed.length); }\n\n// Orphan check: compare BEFORE vs AFTER. Only block if THIS rename creates a new orphan.\n// (East Ventures / Nirman Ventures are already orphaned - removed investors whose sent rows were dropped today.)\nconst before = {}, after = {};\nfor (let r = 1; r < inv.length; r++) { const row = inv[r] || []; const n = s(row[I.investor]); if (n) { before[n] = 1; after[n] = 1; } }\nrenamed.forEach(function (x) { after[x.new_name] = 1; });\nconst ph = (pipe[0] || []).map(s);\nconst P = {}; ['investor','deal_shared','pause'].forEach(function (n) { P[n] = ph.indexOf(n); });\nconst orphanBefore = {}, orphanAfter = {};\nfor (let r = 1; r < pipe.length; r++) { const row = pipe[r] || []; const n = s(row[P.investor]); if (!n) { continue; }\n  if (s(row[P.pause]).toLowerCase() === 'yes') { continue; } // paused rows never send or follow up\n  if (!before[n]) { orphanBefore[n] = (orphanBefore[n] || 0) + 1; }\n  if (!after[n]) { orphanAfter[n] = (orphanAfter[n] || 0) + 1; } }\nconst newlyOrphaned = {};\nfor (const n of Object.keys(orphanAfter)) { if (!orphanBefore[n]) { newlyOrphaned[n] = orphanAfter[n]; } }\nif (Object.keys(newlyOrphaned).length) { throw new Error('ABORT: this rename would newly orphan live PIPELINE rows: ' + JSON.stringify(newlyOrphaned)); }\n\nreturn [{ json: { summary: { renames: renamed.length, cell_writes: updates.length,\n  pre_existing_orphans: orphanBefore, newly_orphaned: 0 }, renamed: renamed, updates: updates } }];"
+      }
+    },
+    {
+      "id": "wv",
+      "name": "Write renames",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ valueInputOption: 'RAW', data: $('Plan').first().json.updates }) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "ga",
+      "name": "GET INVESTORS after",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        1000,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/INVESTORS!A1:J400",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cv",
+      "name": "Verify",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nconst plan = $('Plan').first().json;\nconst inv = $input.first().json.values || [];\nconst ih = (inv[0] || []).map(s);\nconst iN = ih.indexOf('investor'), iE = ih.indexOf('email');\nconst out = [];\nlet emailsOk = true;\nplan.renamed.forEach(function (x) {\n  const keptRow = inv[x.kept_row - 1] || [];\n  const newRow = inv[x.renamed_row - 1] || [];\n  const keptName = s(keptRow[iN]), newName = s(newRow[iN]);\n  const keptMail = s(keptRow[iE]).toLowerCase(), newMail = s(newRow[iE]).toLowerCase();\n  if (keptMail !== x.shared_email || newMail !== x.shared_email) { emailsOk = false; }\n  out.push({ firm: x.firm, kept: keptName, kept_email: keptMail, renamed_to: newName, renamed_email: newMail,\n    kept_thesis: x.kept_thesis, renamed_thesis: x.renamed_thesis,\n    name_ok: keptName === x.kept_name && newName === x.new_name, email_unchanged: keptMail === x.shared_email && newMail === x.shared_email }); });\nconst wrote = $('Write renames').first().json || {};\nreturn [{ json: { cells_updated: wrote.totalUpdatedCells || 0, all_emails_unchanged: emailsOk,\n  results: out, ok: emailsOk && out.every(function (x) { return x.name_ok; }) } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once (set before activating)": {
+      "main": [
+        [
+          {
+            "node": "GET INVESTORS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET INVESTORS": {
+      "main": [
+        [
+          {
+            "node": "GET PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Plan": {
+      "main": [
+        [
+          {
+            "node": "Write renames",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write renames": {
+      "main": [
+        [
+          {
+            "node": "GET INVESTORS after",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET INVESTORS after": {
+      "main": [
+        [
+          {
+            "node": "Verify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once (set before activating)": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "G0jFPAIrYwntZG4z",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-15T15:05:25.474Z",
+      "updatedAt": "2026-09-15T15:05:25.474Z"
+    }
+  ],
+  "activeVersion": null
+}

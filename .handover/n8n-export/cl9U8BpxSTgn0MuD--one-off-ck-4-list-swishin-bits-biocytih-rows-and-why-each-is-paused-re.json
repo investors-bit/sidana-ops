@@ -1,0 +1,151 @@
+{
+  "id": "cl9U8BpxSTgn0MuD",
+  "name": "One-off CK-4 — list Swishin + BITS BIoCyTIH rows and why each is paused (read only)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-11T13:11:47.547Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "922cb402-49fc-435b-9199-3639a4e6ee0f",
+  "versionCounter": 7,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once (set before activating)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "51 12 14 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "r3",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cv",
+      "name": "Check",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nfunction nz(x) { return s(x).toLowerCase().replace(/[^a-z0-9]/g, ''); }\nconst yes = function (x) { return s(x).toLowerCase() === 'yes'; };\nconst pipe = $input.all().map(function (i) { return i.json; });\nconst active = pipe.filter(function (p) { return !yes(p.deal_shared) && !yes(p.pause); });\nconst blank = active.filter(function (p) { return !s(p.email); }).map(function (p) { return [p.row_number, s(p.deal_id), s(p.startup), s(p.investor), s(p.next_due)]; });\nconst HELD = new Set(['capitala', 'windrosecapital']);\nconst held = {}; for (const p of active) { const k = nz(p.investor); if (HELD.has(k)) { (held[s(p.investor)] = held[s(p.investor)] || []).push([p.row_number, s(p.deal_id), s(p.startup), s(p.next_due)]); } }\nconst debt = active.filter(function (p) { return /debt|northernarc|blacksoil|coinage|strideventures|innoven|capwise|epsilonx/.test(nz(p.investor)); }).map(function (p) { return [p.row_number, s(p.deal_id), s(p.investor)]; });\nconst ids = {}; const dup = []; for (const p of pipe) { const id = s(p.deal_id); if (!id) { continue; } if (ids[id]) { dup.push(id); } ids[id] = 1; }\nconst WANT = new Set(['swishinventures', 'bitsbiocytihfoundation']);\nconst ca = pipe.filter(function (p) { return WANT.has(nz(p.investor)); }).map(function (p) { return [nz(p.investor) === 'swishinventures' ? 'SWISHIN' : 'BITS', s(p.deal_id), s(p.startup), yes(p.deal_shared) ? 'SENT' : (yes(p.pause) ? 'PAUSED' : 'queued'), s(p.next_due), s(p.next_action).slice(0, 34), s(p.match_type).slice(0, 55), s(p.notes).slice(-80)]; });\nreturn [{ json: { climate_angels_rows: ca, pipeline_rows: pipe.length, active: active.length, active_blank_email: blank.length, blank_rows: blank.slice(0, 80), active_held_or_dnc: held, active_debt: debt, duplicate_deal_ids: dup.slice(0, 40) } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once (set before activating)": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once (set before activating)": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "cl9U8BpxSTgn0MuD",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-11T13:11:47.549Z",
+      "updatedAt": "2026-09-11T13:11:47.549Z"
+    }
+  ],
+  "activeVersion": null
+}

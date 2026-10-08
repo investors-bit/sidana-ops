@@ -1,0 +1,192 @@
+{
+  "id": "zBKvv2l9YQhVLYgu",
+  "name": "One-off CP-1 — investor composition by type and cheque band (read only)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-11T04:46:03.878Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "bde448ef-81f1-4c15-bc1d-f049e2f2afcb",
+  "versionCounter": 5,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once (set before activating)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 15 11 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "r1",
+      "name": "Read INVESTORS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "INVESTORS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "r3",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "c1",
+      "name": "Classify",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nfunction nz(x) { return s(x).toLowerCase().replace(/[^a-z0-9]/g, ''); }\nconst invRaw = $('Read INVESTORS').all().map(function (i) { return i.json; });\nconst pipe = $input.all().map(function (i) { return i.json; });\n\n// every amount in the cheque cell, INR Cr (USD at 85)\nfunction chequeRange(txt) { const t = s(txt).replace(/,/g, '').toLowerCase(); if (!t) { return null; }\n  const usd = /\\$|usd/.test(t); const re = /(\\d+(?:\\.\\d+)?)\\s*(crores?|cr|million|mn|m|k|lakhs?|lacs?|l\\b)?(?![a-z])/g;\n  const tok = []; let m; while ((m = re.exec(t)) !== null) { tok.push({ v: parseFloat(m[1]), u: m[2] || '' }); }\n  if (!tok.length) { return null; }\n  for (let i = tok.length - 2; i >= 0; i--) { if (!tok[i].u && tok[i + 1].u) { tok[i].u = tok[i + 1].u; } }\n  const vals = [];\n  for (const k of tok) { const u = k.u || (usd ? 'm' : 'cr'); let cr;\n    if (/^cr/.test(u)) { cr = k.v; } else if (/^la|^l$/.test(u)) { cr = k.v / 100; }\n    else if (u === 'k') { cr = usd ? k.v * 0.0085 : k.v / 10000; } else { cr = usd ? k.v * 8.5 : k.v / 10; }\n    if (cr > 0) { vals.push(cr); } }\n  if (!vals.length) { return null; }\n  let lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);\n  if (vals.length === 1 && /up\\s*to|upto|\\bmax/.test(t)) { lo = 0; }\n  return [Math.round(lo * 100) / 100, Math.round(hi * 100) / 100]; }\n\nconst ORG = /\\b(ventures?|venture|capital|partners?|fund|funds|vc|angels?|network|invest(ments?|or|ors)?|group|family|office|advisors?|ltd|llp|limited|holdings?|labs?|foundation|accelerator|collective|equity|growth|finserv|financial|bank|securities|asset|trust|syndicate|club|incubator|unicorns?|catalysts?|corp(oration)?|industries|enterprises?|debt|nabard|health|global|tech|india|x|seed|studio|associates|alternate|wealth)\\b|\\.vc|&/i;\nconst NETWORK = /angel|network|syndicate|\\bipv\\b|inflection point|venture catalysts|\\bfaad\\b|letsventure|lets venture|\\bian\\b|indian angel|hem angels|campus angels|keiretsu|lead angels|mumbai angels|\\bclub\\b/i;\nconst FAMILY = /family office|family\\b|\\bfo\\b/i;\nconst DEBT = /\\bdebt\\b|blacksoil|northern arc|caspian|debtworks|coin-?age|alteria|trifecta|stride ventures/i;\nconst CORP = /bajaj|wipro|flipkart|info edge|hitachi|tdk|lockheed|l'?oreal|tvs capital|baldota|sar group|\\bsig group\\b|nabard|redesign health|reliance|tata|mahindra|infosys|samsung|intel capital|qualcomm/i;\n\nconst byName = {};\nfor (const r of invRaw) { const n = s(r.investor); if (!n) { continue; } const k = nz(n); if (!byName[k]) { byName[k] = []; } byName[k].push(r); }\nconst sent = {}, queued = {};\nfor (const p of pipe) { const k = nz(p.investor); if (s(p.deal_shared).toLowerCase() === 'yes') { sent[k] = (sent[k] || 0) + 1; }\n  else if (s(p.pause).toLowerCase() !== 'yes') { queued[k] = (queued[k] || 0) + 1; } }\n\nconst rows = [];\nfor (const k of Object.keys(byName)) {\n  const rs = byName[k]; const pick = rs.filter(function (r) { return s(r.cheque_inr_cr) !== ''; })[0] || rs[0];\n  const name = s(pick.investor); const contact = s(pick.contact_person); const cheque = s(pick.cheque_inr_cr);\n  const sector = s(pick.sector); const stage = s(pick.stage);\n  const dnc = rs.some(function (r) { return s(r.do_not_contact).toLowerCase() === 'yes'; });\n  const rng = chequeRange(cheque);\n  const blob = name + ' ' + sector + ' ' + stage + ' ' + cheque;\n  // individual: the name reads like a person - no firm words, 1-3 words, or the name is the contact person\n  const words = name.replace(/\\(.*?\\)/g, '').trim().split(/\\s+/).filter(Boolean);\n  const personLike = !ORG.test(name.replace(/\\(.*?\\)/g, '')) && words.length >= 1 && words.length <= 3 && /^[A-Z][a-z]/.test(words[0]) && (words.length >= 2 || (contact && nz(contact).indexOf(nz(name)) >= 0));\n  const isIndividual = personLike || (contact && nz(contact) === nz(name));\n  const isNetwork = NETWORK.test(name) || /angel network|syndicate/i.test(blob);\n  const flags = [];\n  if (FAMILY.test(name)) { flags.push('Family office'); } if (DEBT.test(blob)) { flags.push('Debt'); } if (CORP.test(name)) { flags.push('Corporate VC'); }\n  let bucket;\n  if (isIndividual) { bucket = '1. Individual angel'; }\n  else if (isNetwork) { bucket = '2. Angel network / syndicate'; }\n  else if (!rng) { bucket = '7. Cheque not stated'; }\n  else { const mid = (rng[0] + rng[1]) / 2;\n    if (rng[1] <= 2) { bucket = '3. Micro VC / pre-seed VC'; }\n    else if (mid <= 5) { bucket = '4. Seed fund'; }\n    else if (mid <= 25) { bucket = '5. Institutional VC'; }\n    else { bucket = '6. Large VC / growth (above 25 Cr)'; } }\n  rows.push({ investor: name, contact: contact, bucket: bucket, flags: flags.join(', '), cheque_text: cheque,\n    cheque_min_cr: rng ? rng[0] : null, cheque_max_cr: rng ? rng[1] : null, stage: stage.slice(0, 50), sector: sector.slice(0, 70),\n    do_not_contact: dnc ? 'Yes' : '', sheet_rows: rs.length, deals_sent: sent[k] || 0, deals_queued: queued[k] || 0 });\n}\nrows.sort(function (a, b) { return a.bucket.localeCompare(b.bucket) || a.investor.localeCompare(b.investor); });\nconst summary = {};\nfor (const r of rows) { const b = r.bucket; if (!summary[b]) { summary[b] = { all: 0, contactable: 0, dnc: 0, sent: 0, queued: 0 }; }\n  summary[b].all++; if (r.do_not_contact) { summary[b].dnc++; } else { summary[b].contactable++; } summary[b].sent += r.deals_sent; summary[b].queued += r.deals_queued; }\nconst raw = invRaw.map(function (r) { return { row: r.row_number, investor: s(r.investor), contact_person: s(r.contact_person), email: s(r.email), cc: s(r.cc), sector: s(r.sector), stage: s(r.stage), cheque_inr_cr: s(r.cheque_inr_cr), do_not_contact: s(r.do_not_contact) }; });\nreturn [{ json: { investor_rows_in_sheet: invRaw.length, distinct_investors: rows.length, summary: summary, investors: rows, raw: raw } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once (set before activating)": {
+      "main": [
+        [
+          {
+            "node": "Read INVESTORS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read INVESTORS": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Classify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once (set before activating)": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "zBKvv2l9YQhVLYgu",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-11T04:46:03.915Z",
+      "updatedAt": "2026-09-11T04:46:03.915Z"
+    }
+  ],
+  "activeVersion": null
+}

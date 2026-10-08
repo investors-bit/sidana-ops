@@ -1,0 +1,800 @@
+{
+  "id": "F4xXHRFIr3gS2VHc",
+  "name": "ENGINE-DAILY — match engine: pause off-thesis deals, 2/day inbox cap, new matches (weekdays 07:30 IST)",
+  "description": null,
+  "active": true,
+  "activeVersionId": "b6b9f94c-45f7-4022-92b7-0701d6ac64b4",
+  "createdAt": "2026-09-17T06:50:58.466Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "b6b9f94c-45f7-4022-92b7-0701d6ac64b4",
+  "versionCounter": 30,
+  "sourceWorkflowId": null,
+  "triggerCount": 2,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "30 7 * * 1-5"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "md",
+      "name": "Mode",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// dry: true = report only. Guards abort a run that would pause or add more rows than a normal day (a big thesis change can need a one-off higher guard).\n// Live since 17 Sep 2026 (first clean-up run: 1,138 dropped, 335 held, 237 follow-ups stopped, 44 held, 391 added).\n// 17 Sep afternoon dry run after the 87 mailbox-evidence criteria updates: 238 drop, 30 hold, 43+6 follow-ups, 21 release, 68 add - fits these guards.\n// A run started from the 'Dry hook' webhook is always dry (report only); the 07:30 schedule run is live.\n// 23 Sep 2026: this node was set live for ONE webhook run (post-thesis-fix, user approved) and restored immediately after.\nlet viaDryHook = false; try { viaDryHook = $('Dry hook').all().length > 0; } catch (e) { viaDryHook = false; }\nreturn [{ json: { dry: viaDryHook, max_drops: 500, max_appends: 400 } }];"
+      }
+    },
+    {
+      "id": "gp",
+      "name": "GET pilot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=INVESTOR_CRITERIA!A1:AF400&ranges=STARTUP_PROFILE!A1:O200&ranges=PIPELINE!A1:AI8000&ranges=INVESTORS!A1:J1000&ranges=STARTUPS!A1:L200",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "gm",
+      "name": "GET meetings",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/1d-wSnDCnC_c9_rqD652Zayu6An-dipeVyC7lCD_TD0Y/values/' + encodeURIComponent(\"'Report - No of Deal Flows'!A1:Z400\") }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "gt",
+      "name": "GET tracker",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/1WzrrPelm2HsJNXOUNIEOuRajp70CUY-RrzBOs9LENjs/values/' + encodeURIComponent(\"'Deal Tracker'!A1:AZ800\") }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "pl",
+      "name": "Plan",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// ENGINE-DAILY plan (n8n Code node). Writes nothing itself: returns one item { summary, data (batchUpdate ranges), appends }.\nconst MODE = $(\"Mode\").first().json;\nconst DRY = MODE.dry !== false;          // true = report only\nconst MAX_DROPS = Number(MODE.max_drops) || 300;     // guard: rows paused in one run\nconst MAX_APPENDS = Number(MODE.max_appends) || 400; // guard: new PIPELINE rows in one run\nconst HORIZON_WEEKDAYS = 30;      // how far ahead new rows may be dated\nconst CAP_DAY = 2, CAP_WEEK = 5, CAP_OWNER_DAY = 20;\nconst MEET_STOP = 7; // user 18 Sep: startups with this many meetings or more get no new shares; their queued rows are paused\nconst MEET_NA = 'PAUSED - 7+ meetings (user 18 Sep)';\n// user 22 Sep: the HOT deals (Q4 close push) are exempt from the meeting-count pause AND get priority for send dates\n// 23 Sep: MindWox promoted from the middle desk (Prana/AWE/Enzia/Faad all live); CLIKD kept as well on the user's call, so 11 not 10\nconst HOT = ['spintly', 'boncuisine', 'eosnox', 'hyrgpt', 'talentrecruit', 'hoora', 'clikd', 'mindwox', 'mentorcloud', 'roadathena', 'learningpad'];\nfunction isHot(name) { return HOT.indexOf(nz(name)) >= 0; }\nconst MEET_EXEMPT = HOT.slice(); // was ['clikd'] (user 19 Sep); all hot deals exempt from 22 Sep (user lifted the pause)\nconst NO_AUTO_PAIRS = ['spintly|gvfl','clikd|udyatventures']; // user 19 Sep: Udyat passed on CLIKD 3 Sep; no automatic re-share - a hand-written re-engage note goes in November\n// 28 Sep 2026: Aditya REMOVED the meeting-count pause - \"i remove this pause now and hot deals will get special priority.\"\n// Why: Springbase.ai was blocked from every new investor on a row reading 'PAUSED - 8+ meetings' while the calendars showed\n// THREE investor events, all with ONE investor (Suvan) who wanted advisory equity and never intended to invest. The rule froze\n// a startup out of the market precisely because it had been busy failing.\n// MEET_STOP / MEET_NA / MEET_EXEMPT are deliberately KEPT, not deleted: MEET_PAUSED_RE below still has to recognise the wording\n// already written into 322 rows, and a reader needs to see why the dead code is dead. DO NOT wire them back into a gate.\n// MEET_EXEMPT is now inert by definition - hot deals were exempt from a rule that no longer exists. Hot priority lives entirely\n// in Part B0 (hot rows take the earliest dates in their inbox) and the hot pull-forward, neither of which ever used this rule.\nconst MEET_PAUSED_RE = /^PAUSED - \\d+\\+ meetings/; // matches both wordings in the sheet: 'PAUSED - 7+ meetings (user 18 Sep)' (207 rows) and 'PAUSED - 8+ meetings (user 18 Sep)' (115 rows)\nfunction meetStop(name) { return false; }\nconst POC_OWNER = { iimaventures: 'Chaman' }; // investors who asked for ONE point of contact at Sidana (IIMA 18 Sep)\nfunction s(v) { return String(v == null ? '' : v).trim(); }\nfunction nz(x) { return s(x).toLowerCase().replace(/[^a-z0-9]/g, ''); }\nconst vr = $('GET pilot').first().json.valueRanges || [];\nconst crit = (vr[0] || {}).values || [], prof = (vr[1] || {}).values || [], pipe = (vr[2] || {}).values || [], invs = (vr[3] || {}).values || [], sts = (vr[4] || {}).values || [];\nconst grid = $('GET meetings').first().json.values || [];\nconst trk = $('GET tracker').first().json.values || [];\nif (crit.length < 200 || prof.length < 50 || pipe.length < 5000 || invs.length < 150 || sts.length < 40) { throw new Error('ABORT short read ' + [crit.length, prof.length, pipe.length, invs.length, sts.length].join('/')); }\nfunction objs(rows) { const h = (rows[0] || []).map(s); return rows.slice(1).map(function (r) { const o = {}; h.forEach(function (k, i) { o[k] = r[i] === undefined ? '' : r[i]; }); return o; }); }\nconst C = objs(crit), SP = objs(prof), INV = objs(invs), ST = objs(sts);\n// ===== ENGINE CORE v2 (identical to engine-core.js) =====\nconst LADDER = ['PRE_SEED', 'SEED', 'TRACTION', 'PRE_SERIES_A', 'SERIES_A', 'SERIES_B', 'SERIES_C_PLUS'];\nfunction list(v) { if (Array.isArray(v)) { return v.map(function (x) { return String(x).trim(); }).filter(Boolean); } return String(v == null ? '' : v).split(/[,;|]/).map(function (x) { return x.trim(); }).filter(Boolean); }\nfunction num(v) { if (v === null || v === undefined || v === '') { return null; } const n = Number(v); return isFinite(n) ? n : null; }\nfunction yes(v) { return /^y(es)?$/i.test(String(v == null ? '' : v).trim()); }\nfunction evaluate(inv, st, ctx) {\n  const gates = []; function gate(name, ok, why) { gates.push({ gate: name, ok: ok, why: why }); }\n  const meetings = ctx && typeof ctx.meetings === 'number' ? ctx.meetings : 0;\n  const status = String(inv.status || '').toUpperCase(); gate('investor_active', status === 'ACTIVE', 'status ' + (status || 'blank'));\n  gate('startup_active', yes(st.active), 'startup active=' + st.active);\n  const sIn = list(inv.sectors_in), sEx = list(inv.sectors_excluded), sSt = list(st.sector_codes);\n  const excludedHit = sSt.filter(function (c) { return sEx.indexOf(c) >= 0; });\n  if (excludedHit.length) { gate('sector', false, 'startup sector ' + excludedHit.join('/') + ' is EXCLUDED by investor'); }\n  else if (String(inv.sector_mode || '').toUpperCase() === 'AGNOSTIC') { gate('sector', true, 'investor sector-agnostic (sector waived ONLY; every other gate below still applies - Aditya 1 Oct 2026)'); }\n  else { const overlap = sSt.filter(function (c) { return sIn.indexOf(c) >= 0; });\n    if (!overlap.length) { gate('sector', false, 'no overlap: startup ' + sSt.join('/') + ' vs investor ' + (sIn.join('/') || 'none')); }\n    else if (overlap.indexOf(sSt[0]) >= 0) { gate('sector', true, 'overlap ' + overlap.join('/')); }\n    else {\n      // Only a SECONDARY startup tag overlaps (precision rule 17 Sep): a corporate VC needs the startup's main sector;\n      // a horizontal tag (AI / IoT / consumer app / SaaS) counts only for funds that also back software.\n      const HORIZ = ['AI_APPLIED_ENTERPRISE', 'IOT_SMART_HARDWARE', 'CONSUMER_TECH_APP', 'SAAS_ENTERPRISE'];\n      const cvc = String(inv.investor_type || '').toUpperCase() === 'CVC';\n      const vertical = overlap.filter(function (c) { return HORIZ.indexOf(c) < 0; });\n      const ok2 = !cvc && (vertical.length > 0 || sIn.indexOf('SAAS_ENTERPRISE') >= 0);\n      gate('sector', ok2, ok2 ? 'secondary overlap ' + overlap.join('/') : 'only secondary tag ' + overlap.join('/') + ' overlaps; main sector ' + sSt[0] + ' not on investor list' + (cvc ? ' (corporate VC needs the main sector)' : ' (fund does not back software)'));\n    } }\n  const mIn = list(inv.models_in), mEx = list(inv.models_excluded), m = String(st.business_model || '');\n  if (mEx.indexOf(m) >= 0) { gate('business_model', false, m + ' excluded by investor'); }\n  else if (!mIn.length || mIn.indexOf('ANY') >= 0) { gate('business_model', true, 'any model'); }\n  else { gate('business_model', mIn.indexOf(m) >= 0, mIn.indexOf(m) >= 0 ? m + ' allowed' : m + ' not in ' + mIn.join('/')); }\n  // ---- STAGE: STRICT. Aditya, 1 Oct 2026: \"if the company is series a then send it to only series a investors thats it.\"\n  // The one-rung tolerance and the Series-A-and-later exception are BOTH removed. They were the single largest source of\n  // mismatch: of 1,192 mismatched rows found in the 1 Oct audit, 461 failed on stage. Alt F Coworking at SERIES_A reached\n  // seven funds whose band stops at PRE_SERIES_A because dist was 1; IN44 got Spintly on 28 Sep through the exception,\n  // which is what made him ask us to stop sending. A stage band is now a hard boundary in both directions.\n  let stageOffBy = 0;\n  const si = LADDER.indexOf(String(st.stage_code || '')), lo = LADDER.indexOf(String(inv.stage_min || '')), hi = LADDER.indexOf(String(inv.stage_max || ''));\n  if (si < 0) { gate('stage', false, 'startup stage missing'); }\n  else if (lo < 0 || hi < 0) { gate('stage', false, 'investor stage missing (ON HOLD rule)'); }\n  else if (si >= lo && si <= hi) { gate('stage', true, st.stage_code + ' inside ' + inv.stage_min + '..' + inv.stage_max); }\n  else { const dist = si < lo ? lo - si : si - hi; gate('stage', false, st.stage_code + ' is ' + dist + ' rung(s) outside ' + inv.stage_min + '..' + inv.stage_max + ' (STRICT, no tolerance - Aditya 1 Oct 2026)'); }\n  const cmin = num(inv.cheque_min_cr), raise = num(st.raise_cr);\n  if (cmin === null) { gate('cheque', true, 'no minimum on file'); } else if (raise === null) { gate('cheque', false, 'startup raise unknown'); } else { gate('cheque', raise >= cmin, 'raise ' + raise + ' Cr vs min cheque ' + cmin + ' Cr'); }\n  // ---- CHEQUE CEILING (Aditya, 1 Oct 2026). A fund that will not join a round above a certain size must stop\n  // receiving rounds above it. IN44 is the case that prompted this: round_max 10 Cr, and he was sent Spintly on\n  // 28 Sep, which is what made him ask us to stop.\n  // FAILS OPEN. Only 1 of 303 investors has a ceiling on file, so a missing value MUST mean 'no ceiling known',\n  // never 'ceiling of zero'. Treating blank as a limit would silently mute the entire book.\n  // Only round_max_cr gates. A cheque_max or lead_max does not disqualify: an investor whose largest cheque is\n  // 1.1 Cr can still take 1.1 Cr of a 25 Cr round. Only a round they will not enter at all is a hard no.\n  const rmax = num(inv.round_max_cr);\n  if (rmax !== null && raise !== null) { gate('round_ceiling', raise <= rmax, 'raise ' + raise + ' Cr vs max round size ' + rmax + ' Cr the investor will join'); }\n  const amin = num(inv.arr_min_cr), arr = num(st.arr_cr);\n  if (amin !== null) { if (arr === null) { gate('arr_bar', false, 'needs ARR ' + (yes(inv.arr_min_strict) ? '>' : '>=') + ' ' + amin + ' Cr, startup revenue unknown'); } else { const ok = yes(inv.arr_min_strict) ? arr > amin : arr >= amin; gate('arr_bar', ok, 'ARR ' + arr + ' Cr vs ' + (yes(inv.arr_min_strict) ? '>' : '>=') + ' ' + amin + ' Cr'); } }\n  if (yes(inv.revenue_required)) { gate('revenue_required', arr !== null && arr > 0, arr === null ? 'revenue unknown' : 'ARR ' + arr + ' Cr'); }\n  if (yes(inv.women_only)) { gate('women_only', yes(st.women), 'woman in cap table=' + st.women); }\n  else if (String(inv.women_only || '').trim().toUpperCase() === 'DEEPTECH') { const DT = ['AI_FOUNDATIONAL', 'SEMICONDUCTOR_ELECTRONICS', 'SPACETECH', 'DEFENCE_AEROSPACE', 'BIOTECH_PHARMA', 'MEDTECH_DEVICES', 'IOT_SMART_HARDWARE', 'DATA_INFRA_DEVTOOLS']; const dt = sSt.filter(function (x) { return DT.indexOf(x) >= 0; }); if (dt.length) { gate('women_only', yes(st.women), 'deep-tech startup (' + dt.join('/') + ') needs a woman in cap table; women=' + st.women); } } // user 22 Sep (Colossa): women required only for deep tech\n  if (yes(inv.excludes_jain_sensitive)) { gate('jain_exclusion', !yes(st.jain_sensitive), 'jain_sensitive=' + st.jain_sensitive); }\n  const scope = list(String(inv.geography_scope || 'INDIA').toUpperCase());\n  if (scope.indexOf('GLOBAL') < 0 && scope.indexOf('ANY') < 0) {\n    const g = String(st.geography || '').toLowerCase();\n    const REGION = { INDIA: /india|bharat/, SEA: /indonesia|singapore|malaysia|vietnam|thailand|philippines|southeast asia/, EUROPE: /europe|\\buk\\b|united kingdom|germany|france|netherlands|belgium/, US: /\\busa?\\b|united states|america/, MIDDLE_EAST: /\\buae\\b|dubai|abu dhabi|saudi|qatar|bahrain|\\boman\\b|kuwait|middle east|\\bgcc\\b/, AFRICA: /africa|nigeria|kenya|ghana|egypt|tanzania|uganda|rwanda/, LATAM: /latam|latin america|brazil|mexico|argentina|colombia|chile|peru/ };\n    // 25 Sep: a startup market of 'global' / 'worldwide' now matches ANY investor scope, mirroring GLOBAL on the investor side.\n    // Before this, 'Global' matched no region and fell through to the INDIA default below, so global startups were sent to India-only funds (MentorCloud -> IAN Alpha, 24 Sep) and were invisible to US/EUROPE/SEA-scoped funds.\n    if (/\\bglobal\\b|worldwide|\\bany\\b/.test(g)) { gate('geography', true, 'startup market is global (' + (st.geography || '') + '); matches any scope'); }\n    else {\n    const regions = Object.keys(REGION).filter(function (k) { return REGION[k].test(g); });\n    if (!regions.length) { regions.push('INDIA'); }\n    const ok = scope.indexOf('NON_INDIA') >= 0 ? regions.some(function (r) { return r !== 'INDIA'; }) : regions.some(function (r) { return scope.indexOf(r) >= 0; });\n    gate('geography', ok, 'investor invests in ' + scope.join('/') + '; startup market ' + (st.geography || 'unknown'));\n    }\n  }\n  const failed = gates.filter(function (g) { return !g.ok; }); const pass = failed.length === 0;\n  return { pass: pass, match_type: pass ? 'Exact match' : 'Not per strategy: ' + failed.map(function (g) { return g.gate + ' - ' + g.why; }).join('; '), failed: failed.map(function (g) { return g.gate; }), gates: gates };\n}\n// ===== meetings (latest staircase block) =====\nconst NOW = new Date();\nfunction isHdr(row) { return /startup got meetings/i.test(s((row || [])[1])) && /\\d/.test(s((row || [])[0])); }\nconst hdrs = []; for (let i = 0; i < grid.length; i++) { if (isHdr(grid[i])) { hdrs.push(i); } }\nif (!hdrs.length) { throw new Error('ABORT: no staircase blocks in meetings sheet'); }\nfunction blockDate(label) { const mm = s(label).match(/^(\\d{1,2})[\\/\\-.](\\d{1,2})[\\/\\-.](\\d{4})/); if (!mm) { return null; } const a = +mm[1], b = +mm[2], y = +mm[3]; const c = [];\n  if (b >= 1 && b <= 12 && a >= 1 && a <= 31) { c.push(new Date(Date.UTC(y, b - 1, a))); } if (a >= 1 && a <= 12 && b >= 1 && b <= 31) { c.push(new Date(Date.UTC(y, a - 1, b))); }\n  const past = c.filter(function (d) { return d <= NOW; }); const pool = past.length ? past : c; pool.sort(function (x, z) { return z - x; }); return pool[0] || null; }\nlet li = hdrs[hdrs.length - 1]; let ld = blockDate(s(grid[li][0]));\nfor (const i of hdrs) { const d = blockDate(s(grid[i][0])); if (d && (!ld || d > ld)) { ld = d; li = i; } }\nconst stair = {};\nfor (let i = li + 1; i < grid.length; i++) { const row = grid[i] || []; if (isHdr(row)) { break; } const mm = s(row[1]).match(/^(\\d+)\\s*meetings?/i); if (!mm) { if (Object.keys(stair).length) { break; } else { continue; } }\n  const n = parseInt(mm[1], 10); for (let j = 2; j < row.length; j++) { const nm = s(row[j]); if (!nm) { continue; } const k = nz(nm); if (stair[k] === undefined || n > stair[k]) { stair[k] = n; } } }\nconst MALIAS = { caffeinacoffee: 'caffenacoffee', springbaseai: 'springbaseai', vold: 'voldenergy' };\nconst meetCache = {};\nfunction meetingsFor(name) { if (meetCache[name] !== undefined) { return meetCache[name]; } const k = nz(name); let best = null; for (const sk of Object.keys(stair)) { const kk = MALIAS[sk] || sk; const hit = kk === k || (kk.length >= 4 && k.length >= 4 && (kk.indexOf(k) === 0 || k.indexOf(kk) === 0)); if (hit && (best === null || stair[sk] > best)) { best = stair[sk]; } } meetCache[name] = best === null ? 0 : best; return meetCache[name]; }\n\n// ===== dates (IST) =====\nfunction istDate(d) { return new Date(d.getTime() + 330 * 60000).toISOString().slice(0, 10); }\nconst TODAY = istDate(NOW);\nfunction addDays(iso, n) { const d = new Date(iso + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }\nfunction dow(iso) { return new Date(iso + 'T00:00:00Z').getUTCDay(); }\nfunction monday(iso) { const w = dow(iso); return addDays(iso, w === 0 ? -6 : 1 - w); }\nconst DAYS = []; { let d = addDays(TODAY, 1); while (DAYS.length < HORIZON_WEEKDAYS) { if (dow(d) >= 1 && dow(d) <= 5) { DAYS.push(d); } d = addDays(d, 1); } }\n\n// ===== lookups =====\nconst critBy = {}; C.forEach(function (c) { const k = nz(c.investor); if (k && !critBy[k]) { critBy[k] = c; } });\nconst profBy = {}; SP.forEach(function (p) { profBy[nz(p.startup)] = p; });\nconst stBy = {}; ST.forEach(function (r) { if (s(r.startup)) { stBy[nz(r.startup)] = r; } });\nconst invBy = {}; INV.forEach(function (r) { const k = nz(r.investor); if (k && !invBy[k]) { invBy[k] = r; } });\nfunction inboxOf(email) { return s(email).toLowerCase().split(/[,;\\s]+/).filter(Boolean).sort().join(','); }\nfunction profileFor(stName) { const p = profBy[nz(stName)], srow = stBy[nz(stName)]; if (!p) { return null; } const o = Object.assign({}, p); if (srow) { o.active = s(srow.active) || o.active; } return o; }\nfunction isPending(c) { return s(c.confirmed).toUpperCase() === 'PENDING'; }\nfunction short(mt) { return s(mt).replace(/^Not per strategy: /, '').slice(0, 220); }\n\n// ===== PIPELINE =====\nconst ph = (pipe[0] || []).map(s); const PX = {}; ph.forEach(function (h, i) { PX[h] = i; });\n['deal_id', 'startup', 'owner', 'investor', 'email', 'cc', 'match_type', 'deal_shared', 'date_shared', 'next_action', 'next_due', 'investor_response', 'pause', 'notes'].forEach(function (h) { if (PX[h] === undefined) { throw new Error('ABORT: PIPELINE column missing ' + h); } });\nfunction colL(i) { let n = i + 1, t = ''; while (n > 0) { const m = (n - 1) % 26; t = String.fromCharCode(65 + m) + t; n = Math.floor((n - 1) / 26); } return t; }\nconst upd = {}; // rowNumber -> {col: value}\nfunction set(rn, col, val) { (upd[rn] = upd[rn] || {})[col] = val; }\nconst rows = [];\nfor (let r = 1; r < pipe.length; r++) { const row = pipe[r] || []; const g = function (h) { return s(row[PX[h]]); };\n  rows.push({ rn: r + 1, id: g('deal_id'), startup: g('startup'), owner: g('owner'), investor: g('investor'), email: g('email'), match_type: g('match_type'), sent: /^yes$/i.test(g('deal_shared')), date_shared: g('date_shared').slice(0, 10), na: g('next_action'), due: g('next_due').slice(0, 10), resp: g('investor_response'), ms: g('meeting_scheduled'), md: g('meeting_date'), mh: g('meetings_held'), paused: /^yes$/i.test(g('pause')), notes: g('notes') }); }\nconst TAG = 'ENGINE ' + TODAY;\nconst DROP_NA = 'DROPPED - not per strategy (engine)', HOLD_NA = 'HOLD - investor criteria under review (engine)';\nconst FLAG_NA = 'FLAGGED - off thesis but has prior contact - human review';\nconst sum = { today: TODAY, staircase_block: s(grid[li][0]), pipeline_rows: rows.length, queued_checked: 0, followups_checked: 0, dropped_queued: 0, held_queued: 0, stopped_followups: 0, held_followups: 0, released_queued: 0, released_followups: 0, redated_same_day_cap: 0, no_criteria: {}, no_profile: {}, drop_by_gate: {}, drop_by_investor: {}, added: 0, added_by_startup: {}, unplaced_candidates: 0, tracker_rows: 0, tracker_investors: 0, tracker_excluded_pairs: 0, dup_groups_after: 0 };\nsum.ceilings_on_file = C.filter(function (c) { return num(c.round_max_cr) !== null; }).length;\nconst toAllocate = []; // {kind:'release'|'redate'|'new', ...}\n\n// ---- Part A: evaluate existing rows ----\nfor (const x of rows) {\n  const c = critBy[nz(x.investor)], p = profileFor(x.startup);\n  const isQueued = !x.sent && !x.paused && x.na === \"Initial\";\n  const isFollow = x.sent && !x.paused && !x.resp && /follow/i.test(x.na);\n  // 28 Sep 2026: meeting-paused rows added here. Before this they matched no branch, so no run could ever re-evaluate them -\n// which is why Springbase.ai sat blocked for ten days. They now go through evaluate() like any other parked row and are\n// released one per startup per round inside the daily/weekly caps, rather than by a bulk unpause.\n// Orbo AI's 54 rows are in this set but CANNOT release: STARTUPS active=No, so the startup_active gate fails (user stopped\n// Orbo on 22 Sep). That is the guard working, not an oversight - do not special-case it.\nconst isEngineParked = !x.sent && x.paused && (x.na === DROP_NA || x.na === HOLD_NA || MEET_PAUSED_RE.test(x.na));\n  const isEngineHeldFU = x.sent && x.paused && !x.resp && /ENGINE-HOLD-FU/.test(x.notes);\n  if (!(isQueued || isFollow || isEngineParked || isEngineHeldFU)) { continue; }\n  if (!c) { if (isQueued || isFollow) { sum.no_criteria[x.investor] = (sum.no_criteria[x.investor] || 0) + 1; } continue; }\n  if (!p) { if (isQueued || isFollow) { sum.no_profile[x.startup] = (sum.no_profile[x.startup] || 0) + 1; } continue; }\n  if (/ENGINE OVERRIDE/i.test(x.notes)) { continue; }\n  if (isQueued && meetStop(x.startup)) { set(x.rn, 'pause', 'Yes'); set(x.rn, 'next_action', MEET_NA); set(x.rn, 'notes', (x.notes ? x.notes + ' | ' : '') + TAG + ': paused - startup has ' + meetingsFor(x.startup) + ' meetings (7+ rule)'); x.paused = true; sum.paused_meetings7 = (sum.paused_meetings7 || 0) + 1; continue; }\n  if (isEngineParked && meetStop(x.startup)) { continue; }\n  const ev = evaluate(c, p, { meetings: meetingsFor(x.startup) });\n  const pend = isPending(c);\n  if (isQueued || isFollow) {\n    if (isQueued) { sum.queued_checked++; } else { sum.followups_checked++; }\n    if (ev.pass && !pend) { continue; }\n    if (ev.pass && pend) { continue; } // pending investor but fits the draft criteria: keep going\n    ev.failed.forEach(function (gname) { sum.drop_by_gate[gname] = (sum.drop_by_gate[gname] || 0) + 1; });\n    sum.drop_by_investor[x.investor] = (sum.drop_by_investor[x.investor] || 0) + 1;\n    set(x.rn, 'pause', 'Yes'); x.paused = true;\n    if (isQueued) {\n      // 25 Sep: never silently DROP a row that already produced a conversation. A criteria change must not discard\n      // a relationship a human created. Eight confirmed cases were dropped after a real meeting (Koncite, Fire Armor x\n      // BlueHill 21 Jan, Glazia x Transition 20 Jan, GroCliq x BDev 19 Jan, Orbis x AWE 30 Sep 25, Pixelence and Ulai x\n      // Speciale Mar, Pixelence x Michele). These are still paused so nothing sends, but they are labelled for a human.\n      const hasHistory = !!(x.resp || x.ms || x.md || (x.mh && x.mh !== '0'));\n      if (hasHistory && !pend) {\n        set(x.rn, 'next_action', FLAG_NA);\n        set(x.rn, 'match_type', ev.match_type.slice(0, 480));\n        set(x.rn, 'notes', (x.notes ? x.notes + ' | ' : '') + TAG + ': FLAGGED not dropped - off thesis now, but this pair already has history (' + [x.resp ? 'response' : '', x.ms || x.md ? 'meeting' : '', (x.mh && x.mh !== '0') ? x.mh + ' meetings held' : ''].filter(Boolean).join(', ') + '). A human should decide, not the engine. Reason: ' + short(ev.match_type));\n        sum.flagged_with_history = (sum.flagged_with_history || 0) + 1;\n        (sum.flagged_list = sum.flagged_list || []).push(x.startup + ' x ' + x.investor);\n        continue;\n      }\n      set(x.rn, 'next_action', pend ? HOLD_NA : DROP_NA);\n      set(x.rn, 'match_type', ev.match_type.slice(0, 480));\n      set(x.rn, 'notes', (x.notes ? x.notes + ' | ' : '') + TAG + (pend ? ': held, investor criteria under review - ' : ': dropped - ') + short(ev.match_type));\n      if (pend) { sum.held_queued++; } else { sum.dropped_queued++; }\n    } else {\n      set(x.rn, 'notes', (x.notes ? x.notes + ' | ' : '') + TAG + (pend ? ': ENGINE-HOLD-FU follow-ups held, investor criteria under review - ' : ': follow-ups stopped, not per strategy - ') + short(ev.match_type));\n      if (pend) { sum.held_followups++; } else { sum.stopped_followups++; }\n    }\n  } else if (ev.pass && !pend && s(c.status).toUpperCase() === 'ACTIVE') {\n    if (isEngineParked) { toAllocate.push({ kind: 'release', x: x, c: c, ev: ev, exact: ev.match_type === 'Exact match' }); }\n    else { set(x.rn, 'pause', ''); x.paused = false; set(x.rn, 'notes', x.notes + ' | ' + TAG + ': follow-ups released (investor criteria confirmed)'); sum.released_followups++; }\n  }\n}\nif (sum.dropped_queued + sum.held_queued + sum.stopped_followups + sum.held_followups > MAX_DROPS) { throw new Error('ABORT: ' + (sum.dropped_queued + sum.held_queued + sum.stopped_followups + sum.held_followups) + ' rows to pause exceeds guard ' + MAX_DROPS + ' ' + JSON.stringify(sum.drop_by_gate)); }\n\n// ---- single point of contact: queued rows of POC investors move to that owner's mailbox ----\nrows.forEach(function (x) { const po = POC_OWNER[nz(x.investor)]; if (!po || x.sent || x.paused || x.na !== 'Initial' || x.owner === po) { return; } set(x.rn, 'owner', po); set(x.rn, 'notes', (x.notes ? x.notes + ' | ' : '') + TAG + ': owner ' + x.owner + ' -> ' + po + ' (investor asked for one POC)'); x.owner = po; sum.poc_reassigned = (sum.poc_reassigned || 0) + 1; });\n// ---- inbox resolution: CURRENT email from INVESTORS, fallback to the row cell ----\nfunction inboxForRow(x) { const ir = invBy[nz(x.investor)]; return inboxOf(ir && s(ir.email) ? ir.email : x.email); }\n// ---- Part B0 (user 22 Sep): hot-deal priority - within each inbox, queued hot-deal rows take the earliest dates already held by that inbox's queued rows (per-inbox day/week counts unchanged) ----\n{ const byInbox = {}; rows.forEach(function (x) { if (!x.sent && !x.paused && x.na === 'Initial' && x.due) { const k = inboxForRow(x); (byInbox[k] = byInbox[k] || []).push(x); } });\n  Object.keys(byInbox).forEach(function (k) { const L = byInbox[k]; if (!L.some(function (x) { return isHot(x.startup); }) || L.every(function (x) { return isHot(x.startup); })) { return; }\n    const dates = L.map(function (x) { return x.due; }).sort();\n    const ordered = L.slice().sort(function (a, b) { return (isHot(a.startup) ? 0 : 1) - (isHot(b.startup) ? 0 : 1) || (a.due < b.due ? -1 : a.due > b.due ? 1 : a.rn - b.rn); });\n    ordered.forEach(function (x, i) { const nd = dates[i]; if (nd !== x.due) { x.notes = (x.notes ? x.notes + ' | ' : '') + TAG + ': date ' + x.due + ' -> ' + nd + (isHot(x.startup) ? ' (hot deal first)' : ' (hot deal took earlier slot)'); set(x.rn, 'next_due', nd); set(x.rn, 'notes', x.notes); x.due = nd; sum.hot_swaps = (sum.hot_swaps || 0) + 1; } }); }); }\n// ---- Part B: same-day cap for rows due today or overdue ----\nconst sentToday = {}; rows.forEach(function (x) { if (x.sent && x.date_shared === TODAY) { const k = inboxForRow(x); sentToday[k] = (sentToday[k] || 0) + 1; } });\nconst dueByInbox = {};\nrows.forEach(function (x) { if (!x.sent && !x.paused && x.due && x.due <= TODAY && x.na === 'Initial') { const k = inboxForRow(x); (dueByInbox[k] = dueByInbox[k] || []).push(x); } });\nObject.keys(dueByInbox).forEach(function (k) {\n  const list2 = dueByInbox[k].sort(function (a, b) { const ea = a.match_type === 'Exact match' ? 0 : 1, eb = b.match_type === 'Exact match' ? 0 : 1; return (isHot(a.startup) ? 0 : 1) - (isHot(b.startup) ? 0 : 1) || ea - eb || (a.due < b.due ? -1 : a.due > b.due ? 1 : a.rn - b.rn); });\n  const room = Math.max(0, CAP_DAY - (sentToday[k] || 0));\n  list2.slice(room).forEach(function (x) { x.redate = true; toAllocate.push({ kind: 'redate', x: x, exact: x.match_type === 'Exact match' }); });\n});\n\n// ---- counters for allocation (sent by date_shared, live queued by next_due) ----\nconst cDay = {}, cWeek = {}, cOwner = {}, cStartupWeek = {};\nfunction bump(o, k) { o[k] = (o[k] || 0) + 1; }\nrows.forEach(function (x) {\n  let d = null; if (x.sent) { d = x.date_shared; } else if (!x.paused && !x.redate) { d = x.due; }\n  if (!d) { return; } const k = inboxForRow(x);\n  bump(cDay, k + '|' + d); bump(cWeek, k + '|' + monday(d));\n  if (!x.sent || x.date_shared) { bump(cOwner, x.owner + '|' + d); bump(cStartupWeek, nz(x.startup) + '|' + monday(d)); }\n});\n// ---- HOT RESERVED CAPACITY (Aditya, 28 Sep 2026: \"we need the deals to happen for top 10 hot deals so they should get special\n// priority in any case\") ----\n// Everything before this was ORDERING: Part B0 swaps hot rows onto the earliest dates already held by their inbox, the\n// pull-forward moves them up, and hot sorts first in allocation. Ordering decides WHEN, never HOW MANY - every inbox was still\n// CAP_DAY=2 shared across all ~70 startups, so a hot deal went first and then queued behind the same ceiling as everything else.\n// With the meeting pause lifted the same day, ~200 released rows now compete for those slots, so ordering alone would have made\n// hot deals WORSE, not better.\n// The rule: while any hot row is still waiting for a slot in an inbox, ONE of that inbox's two daily slots is reserved for it.\n// Non-hot may take both only when no hot row is queued for that inbox. CAP_DAY / CAP_WEEK are NOT raised - they exist to protect\n// deliverability and to stop us hammering one investor, and they do not move.\nconst hotDemand = {}; // inbox -> hot rows still waiting for a slot; filled once the pool is built, decremented as each is placed\nfunction firstSlot(inbox, owner, stKey, hotReq) {\n  const reserve = (!hotReq && (hotDemand[inbox] || 0) > 0) ? 1 : 0; // leave the last daily slot for a waiting hot row\n  let denied = false;\n  for (const d of DAYS) {\n    const dayN = cDay[inbox + '|' + d] || 0;\n    if (dayN < CAP_DAY - reserve && (cWeek[inbox + '|' + monday(d)] || 0) < CAP_WEEK && (cOwner[owner + '|' + d] || 0) < CAP_OWNER_DAY) { return d; }\n    if (reserve && dayN < CAP_DAY && (cWeek[inbox + '|' + monday(d)] || 0) < CAP_WEEK && (cOwner[owner + '|' + d] || 0) < CAP_OWNER_DAY) { denied = true; }\n  }\n  if (denied) { sum.hot_reserve_denials = (sum.hot_reserve_denials || 0) + 1; }\n  return null;\n}\nfunction take(inbox, owner, stKey, d) { bump(cDay, inbox + '|' + d); bump(cWeek, inbox + '|' + monday(d)); bump(cOwner, owner + '|' + d); bump(cStartupWeek, stKey + '|' + monday(d)); }\n\n// ---- Part C: new-match candidates ----\nconst pairName = {}, pairInbox = {};\nrows.forEach(function (x) { if (x.na === DROP_NA || x.na === HOLD_NA) { /* engine-parked rows still block duplicates */ }\n  pairName[nz(x.startup) + '|' + nz(x.investor)] = true; pairInbox[nz(x.startup) + '|' + inboxForRow(x)] = true; if (x.email) { pairInbox[nz(x.startup) + '|' + inboxOf(x.email)] = true; } });\n// Deal Tracker (tab 'Deal Tracker', gid 189973839)\nlet hRow = -1; for (let i = 0; i < Math.min(15, trk.length); i++) { if ((trk[i] || []).some(function (c2) { return /all deals shared/i.test(s(c2)); })) { hRow = i; break; } }\nconst trackerEntries = [];\nlet trackerOk = false;\nif (hRow >= 0) {\n  const th = trk[hRow].map(s); let ic = th.findIndex(function (h) { return /investor|fund|firm/i.test(h) && !/deal|shared|picked/i.test(h); }); if (ic < 0) { ic = 0; }\n  for (let i = hRow + 1; i < trk.length; i++) { const r = trk[i] || []; const nm = s(r[ic]); if (!nm) { continue; } trackerEntries.push({ k: nz(nm), blob: nz(r.map(s).join(' ')) }); }\n  sum.tracker_rows = trackerEntries.length; sum.tracker_investors = Object.keys(trackerEntries.reduce(function (o, e) { o[e.k] = 1; return o; }, {})).length;\n  trackerOk = sum.tracker_rows >= 200 && sum.tracker_investors >= 180;\n}\nconst SALIAS = { yuno: ['yuno'], clikd: ['clikd'], sugarsdaddy: ['sugarsdaddy'], springbaseai: ['springbase'], mindwox: ['mindwox'], recex: ['recex'], skillbytes: ['skillbytes'], caffenacoffee: ['caffena', 'caffeina'], voldenergy: ['vold'] };\nfunction trackerShared(invName, stName) {\n  const ki = nz(invName), ks = nz(stName); const vars = SALIAS[ks] || [ks];\n  return trackerEntries.some(function (e) { const same = e.k === ki || (Math.min(e.k.length, ki.length) >= 5 && (e.k.indexOf(ki) === 0 || ki.indexOf(e.k) === 0)); return same && vars.some(function (v) { return v.length >= 4 && e.blob.indexOf(v) >= 0; }); });\n}\nconst cands = [];\nif (!trackerOk) { sum.new_matches_skipped = 'Deal Tracker read incomplete (' + sum.tracker_rows + ' rows / ' + sum.tracker_investors + ' investors) - no new matches this run'; }\nelse {\n  for (const c of C) {\n    if (s(c.status).toUpperCase() !== 'ACTIVE' || isPending(c)) { continue; }\n    const ir = invBy[nz(c.investor)]; if (!ir || !s(ir.email) || /^yes$/i.test(s(ir.do_not_contact))) { continue; }\n    const inbox = inboxOf(ir.email);\n    for (const srow of ST) {\n      if (!/^yes$/i.test(s(srow.active)) || !s(srow.owner)) { continue; }\n      const p = profileFor(srow.startup); if (!p) { continue; }\n      if (meetStop(srow.startup)) { continue; } // user 18 Sep: startups with 7+ meetings get no new shares\n      const kn = nz(srow.startup) + '|' + nz(ir.investor), ki = nz(srow.startup) + '|' + inbox;\n      if (pairName[kn] || pairInbox[ki]) { continue; }\n      if (NO_AUTO_PAIRS.indexOf(kn) >= 0) { sum.blocked_pairs = (sum.blocked_pairs || 0) + 1; continue; }\n      const ev = evaluate(c, p, { meetings: meetingsFor(srow.startup) }); if (!ev.pass) { continue; }\n      // STRICT ONLY (Aditya, 1 Oct 2026: \"each startup would go to investors with strict matches from now\").\n      // Belt and braces: every gate already has to pass above, so this can only fire if a softer match_type is\n      // ever reintroduced. It is here so that such a change cannot quietly start sending near-misses again.\n      if (ev.match_type !== 'Exact match') { sum.non_strict_blocked = (sum.non_strict_blocked || 0) + 1; continue; }\n      if (trackerShared(ir.investor, srow.startup)) { sum.tracker_excluded_pairs++; continue; }\n      cands.push({ kind: 'new', srow: srow, ir: ir, inbox: inbox, ev: ev, exact: ev.match_type === 'Exact match' });\n    }\n  }\n}\n// ---- allocation: redates first, then releases + new in rounds (one per startup per round, fewest-queued startups first) ----\nconst placedUpd = [], appends = [];\nlet maxId = 0; rows.forEach(function (x) { const m2 = x.id.match(/^D(\\d+)$/); if (m2) { maxId = Math.max(maxId, +m2[1]); } });\ntoAllocate.filter(function (t) { return t.kind === 'redate'; }).sort(function (a, b) { return (isHot(a.x.startup) ? 0 : 1) - (isHot(b.x.startup) ? 0 : 1); }).forEach(function (t) {\n  const inbox = inboxForRow(t.x); const d = firstSlot(inbox, t.x.owner, nz(t.x.startup), isHot(t.x.startup));\n  if (d) { take(inbox, t.x.owner, nz(t.x.startup), d); set(t.x.rn, 'next_due', d); set(t.x.rn, 'notes', (t.x.notes ? t.x.notes + ' | ' : '') + TAG + ': moved from ' + t.x.due + ' (max ' + CAP_DAY + ' deals per inbox per day)'); sum.redated_same_day_cap++; }\n});\nconst pool = toAllocate.filter(function (t) { return t.kind === 'release'; }).map(function (t) { return { kind: 'release', x: t.x, ev: t.ev, exact: t.exact, stKey: nz(t.x.startup), owner: t.x.owner, inbox: inboxForRow(t.x) }; })\n  .concat(cands.map(function (t) { return { kind: 'new', srow: t.srow, ir: t.ir, ev: t.ev, exact: t.exact, stKey: nz(t.srow.startup), owner: POC_OWNER[nz(t.ir.investor)] || s(t.srow.owner), inbox: t.inbox }; }));\npool.forEach(function (t) { if (HOT.indexOf(t.stKey) >= 0) { hotDemand[t.inbox] = (hotDemand[t.inbox] || 0) + 1; } });\nsum.hot_demand_inboxes = Object.keys(hotDemand).length;\nsum.hot_demand_rows = Object.keys(hotDemand).reduce(function (n, k) { return n + hotDemand[k]; }, 0);\nconst byStartup = {}; pool.forEach(function (t) { (byStartup[t.stKey] = byStartup[t.stKey] || []).push(t); });\nObject.keys(byStartup).forEach(function (k) { byStartup[k].sort(function (a, b) { return (a.kind === 'release' ? 0 : 1) - (b.kind === 'release' ? 0 : 1) || (a.exact ? 0 : 1) - (b.exact ? 0 : 1); }); });\nconst usedPair = {};\nfunction queuedAhead(stKey) { let n = 0; DAYS.slice(0, 5).forEach(function (d) { n += cStartupWeek[stKey + '|' + monday(d)] || 0; }); return n; }\nlet progress = true;\nwhile (progress) {\n  progress = false;\n  const order = Object.keys(byStartup).filter(function (k) { return byStartup[k].length; }).sort(function (a, b) { return (HOT.indexOf(a) >= 0 ? 0 : 1) - (HOT.indexOf(b) >= 0 ? 0 : 1) || queuedAhead(a) - queuedAhead(b); });\n  for (const k of order) {\n    const q = byStartup[k];\n    while (q.length) {\n      const t = q.shift(); const pk = k + '|' + t.inbox; if (usedPair[pk]) { continue; }\n      const tHot = HOT.indexOf(k) >= 0;\n      const d = firstSlot(t.inbox, t.owner, k, tHot); if (!d) { continue; }\n      if (tHot && hotDemand[t.inbox]) { hotDemand[t.inbox]--; } // this hot row is placed; it no longer reserves a slot\n      if (tHot) { sum.placed_hot = (sum.placed_hot || 0) + 1; } else { sum.placed_nonhot = (sum.placed_nonhot || 0) + 1; }\n      if (appends.length + sum.released_queued >= MAX_APPENDS) { break; }\n      usedPair[pk] = true; take(t.inbox, t.owner, k, d); progress = true;\n      if (t.kind === 'release') {\n        set(t.x.rn, 'pause', ''); set(t.x.rn, 'next_action', 'Initial'); set(t.x.rn, 'next_due', d); set(t.x.rn, 'match_type', t.ev.match_type);\n        set(t.x.rn, 'notes', (t.x.notes ? t.x.notes + ' | ' : '') + TAG + ': released, fits the thesis now'); sum.released_queued++;\n      } else {\n        maxId++; const row = ph.map(function () { return ''; });\n        const put = function (h, v) { if (PX[h] !== undefined) { row[PX[h]] = v; } };\n        put('deal_id', 'D' + String(maxId).padStart(5, '0')); put('startup', s(t.srow.startup)); put('owner', t.owner); put('investor', s(t.ir.investor));\n        put('email', s(t.ir.email)); put('cc', s(t.ir.cc)); put('match_type', t.ev.match_type); put('deal_shared', 'No'); put('next_action', 'Initial'); put('next_due', d);\n        put('notes', TAG + ': engine match (' + t.ev.gates.filter(function (g) { return g.gate === 'sector' || g.gate === 'stage'; }).map(function (g) { return g.why; }).join('; ').slice(0, 200) + ')');\n        appends.push(row); sum.added++; sum.added_by_startup[s(t.srow.startup)] = (sum.added_by_startup[s(t.srow.startup)] || 0) + 1;\n      }\n      break;\n    }\n  }\n}\nObject.keys(byStartup).forEach(function (k) { sum.unplaced_candidates += byStartup[k].length; });\n// ---- hot-deal pull-forward (user 22 Sep): a queued hot row moves to its inbox's first free slot if that is earlier than its date ----\nfunction unbump(o, k) { if (o[k]) { o[k]--; } }\nrows.filter(function (x) { const pz = upd[x.rn] && upd[x.rn].pause !== undefined ? upd[x.rn].pause === 'Yes' : x.paused; const na = upd[x.rn] && upd[x.rn].next_action !== undefined ? upd[x.rn].next_action : x.na; return isHot(x.startup) && !x.sent && !pz && na === 'Initial'; })\n  .map(function (x) { return { x: x, due: upd[x.rn] && upd[x.rn].next_due ? upd[x.rn].next_due : x.due }; })\n  .sort(function (a, b) { return a.due < b.due ? -1 : a.due > b.due ? 1 : a.x.rn - b.x.rn; })\n  .forEach(function (o) { const x = o.x; if (!o.due || o.due <= DAYS[0]) { return; } const inbox = inboxForRow(x), stKey = nz(x.startup);\n    unbump(cDay, inbox + '|' + o.due); unbump(cWeek, inbox + '|' + monday(o.due)); unbump(cOwner, x.owner + '|' + o.due);\n    const d = firstSlot(inbox, x.owner, stKey, true);\n    if (d && d < o.due) { take(inbox, x.owner, stKey, d); const cur = upd[x.rn] && upd[x.rn].notes !== undefined ? upd[x.rn].notes : x.notes; set(x.rn, 'next_due', d); set(x.rn, 'notes', (cur ? cur + ' | ' : '') + TAG + ': hot deal pulled forward ' + o.due + ' -> ' + d); sum.hot_pulled_forward = (sum.hot_pulled_forward || 0) + 1; }\n    else { bump(cDay, inbox + '|' + o.due); bump(cWeek, inbox + '|' + monday(o.due)); bump(cOwner, x.owner + '|' + o.due); } });\nif (appends.length > MAX_APPENDS) { throw new Error('ABORT: ' + appends.length + ' appends exceeds guard'); }\n\n// ---- post-check: same startup twice for one inbox among sent/live rows ----\nconst live = {};\nrows.forEach(function (x) { const pz = upd[x.rn] && upd[x.rn].pause !== undefined ? upd[x.rn].pause === 'Yes' : x.paused; const na2 = upd[x.rn] && upd[x.rn].next_action !== undefined ? upd[x.rn].next_action : x.na; if (/^DROPPED/i.test(na2)) { return; } if (x.sent || !pz) { const k = nz(x.startup) + '|' + inboxForRow(x); live[k] = (live[k] || 0) + 1; } });\nappends.forEach(function (r) { const k = nz(r[PX.startup]) + '|' + inboxOf(r[PX.email]); live[k] = (live[k] || 0) + 1; });\nconst dupKeys = Object.keys(live).filter(function (k) { return live[k] > 1; }); sum.dup_groups_after = dupKeys.length; sum.dup_groups_list = dupKeys.slice(0, 20);\n\n// ---- build batchUpdate ranges ----\nconst data = [];\nObject.keys(upd).forEach(function (rn) { Object.keys(upd[rn]).forEach(function (col) { data.push({ range: 'PIPELINE!' + colL(PX[col]) + rn, values: [[upd[rn][col]]] }); }); });\nsum.blank_rows = []; for (let r = 1; r < pipe.length; r++) { if (!(pipe[r] || []).some(function (c) { return s(c); })) { if (sum.blank_rows.length < 20) { sum.blank_rows.push(r + 1); } } }\nconst idSeen = {}; sum.duplicate_deal_ids = 0; rows.forEach(function (x) { if (x.id) { if (idSeen[x.id]) { sum.duplicate_deal_ids++; } idSeen[x.id] = 1; } });\nsum.queued_live_failing_after = rows.filter(function (x) { return !x.sent && !x.paused && x.na === 'Initial'; }).length;\nsum.cells_to_update = data.length; sum.rows_to_append = appends.length; sum.dry_run = DRY;\nsum.drop_by_investor = Object.keys(sum.drop_by_investor).sort(function (a, b) { return sum.drop_by_investor[b] - sum.drop_by_investor[a]; }).slice(0, 40).map(function (k) { return k + ':' + sum.drop_by_investor[k]; });\nsum.first_appends = appends.slice(0, 8).map(function (r) { return [r[PX.deal_id], r[PX.startup], r[PX.investor], r[PX.next_due], r[PX.match_type]].join(' | '); });\nsum.added_last_date = appends.reduce(function (m, r) { return r[PX.next_due] > m ? r[PX.next_due] : m; }, '');\n// append anchor = last data row, so Sheets appends below the bottom of PIPELINE (17 Sep: an unanchored append landed mid-sheet)\nreturn [{ json: { summary: sum, data: DRY ? [] : data, appends: DRY ? [] : appends, anchor: pipe.length } }];\n"
+      }
+    },
+    {
+      "id": "sm",
+      "name": "Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return [{ json: $('Plan').first().json.summary }];"
+      }
+    },
+    {
+      "id": "hu",
+      "name": "Has updates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1400,
+        -120
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const j = $('Plan').first().json; if (!j.data || !j.data.length) { return []; } return [{ json: { cells: j.data.length } }];"
+      }
+    },
+    {
+      "id": "wu",
+      "name": "Write updates",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1600,
+        -120
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ valueInputOption: 'RAW', data: $('Plan').first().json.data }) }}",
+        "options": {
+          "timeout": 180000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "ha",
+      "name": "Has appends",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1400,
+        160
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const j = $('Plan').first().json; if (!j.appends || !j.appends.length) { return []; } return [{ json: { rows: j.appends.length } }];"
+      }
+    },
+    {
+      "id": "wa",
+      "name": "Append rows",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1600,
+        160
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/' + encodeURIComponent('PIPELINE!A' + $('Plan').first().json.anchor + ':AI' + $('Plan').first().json.anchor) + ':append?valueInputOption=RAW&insertDataOption=INSERT_ROWS' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ values: $('Plan').first().json.appends }) }}",
+        "options": {
+          "timeout": 180000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "dh",
+      "name": "Dry hook",
+      "webhookId": "dde45398-f84c-4d05-b54b-432d397dda5a",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        200
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-engine-dry-8b3f6d1e27",
+        "responseMode": "onReceived",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Schedule": {
+      "main": [
+        [
+          {
+            "node": "Mode",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mode": {
+      "main": [
+        [
+          {
+            "node": "GET pilot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET pilot": {
+      "main": [
+        [
+          {
+            "node": "GET meetings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET meetings": {
+      "main": [
+        [
+          {
+            "node": "GET tracker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET tracker": {
+      "main": [
+        [
+          {
+            "node": "Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Plan": {
+      "main": [
+        [
+          {
+            "node": "Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summary": {
+      "main": [
+        [
+          {
+            "node": "Has updates",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Has appends",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has updates": {
+      "main": [
+        [
+          {
+            "node": "Write updates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has appends": {
+      "main": [
+        [
+          {
+            "node": "Append rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dry hook": {
+      "main": [
+        [
+          {
+            "node": "Mode",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Schedule": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "F4xXHRFIr3gS2VHc",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-17T06:50:58.468Z",
+      "updatedAt": "2026-09-17T06:50:58.468Z"
+    }
+  ],
+  "activeVersion": {
+    "versionId": "b6b9f94c-45f7-4022-92b7-0701d6ac64b4",
+    "workflowId": "F4xXHRFIr3gS2VHc",
+    "nodes": [
+      {
+        "id": "t1",
+        "name": "Schedule",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.4,
+        "position": [
+          0,
+          0
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "30 7 * * 1-5"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "md",
+        "name": "Mode",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          200,
+          0
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "// dry: true = report only. Guards abort a run that would pause or add more rows than a normal day (a big thesis change can need a one-off higher guard).\n// Live since 17 Sep 2026 (first clean-up run: 1,138 dropped, 335 held, 237 follow-ups stopped, 44 held, 391 added).\n// 17 Sep afternoon dry run after the 87 mailbox-evidence criteria updates: 238 drop, 30 hold, 43+6 follow-ups, 21 release, 68 add - fits these guards.\n// A run started from the 'Dry hook' webhook is always dry (report only); the 07:30 schedule run is live.\n// 23 Sep 2026: this node was set live for ONE webhook run (post-thesis-fix, user approved) and restored immediately after.\nlet viaDryHook = false; try { viaDryHook = $('Dry hook').all().length > 0; } catch (e) { viaDryHook = false; }\nreturn [{ json: { dry: viaDryHook, max_drops: 500, max_appends: 400 } }];"
+        }
+      },
+      {
+        "id": "gp",
+        "name": "GET pilot",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "executeOnce": true,
+        "retryOnFail": true,
+        "maxTries": 5,
+        "waitBetweenTries": 5000,
+        "position": [
+          400,
+          0
+        ],
+        "parameters": {
+          "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=INVESTOR_CRITERIA!A1:AF400&ranges=STARTUP_PROFILE!A1:O200&ranges=PIPELINE!A1:AI8000&ranges=INVESTORS!A1:J1000&ranges=STARTUPS!A1:L200",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleSheetsOAuth2Api",
+          "options": {
+            "timeout": 120000
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "gm",
+        "name": "GET meetings",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "executeOnce": true,
+        "retryOnFail": true,
+        "maxTries": 5,
+        "waitBetweenTries": 5000,
+        "position": [
+          600,
+          0
+        ],
+        "parameters": {
+          "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/1d-wSnDCnC_c9_rqD652Zayu6An-dipeVyC7lCD_TD0Y/values/' + encodeURIComponent(\"'Report - No of Deal Flows'!A1:Z400\") }}",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleSheetsOAuth2Api",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "gt",
+        "name": "GET tracker",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "executeOnce": true,
+        "retryOnFail": true,
+        "maxTries": 5,
+        "waitBetweenTries": 5000,
+        "position": [
+          800,
+          0
+        ],
+        "parameters": {
+          "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/1WzrrPelm2HsJNXOUNIEOuRajp70CUY-RrzBOs9LENjs/values/' + encodeURIComponent(\"'Deal Tracker'!A1:AZ800\") }}",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleSheetsOAuth2Api",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "pl",
+        "name": "Plan",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1000,
+          0
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "// ENGINE-DAILY plan (n8n Code node). Writes nothing itself: returns one item { summary, data (batchUpdate ranges), appends }.\nconst MODE = $(\"Mode\").first().json;\nconst DRY = MODE.dry !== false;          // true = report only\nconst MAX_DROPS = Number(MODE.max_drops) || 300;     // guard: rows paused in one run\nconst MAX_APPENDS = Number(MODE.max_appends) || 400; // guard: new PIPELINE rows in one run\nconst HORIZON_WEEKDAYS = 30;      // how far ahead new rows may be dated\nconst CAP_DAY = 2, CAP_WEEK = 5, CAP_OWNER_DAY = 20;\nconst MEET_STOP = 7; // user 18 Sep: startups with this many meetings or more get no new shares; their queued rows are paused\nconst MEET_NA = 'PAUSED - 7+ meetings (user 18 Sep)';\n// user 22 Sep: the HOT deals (Q4 close push) are exempt from the meeting-count pause AND get priority for send dates\n// 23 Sep: MindWox promoted from the middle desk (Prana/AWE/Enzia/Faad all live); CLIKD kept as well on the user's call, so 11 not 10\nconst HOT = ['spintly', 'boncuisine', 'eosnox', 'hyrgpt', 'talentrecruit', 'hoora', 'clikd', 'mindwox', 'mentorcloud', 'roadathena', 'learningpad'];\nfunction isHot(name) { return HOT.indexOf(nz(name)) >= 0; }\nconst MEET_EXEMPT = HOT.slice(); // was ['clikd'] (user 19 Sep); all hot deals exempt from 22 Sep (user lifted the pause)\nconst NO_AUTO_PAIRS = ['spintly|gvfl','clikd|udyatventures']; // user 19 Sep: Udyat passed on CLIKD 3 Sep; no automatic re-share - a hand-written re-engage note goes in November\n// 28 Sep 2026: Aditya REMOVED the meeting-count pause - \"i remove this pause now and hot deals will get special priority.\"\n// Why: Springbase.ai was blocked from every new investor on a row reading 'PAUSED - 8+ meetings' while the calendars showed\n// THREE investor events, all with ONE investor (Suvan) who wanted advisory equity and never intended to invest. The rule froze\n// a startup out of the market precisely because it had been busy failing.\n// MEET_STOP / MEET_NA / MEET_EXEMPT are deliberately KEPT, not deleted: MEET_PAUSED_RE below still has to recognise the wording\n// already written into 322 rows, and a reader needs to see why the dead code is dead. DO NOT wire them back into a gate.\n// MEET_EXEMPT is now inert by definition - hot deals were exempt from a rule that no longer exists. Hot priority lives entirely\n// in Part B0 (hot rows take the earliest dates in their inbox) and the hot pull-forward, neither of which ever used this rule.\nconst MEET_PAUSED_RE = /^PAUSED - \\d+\\+ meetings/; // matches both wordings in the sheet: 'PAUSED - 7+ meetings (user 18 Sep)' (207 rows) and 'PAUSED - 8+ meetings (user 18 Sep)' (115 rows)\nfunction meetStop(name) { return false; }\nconst POC_OWNER = { iimaventures: 'Chaman' }; // investors who asked for ONE point of contact at Sidana (IIMA 18 Sep)\nfunction s(v) { return String(v == null ? '' : v).trim(); }\nfunction nz(x) { return s(x).toLowerCase().replace(/[^a-z0-9]/g, ''); }\nconst vr = $('GET pilot').first().json.valueRanges || [];\nconst crit = (vr[0] || {}).values || [], prof = (vr[1] || {}).values || [], pipe = (vr[2] || {}).values || [], invs = (vr[3] || {}).values || [], sts = (vr[4] || {}).values || [];\nconst grid = $('GET meetings').first().json.values || [];\nconst trk = $('GET tracker').first().json.values || [];\nif (crit.length < 200 || prof.length < 50 || pipe.length < 5000 || invs.length < 150 || sts.length < 40) { throw new Error('ABORT short read ' + [crit.length, prof.length, pipe.length, invs.length, sts.length].join('/')); }\nfunction objs(rows) { const h = (rows[0] || []).map(s); return rows.slice(1).map(function (r) { const o = {}; h.forEach(function (k, i) { o[k] = r[i] === undefined ? '' : r[i]; }); return o; }); }\nconst C = objs(crit), SP = objs(prof), INV = objs(invs), ST = objs(sts);\n// ===== ENGINE CORE v2 (identical to engine-core.js) =====\nconst LADDER = ['PRE_SEED', 'SEED', 'TRACTION', 'PRE_SERIES_A', 'SERIES_A', 'SERIES_B', 'SERIES_C_PLUS'];\nfunction list(v) { if (Array.isArray(v)) { return v.map(function (x) { return String(x).trim(); }).filter(Boolean); } return String(v == null ? '' : v).split(/[,;|]/).map(function (x) { return x.trim(); }).filter(Boolean); }\nfunction num(v) { if (v === null || v === undefined || v === '') { return null; } const n = Number(v); return isFinite(n) ? n : null; }\nfunction yes(v) { return /^y(es)?$/i.test(String(v == null ? '' : v).trim()); }\nfunction evaluate(inv, st, ctx) {\n  const gates = []; function gate(name, ok, why) { gates.push({ gate: name, ok: ok, why: why }); }\n  const meetings = ctx && typeof ctx.meetings === 'number' ? ctx.meetings : 0;\n  const status = String(inv.status || '').toUpperCase(); gate('investor_active', status === 'ACTIVE', 'status ' + (status || 'blank'));\n  gate('startup_active', yes(st.active), 'startup active=' + st.active);\n  const sIn = list(inv.sectors_in), sEx = list(inv.sectors_excluded), sSt = list(st.sector_codes);\n  const excludedHit = sSt.filter(function (c) { return sEx.indexOf(c) >= 0; });\n  if (excludedHit.length) { gate('sector', false, 'startup sector ' + excludedHit.join('/') + ' is EXCLUDED by investor'); }\n  else if (String(inv.sector_mode || '').toUpperCase() === 'AGNOSTIC') { gate('sector', true, 'investor sector-agnostic (sector waived ONLY; every other gate below still applies - Aditya 1 Oct 2026)'); }\n  else { const overlap = sSt.filter(function (c) { return sIn.indexOf(c) >= 0; });\n    if (!overlap.length) { gate('sector', false, 'no overlap: startup ' + sSt.join('/') + ' vs investor ' + (sIn.join('/') || 'none')); }\n    else if (overlap.indexOf(sSt[0]) >= 0) { gate('sector', true, 'overlap ' + overlap.join('/')); }\n    else {\n      // Only a SECONDARY startup tag overlaps (precision rule 17 Sep): a corporate VC needs the startup's main sector;\n      // a horizontal tag (AI / IoT / consumer app / SaaS) counts only for funds that also back software.\n      const HORIZ = ['AI_APPLIED_ENTERPRISE', 'IOT_SMART_HARDWARE', 'CONSUMER_TECH_APP', 'SAAS_ENTERPRISE'];\n      const cvc = String(inv.investor_type || '').toUpperCase() === 'CVC';\n      const vertical = overlap.filter(function (c) { return HORIZ.indexOf(c) < 0; });\n      const ok2 = !cvc && (vertical.length > 0 || sIn.indexOf('SAAS_ENTERPRISE') >= 0);\n      gate('sector', ok2, ok2 ? 'secondary overlap ' + overlap.join('/') : 'only secondary tag ' + overlap.join('/') + ' overlaps; main sector ' + sSt[0] + ' not on investor list' + (cvc ? ' (corporate VC needs the main sector)' : ' (fund does not back software)'));\n    } }\n  const mIn = list(inv.models_in), mEx = list(inv.models_excluded), m = String(st.business_model || '');\n  if (mEx.indexOf(m) >= 0) { gate('business_model', false, m + ' excluded by investor'); }\n  else if (!mIn.length || mIn.indexOf('ANY') >= 0) { gate('business_model', true, 'any model'); }\n  else { gate('business_model', mIn.indexOf(m) >= 0, mIn.indexOf(m) >= 0 ? m + ' allowed' : m + ' not in ' + mIn.join('/')); }\n  // ---- STAGE: STRICT. Aditya, 1 Oct 2026: \"if the company is series a then send it to only series a investors thats it.\"\n  // The one-rung tolerance and the Series-A-and-later exception are BOTH removed. They were the single largest source of\n  // mismatch: of 1,192 mismatched rows found in the 1 Oct audit, 461 failed on stage. Alt F Coworking at SERIES_A reached\n  // seven funds whose band stops at PRE_SERIES_A because dist was 1; IN44 got Spintly on 28 Sep through the exception,\n  // which is what made him ask us to stop sending. A stage band is now a hard boundary in both directions.\n  let stageOffBy = 0;\n  const si = LADDER.indexOf(String(st.stage_code || '')), lo = LADDER.indexOf(String(inv.stage_min || '')), hi = LADDER.indexOf(String(inv.stage_max || ''));\n  if (si < 0) { gate('stage', false, 'startup stage missing'); }\n  else if (lo < 0 || hi < 0) { gate('stage', false, 'investor stage missing (ON HOLD rule)'); }\n  else if (si >= lo && si <= hi) { gate('stage', true, st.stage_code + ' inside ' + inv.stage_min + '..' + inv.stage_max); }\n  else { const dist = si < lo ? lo - si : si - hi; gate('stage', false, st.stage_code + ' is ' + dist + ' rung(s) outside ' + inv.stage_min + '..' + inv.stage_max + ' (STRICT, no tolerance - Aditya 1 Oct 2026)'); }\n  const cmin = num(inv.cheque_min_cr), raise = num(st.raise_cr);\n  if (cmin === null) { gate('cheque', true, 'no minimum on file'); } else if (raise === null) { gate('cheque', false, 'startup raise unknown'); } else { gate('cheque', raise >= cmin, 'raise ' + raise + ' Cr vs min cheque ' + cmin + ' Cr'); }\n  // ---- CHEQUE CEILING (Aditya, 1 Oct 2026). A fund that will not join a round above a certain size must stop\n  // receiving rounds above it. IN44 is the case that prompted this: round_max 10 Cr, and he was sent Spintly on\n  // 28 Sep, which is what made him ask us to stop.\n  // FAILS OPEN. Only 1 of 303 investors has a ceiling on file, so a missing value MUST mean 'no ceiling known',\n  // never 'ceiling of zero'. Treating blank as a limit would silently mute the entire book.\n  // Only round_max_cr gates. A cheque_max or lead_max does not disqualify: an investor whose largest cheque is\n  // 1.1 Cr can still take 1.1 Cr of a 25 Cr round. Only a round they will not enter at all is a hard no.\n  const rmax = num(inv.round_max_cr);\n  if (rmax !== null && raise !== null) { gate('round_ceiling', raise <= rmax, 'raise ' + raise + ' Cr vs max round size ' + rmax + ' Cr the investor will join'); }\n  const amin = num(inv.arr_min_cr), arr = num(st.arr_cr);\n  if (amin !== null) { if (arr === null) { gate('arr_bar', false, 'needs ARR ' + (yes(inv.arr_min_strict) ? '>' : '>=') + ' ' + amin + ' Cr, startup revenue unknown'); } else { const ok = yes(inv.arr_min_strict) ? arr > amin : arr >= amin; gate('arr_bar', ok, 'ARR ' + arr + ' Cr vs ' + (yes(inv.arr_min_strict) ? '>' : '>=') + ' ' + amin + ' Cr'); } }\n  if (yes(inv.revenue_required)) { gate('revenue_required', arr !== null && arr > 0, arr === null ? 'revenue unknown' : 'ARR ' + arr + ' Cr'); }\n  if (yes(inv.women_only)) { gate('women_only', yes(st.women), 'woman in cap table=' + st.women); }\n  else if (String(inv.women_only || '').trim().toUpperCase() === 'DEEPTECH') { const DT = ['AI_FOUNDATIONAL', 'SEMICONDUCTOR_ELECTRONICS', 'SPACETECH', 'DEFENCE_AEROSPACE', 'BIOTECH_PHARMA', 'MEDTECH_DEVICES', 'IOT_SMART_HARDWARE', 'DATA_INFRA_DEVTOOLS']; const dt = sSt.filter(function (x) { return DT.indexOf(x) >= 0; }); if (dt.length) { gate('women_only', yes(st.women), 'deep-tech startup (' + dt.join('/') + ') needs a woman in cap table; women=' + st.women); } } // user 22 Sep (Colossa): women required only for deep tech\n  if (yes(inv.excludes_jain_sensitive)) { gate('jain_exclusion', !yes(st.jain_sensitive), 'jain_sensitive=' + st.jain_sensitive); }\n  const scope = list(String(inv.geography_scope || 'INDIA').toUpperCase());\n  if (scope.indexOf('GLOBAL') < 0 && scope.indexOf('ANY') < 0) {\n    const g = String(st.geography || '').toLowerCase();\n    const REGION = { INDIA: /india|bharat/, SEA: /indonesia|singapore|malaysia|vietnam|thailand|philippines|southeast asia/, EUROPE: /europe|\\buk\\b|united kingdom|germany|france|netherlands|belgium/, US: /\\busa?\\b|united states|america/, MIDDLE_EAST: /\\buae\\b|dubai|abu dhabi|saudi|qatar|bahrain|\\boman\\b|kuwait|middle east|\\bgcc\\b/, AFRICA: /africa|nigeria|kenya|ghana|egypt|tanzania|uganda|rwanda/, LATAM: /latam|latin america|brazil|mexico|argentina|colombia|chile|peru/ };\n    // 25 Sep: a startup market of 'global' / 'worldwide' now matches ANY investor scope, mirroring GLOBAL on the investor side.\n    // Before this, 'Global' matched no region and fell through to the INDIA default below, so global startups were sent to India-only funds (MentorCloud -> IAN Alpha, 24 Sep) and were invisible to US/EUROPE/SEA-scoped funds.\n    if (/\\bglobal\\b|worldwide|\\bany\\b/.test(g)) { gate('geography', true, 'startup market is global (' + (st.geography || '') + '); matches any scope'); }\n    else {\n    const regions = Object.keys(REGION).filter(function (k) { return REGION[k].test(g); });\n    if (!regions.length) { regions.push('INDIA'); }\n    const ok = scope.indexOf('NON_INDIA') >= 0 ? regions.some(function (r) { return r !== 'INDIA'; }) : regions.some(function (r) { return scope.indexOf(r) >= 0; });\n    gate('geography', ok, 'investor invests in ' + scope.join('/') + '; startup market ' + (st.geography || 'unknown'));\n    }\n  }\n  const failed = gates.filter(function (g) { return !g.ok; }); const pass = failed.length === 0;\n  return { pass: pass, match_type: pass ? 'Exact match' : 'Not per strategy: ' + failed.map(function (g) { return g.gate + ' - ' + g.why; }).join('; '), failed: failed.map(function (g) { return g.gate; }), gates: gates };\n}\n// ===== meetings (latest staircase block) =====\nconst NOW = new Date();\nfunction isHdr(row) { return /startup got meetings/i.test(s((row || [])[1])) && /\\d/.test(s((row || [])[0])); }\nconst hdrs = []; for (let i = 0; i < grid.length; i++) { if (isHdr(grid[i])) { hdrs.push(i); } }\nif (!hdrs.length) { throw new Error('ABORT: no staircase blocks in meetings sheet'); }\nfunction blockDate(label) { const mm = s(label).match(/^(\\d{1,2})[\\/\\-.](\\d{1,2})[\\/\\-.](\\d{4})/); if (!mm) { return null; } const a = +mm[1], b = +mm[2], y = +mm[3]; const c = [];\n  if (b >= 1 && b <= 12 && a >= 1 && a <= 31) { c.push(new Date(Date.UTC(y, b - 1, a))); } if (a >= 1 && a <= 12 && b >= 1 && b <= 31) { c.push(new Date(Date.UTC(y, a - 1, b))); }\n  const past = c.filter(function (d) { return d <= NOW; }); const pool = past.length ? past : c; pool.sort(function (x, z) { return z - x; }); return pool[0] || null; }\nlet li = hdrs[hdrs.length - 1]; let ld = blockDate(s(grid[li][0]));\nfor (const i of hdrs) { const d = blockDate(s(grid[i][0])); if (d && (!ld || d > ld)) { ld = d; li = i; } }\nconst stair = {};\nfor (let i = li + 1; i < grid.length; i++) { const row = grid[i] || []; if (isHdr(row)) { break; } const mm = s(row[1]).match(/^(\\d+)\\s*meetings?/i); if (!mm) { if (Object.keys(stair).length) { break; } else { continue; } }\n  const n = parseInt(mm[1], 10); for (let j = 2; j < row.length; j++) { const nm = s(row[j]); if (!nm) { continue; } const k = nz(nm); if (stair[k] === undefined || n > stair[k]) { stair[k] = n; } } }\nconst MALIAS = { caffeinacoffee: 'caffenacoffee', springbaseai: 'springbaseai', vold: 'voldenergy' };\nconst meetCache = {};\nfunction meetingsFor(name) { if (meetCache[name] !== undefined) { return meetCache[name]; } const k = nz(name); let best = null; for (const sk of Object.keys(stair)) { const kk = MALIAS[sk] || sk; const hit = kk === k || (kk.length >= 4 && k.length >= 4 && (kk.indexOf(k) === 0 || k.indexOf(kk) === 0)); if (hit && (best === null || stair[sk] > best)) { best = stair[sk]; } } meetCache[name] = best === null ? 0 : best; return meetCache[name]; }\n\n// ===== dates (IST) =====\nfunction istDate(d) { return new Date(d.getTime() + 330 * 60000).toISOString().slice(0, 10); }\nconst TODAY = istDate(NOW);\nfunction addDays(iso, n) { const d = new Date(iso + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }\nfunction dow(iso) { return new Date(iso + 'T00:00:00Z').getUTCDay(); }\nfunction monday(iso) { const w = dow(iso); return addDays(iso, w === 0 ? -6 : 1 - w); }\nconst DAYS = []; { let d = addDays(TODAY, 1); while (DAYS.length < HORIZON_WEEKDAYS) { if (dow(d) >= 1 && dow(d) <= 5) { DAYS.push(d); } d = addDays(d, 1); } }\n\n// ===== lookups =====\nconst critBy = {}; C.forEach(function (c) { const k = nz(c.investor); if (k && !critBy[k]) { critBy[k] = c; } });\nconst profBy = {}; SP.forEach(function (p) { profBy[nz(p.startup)] = p; });\nconst stBy = {}; ST.forEach(function (r) { if (s(r.startup)) { stBy[nz(r.startup)] = r; } });\nconst invBy = {}; INV.forEach(function (r) { const k = nz(r.investor); if (k && !invBy[k]) { invBy[k] = r; } });\nfunction inboxOf(email) { return s(email).toLowerCase().split(/[,;\\s]+/).filter(Boolean).sort().join(','); }\nfunction profileFor(stName) { const p = profBy[nz(stName)], srow = stBy[nz(stName)]; if (!p) { return null; } const o = Object.assign({}, p); if (srow) { o.active = s(srow.active) || o.active; } return o; }\nfunction isPending(c) { return s(c.confirmed).toUpperCase() === 'PENDING'; }\nfunction short(mt) { return s(mt).replace(/^Not per strategy: /, '').slice(0, 220); }\n\n// ===== PIPELINE =====\nconst ph = (pipe[0] || []).map(s); const PX = {}; ph.forEach(function (h, i) { PX[h] = i; });\n['deal_id', 'startup', 'owner', 'investor', 'email', 'cc', 'match_type', 'deal_shared', 'date_shared', 'next_action', 'next_due', 'investor_response', 'pause', 'notes'].forEach(function (h) { if (PX[h] === undefined) { throw new Error('ABORT: PIPELINE column missing ' + h); } });\nfunction colL(i) { let n = i + 1, t = ''; while (n > 0) { const m = (n - 1) % 26; t = String.fromCharCode(65 + m) + t; n = Math.floor((n - 1) / 26); } return t; }\nconst upd = {}; // rowNumber -> {col: value}\nfunction set(rn, col, val) { (upd[rn] = upd[rn] || {})[col] = val; }\nconst rows = [];\nfor (let r = 1; r < pipe.length; r++) { const row = pipe[r] || []; const g = function (h) { return s(row[PX[h]]); };\n  rows.push({ rn: r + 1, id: g('deal_id'), startup: g('startup'), owner: g('owner'), investor: g('investor'), email: g('email'), match_type: g('match_type'), sent: /^yes$/i.test(g('deal_shared')), date_shared: g('date_shared').slice(0, 10), na: g('next_action'), due: g('next_due').slice(0, 10), resp: g('investor_response'), ms: g('meeting_scheduled'), md: g('meeting_date'), mh: g('meetings_held'), paused: /^yes$/i.test(g('pause')), notes: g('notes') }); }\nconst TAG = 'ENGINE ' + TODAY;\nconst DROP_NA = 'DROPPED - not per strategy (engine)', HOLD_NA = 'HOLD - investor criteria under review (engine)';\nconst FLAG_NA = 'FLAGGED - off thesis but has prior contact - human review';\nconst sum = { today: TODAY, staircase_block: s(grid[li][0]), pipeline_rows: rows.length, queued_checked: 0, followups_checked: 0, dropped_queued: 0, held_queued: 0, stopped_followups: 0, held_followups: 0, released_queued: 0, released_followups: 0, redated_same_day_cap: 0, no_criteria: {}, no_profile: {}, drop_by_gate: {}, drop_by_investor: {}, added: 0, added_by_startup: {}, unplaced_candidates: 0, tracker_rows: 0, tracker_investors: 0, tracker_excluded_pairs: 0, dup_groups_after: 0 };\nsum.ceilings_on_file = C.filter(function (c) { return num(c.round_max_cr) !== null; }).length;\nconst toAllocate = []; // {kind:'release'|'redate'|'new', ...}\n\n// ---- Part A: evaluate existing rows ----\nfor (const x of rows) {\n  const c = critBy[nz(x.investor)], p = profileFor(x.startup);\n  const isQueued = !x.sent && !x.paused && x.na === \"Initial\";\n  const isFollow = x.sent && !x.paused && !x.resp && /follow/i.test(x.na);\n  // 28 Sep 2026: meeting-paused rows added here. Before this they matched no branch, so no run could ever re-evaluate them -\n// which is why Springbase.ai sat blocked for ten days. They now go through evaluate() like any other parked row and are\n// released one per startup per round inside the daily/weekly caps, rather than by a bulk unpause.\n// Orbo AI's 54 rows are in this set but CANNOT release: STARTUPS active=No, so the startup_active gate fails (user stopped\n// Orbo on 22 Sep). That is the guard working, not an oversight - do not special-case it.\nconst isEngineParked = !x.sent && x.paused && (x.na === DROP_NA || x.na === HOLD_NA || MEET_PAUSED_RE.test(x.na));\n  const isEngineHeldFU = x.sent && x.paused && !x.resp && /ENGINE-HOLD-FU/.test(x.notes);\n  if (!(isQueued || isFollow || isEngineParked || isEngineHeldFU)) { continue; }\n  if (!c) { if (isQueued || isFollow) { sum.no_criteria[x.investor] = (sum.no_criteria[x.investor] || 0) + 1; } continue; }\n  if (!p) { if (isQueued || isFollow) { sum.no_profile[x.startup] = (sum.no_profile[x.startup] || 0) + 1; } continue; }\n  if (/ENGINE OVERRIDE/i.test(x.notes)) { continue; }\n  if (isQueued && meetStop(x.startup)) { set(x.rn, 'pause', 'Yes'); set(x.rn, 'next_action', MEET_NA); set(x.rn, 'notes', (x.notes ? x.notes + ' | ' : '') + TAG + ': paused - startup has ' + meetingsFor(x.startup) + ' meetings (7+ rule)'); x.paused = true; sum.paused_meetings7 = (sum.paused_meetings7 || 0) + 1; continue; }\n  if (isEngineParked && meetStop(x.startup)) { continue; }\n  const ev = evaluate(c, p, { meetings: meetingsFor(x.startup) });\n  const pend = isPending(c);\n  if (isQueued || isFollow) {\n    if (isQueued) { sum.queued_checked++; } else { sum.followups_checked++; }\n    if (ev.pass && !pend) { continue; }\n    if (ev.pass && pend) { continue; } // pending investor but fits the draft criteria: keep going\n    ev.failed.forEach(function (gname) { sum.drop_by_gate[gname] = (sum.drop_by_gate[gname] || 0) + 1; });\n    sum.drop_by_investor[x.investor] = (sum.drop_by_investor[x.investor] || 0) + 1;\n    set(x.rn, 'pause', 'Yes'); x.paused = true;\n    if (isQueued) {\n      // 25 Sep: never silently DROP a row that already produced a conversation. A criteria change must not discard\n      // a relationship a human created. Eight confirmed cases were dropped after a real meeting (Koncite, Fire Armor x\n      // BlueHill 21 Jan, Glazia x Transition 20 Jan, GroCliq x BDev 19 Jan, Orbis x AWE 30 Sep 25, Pixelence and Ulai x\n      // Speciale Mar, Pixelence x Michele). These are still paused so nothing sends, but they are labelled for a human.\n      const hasHistory = !!(x.resp || x.ms || x.md || (x.mh && x.mh !== '0'));\n      if (hasHistory && !pend) {\n        set(x.rn, 'next_action', FLAG_NA);\n        set(x.rn, 'match_type', ev.match_type.slice(0, 480));\n        set(x.rn, 'notes', (x.notes ? x.notes + ' | ' : '') + TAG + ': FLAGGED not dropped - off thesis now, but this pair already has history (' + [x.resp ? 'response' : '', x.ms || x.md ? 'meeting' : '', (x.mh && x.mh !== '0') ? x.mh + ' meetings held' : ''].filter(Boolean).join(', ') + '). A human should decide, not the engine. Reason: ' + short(ev.match_type));\n        sum.flagged_with_history = (sum.flagged_with_history || 0) + 1;\n        (sum.flagged_list = sum.flagged_list || []).push(x.startup + ' x ' + x.investor);\n        continue;\n      }\n      set(x.rn, 'next_action', pend ? HOLD_NA : DROP_NA);\n      set(x.rn, 'match_type', ev.match_type.slice(0, 480));\n      set(x.rn, 'notes', (x.notes ? x.notes + ' | ' : '') + TAG + (pend ? ': held, investor criteria under review - ' : ': dropped - ') + short(ev.match_type));\n      if (pend) { sum.held_queued++; } else { sum.dropped_queued++; }\n    } else {\n      set(x.rn, 'notes', (x.notes ? x.notes + ' | ' : '') + TAG + (pend ? ': ENGINE-HOLD-FU follow-ups held, investor criteria under review - ' : ': follow-ups stopped, not per strategy - ') + short(ev.match_type));\n      if (pend) { sum.held_followups++; } else { sum.stopped_followups++; }\n    }\n  } else if (ev.pass && !pend && s(c.status).toUpperCase() === 'ACTIVE') {\n    if (isEngineParked) { toAllocate.push({ kind: 'release', x: x, c: c, ev: ev, exact: ev.match_type === 'Exact match' }); }\n    else { set(x.rn, 'pause', ''); x.paused = false; set(x.rn, 'notes', x.notes + ' | ' + TAG + ': follow-ups released (investor criteria confirmed)'); sum.released_followups++; }\n  }\n}\nif (sum.dropped_queued + sum.held_queued + sum.stopped_followups + sum.held_followups > MAX_DROPS) { throw new Error('ABORT: ' + (sum.dropped_queued + sum.held_queued + sum.stopped_followups + sum.held_followups) + ' rows to pause exceeds guard ' + MAX_DROPS + ' ' + JSON.stringify(sum.drop_by_gate)); }\n\n// ---- single point of contact: queued rows of POC investors move to that owner's mailbox ----\nrows.forEach(function (x) { const po = POC_OWNER[nz(x.investor)]; if (!po || x.sent || x.paused || x.na !== 'Initial' || x.owner === po) { return; } set(x.rn, 'owner', po); set(x.rn, 'notes', (x.notes ? x.notes + ' | ' : '') + TAG + ': owner ' + x.owner + ' -> ' + po + ' (investor asked for one POC)'); x.owner = po; sum.poc_reassigned = (sum.poc_reassigned || 0) + 1; });\n// ---- inbox resolution: CURRENT email from INVESTORS, fallback to the row cell ----\nfunction inboxForRow(x) { const ir = invBy[nz(x.investor)]; return inboxOf(ir && s(ir.email) ? ir.email : x.email); }\n// ---- Part B0 (user 22 Sep): hot-deal priority - within each inbox, queued hot-deal rows take the earliest dates already held by that inbox's queued rows (per-inbox day/week counts unchanged) ----\n{ const byInbox = {}; rows.forEach(function (x) { if (!x.sent && !x.paused && x.na === 'Initial' && x.due) { const k = inboxForRow(x); (byInbox[k] = byInbox[k] || []).push(x); } });\n  Object.keys(byInbox).forEach(function (k) { const L = byInbox[k]; if (!L.some(function (x) { return isHot(x.startup); }) || L.every(function (x) { return isHot(x.startup); })) { return; }\n    const dates = L.map(function (x) { return x.due; }).sort();\n    const ordered = L.slice().sort(function (a, b) { return (isHot(a.startup) ? 0 : 1) - (isHot(b.startup) ? 0 : 1) || (a.due < b.due ? -1 : a.due > b.due ? 1 : a.rn - b.rn); });\n    ordered.forEach(function (x, i) { const nd = dates[i]; if (nd !== x.due) { x.notes = (x.notes ? x.notes + ' | ' : '') + TAG + ': date ' + x.due + ' -> ' + nd + (isHot(x.startup) ? ' (hot deal first)' : ' (hot deal took earlier slot)'); set(x.rn, 'next_due', nd); set(x.rn, 'notes', x.notes); x.due = nd; sum.hot_swaps = (sum.hot_swaps || 0) + 1; } }); }); }\n// ---- Part B: same-day cap for rows due today or overdue ----\nconst sentToday = {}; rows.forEach(function (x) { if (x.sent && x.date_shared === TODAY) { const k = inboxForRow(x); sentToday[k] = (sentToday[k] || 0) + 1; } });\nconst dueByInbox = {};\nrows.forEach(function (x) { if (!x.sent && !x.paused && x.due && x.due <= TODAY && x.na === 'Initial') { const k = inboxForRow(x); (dueByInbox[k] = dueByInbox[k] || []).push(x); } });\nObject.keys(dueByInbox).forEach(function (k) {\n  const list2 = dueByInbox[k].sort(function (a, b) { const ea = a.match_type === 'Exact match' ? 0 : 1, eb = b.match_type === 'Exact match' ? 0 : 1; return (isHot(a.startup) ? 0 : 1) - (isHot(b.startup) ? 0 : 1) || ea - eb || (a.due < b.due ? -1 : a.due > b.due ? 1 : a.rn - b.rn); });\n  const room = Math.max(0, CAP_DAY - (sentToday[k] || 0));\n  list2.slice(room).forEach(function (x) { x.redate = true; toAllocate.push({ kind: 'redate', x: x, exact: x.match_type === 'Exact match' }); });\n});\n\n// ---- counters for allocation (sent by date_shared, live queued by next_due) ----\nconst cDay = {}, cWeek = {}, cOwner = {}, cStartupWeek = {};\nfunction bump(o, k) { o[k] = (o[k] || 0) + 1; }\nrows.forEach(function (x) {\n  let d = null; if (x.sent) { d = x.date_shared; } else if (!x.paused && !x.redate) { d = x.due; }\n  if (!d) { return; } const k = inboxForRow(x);\n  bump(cDay, k + '|' + d); bump(cWeek, k + '|' + monday(d));\n  if (!x.sent || x.date_shared) { bump(cOwner, x.owner + '|' + d); bump(cStartupWeek, nz(x.startup) + '|' + monday(d)); }\n});\n// ---- HOT RESERVED CAPACITY (Aditya, 28 Sep 2026: \"we need the deals to happen for top 10 hot deals so they should get special\n// priority in any case\") ----\n// Everything before this was ORDERING: Part B0 swaps hot rows onto the earliest dates already held by their inbox, the\n// pull-forward moves them up, and hot sorts first in allocation. Ordering decides WHEN, never HOW MANY - every inbox was still\n// CAP_DAY=2 shared across all ~70 startups, so a hot deal went first and then queued behind the same ceiling as everything else.\n// With the meeting pause lifted the same day, ~200 released rows now compete for those slots, so ordering alone would have made\n// hot deals WORSE, not better.\n// The rule: while any hot row is still waiting for a slot in an inbox, ONE of that inbox's two daily slots is reserved for it.\n// Non-hot may take both only when no hot row is queued for that inbox. CAP_DAY / CAP_WEEK are NOT raised - they exist to protect\n// deliverability and to stop us hammering one investor, and they do not move.\nconst hotDemand = {}; // inbox -> hot rows still waiting for a slot; filled once the pool is built, decremented as each is placed\nfunction firstSlot(inbox, owner, stKey, hotReq) {\n  const reserve = (!hotReq && (hotDemand[inbox] || 0) > 0) ? 1 : 0; // leave the last daily slot for a waiting hot row\n  let denied = false;\n  for (const d of DAYS) {\n    const dayN = cDay[inbox + '|' + d] || 0;\n    if (dayN < CAP_DAY - reserve && (cWeek[inbox + '|' + monday(d)] || 0) < CAP_WEEK && (cOwner[owner + '|' + d] || 0) < CAP_OWNER_DAY) { return d; }\n    if (reserve && dayN < CAP_DAY && (cWeek[inbox + '|' + monday(d)] || 0) < CAP_WEEK && (cOwner[owner + '|' + d] || 0) < CAP_OWNER_DAY) { denied = true; }\n  }\n  if (denied) { sum.hot_reserve_denials = (sum.hot_reserve_denials || 0) + 1; }\n  return null;\n}\nfunction take(inbox, owner, stKey, d) { bump(cDay, inbox + '|' + d); bump(cWeek, inbox + '|' + monday(d)); bump(cOwner, owner + '|' + d); bump(cStartupWeek, stKey + '|' + monday(d)); }\n\n// ---- Part C: new-match candidates ----\nconst pairName = {}, pairInbox = {};\nrows.forEach(function (x) { if (x.na === DROP_NA || x.na === HOLD_NA) { /* engine-parked rows still block duplicates */ }\n  pairName[nz(x.startup) + '|' + nz(x.investor)] = true; pairInbox[nz(x.startup) + '|' + inboxForRow(x)] = true; if (x.email) { pairInbox[nz(x.startup) + '|' + inboxOf(x.email)] = true; } });\n// Deal Tracker (tab 'Deal Tracker', gid 189973839)\nlet hRow = -1; for (let i = 0; i < Math.min(15, trk.length); i++) { if ((trk[i] || []).some(function (c2) { return /all deals shared/i.test(s(c2)); })) { hRow = i; break; } }\nconst trackerEntries = [];\nlet trackerOk = false;\nif (hRow >= 0) {\n  const th = trk[hRow].map(s); let ic = th.findIndex(function (h) { return /investor|fund|firm/i.test(h) && !/deal|shared|picked/i.test(h); }); if (ic < 0) { ic = 0; }\n  for (let i = hRow + 1; i < trk.length; i++) { const r = trk[i] || []; const nm = s(r[ic]); if (!nm) { continue; } trackerEntries.push({ k: nz(nm), blob: nz(r.map(s).join(' ')) }); }\n  sum.tracker_rows = trackerEntries.length; sum.tracker_investors = Object.keys(trackerEntries.reduce(function (o, e) { o[e.k] = 1; return o; }, {})).length;\n  trackerOk = sum.tracker_rows >= 200 && sum.tracker_investors >= 180;\n}\nconst SALIAS = { yuno: ['yuno'], clikd: ['clikd'], sugarsdaddy: ['sugarsdaddy'], springbaseai: ['springbase'], mindwox: ['mindwox'], recex: ['recex'], skillbytes: ['skillbytes'], caffenacoffee: ['caffena', 'caffeina'], voldenergy: ['vold'] };\nfunction trackerShared(invName, stName) {\n  const ki = nz(invName), ks = nz(stName); const vars = SALIAS[ks] || [ks];\n  return trackerEntries.some(function (e) { const same = e.k === ki || (Math.min(e.k.length, ki.length) >= 5 && (e.k.indexOf(ki) === 0 || ki.indexOf(e.k) === 0)); return same && vars.some(function (v) { return v.length >= 4 && e.blob.indexOf(v) >= 0; }); });\n}\nconst cands = [];\nif (!trackerOk) { sum.new_matches_skipped = 'Deal Tracker read incomplete (' + sum.tracker_rows + ' rows / ' + sum.tracker_investors + ' investors) - no new matches this run'; }\nelse {\n  for (const c of C) {\n    if (s(c.status).toUpperCase() !== 'ACTIVE' || isPending(c)) { continue; }\n    const ir = invBy[nz(c.investor)]; if (!ir || !s(ir.email) || /^yes$/i.test(s(ir.do_not_contact))) { continue; }\n    const inbox = inboxOf(ir.email);\n    for (const srow of ST) {\n      if (!/^yes$/i.test(s(srow.active)) || !s(srow.owner)) { continue; }\n      const p = profileFor(srow.startup); if (!p) { continue; }\n      if (meetStop(srow.startup)) { continue; } // user 18 Sep: startups with 7+ meetings get no new shares\n      const kn = nz(srow.startup) + '|' + nz(ir.investor), ki = nz(srow.startup) + '|' + inbox;\n      if (pairName[kn] || pairInbox[ki]) { continue; }\n      if (NO_AUTO_PAIRS.indexOf(kn) >= 0) { sum.blocked_pairs = (sum.blocked_pairs || 0) + 1; continue; }\n      const ev = evaluate(c, p, { meetings: meetingsFor(srow.startup) }); if (!ev.pass) { continue; }\n      // STRICT ONLY (Aditya, 1 Oct 2026: \"each startup would go to investors with strict matches from now\").\n      // Belt and braces: every gate already has to pass above, so this can only fire if a softer match_type is\n      // ever reintroduced. It is here so that such a change cannot quietly start sending near-misses again.\n      if (ev.match_type !== 'Exact match') { sum.non_strict_blocked = (sum.non_strict_blocked || 0) + 1; continue; }\n      if (trackerShared(ir.investor, srow.startup)) { sum.tracker_excluded_pairs++; continue; }\n      cands.push({ kind: 'new', srow: srow, ir: ir, inbox: inbox, ev: ev, exact: ev.match_type === 'Exact match' });\n    }\n  }\n}\n// ---- allocation: redates first, then releases + new in rounds (one per startup per round, fewest-queued startups first) ----\nconst placedUpd = [], appends = [];\nlet maxId = 0; rows.forEach(function (x) { const m2 = x.id.match(/^D(\\d+)$/); if (m2) { maxId = Math.max(maxId, +m2[1]); } });\ntoAllocate.filter(function (t) { return t.kind === 'redate'; }).sort(function (a, b) { return (isHot(a.x.startup) ? 0 : 1) - (isHot(b.x.startup) ? 0 : 1); }).forEach(function (t) {\n  const inbox = inboxForRow(t.x); const d = firstSlot(inbox, t.x.owner, nz(t.x.startup), isHot(t.x.startup));\n  if (d) { take(inbox, t.x.owner, nz(t.x.startup), d); set(t.x.rn, 'next_due', d); set(t.x.rn, 'notes', (t.x.notes ? t.x.notes + ' | ' : '') + TAG + ': moved from ' + t.x.due + ' (max ' + CAP_DAY + ' deals per inbox per day)'); sum.redated_same_day_cap++; }\n});\nconst pool = toAllocate.filter(function (t) { return t.kind === 'release'; }).map(function (t) { return { kind: 'release', x: t.x, ev: t.ev, exact: t.exact, stKey: nz(t.x.startup), owner: t.x.owner, inbox: inboxForRow(t.x) }; })\n  .concat(cands.map(function (t) { return { kind: 'new', srow: t.srow, ir: t.ir, ev: t.ev, exact: t.exact, stKey: nz(t.srow.startup), owner: POC_OWNER[nz(t.ir.investor)] || s(t.srow.owner), inbox: t.inbox }; }));\npool.forEach(function (t) { if (HOT.indexOf(t.stKey) >= 0) { hotDemand[t.inbox] = (hotDemand[t.inbox] || 0) + 1; } });\nsum.hot_demand_inboxes = Object.keys(hotDemand).length;\nsum.hot_demand_rows = Object.keys(hotDemand).reduce(function (n, k) { return n + hotDemand[k]; }, 0);\nconst byStartup = {}; pool.forEach(function (t) { (byStartup[t.stKey] = byStartup[t.stKey] || []).push(t); });\nObject.keys(byStartup).forEach(function (k) { byStartup[k].sort(function (a, b) { return (a.kind === 'release' ? 0 : 1) - (b.kind === 'release' ? 0 : 1) || (a.exact ? 0 : 1) - (b.exact ? 0 : 1); }); });\nconst usedPair = {};\nfunction queuedAhead(stKey) { let n = 0; DAYS.slice(0, 5).forEach(function (d) { n += cStartupWeek[stKey + '|' + monday(d)] || 0; }); return n; }\nlet progress = true;\nwhile (progress) {\n  progress = false;\n  const order = Object.keys(byStartup).filter(function (k) { return byStartup[k].length; }).sort(function (a, b) { return (HOT.indexOf(a) >= 0 ? 0 : 1) - (HOT.indexOf(b) >= 0 ? 0 : 1) || queuedAhead(a) - queuedAhead(b); });\n  for (const k of order) {\n    const q = byStartup[k];\n    while (q.length) {\n      const t = q.shift(); const pk = k + '|' + t.inbox; if (usedPair[pk]) { continue; }\n      const tHot = HOT.indexOf(k) >= 0;\n      const d = firstSlot(t.inbox, t.owner, k, tHot); if (!d) { continue; }\n      if (tHot && hotDemand[t.inbox]) { hotDemand[t.inbox]--; } // this hot row is placed; it no longer reserves a slot\n      if (tHot) { sum.placed_hot = (sum.placed_hot || 0) + 1; } else { sum.placed_nonhot = (sum.placed_nonhot || 0) + 1; }\n      if (appends.length + sum.released_queued >= MAX_APPENDS) { break; }\n      usedPair[pk] = true; take(t.inbox, t.owner, k, d); progress = true;\n      if (t.kind === 'release') {\n        set(t.x.rn, 'pause', ''); set(t.x.rn, 'next_action', 'Initial'); set(t.x.rn, 'next_due', d); set(t.x.rn, 'match_type', t.ev.match_type);\n        set(t.x.rn, 'notes', (t.x.notes ? t.x.notes + ' | ' : '') + TAG + ': released, fits the thesis now'); sum.released_queued++;\n      } else {\n        maxId++; const row = ph.map(function () { return ''; });\n        const put = function (h, v) { if (PX[h] !== undefined) { row[PX[h]] = v; } };\n        put('deal_id', 'D' + String(maxId).padStart(5, '0')); put('startup', s(t.srow.startup)); put('owner', t.owner); put('investor', s(t.ir.investor));\n        put('email', s(t.ir.email)); put('cc', s(t.ir.cc)); put('match_type', t.ev.match_type); put('deal_shared', 'No'); put('next_action', 'Initial'); put('next_due', d);\n        put('notes', TAG + ': engine match (' + t.ev.gates.filter(function (g) { return g.gate === 'sector' || g.gate === 'stage'; }).map(function (g) { return g.why; }).join('; ').slice(0, 200) + ')');\n        appends.push(row); sum.added++; sum.added_by_startup[s(t.srow.startup)] = (sum.added_by_startup[s(t.srow.startup)] || 0) + 1;\n      }\n      break;\n    }\n  }\n}\nObject.keys(byStartup).forEach(function (k) { sum.unplaced_candidates += byStartup[k].length; });\n// ---- hot-deal pull-forward (user 22 Sep): a queued hot row moves to its inbox's first free slot if that is earlier than its date ----\nfunction unbump(o, k) { if (o[k]) { o[k]--; } }\nrows.filter(function (x) { const pz = upd[x.rn] && upd[x.rn].pause !== undefined ? upd[x.rn].pause === 'Yes' : x.paused; const na = upd[x.rn] && upd[x.rn].next_action !== undefined ? upd[x.rn].next_action : x.na; return isHot(x.startup) && !x.sent && !pz && na === 'Initial'; })\n  .map(function (x) { return { x: x, due: upd[x.rn] && upd[x.rn].next_due ? upd[x.rn].next_due : x.due }; })\n  .sort(function (a, b) { return a.due < b.due ? -1 : a.due > b.due ? 1 : a.x.rn - b.x.rn; })\n  .forEach(function (o) { const x = o.x; if (!o.due || o.due <= DAYS[0]) { return; } const inbox = inboxForRow(x), stKey = nz(x.startup);\n    unbump(cDay, inbox + '|' + o.due); unbump(cWeek, inbox + '|' + monday(o.due)); unbump(cOwner, x.owner + '|' + o.due);\n    const d = firstSlot(inbox, x.owner, stKey, true);\n    if (d && d < o.due) { take(inbox, x.owner, stKey, d); const cur = upd[x.rn] && upd[x.rn].notes !== undefined ? upd[x.rn].notes : x.notes; set(x.rn, 'next_due', d); set(x.rn, 'notes', (cur ? cur + ' | ' : '') + TAG + ': hot deal pulled forward ' + o.due + ' -> ' + d); sum.hot_pulled_forward = (sum.hot_pulled_forward || 0) + 1; }\n    else { bump(cDay, inbox + '|' + o.due); bump(cWeek, inbox + '|' + monday(o.due)); bump(cOwner, x.owner + '|' + o.due); } });\nif (appends.length > MAX_APPENDS) { throw new Error('ABORT: ' + appends.length + ' appends exceeds guard'); }\n\n// ---- post-check: same startup twice for one inbox among sent/live rows ----\nconst live = {};\nrows.forEach(function (x) { const pz = upd[x.rn] && upd[x.rn].pause !== undefined ? upd[x.rn].pause === 'Yes' : x.paused; const na2 = upd[x.rn] && upd[x.rn].next_action !== undefined ? upd[x.rn].next_action : x.na; if (/^DROPPED/i.test(na2)) { return; } if (x.sent || !pz) { const k = nz(x.startup) + '|' + inboxForRow(x); live[k] = (live[k] || 0) + 1; } });\nappends.forEach(function (r) { const k = nz(r[PX.startup]) + '|' + inboxOf(r[PX.email]); live[k] = (live[k] || 0) + 1; });\nconst dupKeys = Object.keys(live).filter(function (k) { return live[k] > 1; }); sum.dup_groups_after = dupKeys.length; sum.dup_groups_list = dupKeys.slice(0, 20);\n\n// ---- build batchUpdate ranges ----\nconst data = [];\nObject.keys(upd).forEach(function (rn) { Object.keys(upd[rn]).forEach(function (col) { data.push({ range: 'PIPELINE!' + colL(PX[col]) + rn, values: [[upd[rn][col]]] }); }); });\nsum.blank_rows = []; for (let r = 1; r < pipe.length; r++) { if (!(pipe[r] || []).some(function (c) { return s(c); })) { if (sum.blank_rows.length < 20) { sum.blank_rows.push(r + 1); } } }\nconst idSeen = {}; sum.duplicate_deal_ids = 0; rows.forEach(function (x) { if (x.id) { if (idSeen[x.id]) { sum.duplicate_deal_ids++; } idSeen[x.id] = 1; } });\nsum.queued_live_failing_after = rows.filter(function (x) { return !x.sent && !x.paused && x.na === 'Initial'; }).length;\nsum.cells_to_update = data.length; sum.rows_to_append = appends.length; sum.dry_run = DRY;\nsum.drop_by_investor = Object.keys(sum.drop_by_investor).sort(function (a, b) { return sum.drop_by_investor[b] - sum.drop_by_investor[a]; }).slice(0, 40).map(function (k) { return k + ':' + sum.drop_by_investor[k]; });\nsum.first_appends = appends.slice(0, 8).map(function (r) { return [r[PX.deal_id], r[PX.startup], r[PX.investor], r[PX.next_due], r[PX.match_type]].join(' | '); });\nsum.added_last_date = appends.reduce(function (m, r) { return r[PX.next_due] > m ? r[PX.next_due] : m; }, '');\n// append anchor = last data row, so Sheets appends below the bottom of PIPELINE (17 Sep: an unanchored append landed mid-sheet)\nreturn [{ json: { summary: sum, data: DRY ? [] : data, appends: DRY ? [] : appends, anchor: pipe.length } }];\n"
+        }
+      },
+      {
+        "id": "sm",
+        "name": "Summary",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1200,
+          0
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "return [{ json: $('Plan').first().json.summary }];"
+        }
+      },
+      {
+        "id": "hu",
+        "name": "Has updates",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1400,
+          -120
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const j = $('Plan').first().json; if (!j.data || !j.data.length) { return []; } return [{ json: { cells: j.data.length } }];"
+        }
+      },
+      {
+        "id": "wu",
+        "name": "Write updates",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1600,
+          -120
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdate",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleSheetsOAuth2Api",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ valueInputOption: 'RAW', data: $('Plan').first().json.data }) }}",
+          "options": {
+            "timeout": 180000
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "ha",
+        "name": "Has appends",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1400,
+          160
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const j = $('Plan').first().json; if (!j.appends || !j.appends.length) { return []; } return [{ json: { rows: j.appends.length } }];"
+        }
+      },
+      {
+        "id": "wa",
+        "name": "Append rows",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1600,
+          160
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/' + encodeURIComponent('PIPELINE!A' + $('Plan').first().json.anchor + ':AI' + $('Plan').first().json.anchor) + ':append?valueInputOption=RAW&insertDataOption=INSERT_ROWS' }}",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleSheetsOAuth2Api",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ values: $('Plan').first().json.appends }) }}",
+          "options": {
+            "timeout": 180000
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "dh",
+        "name": "Dry hook",
+        "webhookId": "dde45398-f84c-4d05-b54b-432d397dda5a",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          200
+        ],
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "sidana-engine-dry-8b3f6d1e27",
+          "responseMode": "onReceived",
+          "options": {}
+        }
+      }
+    ],
+    "connections": {
+      "Schedule": {
+        "main": [
+          [
+            {
+              "node": "Mode",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Mode": {
+        "main": [
+          [
+            {
+              "node": "GET pilot",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "GET pilot": {
+        "main": [
+          [
+            {
+              "node": "GET meetings",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "GET meetings": {
+        "main": [
+          [
+            {
+              "node": "GET tracker",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "GET tracker": {
+        "main": [
+          [
+            {
+              "node": "Plan",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Plan": {
+        "main": [
+          [
+            {
+              "node": "Summary",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Summary": {
+        "main": [
+          [
+            {
+              "node": "Has updates",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Has appends",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Has updates": {
+        "main": [
+          [
+            {
+              "node": "Write updates",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Has appends": {
+        "main": [
+          [
+            {
+              "node": "Append rows",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Dry hook": {
+        "main": [
+          [
+            {
+              "node": "Mode",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "Sidana Ventures",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "createdAt": "2026-10-01T09:45:39.838Z",
+    "updatedAt": "2026-10-01T09:45:39.838Z",
+    "workflowPublishHistory": [
+      {
+        "id": 10525,
+        "workflowId": "F4xXHRFIr3gS2VHc",
+        "versionId": "b6b9f94c-45f7-4022-92b7-0701d6ac64b4",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-10-01T09:45:39.951Z"
+      }
+    ]
+  }
+}

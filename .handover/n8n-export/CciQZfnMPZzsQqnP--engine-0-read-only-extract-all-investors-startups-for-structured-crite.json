@@ -1,0 +1,293 @@
+{
+  "id": "CciQZfnMPZzsQqnP",
+  "name": "ENGINE-0 (read-only) — extract all INVESTORS + STARTUPS for structured criteria pre-fill (17 Sep)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-17T05:26:02.026Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "5867ac46-754b-4027-9e85-d322170874ed",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once (set before activating)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "5 11 17 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "gp",
+      "name": "GET pilot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=INVESTORS!A1:Z400&ranges=STARTUPS!A1:N400",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "ex",
+      "name": "Extract",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nconst v = $('GET pilot').first().json.valueRanges || [];\nconst inv = (v[0] || {}).values || [], st = (v[1] || {}).values || [];\nif (inv.length < 200 || st.length < 40) { throw new Error('ABORT short read'); }\nconst ih = (inv[0] || []).map(s); const I = {}; ih.forEach(function (h, i) { I[h] = i; });\nconst sh = (st[0] || []).map(s); const S = {}; sh.forEach(function (h, i) { S[h] = i; });\nconst investors = [];\nfor (let r = 1; r < inv.length; r++) { const row = inv[r] || []; const n = s(row[I.investor]); if (!n) { continue; }\n  investors.push([r + 1, n, s(row[I.sector]), s(row[I.stage]), s(row[I.cheque_inr_cr]), s(row[I.do_not_contact]), s(row[I.email]) ? 'email' : 'NO EMAIL'].join(' ~ ')); }\nfunction strip(h) { return s(h).replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&[a-z#0-9]+;/gi, ' ').replace(/\\s+/g, ' ').trim(); }\nconst startups = [];\nfor (let r = 1; r < st.length; r++) { const row = st[r] || []; const n = s(row[S.startup]); if (!n) { continue; }\n  startups.push([r + 1, n, 'active=' + s(row[S.active]), s(row[S.sector]), s(row[S.stage]), 'raise=' + s(row[S.raise_inr_cr]), 'rev=' + s(row[S.revenue]), 'h1=' + s(row[S.highlight_1]).slice(0, 110), 'memo=' + strip(row[S.memo_html]).slice(0, 380)].join(' ~ ')); }\nreturn [{ json: { investors: investors, startups: startups } }];"
+      }
+    },
+    {
+      "id": "i1",
+      "name": "Inv 1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const j = $('Extract').first().json; return [{ json: { n: j.investors.length, rows: j.investors.slice(0, 80) } }];"
+      }
+    },
+    {
+      "id": "i2",
+      "name": "Inv 2",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const j = $('Extract').first().json; return [{ json: { rows: j.investors.slice(80, 160) } }];"
+      }
+    },
+    {
+      "id": "i3",
+      "name": "Inv 3",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const j = $('Extract').first().json; return [{ json: { rows: j.investors.slice(160) } }];"
+      }
+    },
+    {
+      "id": "s1",
+      "name": "St 1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const j = $('Extract').first().json; return [{ json: { n: j.startups.length, rows: j.startups.slice(0, 25) } }];"
+      }
+    },
+    {
+      "id": "s2",
+      "name": "St 2",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1400,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const j = $('Extract').first().json; return [{ json: { rows: j.startups.slice(25, 50) } }];"
+      }
+    },
+    {
+      "id": "s3",
+      "name": "St 3",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const j = $('Extract').first().json; return [{ json: { rows: j.startups.slice(50) } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once (set before activating)": {
+      "main": [
+        [
+          {
+            "node": "GET pilot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET pilot": {
+      "main": [
+        [
+          {
+            "node": "Extract",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract": {
+      "main": [
+        [
+          {
+            "node": "Inv 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Inv 1": {
+      "main": [
+        [
+          {
+            "node": "Inv 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Inv 2": {
+      "main": [
+        [
+          {
+            "node": "Inv 3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Inv 3": {
+      "main": [
+        [
+          {
+            "node": "St 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "St 1": {
+      "main": [
+        [
+          {
+            "node": "St 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "St 2": {
+      "main": [
+        [
+          {
+            "node": "St 3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once (set before activating)": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "CciQZfnMPZzsQqnP",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-17T05:26:02.028Z",
+      "updatedAt": "2026-09-17T05:26:02.028Z"
+    }
+  ],
+  "activeVersion": null
+}

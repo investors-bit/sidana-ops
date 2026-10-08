@@ -1,0 +1,481 @@
+{
+  "id": "gK00sYw0C9WJsyH3",
+  "name": "AUTO — apply Mail corrections to INVESTORS (weekdays 18:40 IST)",
+  "description": null,
+  "active": true,
+  "activeVersionId": "58a2c978-3090-41a3-93b1-61c66a9c7769",
+  "createdAt": "2026-09-07T07:54:25.359Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "58a2c978-3090-41a3-93b1-61c66a9c7769",
+  "versionCounter": 8,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "trg1",
+      "name": "Weekdays 07:30 IST",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "40 18 * * 1-5"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "rd1",
+      "name": "Read Mail correction",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        220,
+        -100
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1WOErvuYawblG-HkrK5In5YWtEiKKt_DeoVpmL5na6GU/edit"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Mail correction"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "rd2",
+      "name": "Read INVESTORS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "INVESTORS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cd1",
+      "name": "Diff and build updates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Firm names in the corrections sheet do not match INVESTORS exactly.\n// Only an exact normalised match or an explicit alias is accepted - never a fuzzy guess,\n// because writing an email onto the wrong investor row sends real mail to the wrong firm.\nconst ALIAS = {\n  'mventures': 'M Venture Partners',\n  'firesideventures': 'Fireside Ventures',\n  'debtworks': 'Debtworks DEBT',\n  'capitala': 'Capital-A',\n  'flipkart': 'Flipkart Ventures',\n  'blincinvest': 'Blinc Invest',\n  'tvscapitalfunds': 'TVS Capital Funds',\n  'piperserica': 'PiperSireca',\n  'ricebergvc': 'Riceberg Ventures',\n  'cedarhillcapital': 'CedarHill Capital',\n  'rainmatterzerodha': 'Rainmatter by Zerodha',\n  'swishinvc': 'Swishin Ventures',\n  '247vc': '247 VC Tech Fund',\n  'sianacapital': 'Siana Capital',\n  'zerencapital': 'Zeren Capital',\n  'vertex': 'Vertex Ventures',\n  'caspian': 'BlackSoil Capital (formerly Caspian Debt)',\n  'blacksoil': 'BlackSoil Capital (formerly Caspian Debt)'\n};\nfunction s(v) { return String(v == null ? '' : v).trim(); }\nfunction norm(x) { return s(x).toLowerCase().replace(/[^a-z0-9]/g, ''); }\n\nconst corr = $('Read Mail correction').all().map(function (i) { return i.json; });\nconst inv = $input.all().map(function (i) { return i.json; });\nif (inv.length < 100) { throw new Error('ABORT: INVESTORS returned only ' + inv.length + ' rows'); }\n\nconst byNorm = {};\nfor (const r of inv) { byNorm[norm(r.investor)] = r; }\n\nconst out = [], unmatched = [], skipped = [];\nfor (const c of corr) {\n  const firm = s(c['Firm name']);\n  const want = s(c['Correct Mails']).replace(/\\s*;\\s*/g, ',').replace(/\\s*,\\s*/g, ',');\n  const who  = s(c['updated contact name']);\n  if (!firm) { continue; }\n\n  const key = norm(firm);\n  const target = byNorm[key] || (ALIAS[key] ? byNorm[norm(ALIAS[key])] : null);\n\n  // 'Not available' means no working address exists for this firm -> stop contacting them.\n  // do_not_contact is checked in 'Decide ONE action per row' BEFORE the follow-up branch,\n  // so this halts new sends and any remaining follow-ups in one field.\n  if (!want || want.toLowerCase() === 'not available') {\n    if (!target) { skipped.push(firm + ' (not in INVESTORS)'); continue; }\n    // user override 11 Sep 2026: keep contacting these even though the sheet says 'Not available'\n    if (['climateangels'].indexOf(norm(target.investor)) >= 0) { skipped.push(firm + ' (user override: keep contacting)'); continue; }\n    if (s(target.do_not_contact).toLowerCase() === 'yes') { continue; }\n    out.push({ json: { investor: s(target.investor), do_not_contact: 'Yes' } });\n    continue;\n  }\n\n  if (!target) { unmatched.push(firm); continue; }\n  if (s(target.do_not_contact).toLowerCase() === 'yes') { skipped.push(firm + ' (do_not_contact)'); continue; }\n\n  const cur = s(target.email).replace(/\\s*,\\s*/g, ',');\n  const row = { investor: s(target.investor) };\n  let changed = 0;\n  if (cur.toLowerCase() !== want.toLowerCase()) { row.email = want; changed++; }\n  if (who && who.toLowerCase() !== 'not available' && s(target.contact_person) !== who) { row.contact_person = who; changed++; }\n  if (changed > 0) { out.push({ json: row }); }\n}\n\n// A firm that has a real corrected email but no INVESTORS match must NOT be skipped quietly -\n// that is the silent-failure mode this system keeps hitting. Fail loudly so the alias map gets fixed.\nif (unmatched.length > 0) { throw new Error('ABORT: corrections sheet lists firms not found in INVESTORS: ' + unmatched.join(', ') + ' - add an alias and re-run'); }\nif (out.length > 25) { throw new Error('ABORT: ' + out.length + ' updates exceeds guard of 25'); }\nif (out.length === 0) { return []; }   // nothing to do today - not an error\nreturn out;"
+      }
+    },
+    {
+      "id": "up1",
+      "name": "Update INVESTORS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "position": [
+        880,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "INVESTORS"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "investor"
+          ],
+          "schema": [
+            {
+              "id": "investor",
+              "displayName": "investor",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Weekdays 07:30 IST": {
+      "main": [
+        [
+          {
+            "node": "Read Mail correction",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Mail correction": {
+      "main": [
+        [
+          {
+            "node": "Read INVESTORS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read INVESTORS": {
+      "main": [
+        [
+          {
+            "node": "Diff and build updates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Diff and build updates": {
+      "main": [
+        [
+          {
+            "node": "Update INVESTORS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Weekdays 07:30 IST": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "gK00sYw0C9WJsyH3",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-07T07:54:25.360Z",
+      "updatedAt": "2026-09-07T07:54:25.360Z"
+    }
+  ],
+  "activeVersion": {
+    "versionId": "58a2c978-3090-41a3-93b1-61c66a9c7769",
+    "workflowId": "gK00sYw0C9WJsyH3",
+    "nodes": [
+      {
+        "id": "trg1",
+        "name": "Weekdays 07:30 IST",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.4,
+        "position": [
+          0,
+          0
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "40 18 * * 1-5"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "rd1",
+        "name": "Read Mail correction",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.7,
+        "executeOnce": true,
+        "retryOnFail": true,
+        "maxTries": 5,
+        "waitBetweenTries": 5000,
+        "position": [
+          220,
+          -100
+        ],
+        "parameters": {
+          "resource": "sheet",
+          "operation": "read",
+          "documentId": {
+            "__rl": true,
+            "mode": "url",
+            "value": "https://docs.google.com/spreadsheets/d/1WOErvuYawblG-HkrK5In5YWtEiKKt_DeoVpmL5na6GU/edit"
+          },
+          "sheetName": {
+            "__rl": true,
+            "mode": "name",
+            "value": "Mail correction"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "rd2",
+        "name": "Read INVESTORS",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.7,
+        "executeOnce": true,
+        "retryOnFail": true,
+        "maxTries": 5,
+        "waitBetweenTries": 5000,
+        "position": [
+          440,
+          0
+        ],
+        "parameters": {
+          "resource": "sheet",
+          "operation": "read",
+          "documentId": {
+            "__rl": true,
+            "mode": "url",
+            "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+          },
+          "sheetName": {
+            "__rl": true,
+            "mode": "name",
+            "value": "INVESTORS"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "cd1",
+        "name": "Diff and build updates",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          660,
+          0
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "// Firm names in the corrections sheet do not match INVESTORS exactly.\n// Only an exact normalised match or an explicit alias is accepted - never a fuzzy guess,\n// because writing an email onto the wrong investor row sends real mail to the wrong firm.\nconst ALIAS = {\n  'mventures': 'M Venture Partners',\n  'firesideventures': 'Fireside Ventures',\n  'debtworks': 'Debtworks DEBT',\n  'capitala': 'Capital-A',\n  'flipkart': 'Flipkart Ventures',\n  'blincinvest': 'Blinc Invest',\n  'tvscapitalfunds': 'TVS Capital Funds',\n  'piperserica': 'PiperSireca',\n  'ricebergvc': 'Riceberg Ventures',\n  'cedarhillcapital': 'CedarHill Capital',\n  'rainmatterzerodha': 'Rainmatter by Zerodha',\n  'swishinvc': 'Swishin Ventures',\n  '247vc': '247 VC Tech Fund',\n  'sianacapital': 'Siana Capital',\n  'zerencapital': 'Zeren Capital',\n  'vertex': 'Vertex Ventures',\n  'caspian': 'BlackSoil Capital (formerly Caspian Debt)',\n  'blacksoil': 'BlackSoil Capital (formerly Caspian Debt)'\n};\nfunction s(v) { return String(v == null ? '' : v).trim(); }\nfunction norm(x) { return s(x).toLowerCase().replace(/[^a-z0-9]/g, ''); }\n\nconst corr = $('Read Mail correction').all().map(function (i) { return i.json; });\nconst inv = $input.all().map(function (i) { return i.json; });\nif (inv.length < 100) { throw new Error('ABORT: INVESTORS returned only ' + inv.length + ' rows'); }\n\nconst byNorm = {};\nfor (const r of inv) { byNorm[norm(r.investor)] = r; }\n\nconst out = [], unmatched = [], skipped = [];\nfor (const c of corr) {\n  const firm = s(c['Firm name']);\n  const want = s(c['Correct Mails']).replace(/\\s*;\\s*/g, ',').replace(/\\s*,\\s*/g, ',');\n  const who  = s(c['updated contact name']);\n  if (!firm) { continue; }\n\n  const key = norm(firm);\n  const target = byNorm[key] || (ALIAS[key] ? byNorm[norm(ALIAS[key])] : null);\n\n  // 'Not available' means no working address exists for this firm -> stop contacting them.\n  // do_not_contact is checked in 'Decide ONE action per row' BEFORE the follow-up branch,\n  // so this halts new sends and any remaining follow-ups in one field.\n  if (!want || want.toLowerCase() === 'not available') {\n    if (!target) { skipped.push(firm + ' (not in INVESTORS)'); continue; }\n    // user override 11 Sep 2026: keep contacting these even though the sheet says 'Not available'\n    if (['climateangels'].indexOf(norm(target.investor)) >= 0) { skipped.push(firm + ' (user override: keep contacting)'); continue; }\n    if (s(target.do_not_contact).toLowerCase() === 'yes') { continue; }\n    out.push({ json: { investor: s(target.investor), do_not_contact: 'Yes' } });\n    continue;\n  }\n\n  if (!target) { unmatched.push(firm); continue; }\n  if (s(target.do_not_contact).toLowerCase() === 'yes') { skipped.push(firm + ' (do_not_contact)'); continue; }\n\n  const cur = s(target.email).replace(/\\s*,\\s*/g, ',');\n  const row = { investor: s(target.investor) };\n  let changed = 0;\n  if (cur.toLowerCase() !== want.toLowerCase()) { row.email = want; changed++; }\n  if (who && who.toLowerCase() !== 'not available' && s(target.contact_person) !== who) { row.contact_person = who; changed++; }\n  if (changed > 0) { out.push({ json: row }); }\n}\n\n// A firm that has a real corrected email but no INVESTORS match must NOT be skipped quietly -\n// that is the silent-failure mode this system keeps hitting. Fail loudly so the alias map gets fixed.\nif (unmatched.length > 0) { throw new Error('ABORT: corrections sheet lists firms not found in INVESTORS: ' + unmatched.join(', ') + ' - add an alias and re-run'); }\nif (out.length > 25) { throw new Error('ABORT: ' + out.length + ' updates exceeds guard of 25'); }\nif (out.length === 0) { return []; }   // nothing to do today - not an error\nreturn out;"
+        }
+      },
+      {
+        "id": "up1",
+        "name": "Update INVESTORS",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.7,
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 5000,
+        "position": [
+          880,
+          0
+        ],
+        "parameters": {
+          "resource": "sheet",
+          "operation": "update",
+          "documentId": {
+            "__rl": true,
+            "mode": "url",
+            "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+          },
+          "sheetName": {
+            "__rl": true,
+            "mode": "name",
+            "value": "INVESTORS"
+          },
+          "columns": {
+            "mappingMode": "autoMapInputData",
+            "value": {},
+            "matchingColumns": [
+              "investor"
+            ],
+            "schema": [
+              {
+                "id": "investor",
+                "displayName": "investor",
+                "required": false,
+                "defaultMatch": true,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              }
+            ]
+          },
+          "options": {
+            "handlingExtraData": "ignoreIt"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Weekdays 07:30 IST": {
+        "main": [
+          [
+            {
+              "node": "Read Mail correction",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Read Mail correction": {
+        "main": [
+          [
+            {
+              "node": "Read INVESTORS",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Read INVESTORS": {
+        "main": [
+          [
+            {
+              "node": "Diff and build updates",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Diff and build updates": {
+        "main": [
+          [
+            {
+              "node": "Update INVESTORS",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "Sidana Ventures",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "createdAt": "2026-09-11T16:18:40.916Z",
+    "updatedAt": "2026-09-11T16:18:40.916Z",
+    "workflowPublishHistory": [
+      {
+        "id": 758,
+        "workflowId": "gK00sYw0C9WJsyH3",
+        "versionId": "58a2c978-3090-41a3-93b1-61c66a9c7769",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-09-11T16:18:41.052Z"
+      }
+    ]
+  }
+}

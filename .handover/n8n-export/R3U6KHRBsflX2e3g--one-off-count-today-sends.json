@@ -1,0 +1,126 @@
+{
+  "id": "R3U6KHRBsflX2e3g",
+  "name": "One-off — Count today sends",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-01T10:11:33.193Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "0c15ee77-4ad6-47df-b197-d422e49013ae",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 0,
+  "nodes": [
+    {
+      "id": "7972170e-8149-429b-84cc-bc3975018a1b",
+      "name": "Run",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "fd3ea61f-dc6b-4c51-b27b-43c4c8ad7aed",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      },
+      "executeOnce": true
+    },
+    {
+      "id": "f66c27bf-f119-4877-821a-cf6a7fc6e3d8",
+      "name": "Count today sends",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const today = '2026-09-01';\nconst rows = $input.all().map(i => i.json);\nconst sentToday = rows.filter(r => String(r.date_shared || '').trim() === today);\nconst byOwner = {};\nfor (const r of sentToday) {\n  const o = String(r.owner || 'unknown').trim();\n  byOwner[o] = byOwner[o] || [];\n  byOwner[o].push({ deal_id: r.deal_id, startup: r.startup, investor: r.investor, email: r.email, next_action: r.next_action, thread_id: r.thread_id });\n}\nconst summary = Object.keys(byOwner).map(o => ({ owner: o, count: byOwner[o].length }));\nreturn [{ json: { today, total_sent_today: sentToday.length, by_owner: summary, detail: byOwner } }];"
+      },
+      "executeOnce": true
+    }
+  ],
+  "connections": {
+    "Run": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Count today sends",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": {},
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "R3U6KHRBsflX2e3g",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-01T10:11:33.194Z",
+      "updatedAt": "2026-09-01T10:11:33.194Z"
+    }
+  ],
+  "activeVersion": null
+}

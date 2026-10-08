@@ -1,0 +1,422 @@
+{
+  "id": "hkfzoES5lKCFSZud",
+  "name": "One-off RM-1 — re-match Zeren, a99 VC, DSG Consumer Partners",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-08T15:54:52.485Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "c49d82aa-6b17-465d-91cc-7570c56d1281",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "trg1",
+      "name": "Run once 21:34 IST 8 Sep",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "34 21 8 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "rd1",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cdI",
+      "name": "Investor updates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        -260
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// All three already exist in INVESTORS - update in place, never create a row.\n// 'DSG Consumer' on the corrections sheet is 'DSG Consumer Partners' here.\nreturn [\n  { json: { investor: 'Zeren Capital', contact_person: 'Sidhi Dalmia', sector: 'Sector agnostic', stage: 'Pre-Series A to Series C', cheque_inr_cr: 'INR 10 Cr minimum' } },\n  { json: { investor: 'a99 VC', contact_person: 'Khushi', stage: 'Series A/B' } },\n  { json: { investor: 'DSG Consumer Partners', contact_person: 'Pooja', email: 'pshirali@dsgcp.com', sector: 'B2C propositions' } }\n];"
+      }
+    },
+    {
+      "id": "upI",
+      "name": "Update INVESTORS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "position": [
+        660,
+        -260
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "INVESTORS"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "investor"
+          ],
+          "schema": [
+            {
+              "id": "investor",
+              "displayName": "investor",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cdD",
+      "name": "Off-mandate pending to delete",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        -60
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const M = {\"Zeren Capital\":[\"Alt F Coworking\",\"Bon Cuisine\",\"DACBY\",\"EosNox\",\"Flyment\",\"Healthy Master\",\"LearningPad\",\"MentorCloud\",\"MindWox\",\"Orbo AI\",\"Spintly\",\"Talent Recruit\",\"Ulai\"],\"a99 VC\":[\"Alt F Coworking\",\"Bon Cuisine\",\"CLIKD\",\"Caffena Coffee\",\"DACBY\",\"EkoSight\",\"Ela Greens\",\"Flyment\",\"GroCliq\",\"Healthy Master\",\"LUSTR\",\"LearningPad\",\"Lex Protector\",\"Luxova\",\"MentorCloud\",\"My Soul\",\"Starz AI\",\"Sugar's Daddy\",\"Talent Recruit\",\"Ulai\",\"VOLD Energy\",\"YUNO\"],\"DSG Consumer Partners\":[\"Bon Cuisine\",\"Caffena Coffee\",\"Chayan Karo\",\"DACBY\",\"Fydo\",\"Healthy Master\",\"LUSTR\",\"Luxova\",\"My Soul\",\"Orbo AI\",\"Sahaj\",\"Sugar's Daddy\",\"SureChain\",\"VOLD Energy\",\"Xproguard\",\"YUNO\"]};\nfunction s(v) { return String(v == null ? '' : v).trim(); }\nconst rows = $input.all().map(function (i) { return i.json; });\nif (rows.length < 500) { throw new Error('ABORT: PIPELINE returned only ' + rows.length + ' rows'); }\n\nconst out = [];\nfor (const inv of Object.keys(M)) {\n  const keep = {};\n  for (const x of M[inv]) { keep[x.toLowerCase()] = true; }\n  for (const r of rows) {\n    if (s(r.investor) !== inv) { continue; }\n    if (s(r.deal_shared).toLowerCase() === 'yes') { continue; }   // sent rows never deleted\n    if (s(r.pause) !== '') { continue; }\n    if (keep[s(r.startup).toLowerCase()]) { continue; }           // still on-mandate\n    if (!r.row_number) { throw new Error('ABORT: missing row_number'); }\n    out.push({ json: { row_number: Number(r.row_number), deal_id: s(r.deal_id), investor: inv, startup: s(r.startup) } });\n  }\n}\nif (out.length === 0) { return []; }\nif (out.length > 80) { throw new Error('ABORT: ' + out.length + ' deletions exceeds guard of 80'); }\nout.sort(function (a, b) { return b.json.row_number - a.json.row_number; });\nreturn out;"
+      }
+    },
+    {
+      "id": "dl1",
+      "name": "Delete off-mandate rows",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        660,
+        -60
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "delete",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        },
+        "toDelete": "rows",
+        "startIndex": "={{ $json.row_number }}",
+        "numberToDelete": 1
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cdP",
+      "name": "Off-mandate sent to pause",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        140
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const M = {\"Zeren Capital\":[\"Alt F Coworking\",\"Bon Cuisine\",\"DACBY\",\"EosNox\",\"Flyment\",\"Healthy Master\",\"LearningPad\",\"MentorCloud\",\"MindWox\",\"Orbo AI\",\"Spintly\",\"Talent Recruit\",\"Ulai\"],\"a99 VC\":[\"Alt F Coworking\",\"Bon Cuisine\",\"CLIKD\",\"Caffena Coffee\",\"DACBY\",\"EkoSight\",\"Ela Greens\",\"Flyment\",\"GroCliq\",\"Healthy Master\",\"LUSTR\",\"LearningPad\",\"Lex Protector\",\"Luxova\",\"MentorCloud\",\"My Soul\",\"Starz AI\",\"Sugar's Daddy\",\"Talent Recruit\",\"Ulai\",\"VOLD Energy\",\"YUNO\"],\"DSG Consumer Partners\":[\"Bon Cuisine\",\"Caffena Coffee\",\"Chayan Karo\",\"DACBY\",\"Fydo\",\"Healthy Master\",\"LUSTR\",\"Luxova\",\"My Soul\",\"Orbo AI\",\"Sahaj\",\"Sugar's Daddy\",\"SureChain\",\"VOLD Energy\",\"Xproguard\",\"YUNO\"]};\nfunction s(v) { return String(v == null ? '' : v).trim(); }\nconst rows = $input.all().map(function (i) { return i.json; });\nif (rows.length < 500) { throw new Error('ABORT: PIPELINE returned only ' + rows.length + ' rows'); }\n\nconst out = [];\nfor (const inv of Object.keys(M)) {\n  const keep = {};\n  for (const x of M[inv]) { keep[x.toLowerCase()] = true; }\n  for (const r of rows) {\n    if (s(r.investor) !== inv) { continue; }\n    if (s(r.deal_shared).toLowerCase() !== 'yes') { continue; }\n    if (s(r.investor_response) !== '') { continue; }   // live conversation - never touch\n    if (s(r.pause) !== '') { continue; }\n    if (keep[s(r.startup).toLowerCase()]) { continue; }\n    const prev = s(r.notes);\n    out.push({ json: { deal_id: s(r.deal_id), pause: 'Yes',\n      next_action: 'Stopped - off updated mandate',\n      notes: (prev ? prev + ' | ' : '') + 'Follow-ups stopped 2026-09-08: ' + inv + ' mandate updated from corrections sheet' } });\n  }\n}\nif (out.length === 0) { return []; }\nif (out.length > 40) { throw new Error('ABORT: ' + out.length + ' exceeds guard of 40'); }\nreturn out;"
+      }
+    },
+    {
+      "id": "upP",
+      "name": "Pause off-mandate sent",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "position": [
+        660,
+        140
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "deal_id"
+          ],
+          "schema": [
+            {
+              "id": "deal_id",
+              "displayName": "deal_id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cdN",
+      "name": "New matches to add",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        340
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const EMAIL = { 'Zeren Capital': 'sidhi.dalmia@zerencapital.com', 'a99 VC': 'Khushi@a99.vc', 'DSG Consumer Partners': 'pshirali@dsgcp.com' };\nconst M = {\"Zeren Capital\":[[\"Alt F Coworking\",\"Chaman\",80],[\"Bon Cuisine\",\"Aditya\",80],[\"DACBY\",\"Chaman\",80],[\"EosNox\",\"Shradha\",80],[\"Flyment\",\"Chaman\",80],[\"Healthy Master\",\"Aditya\",80],[\"LearningPad\",\"Aditya\",80],[\"MentorCloud\",\"Shradha\",80],[\"MindWox\",\"Akansha\",80],[\"Orbo AI\",\"Shradha\",80],[\"Spintly\",\"Shradha\",80],[\"Talent Recruit\",\"Akansha\",80],[\"Ulai\",\"Shradha\",80]],\"a99 VC\":[[\"Alt F Coworking\",\"Chaman\",100],[\"Bon Cuisine\",\"Aditya\",85],[\"CLIKD\",\"Aditya\",85],[\"Caffena Coffee\",\"Aditya\",85],[\"DACBY\",\"Chaman\",85],[\"EkoSight\",\"Chaman\",85],[\"Ela Greens\",\"Chaman\",85],[\"Flyment\",\"Chaman\",85],[\"GroCliq\",\"Akansha\",85],[\"Healthy Master\",\"Aditya\",85],[\"LUSTR\",\"Aditya\",85],[\"LearningPad\",\"Aditya\",85],[\"Lex Protector\",\"Akansha\",85],[\"Luxova\",\"Aditya\",85],[\"MentorCloud\",\"Shradha\",85],[\"My Soul\",\"Aditya\",85],[\"Starz AI\",\"Akansha\",85],[\"Sugar's Daddy\",\"Aditya\",85],[\"Talent Recruit\",\"Akansha\",85],[\"Ulai\",\"Shradha\",85],[\"VOLD Energy\",\"Aditya\",85],[\"YUNO\",\"Aditya\",85]],\"DSG Consumer Partners\":[[\"Bon Cuisine\",\"Aditya\",100],[\"Caffena Coffee\",\"Aditya\",100],[\"Chayan Karo\",\"Shradha\",100],[\"DACBY\",\"Chaman\",100],[\"Fydo\",\"Shradha\",100],[\"Healthy Master\",\"Aditya\",100],[\"LUSTR\",\"Aditya\",100],[\"Luxova\",\"Aditya\",100],[\"My Soul\",\"Aditya\",100],[\"Orbo AI\",\"Shradha\",100],[\"Sahaj\",\"Shradha\",100],[\"Sugar's Daddy\",\"Aditya\",100],[\"SureChain\",\"Shradha\",100],[\"VOLD Energy\",\"Aditya\",100],[\"Xproguard\",\"Akansha\",100],[\"YUNO\",\"Aditya\",100]]};\n\nfunction s(v) { return String(v == null ? '' : v).trim(); }\nconst rows = $input.all().map(function (i) { return i.json; });\nif (rows.length < 500) { throw new Error('ABORT: PIPELINE returned only ' + rows.length + ' rows'); }\n\nconst seen = {};\nfor (const r of rows) { seen[s(r.startup).toLowerCase() + '||' + s(r.investor).toLowerCase()] = true; }\n\nlet maxN = 0;\nfor (const r of rows) {\n  const id = s(r.deal_id);\n  if (id.charAt(0) === 'D') { const n = parseInt(id.slice(1), 10); if (!isNaN(n) && n > maxN) { maxN = n; } }\n}\nif (maxN === 0) { throw new Error('ABORT: could not determine max deal_id'); }\n\nfunction weekdays(n, y, m, d) {\n  const out = []; const dt = new Date(Date.UTC(y, m - 1, d));\n  while (out.length < n) {\n    const wd = dt.getUTCDay();\n    if (wd !== 0 && wd !== 6) { out.push(dt.toISOString().slice(0, 10)); }\n    dt.setUTCDate(dt.getUTCDate() + 1);\n  }\n  return out;\n}\n\nlet n = maxN;\nconst out = [];\nfor (const inv of Object.keys(M)) {\n  const keep = M[inv].filter(function (x) { return !seen[x[0].toLowerCase() + '||' + inv.toLowerCase()]; });\n  const days = weekdays(Math.ceil(keep.length / 2) + 1, 2026, 9, 9);\n  for (let i = 0; i < keep.length; i++) {\n    n++;\n    let pad = String(n);\n    while (pad.length < 5) { pad = '0' + pad; }\n    out.push({ json: {\n      deal_id: 'D' + pad, startup: keep[i][0], owner: keep[i][1], investor: inv,\n      email: EMAIL[inv], cc: '', priority: keep[i][2], deal_shared: 'No',\n      next_action: 'Initial', next_due: days[Math.floor(i / 2)],\n      notes: (keep[i][2] >= 85 ? 'Very High' : 'High') + ' match (' + keep[i][2] + ') - updated mandate 2026-09-08'\n    }});\n  }\n}\nif (out.length === 0) { return []; }\nif (out.length > 51) { throw new Error('ABORT: ' + out.length + ' exceeds guard of 51'); }\nreturn out;"
+      }
+    },
+    {
+      "id": "apN",
+      "name": "Append new matches",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "position": [
+        660,
+        340
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Run once 21:34 IST 8 Sep": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Investor updates",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Off-mandate pending to delete",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Off-mandate sent to pause",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "New matches to add",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Investor updates": {
+      "main": [
+        [
+          {
+            "node": "Update INVESTORS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Off-mandate pending to delete": {
+      "main": [
+        [
+          {
+            "node": "Delete off-mandate rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Off-mandate sent to pause": {
+      "main": [
+        [
+          {
+            "node": "Pause off-mandate sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "New matches to add": {
+      "main": [
+        [
+          {
+            "node": "Append new matches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once 21:34 IST 8 Sep": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "hkfzoES5lKCFSZud",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-08T15:54:52.488Z",
+      "updatedAt": "2026-09-08T15:54:52.488Z"
+    }
+  ],
+  "activeVersion": null
+}

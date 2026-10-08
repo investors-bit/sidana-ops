@@ -1,0 +1,178 @@
+{
+  "id": "IwOhrlvav6Mcr04q",
+  "name": "Investor Cleanup Rows 10-14",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-08-29T14:13:31.589Z",
+  "updatedAt": "2026-08-29T16:38:54.000Z",
+  "isArchived": true,
+  "versionId": "90039dd9-fe9a-42a6-bccc-22855199d8ae",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 0,
+  "nodes": [
+    {
+      "id": "8cdb8734-ef55-4692-ba03-f0998eb6c0c0",
+      "name": "Run Cleanup",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "9365e9b3-5da0-4176-8e1d-73c61ff9b69d",
+      "name": "Build Reset Rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "parameters": {
+        "jsCode": "// Reset rows 10-14 back to originals and clear verification flag + source.\n// Row 10 a99 VC: original khushi@a99.vc (bad append kruti@247vc.in removed)\n// Row 11 Capital-A: original raashi@capital-a.vc ; Utkarsh@aakashemprise.com (bad append rahul@hanu.ai removed)\n// Row 12 Capital-A: original raashi@capital-a.vc (bad xproguard appends removed)\n// Row 13 Aavishkar Capital DEBT: mukund@aavishkaar.in (unchanged, just clear flag)\n// Row 14 Aavishkar Capital DEBT: mukund@aavishkaar.in (unchanged, just clear flag)\nconst rows = [\n  { row_number: 10, \"Investors Email\": \"khushi@a99.vc\" },\n  { row_number: 11, \"Investors Email\": \"raashi@capital-a.vc ; Utkarsh@aakashemprise.com\" },\n  { row_number: 12, \"Investors Email\": \"raashi@capital-a.vc\" },\n  { row_number: 13, \"Investors Email\": \"mukund@aavishkaar.in\" },\n  { row_number: 14, \"Investors Email\": \"mukund@aavishkaar.in\" },\n];\nreturn rows.map(r => ({ json: {\n  row_number: r.row_number,\n  \"Investors Email\": r[\"Investors Email\"],\n  \"Verification of email\": \"\",\n  \"Email Verification Source / Date\": \"\",\n} }));"
+      }
+    },
+    {
+      "id": "a2f88e79-ac9f-4bbe-a3e2-59995ac36d87",
+      "name": "Reset Rows 10-14",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        448,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1wBWCcPkxw_RiSs0tUnFFV4aDyxEY2tu-DT73pzIq8b8",
+          "mode": "list",
+          "cachedResultName": "Copy of updated Investor_list_237",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1wBWCcPkxw_RiSs0tUnFFV4aDyxEY2tu-DT73pzIq8b8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 579173326,
+          "mode": "list",
+          "cachedResultName": "INVESTOR MASTER",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1wBWCcPkxw_RiSs0tUnFFV4aDyxEY2tu-DT73pzIq8b8/edit#gid=579173326"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "row_number"
+          ],
+          "value": {
+            "row_number": "={{ $json.row_number }}",
+            "Investors Email": "={{ $json[\"Investors Email\"] }}",
+            "Verification of email": "={{ $json[\"Verification of email\"] }}",
+            "Email Verification Source / Date": "={{ $json[\"Email Verification Source / Date\"] }}"
+          },
+          "schema": [
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Investors Email",
+              "displayName": "Investors Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Verification of email",
+              "displayName": "Verification of email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Email Verification Source / Date",
+              "displayName": "Email Verification Source / Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Run Cleanup": {
+      "main": [
+        [
+          {
+            "node": "Build Reset Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Reset Rows": {
+      "main": [
+        [
+          {
+            "node": "Reset Rows 10-14",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "pinData": {},
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "IwOhrlvav6Mcr04q",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-08-29T14:13:31.591Z",
+      "updatedAt": "2026-08-29T14:13:31.591Z"
+    }
+  ],
+  "activeVersion": null
+}

@@ -1,0 +1,198 @@
+{
+  "id": "QCPbWFuiM0FpGiwZ",
+  "name": "One-off — Strip closing line (write-back)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-01T14:07:52.278Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "111f7e8f-004f-4551-943a-3a2e455c2b13",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 0,
+  "nodes": [
+    {
+      "id": "834eeec3-f210-4cb3-a72e-68697b396b54",
+      "name": "Run",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "69d79def-f6b1-46a7-8b1f-fab755ad9ec3",
+      "name": "Read STARTUPS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "STARTUPS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      },
+      "executeOnce": true
+    },
+    {
+      "id": "323c0355-43df-475e-ad56-254652c6c768",
+      "name": "Compute stripped memos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const rows = $input.all().map(i => i.json);\nconst stripRe = /\\s*If the opportunity fits[\\s\\S]*?fundraising round\\.\\s*/i;\nconst closeRe = /investment mandate|arrange a discussion|happy to arrange/i;\nconst out = [];\nfor (const r of rows) {\n  const memo = String(r.memo_html || '');\n  if (!closeRe.test(memo)) continue;      // only the flagged ones\n  if (!stripRe.test(memo)) continue;      // safety: skip if rule no longer matches\n  const stripped = memo.replace(stripRe, ' ');\n  if (stripped === memo) continue;        // no change -> skip\n  out.push({ json: { startup: r.startup, memo_html: stripped } });\n}\nreturn out;"
+      }
+    },
+    {
+      "id": "a3295230-a13f-4a81-bef1-7d8e13b7c78f",
+      "name": "Update memo_html",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        672,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "STARTUPS"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "startup": "={{ $json.startup }}",
+            "memo_html": "={{ $json.memo_html }}"
+          },
+          "matchingColumns": [
+            "startup"
+          ],
+          "schema": [
+            {
+              "id": "startup",
+              "displayName": "startup",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "memo_html",
+              "displayName": "memo_html",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Run": {
+      "main": [
+        [
+          {
+            "node": "Read STARTUPS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read STARTUPS": {
+      "main": [
+        [
+          {
+            "node": "Compute stripped memos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute stripped memos": {
+      "main": [
+        [
+          {
+            "node": "Update memo_html",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": {},
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "QCPbWFuiM0FpGiwZ",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-01T14:07:52.280Z",
+      "updatedAt": "2026-09-01T14:07:52.280Z"
+    }
+  ],
+  "activeVersion": null
+}

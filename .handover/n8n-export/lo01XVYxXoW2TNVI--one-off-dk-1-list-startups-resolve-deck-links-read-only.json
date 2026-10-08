@@ -1,0 +1,216 @@
+{
+  "id": "lo01XVYxXoW2TNVI",
+  "name": "One-off DK-1 — list startups + resolve deck links (read only)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-11T15:20:25.771Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "947682eb-9ed2-4535-8382-7c558d9b995c",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once (set before activating)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "55 20 11 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "r2",
+      "name": "Read STARTUPS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "STARTUPS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cf",
+      "name": "Rows with a link",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nconst out = [];\nfor (const i of $input.all()) { const r = i.json; const n = s(r.startup); if (!n) { continue; }\n  const link = s(r.deck_link).split(/\\s+/)[0];\n  out.push({ json: { row: r.row_number, startup: n, active: s(r.active), owner: s(r.owner), sector: s(r.sector), stage: s(r.stage), deck_link: link, url: /^https?:\\/\\//i.test(link) ? link : (link ? 'https://' + link : '') } }); }\nreturn out.filter(function (x) { return x.json.url; });"
+      }
+    },
+    {
+      "id": "hr",
+      "name": "Resolve link (no follow)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "continueOnFail": true,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "options": {
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "text"
+            }
+          },
+          "timeout": 20000
+        }
+      }
+    },
+    {
+      "id": "cc",
+      "name": "Collect",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const src = $('Rows with a link').all().map(function (i) { return i.json; });\nconst res = $input.all().map(function (i) { return i.json; });\nconst all = $('Read STARTUPS').all().map(function (i) { return i.json; });\nconst rows = src.map(function (r, k) { const x = res[k] || {}; const h = x.headers || {};\n  return [r.row, r.startup, r.active, r.owner, r.deck_link, x.statusCode || '', h.location || h.Location || '', x.error ? String(x.error.message || x.error).slice(0, 80) : '']; });\nconst noLink = all.filter(function (r) { return String(r.startup || '').trim() && !String(r.deck_link || '').trim(); }).map(function (r) { return [r.row_number, r.startup, r.active]; });\nreturn [{ json: { startups_total: all.filter(function (r) { return String(r.startup || '').trim(); }).length, with_link: rows.length, rows: rows, no_link: noLink } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once (set before activating)": {
+      "main": [
+        [
+          {
+            "node": "Read STARTUPS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read STARTUPS": {
+      "main": [
+        [
+          {
+            "node": "Rows with a link",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rows with a link": {
+      "main": [
+        [
+          {
+            "node": "Resolve link (no follow)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve link (no follow)": {
+      "main": [
+        [
+          {
+            "node": "Collect",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once (set before activating)": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "lo01XVYxXoW2TNVI",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-11T15:20:25.774Z",
+      "updatedAt": "2026-09-11T15:20:25.774Z"
+    }
+  ],
+  "activeVersion": null
+}

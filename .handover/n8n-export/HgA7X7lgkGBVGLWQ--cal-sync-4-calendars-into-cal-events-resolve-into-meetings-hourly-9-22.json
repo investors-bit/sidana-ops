@@ -1,0 +1,1615 @@
+{
+  "id": "HgA7X7lgkGBVGLWQ",
+  "name": "CAL-SYNC — 4 calendars into cal_events, resolve into meetings (hourly 9-22 IST + backfill webhook)",
+  "description": null,
+  "active": true,
+  "activeVersionId": "0cf8e2d3-52f6-40b8-9562-8d899afef80a",
+  "createdAt": "2026-10-01T09:58:08.449Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "0cf8e2d3-52f6-40b8-9562-8d899afef80a",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 2,
+  "nodes": [
+    {
+      "id": "sch",
+      "name": "Hourly 9-22",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -460,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9-22 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "wh",
+      "name": "Backfill hook",
+      "webhookId": "4e73f1ae-a8c0-415f-b7da-2d8870ddb74c",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -460,
+        520
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-calsync-3e7b9c",
+        "responseMode": "onReceived",
+        "options": {}
+      }
+    },
+    {
+      "id": "win",
+      "name": "Window",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -220,
+        400
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Default window is wide on purpose: meetings get rescheduled and cancelled\n// after the fact, and iCalUID is the primary key so re-reading is free.\n// A backfill call can widen it further with {\"days_back\":600,\"days_fwd\":200}.\nlet b = {};\ntry { b = ($('Backfill hook').first().json.body) || {}; } catch (e) { b = {}; }\n// 30 days back catches a reschedule or a cancellation; 120 forward keeps the\n// upcoming list complete. A wider sweep is a backfill call, not every hour.\nconst back = Number(b.days_back) > 0 ? Number(b.days_back) : 30;\nconst fwd  = Number(b.days_fwd)  > 0 ? Number(b.days_fwd)  : 120;\nconst now = Date.now();\nreturn [{ json: {\n  timeMin: new Date(now - back * 86400000).toISOString(),\n  timeMax: new Date(now + fwd  * 86400000).toISOString(),\n} }];"
+      }
+    },
+    {
+      "id": "g1",
+      "name": "Cal 1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        20,
+        100
+      ],
+      "parameters": {
+        "url": "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleCalendarOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "timeMin",
+              "value": "={{ $json.timeMin }}"
+            },
+            {
+              "name": "timeMax",
+              "value": "={{ $json.timeMax }}"
+            },
+            {
+              "name": "singleEvents",
+              "value": "true"
+            },
+            {
+              "name": "maxResults",
+              "value": "2500"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 120000,
+          "pagination": {
+            "pagination": {
+              "paginationMode": "updateAParameterInEachRequest",
+              "parameters": {
+                "parameters": [
+                  {
+                    "type": "qs",
+                    "name": "pageToken",
+                    "value": "={{ $response.body.nextPageToken }}"
+                  }
+                ]
+              },
+              "paginationCompleteWhen": "other",
+              "completeExpression": "={{ !$response.body.nextPageToken }}",
+              "limitPagesFetched": true,
+              "maxRequests": 20,
+              "requestInterval": 200
+            }
+          }
+        }
+      },
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "FMaJN0wYxb8FWUZs",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "id": "s1",
+      "name": "Shape 1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        100
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const rows = [];\nfor (const it of $input.all()) {\n  for (const e of (it.json.items || [])) {\n    const when = (e.start && (e.start.dateTime || e.start.date)) || null;\n    if (!when) { continue; }\n    const uid = e.iCalUID || e.id;\n    if (!uid) { continue; }\n    rows.push({\n      ical_uid: uid, event_id: e.id || null,\n      summary: e.summary || null,\n      start_at: new Date(when).toISOString(),\n      status: e.status || null,\n      meet_link: e.hangoutLink || null,\n      attendees: (e.attendees || []).map(function (a) { return String(a.email || '').toLowerCase(); }).filter(Boolean).join(','),\n    });\n  }\n}\n// Deduplicate inside the batch. Postgres refuses an upsert that would touch\n// the same key twice in one statement, and a recurring event can repeat here.\nconst seen = {}; const out = [];\nfor (const r of rows) { if (seen[r.ical_uid]) { continue; } seen[r.ical_uid] = 1; out.push(r); }\nconst chunks = [];\nfor (let i = 0; i < out.length; i += 400) { chunks.push({ json: { chunk: out.slice(i, i + 400) } }); }\nreturn chunks;"
+      }
+    },
+    {
+      "id": "w1",
+      "name": "Write 1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        500,
+        100
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://elwaquzawoscotlojtnv.supabase.co/rest/v1/cal_events?on_conflict=ical_uid",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates,return=minimal"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.chunk) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "ntQxeHO20ZUMASMg",
+          "name": "Supabase service"
+        }
+      }
+    },
+    {
+      "id": "g2",
+      "name": "Cal 2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        20,
+        300
+      ],
+      "parameters": {
+        "url": "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleCalendarOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "timeMin",
+              "value": "={{ $json.timeMin }}"
+            },
+            {
+              "name": "timeMax",
+              "value": "={{ $json.timeMax }}"
+            },
+            {
+              "name": "singleEvents",
+              "value": "true"
+            },
+            {
+              "name": "maxResults",
+              "value": "2500"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 120000,
+          "pagination": {
+            "pagination": {
+              "paginationMode": "updateAParameterInEachRequest",
+              "parameters": {
+                "parameters": [
+                  {
+                    "type": "qs",
+                    "name": "pageToken",
+                    "value": "={{ $response.body.nextPageToken }}"
+                  }
+                ]
+              },
+              "paginationCompleteWhen": "other",
+              "completeExpression": "={{ !$response.body.nextPageToken }}",
+              "limitPagesFetched": true,
+              "maxRequests": 20,
+              "requestInterval": 200
+            }
+          }
+        }
+      },
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "SUalv0ssD9ruGnuS",
+          "name": "Google Calendar account 2"
+        }
+      }
+    },
+    {
+      "id": "s2",
+      "name": "Shape 2",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const rows = [];\nfor (const it of $input.all()) {\n  for (const e of (it.json.items || [])) {\n    const when = (e.start && (e.start.dateTime || e.start.date)) || null;\n    if (!when) { continue; }\n    const uid = e.iCalUID || e.id;\n    if (!uid) { continue; }\n    rows.push({\n      ical_uid: uid, event_id: e.id || null,\n      summary: e.summary || null,\n      start_at: new Date(when).toISOString(),\n      status: e.status || null,\n      meet_link: e.hangoutLink || null,\n      attendees: (e.attendees || []).map(function (a) { return String(a.email || '').toLowerCase(); }).filter(Boolean).join(','),\n    });\n  }\n}\nconst seen = {}; const out = [];\nfor (const r of rows) { if (seen[r.ical_uid]) { continue; } seen[r.ical_uid] = 1; out.push(r); }\nconst chunks = [];\nfor (let i = 0; i < out.length; i += 400) { chunks.push({ json: { chunk: out.slice(i, i + 400) } }); }\nreturn chunks;"
+      }
+    },
+    {
+      "id": "w2",
+      "name": "Write 2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        500,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://elwaquzawoscotlojtnv.supabase.co/rest/v1/cal_events?on_conflict=ical_uid",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates,return=minimal"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.chunk) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "ntQxeHO20ZUMASMg",
+          "name": "Supabase service"
+        }
+      }
+    },
+    {
+      "id": "g3",
+      "name": "Cal 3",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        20,
+        500
+      ],
+      "parameters": {
+        "url": "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleCalendarOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "timeMin",
+              "value": "={{ $json.timeMin }}"
+            },
+            {
+              "name": "timeMax",
+              "value": "={{ $json.timeMax }}"
+            },
+            {
+              "name": "singleEvents",
+              "value": "true"
+            },
+            {
+              "name": "maxResults",
+              "value": "2500"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 120000,
+          "pagination": {
+            "pagination": {
+              "paginationMode": "updateAParameterInEachRequest",
+              "parameters": {
+                "parameters": [
+                  {
+                    "type": "qs",
+                    "name": "pageToken",
+                    "value": "={{ $response.body.nextPageToken }}"
+                  }
+                ]
+              },
+              "paginationCompleteWhen": "other",
+              "completeExpression": "={{ !$response.body.nextPageToken }}",
+              "limitPagesFetched": true,
+              "maxRequests": 20,
+              "requestInterval": 200
+            }
+          }
+        }
+      },
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "XHTquOpYpODOTLYR",
+          "name": "Google Calendar account 3"
+        }
+      }
+    },
+    {
+      "id": "s3",
+      "name": "Shape 3",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        500
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const rows = [];\nfor (const it of $input.all()) {\n  for (const e of (it.json.items || [])) {\n    const when = (e.start && (e.start.dateTime || e.start.date)) || null;\n    if (!when) { continue; }\n    const uid = e.iCalUID || e.id;\n    if (!uid) { continue; }\n    rows.push({\n      ical_uid: uid, event_id: e.id || null,\n      summary: e.summary || null,\n      start_at: new Date(when).toISOString(),\n      status: e.status || null,\n      meet_link: e.hangoutLink || null,\n      attendees: (e.attendees || []).map(function (a) { return String(a.email || '').toLowerCase(); }).filter(Boolean).join(','),\n    });\n  }\n}\nconst seen = {}; const out = [];\nfor (const r of rows) { if (seen[r.ical_uid]) { continue; } seen[r.ical_uid] = 1; out.push(r); }\nconst chunks = [];\nfor (let i = 0; i < out.length; i += 400) { chunks.push({ json: { chunk: out.slice(i, i + 400) } }); }\nreturn chunks;"
+      }
+    },
+    {
+      "id": "w3",
+      "name": "Write 3",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        500,
+        500
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://elwaquzawoscotlojtnv.supabase.co/rest/v1/cal_events?on_conflict=ical_uid",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates,return=minimal"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.chunk) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "ntQxeHO20ZUMASMg",
+          "name": "Supabase service"
+        }
+      }
+    },
+    {
+      "id": "g4",
+      "name": "Cal 4",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        20,
+        700
+      ],
+      "parameters": {
+        "url": "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleCalendarOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "timeMin",
+              "value": "={{ $json.timeMin }}"
+            },
+            {
+              "name": "timeMax",
+              "value": "={{ $json.timeMax }}"
+            },
+            {
+              "name": "singleEvents",
+              "value": "true"
+            },
+            {
+              "name": "maxResults",
+              "value": "2500"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 120000,
+          "pagination": {
+            "pagination": {
+              "paginationMode": "updateAParameterInEachRequest",
+              "parameters": {
+                "parameters": [
+                  {
+                    "type": "qs",
+                    "name": "pageToken",
+                    "value": "={{ $response.body.nextPageToken }}"
+                  }
+                ]
+              },
+              "paginationCompleteWhen": "other",
+              "completeExpression": "={{ !$response.body.nextPageToken }}",
+              "limitPagesFetched": true,
+              "maxRequests": 20,
+              "requestInterval": 200
+            }
+          }
+        }
+      },
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "NdbYgV97aSL2PRCB",
+          "name": "Google Calendar account 4"
+        }
+      }
+    },
+    {
+      "id": "s4",
+      "name": "Shape 4",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        700
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const rows = [];\nfor (const it of $input.all()) {\n  for (const e of (it.json.items || [])) {\n    const when = (e.start && (e.start.dateTime || e.start.date)) || null;\n    if (!when) { continue; }\n    const uid = e.iCalUID || e.id;\n    if (!uid) { continue; }\n    rows.push({\n      ical_uid: uid, event_id: e.id || null,\n      summary: e.summary || null,\n      start_at: new Date(when).toISOString(),\n      status: e.status || null,\n      meet_link: e.hangoutLink || null,\n      attendees: (e.attendees || []).map(function (a) { return String(a.email || '').toLowerCase(); }).filter(Boolean).join(','),\n    });\n  }\n}\nconst seen = {}; const out = [];\nfor (const r of rows) { if (seen[r.ical_uid]) { continue; } seen[r.ical_uid] = 1; out.push(r); }\nconst chunks = [];\nfor (let i = 0; i < out.length; i += 400) { chunks.push({ json: { chunk: out.slice(i, i + 400) } }); }\nreturn chunks;"
+      }
+    },
+    {
+      "id": "w4",
+      "name": "Write 4",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        500,
+        700
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://elwaquzawoscotlojtnv.supabase.co/rest/v1/cal_events?on_conflict=ical_uid",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates,return=minimal"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.chunk) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "ntQxeHO20ZUMASMg",
+          "name": "Supabase service"
+        }
+      }
+    },
+    {
+      "id": "rz",
+      "name": "Resolve",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        760,
+        400
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://elwaquzawoscotlojtnv.supabase.co/rest/v1/rpc/resolve_meetings",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={}",
+        "options": {
+          "timeout": 300000
+        }
+      },
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "ntQxeHO20ZUMASMg",
+          "name": "Supabase service"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Hourly 9-22": {
+      "main": [
+        [
+          {
+            "node": "Window",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Backfill hook": {
+      "main": [
+        [
+          {
+            "node": "Window",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Window": {
+      "main": [
+        [
+          {
+            "node": "Cal 1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Cal 2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Cal 3",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Cal 4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cal 1": {
+      "main": [
+        [
+          {
+            "node": "Shape 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Shape 1": {
+      "main": [
+        [
+          {
+            "node": "Write 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write 1": {
+      "main": [
+        [
+          {
+            "node": "Resolve",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cal 2": {
+      "main": [
+        [
+          {
+            "node": "Shape 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Shape 2": {
+      "main": [
+        [
+          {
+            "node": "Write 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write 2": {
+      "main": [
+        [
+          {
+            "node": "Resolve",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cal 3": {
+      "main": [
+        [
+          {
+            "node": "Shape 3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Shape 3": {
+      "main": [
+        [
+          {
+            "node": "Write 3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write 3": {
+      "main": [
+        [
+          {
+            "node": "Resolve",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cal 4": {
+      "main": [
+        [
+          {
+            "node": "Shape 4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Shape 4": {
+      "main": [
+        [
+          {
+            "node": "Write 4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write 4": {
+      "main": [
+        [
+          {
+            "node": "Resolve",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "none",
+    "executionTimeout": 1800,
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Nightly": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    },
+    "node:Hourly 9-22": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "HgA7X7lgkGBVGLWQ",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-10-01T09:58:08.452Z",
+      "updatedAt": "2026-10-01T09:58:08.452Z"
+    }
+  ],
+  "activeVersion": {
+    "versionId": "0cf8e2d3-52f6-40b8-9562-8d899afef80a",
+    "workflowId": "HgA7X7lgkGBVGLWQ",
+    "nodes": [
+      {
+        "id": "sch",
+        "name": "Hourly 9-22",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          -460,
+          300
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "0 9-22 * * *"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "wh",
+        "name": "Backfill hook",
+        "webhookId": "4e73f1ae-a8c0-415f-b7da-2d8870ddb74c",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          -460,
+          520
+        ],
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "sidana-calsync-3e7b9c",
+          "responseMode": "onReceived",
+          "options": {}
+        }
+      },
+      {
+        "id": "win",
+        "name": "Window",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -220,
+          400
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "// Default window is wide on purpose: meetings get rescheduled and cancelled\n// after the fact, and iCalUID is the primary key so re-reading is free.\n// A backfill call can widen it further with {\"days_back\":600,\"days_fwd\":200}.\nlet b = {};\ntry { b = ($('Backfill hook').first().json.body) || {}; } catch (e) { b = {}; }\n// 30 days back catches a reschedule or a cancellation; 120 forward keeps the\n// upcoming list complete. A wider sweep is a backfill call, not every hour.\nconst back = Number(b.days_back) > 0 ? Number(b.days_back) : 30;\nconst fwd  = Number(b.days_fwd)  > 0 ? Number(b.days_fwd)  : 120;\nconst now = Date.now();\nreturn [{ json: {\n  timeMin: new Date(now - back * 86400000).toISOString(),\n  timeMax: new Date(now + fwd  * 86400000).toISOString(),\n} }];"
+        }
+      },
+      {
+        "id": "g1",
+        "name": "Cal 1",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          20,
+          100
+        ],
+        "parameters": {
+          "url": "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleCalendarOAuth2Api",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "timeMin",
+                "value": "={{ $json.timeMin }}"
+              },
+              {
+                "name": "timeMax",
+                "value": "={{ $json.timeMax }}"
+              },
+              {
+                "name": "singleEvents",
+                "value": "true"
+              },
+              {
+                "name": "maxResults",
+                "value": "2500"
+              }
+            ]
+          },
+          "options": {
+            "timeout": 120000,
+            "pagination": {
+              "pagination": {
+                "paginationMode": "updateAParameterInEachRequest",
+                "parameters": {
+                  "parameters": [
+                    {
+                      "type": "qs",
+                      "name": "pageToken",
+                      "value": "={{ $response.body.nextPageToken }}"
+                    }
+                  ]
+                },
+                "paginationCompleteWhen": "other",
+                "completeExpression": "={{ !$response.body.nextPageToken }}",
+                "limitPagesFetched": true,
+                "maxRequests": 20,
+                "requestInterval": 200
+              }
+            }
+          }
+        },
+        "credentials": {
+          "googleCalendarOAuth2Api": {
+            "id": "FMaJN0wYxb8FWUZs",
+            "name": "Google Calendar account"
+          }
+        }
+      },
+      {
+        "id": "s1",
+        "name": "Shape 1",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          260,
+          100
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const rows = [];\nfor (const it of $input.all()) {\n  for (const e of (it.json.items || [])) {\n    const when = (e.start && (e.start.dateTime || e.start.date)) || null;\n    if (!when) { continue; }\n    const uid = e.iCalUID || e.id;\n    if (!uid) { continue; }\n    rows.push({\n      ical_uid: uid, event_id: e.id || null,\n      summary: e.summary || null,\n      start_at: new Date(when).toISOString(),\n      status: e.status || null,\n      meet_link: e.hangoutLink || null,\n      attendees: (e.attendees || []).map(function (a) { return String(a.email || '').toLowerCase(); }).filter(Boolean).join(','),\n    });\n  }\n}\n// Deduplicate inside the batch. Postgres refuses an upsert that would touch\n// the same key twice in one statement, and a recurring event can repeat here.\nconst seen = {}; const out = [];\nfor (const r of rows) { if (seen[r.ical_uid]) { continue; } seen[r.ical_uid] = 1; out.push(r); }\nconst chunks = [];\nfor (let i = 0; i < out.length; i += 400) { chunks.push({ json: { chunk: out.slice(i, i + 400) } }); }\nreturn chunks;"
+        }
+      },
+      {
+        "id": "w1",
+        "name": "Write 1",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          500,
+          100
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://elwaquzawoscotlojtnv.supabase.co/rest/v1/cal_events?on_conflict=ical_uid",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpCustomAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Prefer",
+                "value": "resolution=merge-duplicates,return=minimal"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json.chunk) }}",
+          "options": {
+            "timeout": 120000
+          }
+        },
+        "credentials": {
+          "httpCustomAuth": {
+            "id": "ntQxeHO20ZUMASMg",
+            "name": "Supabase service"
+          }
+        }
+      },
+      {
+        "id": "g2",
+        "name": "Cal 2",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          20,
+          300
+        ],
+        "parameters": {
+          "url": "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleCalendarOAuth2Api",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "timeMin",
+                "value": "={{ $json.timeMin }}"
+              },
+              {
+                "name": "timeMax",
+                "value": "={{ $json.timeMax }}"
+              },
+              {
+                "name": "singleEvents",
+                "value": "true"
+              },
+              {
+                "name": "maxResults",
+                "value": "2500"
+              }
+            ]
+          },
+          "options": {
+            "timeout": 120000,
+            "pagination": {
+              "pagination": {
+                "paginationMode": "updateAParameterInEachRequest",
+                "parameters": {
+                  "parameters": [
+                    {
+                      "type": "qs",
+                      "name": "pageToken",
+                      "value": "={{ $response.body.nextPageToken }}"
+                    }
+                  ]
+                },
+                "paginationCompleteWhen": "other",
+                "completeExpression": "={{ !$response.body.nextPageToken }}",
+                "limitPagesFetched": true,
+                "maxRequests": 20,
+                "requestInterval": 200
+              }
+            }
+          }
+        },
+        "credentials": {
+          "googleCalendarOAuth2Api": {
+            "id": "SUalv0ssD9ruGnuS",
+            "name": "Google Calendar account 2"
+          }
+        }
+      },
+      {
+        "id": "s2",
+        "name": "Shape 2",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          260,
+          300
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const rows = [];\nfor (const it of $input.all()) {\n  for (const e of (it.json.items || [])) {\n    const when = (e.start && (e.start.dateTime || e.start.date)) || null;\n    if (!when) { continue; }\n    const uid = e.iCalUID || e.id;\n    if (!uid) { continue; }\n    rows.push({\n      ical_uid: uid, event_id: e.id || null,\n      summary: e.summary || null,\n      start_at: new Date(when).toISOString(),\n      status: e.status || null,\n      meet_link: e.hangoutLink || null,\n      attendees: (e.attendees || []).map(function (a) { return String(a.email || '').toLowerCase(); }).filter(Boolean).join(','),\n    });\n  }\n}\nconst seen = {}; const out = [];\nfor (const r of rows) { if (seen[r.ical_uid]) { continue; } seen[r.ical_uid] = 1; out.push(r); }\nconst chunks = [];\nfor (let i = 0; i < out.length; i += 400) { chunks.push({ json: { chunk: out.slice(i, i + 400) } }); }\nreturn chunks;"
+        }
+      },
+      {
+        "id": "w2",
+        "name": "Write 2",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          500,
+          300
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://elwaquzawoscotlojtnv.supabase.co/rest/v1/cal_events?on_conflict=ical_uid",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpCustomAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Prefer",
+                "value": "resolution=merge-duplicates,return=minimal"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json.chunk) }}",
+          "options": {
+            "timeout": 120000
+          }
+        },
+        "credentials": {
+          "httpCustomAuth": {
+            "id": "ntQxeHO20ZUMASMg",
+            "name": "Supabase service"
+          }
+        }
+      },
+      {
+        "id": "g3",
+        "name": "Cal 3",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          20,
+          500
+        ],
+        "parameters": {
+          "url": "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleCalendarOAuth2Api",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "timeMin",
+                "value": "={{ $json.timeMin }}"
+              },
+              {
+                "name": "timeMax",
+                "value": "={{ $json.timeMax }}"
+              },
+              {
+                "name": "singleEvents",
+                "value": "true"
+              },
+              {
+                "name": "maxResults",
+                "value": "2500"
+              }
+            ]
+          },
+          "options": {
+            "timeout": 120000,
+            "pagination": {
+              "pagination": {
+                "paginationMode": "updateAParameterInEachRequest",
+                "parameters": {
+                  "parameters": [
+                    {
+                      "type": "qs",
+                      "name": "pageToken",
+                      "value": "={{ $response.body.nextPageToken }}"
+                    }
+                  ]
+                },
+                "paginationCompleteWhen": "other",
+                "completeExpression": "={{ !$response.body.nextPageToken }}",
+                "limitPagesFetched": true,
+                "maxRequests": 20,
+                "requestInterval": 200
+              }
+            }
+          }
+        },
+        "credentials": {
+          "googleCalendarOAuth2Api": {
+            "id": "XHTquOpYpODOTLYR",
+            "name": "Google Calendar account 3"
+          }
+        }
+      },
+      {
+        "id": "s3",
+        "name": "Shape 3",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          260,
+          500
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const rows = [];\nfor (const it of $input.all()) {\n  for (const e of (it.json.items || [])) {\n    const when = (e.start && (e.start.dateTime || e.start.date)) || null;\n    if (!when) { continue; }\n    const uid = e.iCalUID || e.id;\n    if (!uid) { continue; }\n    rows.push({\n      ical_uid: uid, event_id: e.id || null,\n      summary: e.summary || null,\n      start_at: new Date(when).toISOString(),\n      status: e.status || null,\n      meet_link: e.hangoutLink || null,\n      attendees: (e.attendees || []).map(function (a) { return String(a.email || '').toLowerCase(); }).filter(Boolean).join(','),\n    });\n  }\n}\nconst seen = {}; const out = [];\nfor (const r of rows) { if (seen[r.ical_uid]) { continue; } seen[r.ical_uid] = 1; out.push(r); }\nconst chunks = [];\nfor (let i = 0; i < out.length; i += 400) { chunks.push({ json: { chunk: out.slice(i, i + 400) } }); }\nreturn chunks;"
+        }
+      },
+      {
+        "id": "w3",
+        "name": "Write 3",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          500,
+          500
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://elwaquzawoscotlojtnv.supabase.co/rest/v1/cal_events?on_conflict=ical_uid",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpCustomAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Prefer",
+                "value": "resolution=merge-duplicates,return=minimal"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json.chunk) }}",
+          "options": {
+            "timeout": 120000
+          }
+        },
+        "credentials": {
+          "httpCustomAuth": {
+            "id": "ntQxeHO20ZUMASMg",
+            "name": "Supabase service"
+          }
+        }
+      },
+      {
+        "id": "g4",
+        "name": "Cal 4",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          20,
+          700
+        ],
+        "parameters": {
+          "url": "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleCalendarOAuth2Api",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "timeMin",
+                "value": "={{ $json.timeMin }}"
+              },
+              {
+                "name": "timeMax",
+                "value": "={{ $json.timeMax }}"
+              },
+              {
+                "name": "singleEvents",
+                "value": "true"
+              },
+              {
+                "name": "maxResults",
+                "value": "2500"
+              }
+            ]
+          },
+          "options": {
+            "timeout": 120000,
+            "pagination": {
+              "pagination": {
+                "paginationMode": "updateAParameterInEachRequest",
+                "parameters": {
+                  "parameters": [
+                    {
+                      "type": "qs",
+                      "name": "pageToken",
+                      "value": "={{ $response.body.nextPageToken }}"
+                    }
+                  ]
+                },
+                "paginationCompleteWhen": "other",
+                "completeExpression": "={{ !$response.body.nextPageToken }}",
+                "limitPagesFetched": true,
+                "maxRequests": 20,
+                "requestInterval": 200
+              }
+            }
+          }
+        },
+        "credentials": {
+          "googleCalendarOAuth2Api": {
+            "id": "NdbYgV97aSL2PRCB",
+            "name": "Google Calendar account 4"
+          }
+        }
+      },
+      {
+        "id": "s4",
+        "name": "Shape 4",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          260,
+          700
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const rows = [];\nfor (const it of $input.all()) {\n  for (const e of (it.json.items || [])) {\n    const when = (e.start && (e.start.dateTime || e.start.date)) || null;\n    if (!when) { continue; }\n    const uid = e.iCalUID || e.id;\n    if (!uid) { continue; }\n    rows.push({\n      ical_uid: uid, event_id: e.id || null,\n      summary: e.summary || null,\n      start_at: new Date(when).toISOString(),\n      status: e.status || null,\n      meet_link: e.hangoutLink || null,\n      attendees: (e.attendees || []).map(function (a) { return String(a.email || '').toLowerCase(); }).filter(Boolean).join(','),\n    });\n  }\n}\nconst seen = {}; const out = [];\nfor (const r of rows) { if (seen[r.ical_uid]) { continue; } seen[r.ical_uid] = 1; out.push(r); }\nconst chunks = [];\nfor (let i = 0; i < out.length; i += 400) { chunks.push({ json: { chunk: out.slice(i, i + 400) } }); }\nreturn chunks;"
+        }
+      },
+      {
+        "id": "w4",
+        "name": "Write 4",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          500,
+          700
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://elwaquzawoscotlojtnv.supabase.co/rest/v1/cal_events?on_conflict=ical_uid",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpCustomAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Prefer",
+                "value": "resolution=merge-duplicates,return=minimal"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json.chunk) }}",
+          "options": {
+            "timeout": 120000
+          }
+        },
+        "credentials": {
+          "httpCustomAuth": {
+            "id": "ntQxeHO20ZUMASMg",
+            "name": "Supabase service"
+          }
+        }
+      },
+      {
+        "id": "rz",
+        "name": "Resolve",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "onError": "continueRegularOutput",
+        "position": [
+          760,
+          400
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://elwaquzawoscotlojtnv.supabase.co/rest/v1/rpc/resolve_meetings",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpCustomAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={}",
+          "options": {
+            "timeout": 300000
+          }
+        },
+        "credentials": {
+          "httpCustomAuth": {
+            "id": "ntQxeHO20ZUMASMg",
+            "name": "Supabase service"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Hourly 9-22": {
+        "main": [
+          [
+            {
+              "node": "Window",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Backfill hook": {
+        "main": [
+          [
+            {
+              "node": "Window",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Window": {
+        "main": [
+          [
+            {
+              "node": "Cal 1",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Cal 2",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Cal 3",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Cal 4",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Cal 1": {
+        "main": [
+          [
+            {
+              "node": "Shape 1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Shape 1": {
+        "main": [
+          [
+            {
+              "node": "Write 1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Write 1": {
+        "main": [
+          [
+            {
+              "node": "Resolve",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Cal 2": {
+        "main": [
+          [
+            {
+              "node": "Shape 2",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Shape 2": {
+        "main": [
+          [
+            {
+              "node": "Write 2",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Write 2": {
+        "main": [
+          [
+            {
+              "node": "Resolve",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Cal 3": {
+        "main": [
+          [
+            {
+              "node": "Shape 3",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Shape 3": {
+        "main": [
+          [
+            {
+              "node": "Write 3",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Write 3": {
+        "main": [
+          [
+            {
+              "node": "Resolve",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Cal 4": {
+        "main": [
+          [
+            {
+              "node": "Shape 4",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Shape 4": {
+        "main": [
+          [
+            {
+              "node": "Write 4",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Write 4": {
+        "main": [
+          [
+            {
+              "node": "Resolve",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "Sidana Ventures",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "createdAt": "2026-10-01T12:46:13.754Z",
+    "updatedAt": "2026-10-01T12:46:13.754Z",
+    "workflowPublishHistory": [
+      {
+        "id": 10833,
+        "workflowId": "HgA7X7lgkGBVGLWQ",
+        "versionId": "0cf8e2d3-52f6-40b8-9562-8d899afef80a",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-10-01T12:46:13.880Z"
+      },
+      {
+        "id": 10837,
+        "workflowId": "HgA7X7lgkGBVGLWQ",
+        "versionId": "0cf8e2d3-52f6-40b8-9562-8d899afef80a",
+        "event": "deactivated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-10-01T12:46:36.499Z"
+      },
+      {
+        "id": 10838,
+        "workflowId": "HgA7X7lgkGBVGLWQ",
+        "versionId": "0cf8e2d3-52f6-40b8-9562-8d899afef80a",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-10-01T12:46:36.500Z"
+      }
+    ]
+  }
+}

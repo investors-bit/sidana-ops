@@ -1,0 +1,193 @@
+{
+  "id": "9vPagaXKBoAn3N7Q",
+  "name": "Send Lustr Deal to Investors",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-08-24T12:20:17.918Z",
+  "updatedAt": "2026-08-29T16:37:36.000Z",
+  "isArchived": true,
+  "versionId": "4a0df666-d3f4-47e0-85e8-2a492e044fdf",
+  "versionCounter": 50,
+  "sourceWorkflowId": null,
+  "triggerCount": 0,
+  "nodes": [
+    {
+      "id": "679b4473-2a17-4831-9eda-e639a04abd8e",
+      "name": "Start",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "27e3b8df-1f97-44ae-bd4e-2c93c3cf35aa",
+      "name": "Read Investors",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "1d0yM-UyeFMbsG1AxPOWzNAhYBzWAHOjvhAYnhEzr7io"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gid=0",
+          "cachedResultName": "Sheet1"
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "dc4bfd22-78f2-41b4-a324-2da5c7bd5c3b",
+      "name": "Skip Blank Emails",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        448,
+        192
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "has-email",
+              "leftValue": "={{ $json.email }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "not-missing",
+              "leftValue": "={{ $json.email }}",
+              "rightValue": "MISSING",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "02ba5035-d263-4d54-8bf9-b5702c4f6171",
+      "name": "Send Deal Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        448,
+        0
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "={{ $json.email }}",
+        "subject": "New Deal: Indie Stori | Consumer | Premium Indian Regional Foods & Lifestyle",
+        "emailType": "html",
+        "message": "=Hi {{ $json[\"Vc name\"] }},<br><br>\nHope you are doing well.<br><br>\nI'm sharing a new deal that I believe may interest you. Please have a look and let me know if you'd like to explore it further:<br><br>\n<b>Indie Stori</b><br><br>\n<b>Consumer | Premium Indian Regional Foods &amp; Lifestyle | Early Traction | Current Revenue Run-Rate: INR 0.1 Cr | Projected Y3 Revenue: INR 100 Cr FY31 | Raising US$150K / INR 1 Cr</b><br><br>\nRevenue is expected to grow from INR 0.1 Cr in FY26 to INR 100 Cr by FY32, representing approximately 1000x growth over five years.<br><br>\nIndie Stori sells premium, limited-edition Indian regional products - forest honey, spices and indigenous foods - built on provenance rather than discounting. Revenue has grown from INR 2.5 lakh to INR 10 lakh annually with no external institutional funding and a founder still handling sourcing, packaging and marketing personally. The US$450K / INR 4 Cr round is the first outside capital into the business.<br><br>\n<b>1. Traction</b><br><br>\nCustomers reached: 3000-4000<br><br>\nRepeat rate: 60 percent<br><br>\nCorporate gifting: 30% of sales<br><br>\nExternal funding to date: None<br><br>\nRepeat behaviour: Certain customers have purchased up to 10 times<br><br>\nThe absolute numbers are small and should be read as such. What is unusual is the shape: 4x growth with no paid acquisition, 30% of revenue from repeat corporate gifting orders, and individual customers reaching ten purchases. That is a demand signal on a base too small to be a business yet.<br><br>\n<b>2. Founder-Market Fit</b><br><br>\nSiddharth Ojha brings 18+ years in media, communication, advertising, storytelling and brand strategy, including Times Group and Zee Business, alongside work with startups and nonprofits. He began the Umang Foundation at nineteen and produced the documentary 'Dervish, a Spiritual Sojourn', featured on Amazon Prime Video in the US and UK. Siddarth carries experience in various social works as well.<br><br>\nThis is a provenance-and-narrative business before it is a food business - the product is sourced, not manufactured, and the margin sits in the story and the curation. A career in storytelling and brand strategy maps directly onto that. The open question is operating depth: sourcing, packaging and marketing currently sit with one person.<br><br>\n<b>3. Key Investment Highlights</b><br><br>\n- <b>Profitable-growth orientation.</b> Management intends to prioritise sustainable margins and customer retention rather than pursue a high-burn D2C growth strategy.<br><br>\n- <b>Capital-efficient growth to date.</b> 4x revenue growth with no external funding and no discount-led acquisition.<br><br>\n- <b>Corporate gifting channel.</b> 30% of sales from repeat B2B orders, a higher-AOV and more predictable channel than D2C.<br><br>\n- <b>Provenance positioning.</b> Regional sourcing and export-quality raw materials support premium pricing.<br><br>\n- <b>Deliberate scarcity.</b> Limited production protects margin and brand rather than chasing volume.<br><br>\n- <b>Category headroom.</b> A stated roadmap into clothing, handicrafts and lifestyle from the same provenance thesis.<br><br>\n- <b>Promoting finest Indian product to the world.</b><br><br>\n<b>4. The Round</b><br><br>\nUS$150K / INR 1 Cr<br><br>\n<b>5. Recent Category Funding</b><br><br>\nRegional and heritage-led Indian food brands have continued to attract early-stage capital. KIWI Kisan Window, which curates regional and organic food products from across India, secured INR 2.5 Cr for 10% equity from Kunal Bahl following its Shark Tank India Season 4 pitch. My Pahadi Dukan, a D2C Himalayan health and wellness brand sourcing produce across Himalayan states, raised an undisclosed pre-seed round from Inflection Point Ventures in March 2025 to strengthen marketing, working capital, operations and technology infrastructure. Namakwali, a Himalayan food brand focused on flavoured salts, spices and regional products, secured a INR 50 Lakh structured Shark Tank deal from Amit Jain - INR 10 Lakh for 5% equity plus INR 40 Lakh debt. Indie Stori is positioned differently through limited edition regional sourcing, cultural storytelling and a corporate gifting channel rather than pursuing mass-market D2C throughput.<br><br>\nIf the opportunity fits your consumer / D2C investment mandate, we would be happy to arrange a discussion with the founder and share further details on the company and the fundraising round.<br><br>\n--<br>\n<table cellpadding=\"0\" cellspacing=\"0\" style=\"font-family: Arial, sans-serif; color: #000000;\"><tr><td style=\"vertical-align: top; padding-right: 16px;\"><div style=\"font-size: 16px; font-weight: bold; color: #1a4a7a;\">Aditya Mishra</div><div style=\"font-size: 14px; color: #333333; border-bottom: 1px solid #cccccc; padding-bottom: 6px; margin-bottom: 8px;\">Investor Relations</div><img src=\"https://sidanaventures.com/vc/wp-content/uploads/2024/08/1logo_black.png\" alt=\"Sidana Ventures\" width=\"140\" style=\"display: block;\"></td><td style=\"vertical-align: top; border-left: 1px solid #cccccc; padding-left: 16px; font-size: 13px; line-height: 1.5; color: #333333;\"><div style=\"font-size: 15px; font-weight: bold; color: #000000; margin-bottom: 8px;\">SIDANA VENTURES LLP</div>424A Tower B3, Spaze itech park,<br>Sector 49, Sohna Road<br>Gurgaon, Haryana 122022<br>+91 87965 99510<br><a href=\"https://www.sidanaventures.com\" style=\"color: #1a5fb4;\">https://www.sidanaventures.com</a></td></tr></table>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "WnChCwx6dhMlY5iw",
+          "name": "Gmail account"
+        }
+      },
+      "webhookId": "563f0b78-ed94-4f05-af10-77614620a867"
+    }
+  ],
+  "connections": {
+    "Start": {
+      "main": [
+        [
+          {
+            "node": "Read Investors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Investors": {
+      "main": [
+        [
+          {
+            "node": "Skip Blank Emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skip Blank Emails": {
+      "main": [
+        [
+          {
+            "node": "Send Deal Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "pinData": {},
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "9vPagaXKBoAn3N7Q",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-08-24T12:20:17.921Z",
+      "updatedAt": "2026-08-24T12:20:17.921Z"
+    }
+  ],
+  "activeVersion": null
+}

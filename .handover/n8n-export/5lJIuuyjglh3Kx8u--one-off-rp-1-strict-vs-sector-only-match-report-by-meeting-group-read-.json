@@ -1,0 +1,319 @@
+{
+  "id": "5lJIuuyjglh3Kx8u",
+  "name": "One-off RP-1 — strict vs sector-only match report by meeting group (read only)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-10T09:45:15.132Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "a5d9190e-f740-4fe7-bea4-f15abb4e32c5",
+  "versionCounter": 4,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once 15:19 IST 10 Sep",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "9 18 10 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "h1",
+      "name": "GET meetings values",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/1d-wSnDCnC_c9_rqD652Zayu6An-dipeVyC7lCD_TD0Y/values/' + encodeURIComponent(\"'Report - No of Deal Flows'!A1:Z300\") }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "r0",
+      "name": "Read Deal Tracker",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1WzrrPelm2HsJNXOUNIEOuRajp70CUY-RrzBOs9LENjs/edit"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1WzrrPelm2HsJNXOUNIEOuRajp70CUY-RrzBOs9LENjs/edit#gid=189973839"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "r1",
+      "name": "Read INVESTORS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "INVESTORS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "r2",
+      "name": "Read STARTUPS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        880,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "STARTUPS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "r3",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        1100,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "c1",
+      "name": "Build report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nfunction nz(x) { return s(x).toLowerCase().replace(/[^a-z0-9]/g, ''); }\nconst grid = $('GET meetings values').first().json.values || [];\nconst trk = $('Read Deal Tracker').all().map(function (i) { return i.json; });\nconst invRaw = $('Read INVESTORS').all().map(function (i) { return i.json; });\nconst stRaw = $('Read STARTUPS').all().map(function (i) { return i.json; });\nconst pipe = $input.all().map(function (i) { return i.json; });\nif (pipe.length < 500) { throw new Error('ABORT: PIPELINE only ' + pipe.length); }\nif (trk.length < 200) { throw new Error('ABORT: tracker only ' + trk.length + ' rows - truncated'); }\n\n// ---- meetings: the LATEST staircase block only (user 2026-09-10: ignore pipeline meetings) ----\nfunction isHdr(row) { return /startup got meetings/i.test(s((row || [])[1])) && /\\d/.test(s((row || [])[0])); }\nconst hdrs = [];\nfor (let i = 0; i < grid.length; i++) { if (isHdr(grid[i])) { hdrs.push(i); } }\nif (!hdrs.length) { throw new Error('ABORT: no staircase blocks found'); }\nfunction parseBlock(start) {\n  const st = {}, raw = {};\n  for (let i = start + 1; i < grid.length; i++) {\n    const row = grid[i] || [];\n    if (isHdr(row)) { break; }\n    const m = s(row[1]).match(/^(\\d+)\\s*meetings?/i);\n    if (!m) { if (Object.keys(st).length) { break; } else { continue; } }\n    const n = parseInt(m[1], 10);\n    for (let j = 2; j < row.length; j++) { const nm = s(row[j]); if (!nm) { continue; } const k = nz(nm);\n      if (st[k] === undefined || n > st[k]) { st[k] = n; raw[k] = nm; } }\n  }\n  return { st: st, raw: raw };\n}\nconst TODAY = new Date(Date.UTC(2026, 8, 10));\nfunction blockDate(label) {\n  const m = s(label).match(/^(\\d{1,2})[\\/\\-.](\\d{1,2})[\\/\\-.](\\d{4})/); if (!m) { return null; }\n  const a = +m[1], b = +m[2], y = +m[3]; const c = [];\n  if (b >= 1 && b <= 12 && a >= 1 && a <= 31) { c.push(new Date(Date.UTC(y, b - 1, a))); }\n  if (a >= 1 && a <= 12 && b >= 1 && b <= 31) { c.push(new Date(Date.UTC(y, a - 1, b))); }\n  const past = c.filter(function (d) { return d <= TODAY; }); const pool = past.length ? past : c;\n  pool.sort(function (x, z) { return z - x; }); return pool[0] || null;\n}\nlet latestIdx = hdrs[hdrs.length - 1]; let latestDate = blockDate(s(grid[latestIdx][0]));\nfor (const i of hdrs) { const d = blockDate(s(grid[i][0])); if (d && (!latestDate || d > latestDate)) { latestDate = d; latestIdx = i; } }\nif (!latestDate) { throw new Error('ABORT: could not read the date of the latest block: ' + s(grid[latestIdx][0])); }\nconst latest = parseBlock(latestIdx);\nconst stairLabel = s(grid[latestIdx][0]);\nlet augIdx = null;\nfor (const i of hdrs) { const d = blockDate(s(grid[i][0])); if (d && d.getTime() === Date.UTC(2026, 7, 31)) { augIdx = i; } }\nconst aug = augIdx !== null ? parseBlock(augIdx) : { st: {}, raw: {} };\nconst ALIAS = { caffeinacoffee: 'caffenacoffee' };\nfunction stairIn(block, name) { const k = nz(name); let best = null;\n  for (const sk of Object.keys(block.st)) { const kk = ALIAS[sk] || sk;\n    const hit = kk === k || (kk.length >= 4 && k.length >= 4 && (kk.indexOf(k) === 0 || k.indexOf(kk) === 0));\n    if (hit && (best === null || block.st[sk] > best.n)) { best = { n: block.st[sk], src: block.raw[sk] }; } }\n  return best; }\nfunction parseDate(v) { const t = s(v); if (!t) { return null; }\n  let m = t.match(/^(\\d{4})-(\\d{2})-(\\d{2})/); if (m) { return new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])); }\n  m = t.match(/^(\\d{1,2})[\\/-](\\d{1,2})[\\/-](\\d{4})/); if (m) { return new Date(Date.UTC(+m[3], +m[2] - 1, +m[1])); }\n  const d = new Date(t); return isNaN(d.getTime()) ? null : d; }\nconst cutIso = latestDate.toISOString().slice(0, 10);\n// pipeline meetings are listed for reference only - never added to the count\nconst pmRef = {}; const meetingLog = [];\nfor (const p of pipe) {\n  const sk = nz(p.startup); if (!sk) { continue; }\n  const resp = s(p.investor_response).toLowerCase(); const held = parseFloat(s(p.meetings_held));\n  const isMeet = /meet/.test(resp) || /^(yes|y|true|scheduled|done)$/.test(s(p.meeting_scheduled).toLowerCase()) || s(p.meeting_date) !== '' || (!isNaN(held) && held > 0);\n  if (!isMeet) { continue; }\n  pmRef[sk] = (pmRef[sk] || 0) + 1;\n  meetingLog.push(s(p.startup) + ' <> ' + s(p.investor) + ' | meeting date: ' + (s(p.meeting_date) || 'none') + ' | NOT counted (staircase only)');\n}\n\n// ---- matching ----\nconst TAGS = [\n  ['health', /health|medtech|bio|clinic|pharma|life science|wellness|fitness|diagnost|hospital|patient|doctor/],\n  ['fintech', /fintech|lending|insur|payment|banking|wealth|credit|financial|neobank/],\n  ['saas', /saas|b2b|enterprise|software|platform|api|devtool|cloud|workflow|automation/],\n  ['consumer', /consumer|d2c|b2c|retail|fmcg|food|beverage|fashion|beauty|apparel|coffee|restaurant|cafe|grocer|kitchen|snack|personal care/],\n  ['deeptech', /deeptech|deep tech|\\bai\\b|artificial intelligence|\\bml\\b|robot|iot|semiconductor|space|drone|quantum|computer vision|hardware/],\n  ['climate', /climate|clean|energy|solar|ev\\b|electric vehicle|sustain|green|water|waste|carbon|recycl/],\n  ['edtech', /edtech|education|learning|skill|training|exam|student|course/],\n  ['logistics', /logistic|supply chain|mobility|delivery|freight|shipping|transport|warehous/],\n  ['agritech', /agri|farm|agtech|crop/],\n  ['hrtech', /hrtech|\\bhr\\b|recruit|talent|hiring|staffing|workforce/],\n  ['proptech', /proptech|real estate|construction|coworking|interior|windoor|building/],\n  ['media', /media|gaming|content|entertainment|creator|social|dating|travel|music|video/]\n];\nfunction tagsOf(txt) { const t = s(txt).toLowerCase(); const o = {}; for (const p of TAGS) { if (p[1].test(t)) { o[p[0]] = 1; } } return Object.keys(o); }\nfunction startupStage(txt) { const t = s(txt).toLowerCase();\n  if (/series[\\s-]*[b-e]\\b|growth|pre-?\\s*ipo/.test(t)) { return 4; }\n  if (/series[\\s-]*a\\b/.test(t)) { return 3; }\n  if (/pilot|traction|early revenue|revenue|mvp|launched/.test(t)) { return 2; }\n  if (/\\bseed\\b/.test(t.replace(/pre-?\\s*seed/g, ''))) { return 1; }\n  if (/pre-?\\s*seed|ideation|concept|idea|prototype/.test(t)) { return 0; }\n  return 1; }\nfunction investorBand(txt) { const t = s(txt).toLowerCase(); const h = [];\n  if (/pre-?\\s*seed|preseed/.test(t)) { h.push(0); }\n  if (/\\bseed\\b/.test(t.replace(/pre-?\\s*seed/g, ''))) { h.push(1); }\n  if (/pilot|traction|early|pre-?\\s*series[\\s-]*a/.test(t)) { h.push(2); }\n  if (/series[\\s-]*a\\b/.test(t)) { h.push(3); }\n  if (/series[\\s-]*[b-e]\\b|series[\\s-]*a\\s*[\\/&,]\\s*b|growth|late|pre-?\\s*ipo|onwards|and above/.test(t)) { h.push(4); }\n  if (!h.length) { return null; }\n  return { lo: Math.min.apply(null, h), hi: Math.max.apply(null, h) }; }\nfunction chequeRange(txt) { const t = s(txt).replace(/,/g, '').toLowerCase(); if (!t) { return null; }\n  const usd = /\\$|usd/.test(t); const re = /(\\d+(?:\\.\\d+)?)\\s*(crores?|cr|million|mn|m|k|lakhs?|lacs?)?(?![a-z])/g;\n  const tok = []; let m; while ((m = re.exec(t)) !== null) { tok.push({ v: parseFloat(m[1]), u: m[2] || '' }); }\n  if (!tok.length) { return null; }\n  for (let i = tok.length - 2; i >= 0; i--) { if (!tok[i].u && tok[i + 1].u) { tok[i].u = tok[i + 1].u; } }\n  const vals = [];\n  for (const k of tok) { const u = k.u || (usd ? 'm' : 'cr'); let cr;\n    if (/^cr/.test(u)) { cr = k.v; } else if (/^la/.test(u)) { cr = k.v / 100; }\n    else if (u === 'k') { cr = usd ? k.v * 0.0085 : k.v / 10000; } else { cr = usd ? k.v * 8.5 : k.v / 10; }\n    if (cr > 0) { vals.push(cr); } }\n  if (!vals.length) { return null; }\n  let lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);\n  if (/minimum|\\bmin\\b|onwards|above|\\+/.test(t)) { hi = Infinity; }\n  if (vals.length === 1 && /up\\s*to|upto|\\bmax/.test(t)) { lo = 0; }\n  if (vals.length === 1 && hi === lo) { lo = lo * 0.8; hi = hi * 1.2; }\n  return [lo, hi]; }\nfunction raiseOf(txt) { const t = s(txt).replace(/,/g, ''); if (!t) { return null; }\n  let m = t.match(/(?:US\\$|\\$)\\s*([\\d.]+)\\s*M/i); if (m) { return parseFloat(m[1]) * 8.5; }\n  m = t.match(/(?:US\\$|\\$)\\s*([\\d.]+)\\s*K/i); if (m) { return parseFloat(m[1]) * 0.0085; }\n  m = t.match(/([\\d.]+)\\s*(?:-|to|–)\\s*[\\d.]+\\s*Cr/i); if (m) { return parseFloat(m[1]); }\n  m = t.match(/([\\d.]+)\\s*Cr/i); if (m) { return parseFloat(m[1]); }\n  m = t.match(/([\\d.]+)\\s*Lakh/i); if (m) { return parseFloat(m[1]) / 100; }\n  return null; }\nconst FLOOR_FIX = { a2dventures: 0.85, mintvc: 0.5, pipersireca: 1.0 };\nconst book = []; const seenInv = {};\nfor (const r of invRaw) { const n = s(r.investor); if (!n) { continue; }\n  if (s(r.do_not_contact).toLowerCase() === 'yes') { continue; }\n  const k = nz(n); if (seenInv[k]) { continue; } seenInv[k] = 1;\n  let rng = chequeRange(r.cheque_inr_cr); if (FLOOR_FIX[k] !== undefined) { rng = [FLOOR_FIX[k], rng ? rng[1] : Infinity]; }\n  book.push({ key: k, name: n, email: s(r.email), agnostic: /agno/i.test(s(r.sector)), tags: tagsOf(r.sector),\n    band: investorBand(r.stage), rng: rng, stageText: s(r.stage).slice(0, 40), chequeText: s(r.cheque_inr_cr).slice(0, 30), sectorText: s(r.sector).slice(0, 60) }); }\nconst cols = Object.keys(trk[0] || {}); let cInv = null; const cDeals = [];\nfor (const c of cols) { const l = c.toLowerCase();\n  if (!cInv && (l.indexOf('investor') >= 0 || l.indexOf('vc name') >= 0)) { cInv = c; }\n  if (l.indexOf('deals shared') >= 0 || l.indexOf('latest deal') >= 0 || l.indexOf('picked') >= 0) { cDeals.push(c); } }\nconst trkText = [];\nfor (const r of trk) { const iv = nz(r[cInv]); if (!iv) { continue; } let b = ''; for (const c of cDeals) { b += ' ' + s(r[c]); } trkText.push({ inv: iv, blob: nz(b) }); }\nconst status = {};\nfor (const p of pipe) { const sk = nz(p.startup); if (!sk) { continue; } const key = sk + '|' + nz(p.investor);\n  const isSent = s(p.deal_shared).toLowerCase() === 'yes'; const isPaused = s(p.pause).toLowerCase() === 'yes';\n  const st = isSent ? 'sent' : (isPaused ? 'paused' : 'queued'); const cur = status[key];\n  if (cur !== 'sent' && !(cur === 'queued' && st === 'paused')) { status[key] = st; } }\n\nconst rows = []; const pairs = []; const unmatched = [];\nfor (const r of stRaw) {\n  const name = s(r.startup); if (!name || s(r.active).toLowerCase() !== 'yes') { continue; }\n  const sk = nz(name); const st = stairIn(latest, name); const stA = stairIn(aug, name);\n  if (!st) { unmatched.push(name); }\n  const stairN = st ? st.n : 0; const augN = stA ? stA.n : 0;\n  const total = stairN;                                   // staircase only\n  const group = total < 5 ? 'Under 5' : '5+';\n  const inTrk = {}; for (const t of trkText) { if (sk.length > 3 && t.blob.indexOf(sk) >= 0) { inTrk[t.inv] = 1; } }\n  const sTags = tagsOf(r.sector); const si = startupStage(r.stage); const raise = raiseOf(r.raise_inr_cr);\n  const o = { startup: name, owner: s(r.owner), stage_text: s(r.stage).slice(0, 30), raise_cr: raise === null ? null : Math.round(raise * 100) / 100,\n    stair_latest: stairN, stair_aug: augN, stair_change: stairN - augN, stair_name: st ? st.src : '', pipeline_after: pmRef[sk] || 0, total_meetings: total, group: group,\n    strict_total: 0, strict_sent: 0, strict_queued: 0, strict_paused: 0, strict_tracker_only: 0, strict_not_queued: 0, perfect_total: 0,\n    sector_only_new: 0, sector_only_stage_off: 0, sector_only_cheque_below: 0, late_stage_excluded: 0, no_email_new: 0 };\n  for (const b of book) {\n    let ov = false; for (const tg of b.tags) { if (sTags.indexOf(tg) >= 0) { ov = true; break; } }\n    const secOK = b.agnostic || ov; if (!secOK) { continue; }\n    const inBand = !b.band || (si >= b.band.lo && si <= b.band.hi);\n    const chqOK = !b.rng || (raise !== null && raise >= b.rng[0]);\n    const strict = inBand && chqOK;\n    if (b.band && inBand && b.rng && raise !== null && raise >= b.rng[0] && raise <= b.rng[1]) { o.perfect_total++; }\n    const pst = status[sk + '|' + b.key];\n    const where = pst ? pst : (inTrk[b.key] ? 'tracker' : 'none');\n    const score = (ov ? 40 : 28) + (inBand ? 30 : 15) + (!b.rng ? 20 : (chqOK ? 30 : 10));\n    const stageFit = inBand ? 'In band' : 'Off';\n    const chqFit = !b.rng ? 'Unknown' : (chqOK ? 'OK' : 'Below their min');\n    if (strict) {\n      o.strict_total++;\n      if (where === 'sent') { o.strict_sent++; } else if (where === 'queued') { o.strict_queued++; }\n      else if (where === 'paused') { o.strict_paused++; } else if (where === 'tracker') { o.strict_tracker_only++; }\n      else { o.strict_not_queued++; if (!b.email) { o.no_email_new++; }\n        pairs.push([name, group, 1, b.name, b.email, score, stageFit, chqFit, b.stageText, b.chequeText, b.sectorText]); }\n      continue;\n    }\n    if (group !== 'Under 5' || where !== 'none') { continue; }\n    if (b.band && b.band.lo >= 4 && si <= 2) { o.late_stage_excluded++; continue; }\n    o.sector_only_new++;\n    if (!inBand) { o.sector_only_stage_off++; }\n    if (!chqOK) { o.sector_only_cheque_below++; }\n    if (!b.email) { o.no_email_new++; }\n    pairs.push([name, group, 2, b.name, b.email, score, stageFit, chqFit, b.stageText, b.chequeText, b.sectorText]);\n  }\n  rows.push(o);\n}\npairs.sort(function (a, b) { return a[2] - b[2] || a[0].localeCompare(b[0]) || b[5] - a[5] || a[3].localeCompare(b[3]); });\nreturn [{ json: { generated: '2026-09-10', book_size: book.length, tracker_rows: trk.length, pipeline_rows: pipe.length,\n  staircase_only: true, stair_label: stairLabel, cut_date: cutIso, blocks: hdrs.map(function (i) { return s(grid[i][0]); }),\n  unmatched: unmatched, meeting_log: meetingLog,\n  pair_cols: ['Startup', 'Group', 'Priority', 'Investor', 'Email', 'Score', 'Stage fit', 'Cheque fit', 'Investor stage', 'Investor cheque', 'Investor sector'],\n  rows: rows, pairs: pairs } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once 15:19 IST 10 Sep": {
+      "main": [
+        [
+          {
+            "node": "GET meetings values",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET meetings values": {
+      "main": [
+        [
+          {
+            "node": "Read Deal Tracker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Deal Tracker": {
+      "main": [
+        [
+          {
+            "node": "Read INVESTORS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read INVESTORS": {
+      "main": [
+        [
+          {
+            "node": "Read STARTUPS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read STARTUPS": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Build report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once 15:19 IST 10 Sep": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "5lJIuuyjglh3Kx8u",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-10T09:45:15.135Z",
+      "updatedAt": "2026-09-10T09:45:15.135Z"
+    }
+  ],
+  "activeVersion": null
+}

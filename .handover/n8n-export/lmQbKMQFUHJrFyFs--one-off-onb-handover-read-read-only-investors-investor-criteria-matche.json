@@ -1,0 +1,202 @@
+{
+  "id": "lmQbKMQFUHJrFyFs",
+  "name": "One-off ONB-HANDOVER-READ (read-only) — INVESTORS + INVESTOR_CRITERIA matches + STARTUPS book (5 Oct)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-10-05T11:12:50.219Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "301c3541-a3d2-48f4-a8f8-103dc944f37c",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "09c5429e-1d78-4a83-9438-82b9a44720d2",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "onb-handover-read-9d42",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "ri",
+      "name": "Read INV",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/INVESTORS!A1:BB1200?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "rc",
+      "name": "Read CRIT",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/INVESTOR_CRITERIA!A1:BB1200?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "rs",
+      "name": "Read SU",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/STARTUPS!A1:Z200?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "out",
+      "name": "Out",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function sh(n){var j={};try{j=$(n).first().json||{};}catch(e){return [];}return j.values||[];}\nfunction s(v){return String(v==null?'':v).trim();}\nfunction norm(x){return s(x).toLowerCase().replace(/[^a-z0-9]/g,'');}\nvar body=($('Webhook').first().json.body)||{};\nvar names=(body.names||[]).map(norm).filter(function(x){return x;});\nfunction hit(rowtext){for(var i=0;i<names.length;i++){if(norm(rowtext).indexOf(names[i])>=0)return names[i];}return '';}\nvar out={};\n\nvar iv=sh('Read INV');var ivh=(iv[0]||[]).map(s);\nout.inv_header=ivh;var im=[];\nfor(var a=1;a<iv.length;a++){var r=iv[a]||[];var t=r.slice(0,4).map(s).join(' | ');var h=hit(t);if(!h)continue;var o={row:a+1};for(var b=0;b<ivh.length;b++){if(ivh[b]&&s(r[b]))o[ivh[b]]=s(r[b]).slice(0,220);}im.push(o);}\nout.inv_matches=im;out.inv_rows=iv.length-1;\n\nvar cv=sh('Read CRIT');var cvh=(cv[0]||[]).map(s);\nout.crit_header=cvh;var cm=[];\nfor(var c=1;c<cv.length;c++){var q=cv[c]||[];var t2=q.slice(0,4).map(s).join(' | ');var h2=hit(t2);if(!h2)continue;var o2={row:c+1};for(var d=0;d<cvh.length;d++){if(cvh[d]&&s(q[d]))o2[cvh[d]]=s(q[d]).slice(0,300);}cm.push(o2);}\nout.crit_matches=cm;out.crit_rows=cv.length-1;\n\nvar su=sh('Read SU');var suh=(su[0]||[]).map(s);\nout.su_header=suh;\nout.su_first3_raw=su.slice(1,4).map(function(r){return (r||[]).map(function(x){return s(x).slice(0,50);});});\nvar sl=[];\nfor(var e=1;e<su.length;e++){var sr=su[e]||[];var any=false;for(var f=0;f<sr.length;f++){if(s(sr[f])){any=true;break;}}if(!any)continue;sl.push({row:e+1,cells:sr.map(function(x){return s(x).slice(0,60);})});}\nout.su_rows=sl.length;out.su=sl;\nreturn [{json:out}];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Read INV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read INV": {
+      "main": [
+        [
+          {
+            "node": "Read CRIT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read CRIT": {
+      "main": [
+        [
+          {
+            "node": "Read SU",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read SU": {
+      "main": [
+        [
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionTimeout": 300,
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "lmQbKMQFUHJrFyFs",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-10-05T11:12:50.222Z",
+      "updatedAt": "2026-10-05T11:12:50.222Z"
+    }
+  ],
+  "activeVersion": null
+}

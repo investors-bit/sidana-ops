@@ -1,0 +1,375 @@
+{
+  "id": "9eNTluFk32eHDtjl",
+  "name": "One-off TR-15 — remove duplicate deal pairs (delete unsent, silence already-sent)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-15T09:06:38.215Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "949dd123-206d-416b-9c12-8b50a231d7cc",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once (set before activating)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "42 14 15 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "gm",
+      "name": "GET sheet meta",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4?fields=sheets.properties(sheetId,title)",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "gp",
+      "name": "GET PIPELINE",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/PIPELINE!A1:AJ6000",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cp",
+      "name": "Plan",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nfunction nz(x) { return s(x).toLowerCase().replace(/[^a-z0-9]/g, ''); }\nfunction colLetter(i) { let n = i + 1, out = ''; while (n > 0) { const m = (n - 1) % 26; out = String.fromCharCode(65 + m) + out; n = Math.floor((n - 1) / 26); } return out; }\nconst TODAY = '2026-09-15';\n\nconst meta = $('GET sheet meta').first().json.sheets || [];\nlet sheetId = null;\nfor (const sh of meta) { if (s(sh.properties.title) === 'PIPELINE') { sheetId = sh.properties.sheetId; } }\nif (sheetId === null) { throw new Error('ABORT: PIPELINE sheetId not found'); }\n\nconst pipe = $('GET PIPELINE').first().json.values || [];\nif (pipe.length < 500) { throw new Error('ABORT: PIPELINE only ' + pipe.length); }\nconst ph = (pipe[0] || []).map(s);\nconst P = {};\n['deal_id','startup','investor','email','owner','deal_shared','date_shared','pause','next_action','next_due','match_type','notes','thread_id'].forEach(function (n) { P[n] = ph.indexOf(n); if (P[n] < 0) { throw new Error('ABORT: PIPELINE missing ' + n); } });\nconst C = {}; ['pause','next_action','next_due','match_type','notes'].forEach(function (n) { C[n] = colLetter(P[n]); });\n\nconst rows = [];\nfor (let r = 1; r < pipe.length; r++) { const row = pipe[r] || [];\n  const st = s(row[P.startup]), iv = s(row[P.investor]); if (!st || !iv) { continue; }\n  const sent = s(row[P.deal_shared]).toLowerCase() === 'yes';\n  const paused = s(row[P.pause]).toLowerCase() === 'yes';\n  if (!sent && paused) { continue; }\n  rows.push({ row: r + 1, deal_id: s(row[P.deal_id]), startup: st, investor: iv,\n    email: s(row[P.email]).split(/[,;\\s]+/)[0].toLowerCase(), sent: sent, paused: paused,\n    date_shared: s(row[P.date_shared]), next_due: s(row[P.next_due]), notes: s(row[P.notes]) }); }\n\nconst g = {};\nfor (const x of rows) { const k = nz(x.startup) + '|' + (x.email || 'name:' + nz(x.investor)); (g[k] = g[k] || []).push(x); }\n\nconst updates = [], deleteRows = [], silenced = [], deleted = [], groups = [];\nfor (const k of Object.keys(g)) { const grp = g[k]; if (grp.length < 2) { continue; }\n  const sent = grp.filter(function (x) { return x.sent; });\n  const unsent = grp.filter(function (x) { return !x.sent; });\n  let keeper;\n  if (sent.length) { sent.sort(function (a, b) { return (a.date_shared || '9999').localeCompare(b.date_shared || '9999') || a.row - b.row; }); keeper = sent[0]; }\n  else { unsent.sort(function (a, b) { return (a.next_due || '9999').localeCompare(b.next_due || '9999') || a.row - b.row; }); keeper = unsent[0]; }\n  const losers = grp.filter(function (x) { return x.row !== keeper.row; });\n  groups.push({ startup: grp[0].startup, inbox: grp[0].email, kept: [keeper.deal_id, keeper.investor, keeper.sent ? 'SENT ' + keeper.date_shared : 'queued ' + keeper.next_due],\n    removed: losers.map(function (x) { return [x.deal_id, x.investor, x.sent ? 'SENT ' + x.date_shared : 'queued ' + x.next_due, x.sent ? 'silenced' : 'deleted']; }) });\n  for (const x of losers) {\n    if (x.sent) {\n      const why = 'duplicate - the same deck already went to ' + x.email + ' on ' + (keeper.date_shared || 'an earlier date') + ' as ' + keeper.deal_id;\n      updates.push({ range: 'PIPELINE!' + C.pause + x.row, values: [['Yes']] });\n      updates.push({ range: 'PIPELINE!' + C.next_action + x.row, values: [['DROPPED - duplicate deal']] });\n      updates.push({ range: 'PIPELINE!' + C.next_due + x.row, values: [['']] });\n      updates.push({ range: 'PIPELINE!' + C.match_type + x.row, values: [['Duplicate: ' + why]] });\n      updates.push({ range: 'PIPELINE!' + C.notes + x.row, values: [[(x.notes ? x.notes + ' | ' : '') + 'DUPLICATE ' + TODAY + ' - ' + why + '; follow-ups stopped, thread kept for the record']] });\n      silenced.push([x.row, x.deal_id, x.startup, x.investor, x.date_shared]);\n    } else {\n      deleteRows.push(x.row);\n      deleted.push([x.row, x.deal_id, x.startup, x.investor, x.next_due]);\n    } } }\n\nif (silenced.length > 60) { throw new Error('ABORT: ' + silenced.length + ' silences exceeds guard'); }\nif (deleteRows.length > 60) { throw new Error('ABORT: ' + deleteRows.length + ' deletions exceeds guard'); }\nif (!silenced.length && !deleteRows.length) { throw new Error('ABORT: no duplicates found - nothing to do'); }\nif (!updates.length) { updates.push({ range: 'PIPELINE!' + C.pause + '1', values: [['pause']] }); }\n\n// delete bottom-up so earlier row numbers stay valid\ndeleteRows.sort(function (a, b) { return b - a; });\nconst deleteRequests = deleteRows.map(function (rn) { return { deleteDimension: { range: { sheetId: sheetId, dimension: 'ROWS', startIndex: rn - 1, endIndex: rn } } }; });\n\nreturn [{ json: { summary: { duplicate_groups: groups.length, sent_rows_silenced: silenced.length, unsent_rows_deleted: deleteRows.length,\n  pipeline_before: pipe.length - 1, expected_after: pipe.length - 1 - deleteRows.length, cell_writes: updates.length, sheetId: sheetId },\n  groups: groups, silenced: silenced, deleted: deleted, updates: updates, deleteRequests: deleteRequests, delete_count: deleteRequests.length } }];"
+      }
+    },
+    {
+      "id": "wv",
+      "name": "Write silences",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ valueInputOption: 'RAW', data: $('Plan').first().json.updates }) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "ifd",
+      "name": "Any rows to delete?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1000,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $('Plan').first().json.delete_count }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "dr",
+      "name": "Delete duplicate rows",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "position": [
+        1200,
+        -100
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ requests: $('Plan').first().json.deleteRequests }) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "ga",
+      "name": "GET PIPELINE after",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        1400,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/PIPELINE!A1:AJ6000",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cv",
+      "name": "Verify",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nfunction nz(x) { return s(x).toLowerCase().replace(/[^a-z0-9]/g, ''); }\nconst plan = $('Plan').first().json;\nconst pipe = $input.first().json.values || [];\nif (pipe.length < 500) { throw new Error('ABORT: verify read returned ' + pipe.length); }\nconst ph = (pipe[0] || []).map(s);\nconst P = {};\n['deal_id','startup','investor','email','deal_shared','pause'].forEach(function (n) { P[n] = ph.indexOf(n); });\nconst g = {};\nfor (let r = 1; r < pipe.length; r++) { const row = pipe[r] || [];\n  const st = s(row[P.startup]), iv = s(row[P.investor]); if (!st || !iv) { continue; }\n  const sent = s(row[P.deal_shared]).toLowerCase() === 'yes';\n  const paused = s(row[P.pause]).toLowerCase() === 'yes';\n  if (!sent && paused) { continue; }\n  if (sent && paused) { continue; }\n  const k = nz(st) + '|' + (s(row[P.email]).split(/[,;\\s]+/)[0].toLowerCase() || 'name:' + nz(iv));\n  (g[k] = g[k] || []).push(s(row[P.deal_id])); }\nconst left = Object.keys(g).filter(function (k) { return g[k].length > 1; }).map(function (k) { return [k, g[k]]; });\nconst deletedIds = {};\nplan.deleted.forEach(function (x) { deletedIds[x[1]] = 1; });\nlet stillPresent = 0;\nfor (let r = 1; r < pipe.length; r++) { if (deletedIds[s((pipe[r] || [])[P.deal_id])]) { stillPresent++; } }\nreturn [{ json: { pipeline_before: plan.summary.pipeline_before, pipeline_after: pipe.length - 1, expected_after: plan.summary.expected_after,\n  count_ok: (pipe.length - 1) === plan.summary.expected_after,\n  rows_silenced: plan.summary.sent_rows_silenced, rows_deleted: plan.summary.unsent_rows_deleted,\n  deleted_rows_still_present: stillPresent, duplicate_groups_remaining: left.length, remaining: left.slice(0, 10),\n  groups: plan.groups,\n  ok: (pipe.length - 1) === plan.summary.expected_after && stillPresent === 0 && left.length === 0 } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once (set before activating)": {
+      "main": [
+        [
+          {
+            "node": "GET sheet meta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET sheet meta": {
+      "main": [
+        [
+          {
+            "node": "GET PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Plan": {
+      "main": [
+        [
+          {
+            "node": "Write silences",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write silences": {
+      "main": [
+        [
+          {
+            "node": "Any rows to delete?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Any rows to delete?": {
+      "main": [
+        [
+          {
+            "node": "Delete duplicate rows",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "GET PIPELINE after",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete duplicate rows": {
+      "main": [
+        [
+          {
+            "node": "GET PIPELINE after",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET PIPELINE after": {
+      "main": [
+        [
+          {
+            "node": "Verify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once (set before activating)": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "9eNTluFk32eHDtjl",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-15T09:06:38.218Z",
+      "updatedAt": "2026-09-15T09:06:38.218Z"
+    }
+  ],
+  "activeVersion": null
+}

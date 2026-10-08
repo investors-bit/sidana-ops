@@ -1,0 +1,126 @@
+{
+  "id": "NRRYgucsYKuuDwgn",
+  "name": "DIAG — memo tails (read-only)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-01T08:38:35.744Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "ce1e7330-535e-4af9-a3dd-a52827290cee",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 0,
+  "nodes": [
+    {
+      "id": "63bccd3e-5d81-4599-b0b4-5b5a6086dd29",
+      "name": "Run (press Execute)",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "2a4f3b62-9b84-4c24-955b-5ba414b87c54",
+      "name": "Read STARTUPS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "STARTUPS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      },
+      "executeOnce": true
+    },
+    {
+      "id": "87b0c956-2321-41b6-9fd4-8bfff234ffe0",
+      "name": "Analyze memo tails",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst rows = $('Read STARTUPS').all().map(i => i.json);\nconst blank = (x) => x === undefined || x === null || String(x).trim() === '';\nlet total = 0, hasMemo = 0, memoHasDeck = 0, memoHasClosing = 0, memoMissingDeck = 0;\nconst missingDeckExamples = [];\nconst deckDetail = [];\nfor (const s of rows) {\n  total++;\n  const m = String(s.memo_html == null ? '' : s.memo_html);\n  if (blank(m)) continue;\n  hasMemo++;\n  const lower = m.toLowerCase();\n  const deck = lower.includes('pitch deck');\n  const closing = lower.includes('if the opportunity fits') || lower.includes('happy to arrange a discussion');\n  if (deck) memoHasDeck++; else { memoMissingDeck++; if (missingDeckExamples.length < 15) missingDeckExamples.push(s.startup); }\n  if (closing) memoHasClosing++;\n}\nreturn [{ json: {\n  total_startups: total,\n  with_memo_html: hasMemo,\n  memo_contains_pitch_deck_line: memoHasDeck,\n  memo_MISSING_pitch_deck_line: memoMissingDeck,\n  memo_contains_closing_line: memoHasClosing,\n  startups_whose_memo_has_NO_deck_line: missingDeckExamples,\n} }];\n"
+      }
+    }
+  ],
+  "connections": {
+    "Run (press Execute)": {
+      "main": [
+        [
+          {
+            "node": "Read STARTUPS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read STARTUPS": {
+      "main": [
+        [
+          {
+            "node": "Analyze memo tails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": {},
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "NRRYgucsYKuuDwgn",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-01T08:38:35.745Z",
+      "updatedAt": "2026-09-01T08:38:35.745Z"
+    }
+  ],
+  "activeVersion": null
+}

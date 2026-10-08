@@ -1,0 +1,204 @@
+{
+  "id": "vdNiikxRdEEd6pl7",
+  "name": "One-off CP-3 — read every tab of InvestorCompositionList20260911 (Google Sheet, read only)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-11T16:44:54.565Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "6a507253-31dc-4863-b62c-d46f7ed32cc1",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once (set before activating)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "22 22 11 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "m1",
+      "name": "GET tabs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1_MBFQb6N6K-xgw79jahzgTPc3q1dEs1SpEbS-8dtPjM?fields=sheets.properties(sheetId,title,gridProperties)",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "c0",
+      "name": "One item per tab",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const t = ($input.first().json.sheets || []).map(function (x) { return x.properties.title; });\nif (!t.length) { throw new Error('ABORT: no tabs returned'); }\nreturn t.map(function (title) { return { json: { tab: title } }; });"
+      }
+    },
+    {
+      "id": "rv",
+      "name": "GET tab values",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/1_MBFQb6N6K-xgw79jahzgTPc3q1dEs1SpEbS-8dtPjM/values/' + encodeURIComponent(\"'\" + $json.tab + \"'\") }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cc",
+      "name": "Collect",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const tabs = $('One item per tab').all().map(function (i) { return i.json.tab; });\nconst vals = $input.all().map(function (i) { return i.json; });\nreturn [{ json: { tabs: tabs.map(function (t, i) { const v = (vals[i] || {}).values || []; return { tab: t, rows: v.length, values: v }; }) } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once (set before activating)": {
+      "main": [
+        [
+          {
+            "node": "GET tabs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET tabs": {
+      "main": [
+        [
+          {
+            "node": "One item per tab",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "One item per tab": {
+      "main": [
+        [
+          {
+            "node": "GET tab values",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET tab values": {
+      "main": [
+        [
+          {
+            "node": "Collect",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once (set before activating)": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "vdNiikxRdEEd6pl7",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-11T16:44:54.567Z",
+      "updatedAt": "2026-09-11T16:44:54.567Z"
+    }
+  ],
+  "activeVersion": null
+}

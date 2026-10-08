@@ -1,0 +1,228 @@
+{
+  "id": "jtZdLCYYGbzoGKWI",
+  "name": "ONB-PROBE — read only state check (5 Oct)",
+  "description": null,
+  "active": true,
+  "activeVersionId": "bdca1f28-e352-4483-b02f-1945037a3078",
+  "createdAt": "2026-10-05T10:06:58.282Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "bdca1f28-e352-4483-b02f-1945037a3078",
+  "versionCounter": 5,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "w",
+      "name": "Webhook",
+      "webhookId": "fb4b66ea-ad35-4bc2-a9ec-359592575c2c",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {
+        "path": "onbprobe-5oct-a1",
+        "httpMethod": "POST",
+        "responseMode": "lastNode"
+      }
+    },
+    {
+      "id": "r",
+      "name": "Read",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        200,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGetByDataFilter",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({dataFilters:($json.body&&$json.body.ranges?$json.body.ranges:['ONBOARDING!A1:AV1']).map(r=>({a1Range:r})),valueRenderOption:'FORMATTED_VALUE'}) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "o",
+      "name": "Out",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b=$('Webhook').first().json.body||{};\nconst vr=$json.valueRanges||[];\nconst map={};\nfor(const v of vr){const x=v.valueRange||v;map[x.range||'(none)']=x.values||[];}\nif(!b.project) return [{json:map}];\nconst find=p=>{const k=Object.keys(map).find(r=>r.replace(/'/g,'').indexOf(p)===0);return k?map[k]:[];};\nconst cols={};\nfor(const [label,pref] of Object.entries(b.project.cols)) cols[label]=find(pref);\nconst res=(b.project.rows||[]).map(r=>{const o={row:r};for(const [label,arr] of Object.entries(cols)) o[label]=((arr[r-1]||[])[0]||'');return o;});\nreturn [{json:{rows:res}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read": {
+      "main": [
+        [
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "jtZdLCYYGbzoGKWI",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-10-05T10:06:58.286Z",
+      "updatedAt": "2026-10-05T10:06:58.286Z"
+    }
+  ],
+  "activeVersion": {
+    "versionId": "bdca1f28-e352-4483-b02f-1945037a3078",
+    "workflowId": "jtZdLCYYGbzoGKWI",
+    "nodes": [
+      {
+        "id": "w",
+        "name": "Webhook",
+        "webhookId": "fb4b66ea-ad35-4bc2-a9ec-359592575c2c",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          300
+        ],
+        "parameters": {
+          "path": "onbprobe-5oct-a1",
+          "httpMethod": "POST",
+          "responseMode": "lastNode"
+        }
+      },
+      {
+        "id": "r",
+        "name": "Read",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          200,
+          300
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGetByDataFilter",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleSheetsOAuth2Api",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({dataFilters:($json.body&&$json.body.ranges?$json.body.ranges:['ONBOARDING!A1:AV1']).map(r=>({a1Range:r})),valueRenderOption:'FORMATTED_VALUE'}) }}",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "o",
+        "name": "Out",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          400,
+          300
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const b=$('Webhook').first().json.body||{};\nconst vr=$json.valueRanges||[];\nconst map={};\nfor(const v of vr){const x=v.valueRange||v;map[x.range||'(none)']=x.values||[];}\nif(!b.project) return [{json:map}];\nconst find=p=>{const k=Object.keys(map).find(r=>r.replace(/'/g,'').indexOf(p)===0);return k?map[k]:[];};\nconst cols={};\nfor(const [label,pref] of Object.entries(b.project.cols)) cols[label]=find(pref);\nconst res=(b.project.rows||[]).map(r=>{const o={row:r};for(const [label,arr] of Object.entries(cols)) o[label]=((arr[r-1]||[])[0]||'');return o;});\nreturn [{json:{rows:res}}];"
+        }
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Read",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Read": {
+        "main": [
+          [
+            {
+              "node": "Out",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "Sidana Ventures",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "createdAt": "2026-10-05T10:09:37.062Z",
+    "updatedAt": "2026-10-05T10:09:37.062Z",
+    "workflowPublishHistory": [
+      {
+        "id": 11830,
+        "workflowId": "jtZdLCYYGbzoGKWI",
+        "versionId": "bdca1f28-e352-4483-b02f-1945037a3078",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-10-05T10:09:37.146Z"
+      }
+    ]
+  }
+}

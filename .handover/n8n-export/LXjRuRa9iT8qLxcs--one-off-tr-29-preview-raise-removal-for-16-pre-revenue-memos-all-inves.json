@@ -1,0 +1,280 @@
+{
+  "id": "LXjRuRa9iT8qLxcs",
+  "name": "One-off TR-29 — PREVIEW raise removal for 16 pre-revenue memos, all investors (read only)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-16T08:18:02.149Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "a9e63fa2-6940-408c-a1a9-da9e5a23c598",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once (set before activating)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "55 13 16 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "gs",
+      "name": "GET sheets",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=STARTUPS!A1:BZ400&ranges=TEMPLATES!A1:Z50",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "gp",
+      "name": "GET PIPELINE",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/PIPELINE!A1:AJ6000",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "an",
+      "name": "Analyse",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s0(v){return String(v==null?'':v);}\nfunction s(v){return s0(v).trim();}\nfunction nz(x){return s(x).toLowerCase().replace(/[^a-z0-9]/g,'');}\nfunction colLetter(i){let n=i+1,o='';while(n>0){const m=(n-1)%26;o=String.fromCharCode(65+m)+o;n=Math.floor((n-1)/26);}return o;}\nconst vr=$('GET sheets').first().json.valueRanges||[];\nconst st=(vr[0]||{}).values||[];\nconst tpl=(vr[1]||{}).values||[];\nconst pipe=$('GET PIPELINE').first().json.values||[];\nif(st.length<40||tpl.length<2||pipe.length<500){throw new Error('ABORT: short read '+st.length+'/'+tpl.length+'/'+pipe.length);}\nconst SIXTEEN=['Body & Beyond','Outlanders','Koncite','Washtro','Fire Armor','Tronix.AI','Springbase.ai','Formverse','ServeAmigo','MonitorExam','Pixelence','Fuski.AI','Vilva AI','SkillBytes','Orbit AI','Vira Jal'];\nconst OTHER11=['Opulytics','Train Rex','Xproguard','Indie Stori','Appli','Luxova','AI Signal Labs','Desi Machines','Doffair','bezgoFresh','Chayan Karo'];\nconst ANG={};['Gautam Kapur','Ignacio','Ishan Singh','Jonathan Solamon','Alex Alpert','Devesh','Mandeep Singh','Ankit','Vivasvan','Mohit','Gautham Krishnan','Sayan Ghosh','Michele'].forEach(function(x){ANG[nz(x)]=1;});\nconst IN27={};SIXTEEN.concat(OTHER11).forEach(function(x){IN27[nz(x)]=1;});\nconst IN16={};SIXTEEN.forEach(function(x){IN16[nz(x)]=1;});\n\nconst AMT=String.raw`(?:(?:₹|\\brs\\.?|\\binr|\\busd|us\\$|\\$|€|\\beur|£)\\s*\\d[\\d.,]*(?:\\s*(?:cr\\b|crores?\\b|lakhs?\\b|lacs?\\b|l\\b|mn\\b|m\\b|million\\b|k\\b|bn\\b|billion\\b))?|\\d[\\d.,]*\\s*(?:cr\\b|crores?\\b|lakhs?\\b|lacs?\\b|mn\\b|million\\b|bn\\b|billion\\b)|\\d[\\d.,]*(?:m|k|l)\\b)`;\nconst KW=String.raw`(?:\\brais(?:e|es|ing)\\b|\\bfund\\s*-?\\s*rais(?:e|es|ing)\\b|\\bfundrais(?:e|es|ing)\\b|\\b(?:fund|funds|funding|investment|capital)\\s*(?:ask|sought|required|requirement|needed)\\b|\\bthe\\s+ask\\b|\\bask\\s*[:\\-–—]|\\basking\\s+for\\b|\\bseeking\\b|\\b(?:round|raise|ticket)\\s*size\\b|\\b(?:current|this|proposed|ongoing)\\s+round\\b)`;\nconst OWN_A=new RegExp(KW+'[^.<|]{0,60}?'+AMT,'i');\nconst OWN_B=/(?:\\brais(?:e|es|ing)\\b|\\bfund(?:ing)?\\s*ask\\b)[^.<|]{0,15}?\\d/i;\nconst AMT_ROUND=new RegExp(AMT+String.raw`[^.<|]{0,30}?\\b(?:round|raise|fundraise|ask)\\b`,'i');\nconst PAST=/\\braised\\b|\\bclosed\\b|\\bsecured\\b|\\bled by\\b|\\bbacked by\\b|\\bfunded by\\b/i;\nconst HEAD=/^(?:the\\s+)?(?:funding\\s+ask|fund\\s*ask|ask|investment\\s+ask|fundrais(?:e|ing)(?:\\s+details)?|current\\s+round|round\\s+details|the\\s+round|raise|raising)\\s*[:\\-–—]?$/i;\nconst UOF=/use\\s+of\\s+(?:funds|proceeds)|funds?\\s+utili[sz]ation|allocation\\s+of\\s+(?:funds|capital)|deployment\\s+of\\s+(?:funds|capital)|funds?\\s+will\\s+be\\s+(?:used|deployed)/i;\nconst SPLIT=/(?<=[.!?])(?<!\\b(?:Rs|RS|rs|No|no|vs|Vs|Pvt|PVT|Ltd|LTD|Inc|approx|Approx|Dr|Mr|Ms|Mrs|St|Co|etc|e\\.g|i\\.e)\\.)\\s+(?=[^a-z\\s])/;\nconst BLOCKS=/(?<=<\\/(?:p|div|li|h[1-6]|ul|ol|td|tr|table|tbody)>)/i;\nfunction classify(t){if(OWN_A.test(t)||OWN_B.test(t)){return 'own';} if(AMT_ROUND.test(t)){return PAST.test(t)?'context':'own';} return null;}\nfunction strip(h){return s0(h).replace(/<br\\s*\\/?>/gi,' ¶ ').replace(/<[^>]*>/g,' ').replace(/&nbsp;/g,' ').replace(/&amp;/g,'&').replace(/&mdash;/g,'—').replace(/&ndash;/g,'–').replace(/&rsquo;/g,'’').replace(/&lsquo;/g,'‘').replace(/&ldquo;/g,'“').replace(/&rdquo;/g,'”').replace(/&quot;/g,'“').replace(/&#39;/g,'’').replace(/&#8377;/g,'₹').replace(/&lt;/g,'‹').replace(/&gt;/g,'›').replace(/[ \\t\\r\\n]+/g,' ').replace(/(?:\\s*¶\\s*)+/g,' ¶ ').replace(/^\\s*¶\\s*|\\s*¶\\s*$/g,'').trim();}\nfunction esc(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}\nfunction render(t){return esc(t).replace(/\\s*¶\\s*/g,'<br>');}\nconst LEAD=/^\\s*(?:<(?:div|p|li|ul|ol|h[1-6]|table|tbody|thead|tr|td|th|section|blockquote)\\b[^>]*>\\s*)+/i;\nconst TRAIL=/(?:\\s*<\\/(?:div|p|li|ul|ol|h[1-6]|table|tbody|thead|tr|td|th|section|blockquote)>)+\\s*$/i;\nfunction dropInner(b){const lead=(b.match(LEAD)||[''])[0];const trail=(b.match(TRAIL)||[''])[0];const lt=lead.match(/<[^>]+>/g)||[];const tt=trail.match(/<\\/[^>]+>/g)||[];if(lt.length&&tt.length){return lt.slice(0,-1).join('')+tt.slice(1).join('');}return lead+trail;}\nfunction bal(h){const o=(s0(h).match(/<(?:div|p|li|ul|ol)\\b/gi)||[]).length;const c=(s0(h).match(/<\\/(?:div|p|li|ul|ol)>/gi)||[]).length;return o-c;}\nfunction cleanText(text,removed,context){\n  const parts=text.split(/(\\s*[|¶]\\s*)/); const out=[];\n  for(let i=0;i<parts.length;i++){const p=parts[i]; if(i%2===1){out.push(p);continue;}\n    const keep=[]; for(const x of p.split(SPLIT)){const c=classify(x); if(c==='own'){if(x.trim()){removed.push(x.trim().slice(0,240));}} else {if(c==='context'){context.push(x.trim().slice(0,240));} keep.push(x);}}\n    out.push(keep.join(' ').trim());}\n  const res=[]; for(let i=0;i<out.length;i+=2){const c=out[i]; if(!c){continue;} if(res.length){res.push(out[i-1]);} res.push(c);}\n  return res.join('');}\nfunction cleanMemo(html){\n  const removed=[],context=[],heads=[],badRebuild=[]; let edited=0,dropped=0;\n  const blocks=s0(html).split(BLOCKS); const texts=blocks.map(strip); const AMT1=new RegExp(AMT,'i'); const dropIdx={};\n  for(let i=0;i<blocks.length;i++){const t=texts[i].replace(/¶/g,' ').trim(); if(!t||!HEAD.test(t)){continue;} let j=i+1; while(j<blocks.length&&!texts[j]){j++;} if(j<blocks.length&&AMT1.test(texts[j])&&texts[j].length<160){dropIdx[i]=1;dropIdx[j]=1;heads.push(t+' => '+texts[j]);}}\n  const out=[];\n  for(let i=0;i<blocks.length;i++){const b=blocks[i],t=texts[i];\n    if(dropIdx[i]){out.push(dropInner(b));dropped++;continue;}\n    if(!t){out.push(b);continue;}\n    const n0=removed.length; const cleaned=cleanText(t,removed,context);\n    if(removed.length===n0){out.push(b);continue;}\n    let nb; if(cleaned.replace(/[^A-Za-z0-9]/g,'').length>=3){const lead=(b.match(LEAD)||[''])[0];const trail=(b.match(TRAIL)||[''])[0];nb=lead+render(cleaned)+trail;edited++;} else {nb=dropInner(b);dropped++;}\n    if(bal(nb)!==bal(b)){badRebuild.push({was:b.slice(0,300),now:nb.slice(0,300)});}\n    out.push(nb);}\n  return {html:out.join(''),removed:removed,context:context,heads:heads,edited:edited,dropped:dropped,badRebuild:badRebuild};}\nfunction residual(html){const hits=[]; const bl=s0(html).split(BLOCKS).map(strip).filter(function(x){return x;}); const AMT1=new RegExp(AMT,'i');\n  for(let i=0;i<bl.length;i++){for(const p of bl[i].split(/\\s*[|¶]\\s*/)){for(const x of p.split(SPLIT)){if(classify(x)==='own'){hits.push(x.trim().slice(0,200));}}}\n    if(HEAD.test(bl[i].replace(/¶/g,' ').trim())&&i+1<bl.length&&AMT1.test(bl[i+1])){hits.push('HEAD '+bl[i]+' => '+bl[i+1].slice(0,80));}}\n  return hits;}\nfunction amounts(html){const t=s0(html).split(BLOCKS).map(strip).join(' ').replace(/¶/g,' '); const re=new RegExp(AMT,'gi'); const seen={},o=[]; let m; while((m=re.exec(t))!==null){if(!m[0].length){re.lastIndex++;continue;} const c=t.slice(Math.max(0,m.index-50),m.index+m[0].length+25); if(!seen[c]){seen[c]=1;o.push(c);} if(o.length>=45){break;}} return o;}\nconst BADOLD=/(?:rais(?:e|ed|es|ing)|fund\\s*ask|funding\\s*ask|fund\\s*raise)[^.<]{0,40}?\\d|pre-?\\s*revenue|pre-?\\s*launch|pre-?\\s*monetis|pre-?\\s*monetiz/i;\nfunction stripOld(h){return s0(h).replace(/<[^>]*>/g,' ').replace(/&nbsp;/g,' ').replace(/&amp;/g,'&').replace(/&mdash;/g,'-').replace(/&ndash;/g,'-').replace(/&rsquo;/g,'\\'').replace(/\\s+/g,' ').trim();}\nfunction segsOld(t){return s0(t).split('|').map(function(x){return x.trim();}).filter(function(x){return x&&!BADOLD.test(x);}).join(' | ');}\nfunction oldAngel(html){const bl=s0(html).split(/(?<=<\\/(?:p|div|li|h[1-6]|ul|ol)>)/); const k=[]; for(const b of bl){const t=stripOld(b); if(!t){k.push(b);continue;} if(!BADOLD.test(t)){k.push(b);continue;} const c=segsOld(t); if(c&&c.length>=25&&!BADOLD.test(c)){k.push('<div>'+c+'</div>');}} return k.join('');}\n\nconst sh=(st[0]||[]).map(s); const S={}; sh.forEach(function(h,i){S[h]=i;});\nif(S.startup===undefined||S.memo_html===undefined){throw new Error('ABORT: STARTUPS headers');}\nconst th=(tpl[0]||[]).map(s); const T={}; th.forEach(function(h,i){T[h]=i;});\nconst templates=[]; for(let r=1;r<tpl.length;r++){const row=tpl[r]||[]; const id=s(row[T.template_id]); if(!id){continue;} templates.push({id:id,subject:s(row[T.subject]),body:s0(row[T.body])});}\nconst byName={}; for(let r=1;r<st.length;r++){const row=st[r]||[]; const n=s(row[S.startup]); if(n){byName[nz(n)]={row:r+1,cells:row};}}\nfunction g(rec,col){return S[col]===undefined?'':s0(rec.cells[S[col]]);}\nconst SUBJ_STRIP=/\\s*\\|\\s*Rais(?:e|es|ing)\\b[^|]*$/i;\nconst removals=[],amountsA=[],amountsB=[],clean={},missing=[];\nSIXTEEN.forEach(function(n,idx){const rec=byName[nz(n)]; if(!rec){missing.push(n);return;}\n  const memo=g(rec,'memo_html'); const res=cleanMemo(memo); clean[n]=res.html;\n  const tokens={'{{InvestorName}}':'INV','{{ContactPerson}}':'CP','{{StartupName}}':n,'{{Sector}}':g(rec,'sector'),'{{FundraiseAmount}}':g(rec,'raise_inr_cr'),'{{Revenue}}':g(rec,'revenue'),'{{Highlight1}}':g(rec,'highlight_1'),'{{Highlight2}}':g(rec,'highlight_2'),'{{Highlight3}}':g(rec,'highlight_3'),'{{DeckLink}}':g(rec,'deck_link'),'{{SenderName}}':'SENDER','{{MemoBody}}':''};\n  const fill=function(x){let o=s0(x); for(const k in tokens){o=o.split(k).join(tokens[k]);} return o;};\n  const tplIssues=[];\n  templates.forEach(function(t){const subjRaw=fill(t.subject); const subj=subjRaw.replace(SUBJ_STRIP,'').trim(); if(classify(subj)||/\\{\\{FundraiseAmount\\}\\}/.test(subj)){tplIssues.push(t.id+' SUBJECT after strip: '+subj);} if(/FundraiseAmount/.test(t.body)){tplIssues.push(t.id+' BODY uses {{FundraiseAmount}}');} fill(t.body).split(/\\n+/).forEach(function(line){line.split(SPLIT).forEach(function(x){if(classify(x)==='own'){tplIssues.push(t.id+' BODY: '+x.trim().slice(0,200));}});});});\n  const hl=[]; ['highlight_1','highlight_2','highlight_3','revenue','stage'].forEach(function(c){const v=g(rec,c); if(v&&classify(v)){hl.push(c+': '+v.slice(0,200));}});\n  const uof=s0(memo).split(BLOCKS).map(strip).filter(function(x){return UOF.test(x);}).map(function(x){return x.slice(0,220);});\n  removals.push({startup:n,row:rec.row,raise:g(rec,'raise_inr_cr'),removed:res.removed,heading_pairs:res.heads,context_kept:res.context,use_of_funds_blocks:uof,template_issues:tplIssues,highlight_hits:hl,residual_own:residual(res.html),bad_rebuild:res.badRebuild,edited:res.edited,dropped:res.dropped,len_before:memo.length,len_after:res.html.length});\n  const am={startup:n,amounts:amounts(res.html)}; if(idx<8){amountsA.push(am);} else {amountsB.push(am);}});\nconst angelResidual=[]; SIXTEEN.concat(OTHER11).forEach(function(n){const rec=byName[nz(n)]; if(!rec){return;} const h=residual(oldAngel(g(rec,'memo_html'))); if(h.length){angelResidual.push({startup:n,hits:h});}});\nconst ph=(pipe[0]||[]).map(s); const P={}; ph.forEach(function(h,i){P[h]=i;});\nconst initialsByOwner={}; const angelToday=[]; let sixteenToday=0, contactedToday=0, sixteenQueued=0;\nfor(let r=1;r<pipe.length;r++){const row=pipe[r]||[]; const sn=s(row[P.startup]);\n  if(s(row[P.last_contact]).slice(0,10)==='2026-09-16'){contactedToday++;}\n  if(IN16[nz(sn)]&&s(row[P.deal_shared]).toLowerCase()!=='yes'&&s(row[P.pause]).toLowerCase()!=='yes'&&s(row[P.next_due])){sixteenQueued++;}\n  if(s(row[P.date_shared]).slice(0,10)!=='2026-09-16'){continue;}\n  const o=s(row[P.owner]); initialsByOwner[o]=(initialsByOwner[o]||0)+1;\n  if(IN16[nz(sn)]){sixteenToday++;}\n  if(IN27[nz(sn)]&&ANG[nz(row[P.investor])]){angelToday.push([s(row[P.deal_id]),sn,s(row[P.investor])]);}}\nconst checks={missing:missing,startups_headers:sh.map(function(h,i){return colLetter(i)+':'+h;}),templates:templates.map(function(t){return {id:t.id,subject:t.subject,body:t.body.slice(0,1800)};}),initials_sent_today_by_owner:initialsByOwner,rows_contacted_today:contactedToday,sixteen_initials_today:sixteenToday,sixteen_queued_unsent:sixteenQueued,angel_hide_sends_today:angelToday,old_angel_sanitiser_residual:angelResidual};\nreturn [{json:{removals:removals,amountsA:amountsA,amountsB:amountsB,checks:checks,clean:clean}}];"
+      }
+    },
+    {
+      "id": "rm",
+      "name": "Removals",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return [{ json: { removals: $('Analyse').first().json.removals } }];"
+      }
+    },
+    {
+      "id": "aa",
+      "name": "AmountsA",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return [{ json: { amounts: $('Analyse').first().json.amountsA } }];"
+      }
+    },
+    {
+      "id": "ab",
+      "name": "AmountsB",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return [{ json: { amounts: $('Analyse').first().json.amountsB } }];"
+      }
+    },
+    {
+      "id": "ck",
+      "name": "Checks",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1400,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return [{ json: $('Analyse').first().json.checks }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once (set before activating)": {
+      "main": [
+        [
+          {
+            "node": "GET sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET sheets": {
+      "main": [
+        [
+          {
+            "node": "GET PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Analyse",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyse": {
+      "main": [
+        [
+          {
+            "node": "Removals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Removals": {
+      "main": [
+        [
+          {
+            "node": "AmountsA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AmountsA": {
+      "main": [
+        [
+          {
+            "node": "AmountsB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AmountsB": {
+      "main": [
+        [
+          {
+            "node": "Checks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once (set before activating)": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "LXjRuRa9iT8qLxcs",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-16T08:18:02.153Z",
+      "updatedAt": "2026-09-16T08:18:02.153Z"
+    }
+  ],
+  "activeVersion": null
+}

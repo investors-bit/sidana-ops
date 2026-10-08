@@ -1,0 +1,352 @@
+{
+  "id": "q1a7dZAHzFKLbq5X",
+  "name": "One-off LOR-1 — clear L'Oreal pipeline rows + record true thesis",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-08T05:05:34.837Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "826deb06-a687-43f8-b13f-290a68193bad",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "trg1",
+      "name": "Run once 10:42 IST 8 Sep",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "42 10 8 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "rd1",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cdA",
+      "name": "Pending to delete",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        -160
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// L'Oreal's real thesis needs $1-10M traction; the best revenue in the book is ~2.2 Cr (~$260K),\n// roughly 4x below their floor. So no current startup qualifies -> clear the unsent rows.\n// Sent rows are handled separately: deleting them would destroy thread_id and blind reply detection.\nconst INV = \"L'Oreal Venture Capital\";\nfunction s(v) { return String(v == null ? '' : v).trim(); }\nconst rows = $input.all().map(function (i) { return i.json; });\nif (rows.length < 500) { throw new Error('ABORT: PIPELINE returned only ' + rows.length + ' rows'); }\n\nconst mine = rows.filter(function (r) { return s(r.investor) === INV; });\nif (mine.length > 100) { throw new Error('ABORT: ' + mine.length + \" L'Oreal rows exceeds guard of 100\"); }\n\nconst del = mine.filter(function (r) {\n  return s(r.deal_shared).toLowerCase() !== 'yes' && s(r.pause) === '';\n});\nif (del.length === 0) { return []; }\nfor (const r of del) { if (!r.row_number) { throw new Error('ABORT: missing row_number'); } }\n\nconst out = del.map(function (r) {\n  return { json: { row_number: Number(r.row_number), deal_id: s(r.deal_id), startup: s(r.startup) } };\n});\nout.sort(function (a, b) { return b.json.row_number - a.json.row_number; });\nreturn out;"
+      }
+    },
+    {
+      "id": "dl1",
+      "name": "Delete pending rows",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        660,
+        -160
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "delete",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        },
+        "toDelete": "rows",
+        "startIndex": "={{ $json.row_number }}",
+        "numberToDelete": 1
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cdB",
+      "name": "Sent no-reply to pause",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        40
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Already-sent L'Oreal rows: stop remaining follow-ups, but keep the row and its thread\n// so any reply still gets matched. Rows carrying an investor_response are left untouched.\nconst INV = \"L'Oreal Venture Capital\";\nfunction s(v) { return String(v == null ? '' : v).trim(); }\nconst rows = $input.all().map(function (i) { return i.json; });\nif (rows.length < 500) { throw new Error('ABORT: PIPELINE returned only ' + rows.length + ' rows'); }\n\nconst out = [];\nfor (const r of rows) {\n  if (s(r.investor) !== INV) { continue; }\n  if (s(r.deal_shared).toLowerCase() !== 'yes') { continue; }\n  if (s(r.investor_response) !== '') { continue; }\n  if (s(r.pause) !== '') { continue; }\n  const prev = s(r.notes);\n  out.push({ json: {\n    deal_id: s(r.deal_id),\n    pause: 'Yes',\n    next_action: \"Stopped - below L'Oreal traction bar\",\n    notes: (prev ? prev + ' | ' : '') + \"Follow-ups stopped 2026-09-08: L'Oreal requires $1-10M traction; no current portfolio company qualifies\"\n  }});\n}\nif (out.length === 0) { return []; }\nif (out.length > 40) { throw new Error('ABORT: ' + out.length + ' exceeds guard of 40'); }\nreturn out;"
+      }
+    },
+    {
+      "id": "up1",
+      "name": "Pause sent rows",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "position": [
+        660,
+        40
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "deal_id"
+          ],
+          "schema": [
+            {
+              "id": "deal_id",
+              "displayName": "deal_id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cdC",
+      "name": "Build investor update",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        240
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Record L'Oreal's actual stated thesis so future match runs respect it.\n// Kept as ONE row (the user wants them retained in INVESTORS), with both verticals in sector.\nreturn [{ json: {\n  investor: \"L'Oreal Venture Capital\",\n  contact_person: 'Filippo',\n  email: 'filippo.principi@loreal.com',\n  sector: 'V1 Beauty & Wellness Brands (never leads; co-lead/follow; needs $1-10M traction). V2 Science & Tech for Beauty (tech/biotech, needs scientific validation + L Oreal strategic interest; never pre-seed/seed)',\n  stage: 'V1 growth-stage brands; V2 post-seed only',\n  cheque_inr_cr: 'V1 US$1-3M; V2 US$4-10M'\n}}];"
+      }
+    },
+    {
+      "id": "up2",
+      "name": "Update INVESTORS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "position": [
+        660,
+        240
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "INVESTORS"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "investor"
+          ],
+          "schema": [
+            {
+              "id": "investor",
+              "displayName": "investor",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Run once 10:42 IST 8 Sep": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Pending to delete",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Sent no-reply to pause",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Build investor update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pending to delete": {
+      "main": [
+        [
+          {
+            "node": "Delete pending rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sent no-reply to pause": {
+      "main": [
+        [
+          {
+            "node": "Pause sent rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build investor update": {
+      "main": [
+        [
+          {
+            "node": "Update INVESTORS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once 10:42 IST 8 Sep": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "q1a7dZAHzFKLbq5X",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-08T05:05:34.839Z",
+      "updatedAt": "2026-09-08T05:05:34.839Z"
+    }
+  ],
+  "activeVersion": null
+}

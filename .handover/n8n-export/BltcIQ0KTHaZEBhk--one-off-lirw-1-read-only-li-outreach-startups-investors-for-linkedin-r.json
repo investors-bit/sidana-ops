@@ -1,0 +1,289 @@
+{
+  "id": "BltcIQ0KTHaZEBhk",
+  "name": "One-off LIRW-1 (read-only) — LI_OUTREACH + STARTUPS + INVESTORS for linkedin-reply-watch (1 Oct)",
+  "description": null,
+  "active": true,
+  "activeVersionId": "7038631e-9e01-469f-afaf-dd19e864d4be",
+  "createdAt": "2026-10-01T04:34:52.513Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "7038631e-9e01-469f-afaf-dd19e864d4be",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "a7c31e92-6b44-4d18-9f07-2e5a8c1b4d60",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-lirw-1oct-Qv7mK2",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "bu",
+      "name": "Build",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b = $('Webhook').first().json.body || {};\nif (b.secret !== 'lirw-1oct-Qv7mK2') throw new Error('bad secret');\nconst ranges = { LI_OUTREACH: \"'LI_OUTREACH'!A1:U500\", STARTUPS: \"'STARTUPS'!A1:Z200\", INVESTORS: \"'INVESTORS'!A1:Z1000\" };\nconst all = ['LI_OUTREACH','STARTUPS','INVESTORS'];\nconst want = (Array.isArray(b.want) && b.want.length) ? b.want.filter(x => all.indexOf(x) !== -1) : all;\nif (!want.length) throw new Error('no valid tab requested');\nreturn [{ json: { titles: want, body: { dataFilters: want.map(x => ({ a1Range: ranges[x] })), majorDimension: 'ROWS', valueRenderOption: 'FORMATTED_VALUE' } } }];"
+      }
+    },
+    {
+      "id": "rd",
+      "name": "Read",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGetByDataFilter",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "o",
+      "name": "Out",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const vr = $input.first().json.valueRanges || [];\nconst tabs = {};\nfor (const x of vr) {\n  const rng = ((x||{}).valueRange||{}).range || '';\n  const vals = ((x||{}).valueRange||{}).values || [];\n  const name = rng.split('!')[0].replace(/^'/,'').replace(/'$/,'');\n  tabs[name] = { range: rng, rows: vals.length, values: vals.map(r => (r||[]).map(c => String(c)).join(' | ')) };\n}\nreturn [{ json: { tabs } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Build",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build": {
+      "main": [
+        [
+          {
+            "node": "Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read": {
+      "main": [
+        [
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "none",
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "BltcIQ0KTHaZEBhk",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-10-01T04:34:52.531Z",
+      "updatedAt": "2026-10-01T04:34:52.531Z"
+    }
+  ],
+  "activeVersion": {
+    "versionId": "7038631e-9e01-469f-afaf-dd19e864d4be",
+    "workflowId": "BltcIQ0KTHaZEBhk",
+    "nodes": [
+      {
+        "id": "wh",
+        "name": "Webhook",
+        "webhookId": "a7c31e92-6b44-4d18-9f07-2e5a8c1b4d60",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          0
+        ],
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "sidana-lirw-1oct-Qv7mK2",
+          "responseMode": "lastNode",
+          "responseData": "firstEntryJson",
+          "options": {}
+        }
+      },
+      {
+        "id": "bu",
+        "name": "Build",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          200,
+          0
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const b = $('Webhook').first().json.body || {};\nif (b.secret !== 'lirw-1oct-Qv7mK2') throw new Error('bad secret');\nconst ranges = { LI_OUTREACH: \"'LI_OUTREACH'!A1:U500\", STARTUPS: \"'STARTUPS'!A1:Z200\", INVESTORS: \"'INVESTORS'!A1:Z1000\" };\nconst all = ['LI_OUTREACH','STARTUPS','INVESTORS'];\nconst want = (Array.isArray(b.want) && b.want.length) ? b.want.filter(x => all.indexOf(x) !== -1) : all;\nif (!want.length) throw new Error('no valid tab requested');\nreturn [{ json: { titles: want, body: { dataFilters: want.map(x => ({ a1Range: ranges[x] })), majorDimension: 'ROWS', valueRenderOption: 'FORMATTED_VALUE' } } }];"
+        }
+      },
+      {
+        "id": "rd",
+        "name": "Read",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          400,
+          0
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGetByDataFilter",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleSheetsOAuth2Api",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json.body) }}",
+          "options": {
+            "timeout": 120000
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "o",
+        "name": "Out",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          600,
+          0
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const vr = $input.first().json.valueRanges || [];\nconst tabs = {};\nfor (const x of vr) {\n  const rng = ((x||{}).valueRange||{}).range || '';\n  const vals = ((x||{}).valueRange||{}).values || [];\n  const name = rng.split('!')[0].replace(/^'/,'').replace(/'$/,'');\n  tabs[name] = { range: rng, rows: vals.length, values: vals.map(r => (r||[]).map(c => String(c)).join(' | ')) };\n}\nreturn [{ json: { tabs } }];"
+        }
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Build",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build": {
+        "main": [
+          [
+            {
+              "node": "Read",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Read": {
+        "main": [
+          [
+            {
+              "node": "Out",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "Sidana Ventures",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "createdAt": "2026-10-01T09:39:58.668Z",
+    "updatedAt": "2026-10-01T09:39:58.668Z",
+    "workflowPublishHistory": [
+      {
+        "id": 10518,
+        "workflowId": "BltcIQ0KTHaZEBhk",
+        "versionId": "7038631e-9e01-469f-afaf-dd19e864d4be",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-10-01T09:39:59.115Z"
+      }
+    ]
+  }
+}

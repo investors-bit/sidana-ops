@@ -1,0 +1,289 @@
+{
+  "id": "QLHy1K3kGqMBDnV8",
+  "name": "One-off BG-1 — update BlueGreen mandate in INVESTORS + stop 7 follow-ups",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-07T05:15:26.452Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "cd1f432e-2516-4754-90d9-362641fe8669",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "trg1",
+      "name": "Run once 10:52 IST 7 Sep",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "52 10 7 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "cd0",
+      "name": "Build investor update",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        -160
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// New mandate from https://www.bluegreen.vc (checked 2026-09-07).\n// Cheque size unchanged per user instruction.\nreturn [{ json: {\n  investor: 'BlueGreen Ventures',\n  sector: 'Climate, Post AI Careers, Salt & Pepper economy; portfolio also spans Fintech, EdTech, Gaming, HealthTech, Ecommerce',\n  stage: 'Early stage (Pre-seed to Series A)'\n}}];"
+      }
+    },
+    {
+      "id": "up0",
+      "name": "Update INVESTORS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "position": [
+        440,
+        -160
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "INVESTORS"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "investor"
+          ],
+          "schema": [
+            {
+              "id": "investor",
+              "displayName": "investor",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "rd1",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        220,
+        120
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cd1",
+      "name": "Build pause rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        120
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// BlueGreen rows already SENT with NO investor reply -> stop remaining follow-ups.\n// D00645 (Vilva AI) is excluded: that investor replied ('Other - needs review').\nconst TARGETS = ['D01706','D01710','D01720','D01740','D01741','D02501','D02564'];\nfunction s(v) { return String(v == null ? '' : v).trim(); }\n\nconst rows = $input.all().map(function (i) { return i.json; });\nif (rows.length < 500) { throw new Error('ABORT: PIPELINE returned only ' + rows.length + ' rows'); }\n\nconst out = [];\nfor (const t of TARGETS) {\n  const hits = rows.filter(function (r) { return s(r.deal_id) === t; });\n  if (hits.length !== 1) { throw new Error('ABORT: expected 1 row for ' + t + ', found ' + hits.length); }\n  const h = hits[0];\n  if (s(h.investor) !== 'BlueGreen Ventures') { throw new Error('ABORT: ' + t + ' is not BlueGreen (' + s(h.investor) + ')'); }\n  if (s(h.deal_shared).toLowerCase() !== 'yes') { throw new Error('ABORT: ' + t + ' is not deal_shared=Yes'); }\n  if (s(h.investor_response) !== '') { throw new Error('ABORT: ' + t + ' has an investor_response - leave it alone'); }\n  if (s(h.pause) !== '') { continue; }\n  const prev = s(h.notes);\n  out.push({ json: {\n    deal_id: t,\n    pause: 'Yes',\n    next_action: 'Stopped - off new BlueGreen mandate',\n    notes: (prev ? prev + ' | ' : '') + 'Follow-ups stopped 2026-09-07: BlueGreen mandate changed (Climate / Post AI Careers / Salt & Pepper)'\n  }});\n}\nif (out.length === 0) { throw new Error('ABORT: nothing to pause'); }\nif (out.length > 7) { throw new Error('ABORT: ' + out.length + ' exceeds guard of 7'); }\nreturn out;"
+      }
+    },
+    {
+      "id": "up1",
+      "name": "Update PIPELINE (pause)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "position": [
+        660,
+        120
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "deal_id"
+          ],
+          "schema": [
+            {
+              "id": "deal_id",
+              "displayName": "deal_id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Run once 10:52 IST 7 Sep": {
+      "main": [
+        [
+          {
+            "node": "Build investor update",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build investor update": {
+      "main": [
+        [
+          {
+            "node": "Update INVESTORS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Build pause rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build pause rows": {
+      "main": [
+        [
+          {
+            "node": "Update PIPELINE (pause)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once 10:52 IST 7 Sep": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "QLHy1K3kGqMBDnV8",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-07T05:15:26.455Z",
+      "updatedAt": "2026-09-07T05:15:26.455Z"
+    }
+  ],
+  "activeVersion": null
+}

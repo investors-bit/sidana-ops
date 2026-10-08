@@ -1,0 +1,278 @@
+{
+  "id": "IikjJZEn5TY1IT6B",
+  "name": "One-off MAIL-0 (read-only) — which Gmail account is which owner + PIPELINE reply stats (17 Sep)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-17T07:53:33.947Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "2031eab8-08ff-4de0-945d-b02f62428f25",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "25 13 17 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "p2",
+      "name": "Profile 2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "continueOnFail": true,
+      "position": [
+        200,
+        -200
+      ],
+      "parameters": {
+        "url": "https://gmail.googleapis.com/gmail/v1/users/me/profile",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "hwEqMRn6IxzoYs1R",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "id": "p3",
+      "name": "Profile 3",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "continueOnFail": true,
+      "position": [
+        400,
+        -200
+      ],
+      "parameters": {
+        "url": "https://gmail.googleapis.com/gmail/v1/users/me/profile",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mymSHTFVWtsI3Mh7",
+          "name": "Gmail account 3"
+        }
+      }
+    },
+    {
+      "id": "p4",
+      "name": "Profile 4",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "continueOnFail": true,
+      "position": [
+        600,
+        -200
+      ],
+      "parameters": {
+        "url": "https://gmail.googleapis.com/gmail/v1/users/me/profile",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "9IWD8mWqdARPXloL",
+          "name": "Gmail account 4"
+        }
+      }
+    },
+    {
+      "id": "p5",
+      "name": "Profile 5",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "continueOnFail": true,
+      "position": [
+        800,
+        -200
+      ],
+      "parameters": {
+        "url": "https://gmail.googleapis.com/gmail/v1/users/me/profile",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "R5K61omYbU9oT5J8",
+          "name": "Gmail account 5"
+        }
+      }
+    },
+    {
+      "id": "g1",
+      "name": "GET pipeline",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "position": [
+        1000,
+        -200
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=PIPELINE!A1:AI8000",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "c1",
+      "name": "Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        -200
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v){return String(v==null?'':v).trim();}\nconst prof={};for(const n of ['Profile 2','Profile 3','Profile 4','Profile 5']){const j=$(n).first().json;prof[n]={email:j.emailAddress||'',messages:j.messagesTotal,threads:j.threadsTotal,err:j.error?String(j.error.message||j.error).slice(0,150):''};}\nconst pipe=(($('GET pipeline').first().json.valueRanges||[])[0]||{}).values||[];const h=(pipe[0]||[]).map(s);const X={};h.forEach((k,i)=>X[k]=i);\nconst byOwner={},resp={},pass={},meet={},status={};let sent=0,withThread=0,withResp=0;const firstSent={};\nfor(let i=1;i<pipe.length;i++){const r=pipe[i]||[];const g=k=>s(r[X[k]]);if(!/^yes$/i.test(g('deal_shared'))){continue;}sent++;const o=g('owner');byOwner[o]=(byOwner[o]||0)+1;if(g('thread_id')){withThread++;}\n const d=g('date_shared');if(d&&(!firstSent[o]||d<firstSent[o])){firstSent[o]=d;}\n const rp=g('investor_response');if(rp){withResp++;resp[rp.slice(0,40)]=(resp[rp.slice(0,40)]||0)+1;}\n const pr=g('pass_reason');if(pr){pass[pr.slice(0,80)]=(pass[pr.slice(0,80)]||0)+1;}\n const ms=g('meeting_scheduled');if(ms){meet[ms]=(meet[ms]||0)+1;}const st=g('deal_status');if(st){status[st]=(status[st]||0)+1;}}\nreturn [{json:{profiles:prof,sent:sent,with_thread:withThread,with_response:withResp,sent_by_owner:byOwner,first_sent_by_owner:firstSent,responses:resp,pass_reasons:pass,meeting_scheduled:meet,deal_status:status}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once": {
+      "main": [
+        [
+          {
+            "node": "Profile 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Profile 2": {
+      "main": [
+        [
+          {
+            "node": "Profile 3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Profile 3": {
+      "main": [
+        [
+          {
+            "node": "Profile 4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Profile 4": {
+      "main": [
+        [
+          {
+            "node": "Profile 5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Profile 5": {
+      "main": [
+        [
+          {
+            "node": "GET pipeline",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET pipeline": {
+      "main": [
+        [
+          {
+            "node": "Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataSuccessExecution": "all",
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "IikjJZEn5TY1IT6B",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-17T07:53:33.950Z",
+      "updatedAt": "2026-09-17T07:53:33.950Z"
+    }
+  ],
+  "activeVersion": null
+}

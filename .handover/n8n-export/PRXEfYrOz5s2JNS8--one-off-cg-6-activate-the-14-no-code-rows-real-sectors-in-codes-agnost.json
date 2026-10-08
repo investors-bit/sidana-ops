@@ -1,0 +1,193 @@
+{
+  "id": "PRXEfYrOz5s2JNS8",
+  "name": "One-off CG-6 — activate the 14 no-code rows: real sectors_in codes, AGNOSTIC where the firm says so (user-authorised 23 Sep)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-23T17:17:29.273Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "8493a5be-90f2-4e0a-8046-ee2458767841",
+  "versionCounter": 4,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "3d3b0824-98de-4704-bacd-33c524f89647",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-activate-14-c7d0e2",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "g",
+      "name": "Read",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=INVESTOR_CRITERIA%21A1%3AAC320&ranges=INVESTORS%21A1%3AJ300",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "v",
+      "name": "Compute",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const R = $json.valueRanges || [];\nconst pick = (n) => (R.find(x => String(x.range||'').indexOf(n) === 0) || {}).values || [];\nconst crit = pick('INVESTOR_CRITERIA');\nconst inv  = pick('INVESTORS!');\nconst g = (row,i) => (row && row[i] != null) ? String(row[i]).trim() : '';\n\n// AGNOSTIC only where the firm's own material says sector agnostic\nconst AGN = { '247':'Alteria - venture debt, self-described sector AND stage agnostic',\n              '254':'Golden Gate - no sector mandate; portfolio spans everything',\n              '262':'Marwari Catalysts - Tier 2/3 accelerator, no sector mandate stated',\n              '267':'RevX - sector-agnostic private debt; revenue is the real constraint' };\n\n// Real codes derived from each firm's stated focus (see findings.md)\nconst CODES = {\n '252':'FINTECH_CONSUMER, FINTECH_INFRA, FINTECH_SME_LENDING, EDTECH_K12_TESTPREP, EDTECH_UPSKILLING_ENTERPRISE, CLIMATE_ENERGY, AGRITECH, RETAIL_TECH, QUICK_HYPERLOCAL_COMMERCE, SPACETECH, HEALTHTECH_DIGITAL, HEALTHCARE_DELIVERY, D2C_HEALTH_WELLNESS',\n '256':'CONSUMER_TECH_APP, CONSUMER_SERVICES, SAAS_ENTERPRISE, RETAIL_TECH, D2C_HOME_LIFESTYLE, D2C_FASHION_JEWELLERY, D2C_BEAUTY_PERSONAL_CARE, D2C_HEALTH_WELLNESS, AI_APPLIED_ENTERPRISE',\n '258':'AI_FOUNDATIONAL, SEMICONDUCTOR_ELECTRONICS, IOT_SMART_HARDWARE, SPACETECH, DEFENCE_AEROSPACE, BIOTECH_PHARMA, MEDTECH_DEVICES, MANUFACTURING_INDUSTRIAL, DATA_INFRA_DEVTOOLS',\n '259':'SAAS_ENTERPRISE, AI_APPLIED_ENTERPRISE, CONSUMER_TECH_APP, CONSUMER_SERVICES, D2C_HOME_LIFESTYLE, D2C_FASHION_JEWELLERY, D2C_BEAUTY_PERSONAL_CARE, D2C_HEALTH_WELLNESS, SUSTAINABLE_MATERIALS_CIRCULAR, CLIMATE_ENERGY, SPACETECH, FINTECH_CONSUMER',\n '263':'AI_APPLIED_ENTERPRISE, AI_FOUNDATIONAL, SAAS_ENTERPRISE, DATA_INFRA_DEVTOOLS, LOGISTICS_SUPPLY_CHAIN, MANUFACTURING_INDUSTRIAL, CLIMATE_ENERGY, HEALTHTECH_DIGITAL, FINTECH_INFRA',\n '264':'CONSTRUCTION_INFRA_TECH, LOGISTICS_SUPPLY_CHAIN, CLIMATE_ENERGY, EV_CLEAN_MOBILITY, REAL_ESTATE_COWORKING_PROPTECH, HEALTHCARE_DELIVERY, MANUFACTURING_INDUSTRIAL, DATA_INFRA_DEVTOOLS, WATER_TECH',\n '266':'HEALTHCARE_DELIVERY, HEALTHTECH_DIGITAL, CLIMATE_ENERGY, FINTECH_CONSUMER, FINTECH_SME_LENDING, AGRITECH, FNB_PACKAGED_FOOD, CONSUMER_TECH_APP, D2C_HOME_LIFESTYLE, LOGISTICS_SUPPLY_CHAIN, BIOTECH_PHARMA, RETAIL_TECH',\n '268':'AGRITECH, FNB_PACKAGED_FOOD, FNB_FOODSERVICE, HEALTHCARE_DELIVERY, HEALTHTECH_DIGITAL, SAAS_ENTERPRISE, EDTECH_UPSKILLING_ENTERPRISE, TRAVEL_HOSPITALITY, RETAIL_TECH, CONSTRUCTION_INFRA_TECH, MANUFACTURING_INDUSTRIAL, CLIMATE_ENERGY, FINTECH_SME_LENDING',\n '271':'RETAIL_TECH, QUICK_HYPERLOCAL_COMMERCE, SAAS_ENTERPRISE, DATA_INFRA_DEVTOOLS, AGRITECH, CONSUMER_SERVICES, AI_FOUNDATIONAL, SEMICONDUCTOR_ELECTRONICS, IOT_SMART_HARDWARE',\n '273':'RETAIL_TECH, QUICK_HYPERLOCAL_COMMERCE, CONSUMER_TECH_APP, D2C_HOME_LIFESTYLE, D2C_FASHION_JEWELLERY, D2C_BEAUTY_PERSONAL_CARE, D2C_HEALTH_WELLNESS, FINTECH_INFRA, LOGISTICS_SUPPLY_CHAIN'\n};\n\nconst NOTE = '2026-09-23: activated on Aditya’s instruction. sectors_in derived from the firm’s own stated focus during thesis research; geography mismatch (if noted in thesis_summary) is NOT enforced by the engine, so watch the pass reasons.';\n\nconst data = [], done = [], skipped = [];\n\nfor (let i = 1; i < crit.length; i++) {\n  const c = crit[i];\n  const critRow = i + 1;\n  const key = g(c,0);\n  if (!key) continue;\n  const n = parseInt(key,10);\n  const ivRow = inv[n-1];\n  if (!ivRow || !g(ivRow,0)) continue;\n  if (g(ivRow,9)) continue;\n\n  const isTarget = AGN[key] || CODES[key];\n  if (!isTarget) continue;\n\n  // only touch rows that currently have NO codes and are not AGNOSTIC\n  const mode = g(c,6).toUpperCase();\n  if (mode === 'AGNOSTIC' || g(c,7)) { skipped.push(n + ' ' + g(ivRow,0) + ' :: already has codes or is agnostic'); continue; }\n\n  const ch = [];\n  if (AGN[key]) { data.push({ range: 'INVESTOR_CRITERIA!G' + critRow, values: [['AGNOSTIC']] }); ch.push('sector_mode LIST->AGNOSTIC'); }\n  else { data.push({ range: 'INVESTOR_CRITERIA!H' + critRow, values: [[CODES[key]]] }); ch.push('sectors_in +' + CODES[key].split(',').length + ' codes'); }\n  if (g(c,3).toUpperCase() !== 'ACTIVE') { data.push({ range: 'INVESTOR_CRITERIA!D' + critRow, values: [['ACTIVE']] }); ch.push('status->ACTIVE'); }\n  if (g(c,4).toUpperCase() === 'PENDING') { data.push({ range: 'INVESTOR_CRITERIA!E' + critRow, values: [['USER']] }); ch.push('confirmed->USER'); }\n  if (!g(c,25)) { data.push({ range: 'INVESTOR_CRITERIA!Z' + critRow, values: [[NOTE]] }); ch.push('rule_notes'); }\n\n  done.push({ row: n, investor: g(ivRow,0).slice(0,30), basis: AGN[key] || 'codes from stated focus', changes: ch });\n}\n\nif (!data.length) throw new Error('Nothing to do');\nif (data.length > 80) throw new Error('Guard: ' + data.length + ' cells exceeds cap 80');\n\nreturn [{ json: { body: { valueInputOption: 'RAW', data: data }, cells: data.length, rows: done.length, done: done, skipped: skipped } }];"
+      }
+    },
+    {
+      "id": "w",
+      "name": "Write",
+      "disabled": false,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "o",
+      "name": "Out",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const c = $('Compute').first().json; const w = $json;\nreturn [{ json: { updatedCells: w.totalUpdatedCells != null ? w.totalUpdatedCells : null, planned: c.cells, rows: c.rows, done: c.done, skipped: c.skipped } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read": {
+      "main": [
+        [
+          {
+            "node": "Compute",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute": {
+      "main": [
+        [
+          {
+            "node": "Write",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write": {
+      "main": [
+        [
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "PRXEfYrOz5s2JNS8",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-23T17:17:29.275Z",
+      "updatedAt": "2026-09-23T17:17:29.275Z"
+    }
+  ],
+  "activeVersion": null
+}

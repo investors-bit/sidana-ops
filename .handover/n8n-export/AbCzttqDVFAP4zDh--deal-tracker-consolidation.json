@@ -1,0 +1,714 @@
+{
+  "id": "AbCzttqDVFAP4zDh",
+  "name": "Deal Tracker Consolidation",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-08-30T15:11:08.212Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "4f66276f-e707-44c4-9515-6de8cba055fe",
+  "versionCounter": 25,
+  "sourceWorkflowId": null,
+  "triggerCount": 0,
+  "nodes": [
+    {
+      "id": "54c399c1-3469-4390-b9d3-96b6ccc683b1",
+      "name": "Start",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        288
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "a26b21a0-532a-45ec-8a4d-2ff06ff1822a",
+      "name": "Config",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        288
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "sourceId",
+              "value": "https://docs.google.com/spreadsheets/d/1XnvjyfLrPlfMqpvN0koXniusbNjH42y6xEX0rPzgPDw/edit?usp=sharing",
+              "type": "string"
+            },
+            {
+              "id": "a2",
+              "name": "destId",
+              "value": "https://docs.google.com/spreadsheets/d/1WzrrPelm2HsJNXOUNIEOuRajp70CUY-RrzBOs9LENjs/edit?gid=189973839#gid=189973839",
+              "type": "string"
+            },
+            {
+              "id": "a3",
+              "name": "destSheet",
+              "value": "Deal Tracker",
+              "type": "string"
+            },
+            {
+              "id": "a4",
+              "name": "excludedTabs",
+              "value": "Dashboard,How to use,TEMPLATE,Lists,Sheet2,Instructions,Config",
+              "type": "string"
+            },
+            {
+              "id": "a5",
+              "name": "dryRun",
+              "value": false,
+              "type": "boolean"
+            },
+            {
+              "id": "a6",
+              "name": "testLimit",
+              "value": 0,
+              "type": "number"
+            },
+            {
+              "id": "a7",
+              "name": "runDate",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "d7f27423-e4d8-4477-9f0c-a22c2fa00846",
+      "name": "Extract IDs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        480
+      ],
+      "parameters": {
+        "jsCode": "const cfg = $('Config').first().json;\nfunction idOf(v){ const s=String(v||''); const m=s.match(/\\/d\\/([a-zA-Z0-9-_]+)/); return m ? m[1] : s.trim(); }\nreturn [{ json: { sourceId: idOf(cfg.sourceId), destId: idOf(cfg.destId), sourceRaw: cfg.sourceId, destRaw: cfg.destId } }];"
+      }
+    },
+    {
+      "id": "ae007c97-9d73-4302-9488-229aeae89a74",
+      "name": "Get Source Metadata",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        448,
+        288
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $json.sourceId }}?fields=sheets.properties.title",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api"
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "2c17a4e9-a042-4c10-8874-1496bae41793",
+      "name": "Build Batch Get URL",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        288
+      ],
+      "parameters": {
+        "jsCode": "const cfg = $('Config').first().json;\nconst meta = $input.first().json;\nconst excluded = String(cfg.excludedTabs || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);\nconst props = (meta.sheets || []).map(s => (s && s.properties && s.properties.title) ? s.properties.title : null).filter(Boolean);\nconst startupTabs = props.filter(t => excluded.indexOf(String(t).trim().toLowerCase()) === -1);\nconst sid = $('Extract IDs').first().json.sourceId;\nconst base = 'https://sheets.googleapis.com/v4/spreadsheets/' + encodeURIComponent(sid) + '/values:batchGet';\nconst qp = ['majorDimension=ROWS', 'valueRenderOption=UNFORMATTED_VALUE', 'dateTimeRenderOption=FORMATTED_STRING'];\nconst rq = startupTabs.map(t => 'ranges=' + encodeURIComponent(\"'\" + String(t).replace(/'/g, \"''\") + \"'\"));\nconst url = base + '?' + qp.concat(rq).join('&');\nreturn [{ json: { url: url, startupTabs: startupTabs } }];"
+      }
+    },
+    {
+      "id": "84dbe369-b2e6-4ac3-9a2f-b6c54bf3cd38",
+      "name": "Read Source Rows",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        896,
+        288
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.url }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api"
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "8f6bea48-49da-4465-ba69-35feee540b5c",
+      "name": "Normalize Source Rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        288
+      ],
+      "parameters": {
+        "jsCode": "const resp = $input.first().json;\nconst vr = resp.valueRanges || [];\nconst alias = {\n  'dealid':'deal_id',\n  'investorvcname':'investor_name','investorname':'investor_name','investor':'investor_name','vcname':'investor_name','investors':'investor_name',\n  'owner':'owner','priority':'priority',\n  'dealshared':'deal_shared',\n  'dateshared':'date_shared','channel':'channel','dayssinceshared':'days_since_shared',\n  'followup1done':'followup1_done','fu1done':'followup1_done','followup1':'followup1_done',\n  'followup1date':'followup1_date','fu1date':'followup1_date',\n  'followup2done':'followup2_done','fu2done':'followup2_done','followup2':'followup2_done',\n  'followup2date':'followup2_date','fu2date':'followup2_date',\n  'followup3done':'followup3_done','fu3done':'followup3_done','followup3':'followup3_done',\n  'followup3date':'followup3_date','fu3date':'followup3_date',\n  'totalfollowups':'total_followups',\n  'lastcontactdate':'last_contact_date','dayssincelastcontact':'days_since_last_contact',\n  'meetingscheduled':'meeting_scheduled',\n  'dateofmeetingscheduled':'meeting_date','meetingdate':'meeting_date',\n  'noofmeetingsheld':'meetings_held','meetingsheld':'meetings_held','numberofmeetingsheld':'meetings_held',\n  'lastmeetingdate':'last_meeting_date','lastmeetingoutcome':'last_meeting_outcome',\n  'investorresponse':'investor_response','response':'investor_response',\n  'passreason':'pass_reason','currentstage':'current_stage','stage':'current_stage',\n  'nextaction':'next_action','nextactiondue':'next_action_due','daystooverdue':'days_to_overdue',\n  'committedamountinrcr':'committed_amount','committedamount':'committed_amount',\n  'dealstatus':'deal_status','status':'deal_status','notes':'notes'\n};\nfunction nh(h){ return String(h).toLowerCase().replace(/[^a-z0-9]+/g,''); }\nconst out = [];\nfor (const block of vr) {\n  const range = block.range || '';\n  let tab = range; const bang = range.lastIndexOf('!'); if (bang >= 0) tab = range.slice(0, bang);\n  tab = tab.replace(/^'/, '').replace(/'$/, '').replace(/''/g, \"'\").trim();\n  const rows = block.values || [];\n  if (!rows.length) continue;\n  let headerIdx = -1;\n  for (let h = 0; h < rows.length; h++) { const cells = (rows[h] || []).map(x => nh(x)); if (cells.indexOf('investorvcname') !== -1 || (cells.indexOf('dealid') !== -1 && cells.indexOf('dealshared') !== -1)) { headerIdx = h; break; } }\n  if (headerIdx === -1) continue;\n  const canon = (rows[headerIdx] || []).map(h => alias[nh(h)] || null);\n  for (let r = headerIdx + 1; r < rows.length; r++) {\n    const row = rows[r] || [];\n    const rec = { startup_name: tab, _source_row: r + 1 };\n    for (let c = 0; c < canon.length; c++) { if (canon[c]) { const v = row[c]; rec[canon[c]] = (v === undefined ? null : v); } }\n    const inv = rec.investor_name != null && String(rec.investor_name).trim() !== '';\n    if (!inv) continue;\n    const invLow = String(rec.investor_name).trim().toLowerCase();\n    if (['investor / vc name','investor','vc name','total','totals','grand total','instructions','template'].indexOf(invLow) !== -1) continue;\n    const meaningful = [rec.deal_shared, rec.investor_response, rec.current_stage, rec.deal_status, rec.followup1_done, rec.followup2_done, rec.followup3_done, rec.meeting_scheduled, rec.date_shared].some(x => x != null && String(x).trim() !== '');\n    if (!meaningful) continue;\n    out.push({ json: rec });\n  }\n}\nreturn out;"
+      }
+    },
+    {
+      "id": "0f7e869e-9e4c-46b7-bf6c-3331a8aabfd3",
+      "name": "Read Destination",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1344,
+        288
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $(\"Extract IDs\").first().json.destId }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Deal Tracker"
+        },
+        "options": {
+          "outputFormatting": {
+            "values": {
+              "general": "UNFORMATTED_VALUE",
+              "date": "FORMATTED_STRING"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      },
+      "executeOnce": true
+    },
+    {
+      "id": "314437c0-59b1-4732-ae01-a973ac8b4996",
+      "name": "Consolidate Investor Updates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1568,
+        288
+      ],
+      "parameters": {
+        "jsCode": "const cfg = $('Config').first().json;\nlet src = $('Normalize Source Rows').all().map(i => i.json);\nconst dest = $('Read Destination').all().map(i => i.json);\nconst testLimit = Number(cfg.testLimit) || 0;\nconst months = { jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11 };\nfunction pd(v){ if(v===null||v===undefined) return null; const s=String(v).trim(); if(!s) return null; const mName=s.match(/^(\\d{1,2})[\\s\\-\\/]+([A-Za-z]{3,})[\\s,\\-\\/]+(\\d{2,4})?$/); if(mName){ const day=+mName[1]; const mon=months[mName[2].slice(0,3).toLowerCase()]; let yr=mName[3]?+mName[3]:new Date().getFullYear(); if(yr<100) yr+=2000; if(mon!=null) return {ts:new Date(yr,mon,day).getTime(),raw:s}; } const mNum=s.match(/^(\\d{1,2})[\\-\\/](\\d{1,2})[\\-\\/](\\d{2,4})$/); if(mNum){ const day=+mNum[1]; const mon=+mNum[2]-1; let yr=+mNum[3]; if(yr<100) yr+=2000; if(mon>=0&&mon<12) return {ts:new Date(yr,mon,day).getTime(),raw:s}; } const t=Date.parse(s); if(!isNaN(t)) return {ts:t,raw:s}; return {ts:null,raw:s}; }\nfunction fmt(ts){ const dt=new Date(ts); const y=dt.getFullYear(); const m=('0'+(dt.getMonth()+1)).slice(-2); const da=('0'+dt.getDate()).slice(-2); return y+'-'+m+'-'+da; }\nfunction ymdOf(v){ const p=pd(v); if(!p||p.ts==null) return null; return fmt(p.ts); }\nlet runYmd=''; if(cfg.runDate!=null && String(cfg.runDate).trim()!==''){ runYmd=ymdOf(cfg.runDate)||''; }\nif(!runYmd){ const nowI=new Date(Date.now()+5.5*3600*1000); runYmd=nowI.getUTCFullYear()+'-'+('0'+(nowI.getUTCMonth()+1)).slice(-2)+'-'+('0'+nowI.getUTCDate()).slice(-2); }\n// Process ALL deals in the source sheet regardless of date_shared.\n// Deals already present in the destination are skipped by the dedupe logic below.\nfunction yes(v){ if(v===null||v===undefined) return false; const s=String(v).trim().toLowerCase(); return ['yes','y','done','true','1','completed','complete'].indexOf(s)!==-1; }\nfunction norm(v){ return String(v==null?'':v).toLowerCase().trim().replace(/[^a-z0-9 ()]+/g,' ').replace(/\\s+/g,' ').trim(); }\nfunction nonEmpty(v){ return v!=null && String(v).trim()!==''; }\nfunction splitList(v){ if(!nonEmpty(v)) return []; return String(v).split(',').map(s=>s.trim()).filter(Boolean); }\nfunction splitParts(v){ if(!nonEmpty(v)) return []; return String(v).split(/\\n|;/).map(s=>s.trim()).filter(Boolean); }\nfunction dedupePreserve(arr){ const seen={}; const out=[]; for(const a of arr){ const k=a.toLowerCase(); if(!seen[k]){ seen[k]=1; out.push(a);} } return out; }\nfunction dedupeNames(arr){ const seen={}; const out=[]; for(const a of arr){ if(a==null) continue; const s=String(a).trim(); if(s==='') continue; const k=s.toLowerCase().replace(/[^a-z0-9]+/g,''); if(!k) continue; if(!seen[k]){ seen[k]=1; out.push(s);} } return out; }\nfunction isInterested(r){ const blob=norm(r.investor_response)+' '+norm(r.current_stage)+' '+norm(r.deal_status); if(yes(r.meeting_scheduled)||(Number(r.meetings_held)||0)>0) return true; return ['interested','picked','meeting','asked for documents','asked for docs','reviewing','review','due diligence','term sheet','committed','won'].some(p=>blob.indexOf(p)!==-1); }\nfunction isPassed(r){ const blob=norm(r.investor_response)+' '+norm(r.deal_status)+' '+norm(r.current_stage); return ['passed','pass','lost','declined','not relevant','not interested'].some(p=>blob.indexOf(p)!==-1); }\nfunction activityDate(r){ const ds=[r.date_shared,r.followup1_date,r.followup2_date,r.followup3_date,r.last_contact_date,r.last_meeting_date,r.meeting_date]; let best=null; for(const d of ds){ const p=pd(d); if(p&&p.ts!=null){ if(best===null||p.ts>best) best=p.ts; } } return best; }\nfunction fuRound(r){ if(!r) return 0; if(yes(r.followup3_done)) return 3; if(yes(r.followup2_done)) return 2; if(yes(r.followup1_done)) return 1; return 0; }\nfunction lastFU(r){ let best=null; const xs=[r?r.followup1_date:null,r?r.followup2_date:null,r?r.followup3_date:null]; for(const x of xs){ const p=pd(x); if(p&&p.ts!=null){ if(best===null||p.ts>best) best=p.ts; } } return best; }\nfunction stopChase(r){ const blob=norm(r.investor_response)+' '+norm(r.current_stage)+' '+norm(r.deal_status)+' '+norm(r.next_action); if(yes(r.meeting_scheduled)) return true; return ['meeting scheduled','asked for documents','asked for docs','interested','picked','committed','won','close','closed','lost','not relevant','term sheet','due diligence'].some(s=>blob.indexOf(s)!==-1); }\nfunction statusOf(r){ if(!r) return ''; if(yes(r.meeting_scheduled)||(Number(r.meetings_held)||0)>0) return 'Meeting Scheduled'; if(isInterested(r)) return 'Interested'; const fr=fuRound(r); if(fr===3) return 'Follow-up Done 3'; if(fr===2) return 'Follow-up Done 2'; if(fr===1) return 'Follow-up Done'; if(yes(r.deal_shared)||nonEmpty(r.date_shared)) return 'Deal Shared'; return 'Other'; }\nfunction prank(p){ const s=norm(p); if(s.indexOf('high')!==-1||s==='1'||s==='p1') return 3; if(s.indexOf('med')!==-1||s==='2'||s==='p2') return 2; if(s.indexOf('low')!==-1||s==='3'||s==='p3') return 1; return 0; }\nconst destMap={};\ndest.forEach((d,idx)=>{ const name=d['Investor / VC Name']; if(!nonEmpty(name)) return; const key=norm(name); if(!(key in destMap)) destMap[key]={json:d, rowNumber:(d.row_number!=null?d.row_number:idx+2)}; });\nconst groups={}; const unmatchedMap={};\nfor(const rec of src){ const key=norm(rec.investor_name); if(destMap[key]){ if(!groups[key]) groups[key]={dest:destMap[key], rows:[]}; groups[key].rows.push(rec);} else { if(!unmatchedMap[key]) unmatchedMap[key]={name:rec.investor_name, startups:{}, rows:[]}; unmatchedMap[key].startups[rec.startup_name]=1; unmatchedMap[key].rows.push(rec._source_row+'@'+rec.startup_name); } }\nconst results=[];\nObject.keys(groups).forEach(key=>{\n  const g=groups[key]; const dOrig=g.dest.json; const d={}; for(const dk in dOrig){ d[String(dk).trim()]=dOrig[dk]; } const rows=g.rows; const destName=d['Investor / VC Name'];\n  const sourceStartups=dedupeNames(rows.map(r=>r.startup_name));\n  const sharedRows=rows.filter(r=>yes(r.deal_shared)||nonEmpty(r.date_shared));\n  const sharedStartups=dedupeNames(sharedRows.map(r=>r.startup_name));\n  const existingAll=splitList(d['All Deals Shared till date']);\n  const proposedAll=dedupeNames(existingAll.concat(sharedStartups));\n  const destLastDate=pd(d['Last Deal Mail Sent Date/call done']);\n  const destFollowDate=pd(d['Last Follow-up Sent Date']);\n  let latestRefTs=null;\n  if(destLastDate&&destLastDate.ts!=null) latestRefTs=destLastDate.ts;\n  if(destFollowDate&&destFollowDate.ts!=null && (latestRefTs===null||destFollowDate.ts>latestRefTs)) latestRefTs=destFollowDate.ts;\n  let maxShareTs=null; sharedRows.forEach(r=>{ const p=pd(r.date_shared); if(p&&p.ts!=null){ if(maxShareTs===null||p.ts>maxShareTs) maxShareTs=p.ts; } });\n  let latestStartups=[]; if(maxShareTs!==null) latestStartups=dedupeNames(sharedRows.filter(r=>{ const p=pd(r.date_shared); return p&&p.ts===maxShareTs; }).map(r=>r.startup_name));\n  let proposedLatest=d['Latest deal shared'];\n  if(latestStartups.length){ if(!(latestRefTs!==null&&maxShareTs<latestRefTs)) proposedLatest=latestStartups.join(', '); }\n  if(!nonEmpty(proposedLatest) && sharedStartups.length) proposedLatest=sharedStartups.join(', ');\n  if(!nonEmpty(proposedLatest) && sourceStartups.length) proposedLatest=sourceStartups.join(', ');\n  if(!nonEmpty(proposedLatest)) proposedLatest=d['Latest deal shared'];\n  let srcActMax=null; rows.forEach(r=>{ const a=activityDate(r); if(a!=null){ if(srcActMax===null||a>srcActMax) srcActMax=a; } });\n  let proposedMail=d['Last Deal Mail Sent Date/call done'];\n  if(srcActMax!==null){ if(!(destLastDate&&destLastDate.ts!=null&&srcActMax<destLastDate.ts)) proposedMail=fmt(srcActMax); }\n  if(!nonEmpty(proposedMail)) proposedMail=d['Last Deal Mail Sent Date/call done'];\n  const pickedSrc=dedupeNames(rows.filter(isInterested).map(r=>r.startup_name));\n  const existingPicked=splitList(d['Picked / Interested Deals']);\n  const proposedPicked=dedupeNames(existingPicked.concat(pickedSrc));\n  const activeRows=rows.filter(r=>(yes(r.deal_shared)||nonEmpty(r.date_shared)) && !isPassed(r));\n  let latestActive=null; let latestActiveTs=null; activeRows.forEach(r=>{ const a=activityDate(r); if(latestActive===null || (a!=null && (latestActiveTs===null||a>latestActiveTs))){ latestActive=r; latestActiveTs=a; } });\n  let proposedFURound = latestActive!==null ? fuRound(latestActive) : (nonEmpty(d['Follow-up Round'])?d['Follow-up Round']:0);\n  const efu=pd(d['Last Follow-up Sent Date']); let proposedFUDate=d['Last Follow-up Sent Date']; const lfu=latestActive?lastFU(latestActive):null; if(lfu!=null){ if(!(efu&&efu.ts!=null&&lfu<efu.ts)) proposedFUDate=fmt(lfu); } if(!nonEmpty(proposedFUDate)) proposedFUDate=d['Last Follow-up Sent Date'];\n  let followupNeeded=false; activeRows.forEach(r=>{ if(!stopChase(r)) followupNeeded=true; });\n  const proposedFUNeeded = activeRows.length ? (followupNeeded?'Yes':'No') : (nonEmpty(d['Follow-up Needed?'])?d['Follow-up Needed?']:'No');\n  let proposedStatus = latestActive ? statusOf(latestActive) : '';\n  if(!nonEmpty(proposedStatus)){ if(activeRows.length===0 && rows.some(isPassed)) proposedStatus='Passed'; else proposedStatus=d['Current Status']; }\n  const existingPassParts=splitParts(d['Pass Reason']); const passItems=[]; rows.filter(isPassed).forEach(r=>{ if(nonEmpty(r.pass_reason)) passItems.push(r.startup_name+': '+String(r.pass_reason).trim()); });\n  let proposedPass=d['Pass Reason']; if(passItems.length){ proposedPass=dedupePreserve(existingPassParts.concat(passItems)).join('; '); } if(!nonEmpty(proposedPass)) proposedPass=d['Pass Reason'];\n  const existingFbParts=splitParts(d['Investor Feedback / Response']); const fbItems=[]; rows.forEach(r=>{ let f=null; if(nonEmpty(r.investor_response) && ['no response','?','na','n a'].indexOf(norm(r.investor_response))===-1) f=r.investor_response; else if(nonEmpty(r.last_meeting_outcome)) f=r.last_meeting_outcome; else if(nonEmpty(r.notes)) f=r.notes; if(nonEmpty(f)) fbItems.push(r.startup_name+': '+String(f).trim()); });\n  let proposedFeedback=d['Investor Feedback / Response']; if(fbItems.length){ proposedFeedback=dedupePreserve(existingFbParts.concat(fbItems)).join('; '); } if(!nonEmpty(proposedFeedback)) proposedFeedback=d['Investor Feedback / Response'];\n  let chosenAction=null; if(activeRows.length){ let best=null; let bestDue=null; activeRows.forEach(r=>{ if(!nonEmpty(r.next_action)) return; const p=pd(r.next_action_due); const due=p&&p.ts!=null?p.ts:null; if(best===null){ best=r; bestDue=due; } else if(due!=null && (bestDue===null||due<bestDue)){ best=r; bestDue=due; } }); if(!best) best=latestActive; chosenAction=best?best.next_action:null; }\n  let proposedNext = nonEmpty(chosenAction)?String(chosenAction).trim():d['Next Action']; if(!nonEmpty(proposedNext)) proposedNext=d['Next Action'];\n  let bestPr=null; let bestRank=-1; (activeRows.length?activeRows:rows).forEach(r=>{ if(nonEmpty(r.priority)){ const rk=prank(r.priority); if(rk>bestRank){ bestRank=rk; bestPr=r.priority; } } });\n  let proposedPriority = nonEmpty(bestPr)?String(bestPr).trim():d['Priority']; if(!nonEmpty(proposedPriority)) proposedPriority=d['Priority'];\n  const existingRParts=splitParts(d['Remarks / Old Status']); const newNotes=[]; rows.forEach(r=>{ if(nonEmpty(r.notes)){ const n=r.startup_name+': '+String(r.notes).trim(); if(existingRParts.indexOf(n)===-1) newNotes.push(n); } });\n  const proposedRemarks = newNotes.length ? dedupePreserve(existingRParts.concat(newNotes)).join('; ') : d['Remarks / Old Status'];\n  const proposed={ 'Latest deal shared':proposedLatest, 'All Deals Shared till date':proposedAll.join(', '), 'Picked / Interested Deals':proposedPicked.join(', '), 'Last Deal Mail Sent Date/call done':proposedMail, 'Current Status':proposedStatus, 'Follow-up Round':proposedFURound, 'Last Follow-up Sent Date':proposedFUDate, 'Follow-up Needed?':proposedFUNeeded, 'Pass Reason':proposedPass, 'Investor Feedback / Response':proposedFeedback, 'Next Action':proposedNext, 'Priority':proposedPriority, 'Remarks / Old Status':proposedRemarks };\n  const keys=Object.keys(proposed); const existing={}; keys.forEach(k=>{ existing[k]=d[k]; });\n  const changed=[]; keys.forEach(k=>{ const a=proposed[k]==null?'':String(proposed[k]).trim(); const b=existing[k]==null?'':String(existing[k]).trim(); if(a!==b && a!=='') changed.push(k); });\n  const updatePayload={ 'Investor / VC Name':destName }; keys.forEach(k=>{ const a=proposed[k]==null?'':String(proposed[k]); updatePayload[k]= nonEmpty(a)?proposed[k]:(existing[k]==null?'':existing[k]); });\n  results.push({ _type:'matched', investor:destName, destRowNumber:g.dest.rowNumber, sourceStartups:sourceStartups.join(', '), existing:existing, proposed:proposed, fieldsThatWouldChange:changed, updatePayload:updatePayload });\n});\nlet matched=results; if(testLimit>0) matched=results.slice(0, testLimit);\nconst unmatched=Object.keys(unmatchedMap).map(k=>{ const u=unmatchedMap[k]; return { _type:'unmatched', sourceInvestorName:u.name, startups:Object.keys(u.startups).join(', '), sourceRows:u.rows.join(', '), reason:'No confident match in destination Deal Tracker' }; });\nconst outAll=[]; matched.forEach(m=>outAll.push({json:m})); unmatched.forEach(u=>outAll.push({json:u})); return outAll;"
+      },
+      "executeOnce": true
+    },
+    {
+      "id": "12b98653-cdda-4879-898b-e8df3eaf56df",
+      "name": "Is Matched",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1792,
+        192
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json._type }}",
+              "rightValue": "matched",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "48b19e74-3d9a-462e-9808-8a80ad1265f8",
+      "name": "Is Dry Run",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2016,
+        96
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $(\"Config\").first().json.dryRun }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "3e31282a-e7c6-45bd-9b96-7165f7c251fe",
+      "name": "Dry Run Audit",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const m=$json; const e=m.existing||{}; const p=m.proposed||{};\nreturn [{ json: {\n  'Investor / VC Name': m.investor,\n  'Destination Row Number': m.destRowNumber,\n  'Source Startups Found': m.sourceStartups,\n  'Existing Latest Deal': e['Latest deal shared'],\n  'Proposed Latest Deal': p['Latest deal shared'],\n  'Existing All Deals': e['All Deals Shared till date'],\n  'Proposed All Deals': p['All Deals Shared till date'],\n  'Existing Picked Deals': e['Picked / Interested Deals'],\n  'Proposed Picked Deals': p['Picked / Interested Deals'],\n  'Existing Current Status': e['Current Status'],\n  'Proposed Current Status': p['Current Status'],\n  'Existing Follow-up Round': e['Follow-up Round'],\n  'Proposed Follow-up Round': p['Follow-up Round'],\n  'Existing Last Follow-up Date': e['Last Follow-up Sent Date'],\n  'Proposed Last Follow-up Date': p['Last Follow-up Sent Date'],\n  'Existing Follow-up Needed': e['Follow-up Needed?'],\n  'Proposed Follow-up Needed': p['Follow-up Needed?'],\n  'Existing Pass Reason': e['Pass Reason'],\n  'Proposed Pass Reason': p['Pass Reason'],\n  'Existing Feedback': e['Investor Feedback / Response'],\n  'Proposed Feedback': p['Investor Feedback / Response'],\n  'Existing Next Action': e['Next Action'],\n  'Proposed Next Action': p['Next Action'],\n  'Fields That Would Change': (m.fieldsThatWouldChange||[]).join(', ')\n} }];"
+      }
+    },
+    {
+      "id": "b06a6e49-8a60-4bc9-baa5-2998ab08a3d6",
+      "name": "Update Destination",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2240,
+        192
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $(\"Extract IDs\").first().json.destId }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Deal Tracker"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "Investor / VC Name"
+          ],
+          "value": {
+            "Investor / VC Name": "={{ $json.updatePayload[\"Investor / VC Name\"] }}",
+            "Latest deal shared ": "={{ $json.updatePayload[\"Latest deal shared\"] }}",
+            "All Deals Shared till date": "={{ $json.updatePayload[\"All Deals Shared till date\"] }}",
+            "Picked / Interested Deals": "={{ $json.updatePayload[\"Picked / Interested Deals\"] }}",
+            "Last Deal Mail Sent Date/call done": "={{ $json.updatePayload[\"Last Deal Mail Sent Date/call done\"] }}",
+            " Current Status": "={{ $json.updatePayload[\"Current Status\"] }}",
+            "Follow-up Round": "={{ $json.updatePayload[\"Follow-up Round\"] }}",
+            "Last Follow-up Sent Date": "={{ $json.updatePayload[\"Last Follow-up Sent Date\"] }}",
+            "Follow-up Needed?": "={{ $json.updatePayload[\"Follow-up Needed?\"] }}",
+            "Pass Reason": "={{ $json.updatePayload[\"Pass Reason\"] }}",
+            "Investor Feedback / Response": "={{ $json.updatePayload[\"Investor Feedback / Response\"] }}",
+            "Next Action": "={{ $json.updatePayload[\"Next Action\"] }}",
+            "Priority": "={{ $json.updatePayload[\"Priority\"] }}",
+            "Remarks / Old Status": "={{ $json.updatePayload[\"Remarks / Old Status\"] }}"
+          },
+          "schema": [
+            {
+              "id": "Investor / VC Name",
+              "displayName": "Investor / VC Name",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Latest deal shared ",
+              "displayName": "Latest deal shared ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "All Deals Shared till date",
+              "displayName": "All Deals Shared till date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Picked / Interested Deals",
+              "displayName": "Picked / Interested Deals",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Last Deal Mail Sent Date/call done",
+              "displayName": "Last Deal Mail Sent Date/call done",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": " Current Status",
+              "displayName": " Current Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Follow-up Round",
+              "displayName": "Follow-up Round",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Last Follow-up Sent Date",
+              "displayName": "Last Follow-up Sent Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Follow-up Needed?",
+              "displayName": "Follow-up Needed?",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Pass Reason",
+              "displayName": "Pass Reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Investor Feedback / Response",
+              "displayName": "Investor Feedback / Response",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Next Action",
+              "displayName": "Next Action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Priority",
+              "displayName": "Priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Remarks / Old Status",
+              "displayName": "Remarks / Old Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        },
+        "options": {
+          "cellFormat": "RAW"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "bd9a52fb-ab04-4808-b384-9f35e6a0d2f8",
+      "name": "Unmatched Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2016,
+        288
+      ],
+      "parameters": {
+        "jsCode": "const m=$json;\nreturn [{ json: { 'Source Investor Name': m.sourceInvestorName, 'Startup(s)': m.startups, 'Source row(s)': m.sourceRows, 'Reason not matched': m.reason } }];"
+      }
+    },
+    {
+      "id": "03da9f29-3690-42e0-a6cc-33cddb702435",
+      "name": "Final Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1792,
+        384
+      ],
+      "parameters": {
+        "jsCode": "const cons=$('Consolidate Investor Updates').all().map(i=>i.json);\nconst cfg=$('Config').first().json;\nfunction pd2(v){ if(v==null) return null; const s=String(v).trim(); if(!s) return null; const months={jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11}; const mN=s.match(/^(\\d{1,2})[\\s\\-\\/]+([A-Za-z]{3,})[\\s,\\-\\/]+(\\d{2,4})?$/); if(mN){ const day=+mN[1]; const mon=months[mN[2].slice(0,3).toLowerCase()]; let yr=mN[3]?+mN[3]:new Date().getFullYear(); if(yr<100) yr+=2000; if(mon!=null) return new Date(yr,mon,day); } const mNum=s.match(/^(\\d{1,2})[\\-\\/](\\d{1,2})[\\-\\/](\\d{2,4})$/); if(mNum){ const day=+mNum[1]; const mon=+mNum[2]-1; let yr=+mNum[3]; if(yr<100) yr+=2000; if(mon>=0&&mon<12) return new Date(yr,mon,day); } const t=Date.parse(s); if(!isNaN(t)) return new Date(t); return null; }\nfunction ymd(dt){ return dt.getFullYear()+'-'+('0'+(dt.getMonth()+1)).slice(-2)+'-'+('0'+dt.getDate()).slice(-2); }\nlet runYmd=''; if(cfg.runDate!=null && String(cfg.runDate).trim()!==''){ const d=pd2(cfg.runDate); if(d) runYmd=ymd(d); }\nif(!runYmd){ const nowI=new Date(Date.now()+5.5*3600*1000); runYmd=nowI.getUTCFullYear()+'-'+('0'+(nowI.getUTCMonth()+1)).slice(-2)+'-'+('0'+nowI.getUTCDate()).slice(-2); }\nconst src=$('Normalize Source Rows').all().map(i=>i.json);\nlet tabs=[]; const bu=$('Build Batch Get URL').first(); if(bu&&bu.json&&bu.json.startupTabs) tabs=bu.json.startupTabs;\nconst matched=cons.filter(c=>c._type==='matched'); const unmatched=cons.filter(c=>c._type==='unmatched');\nconst willChange=matched.filter(c=>(c.fieldsThatWouldChange||[]).length>0);\nconst inv={}; src.forEach(r=>{ inv[String(r.investor_name).toLowerCase().trim()]=1; });\nconst dryRun=$('Config').first().json.dryRun;\nreturn [{ json: {\n  'Rows processed': 'All deals in source sheet (no date filter)',\n  'Source startup tabs processed': tabs.length,\n  'Source startup tabs': tabs.join(', '),\n  'Source investor-deal rows processed': src.length,\n  'Unique investors found': Object.keys(inv).length,\n  'Destination investors matched': matched.length,\n  'Destination investors that would change': willChange.length,\n  'Investors unchanged': matched.length - willChange.length,\n  'Unmatched investors': unmatched.length,\n  'Mode': dryRun ? 'DRY_RUN (no writes)' : 'LIVE UPDATE',\n  'Errors': 0\n} }];"
+      },
+      "executeOnce": true
+    }
+  ],
+  "connections": {
+    "Start": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config": {
+      "main": [
+        [
+          {
+            "node": "Extract IDs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract IDs": {
+      "main": [
+        [
+          {
+            "node": "Get Source Metadata",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Source Metadata": {
+      "main": [
+        [
+          {
+            "node": "Build Batch Get URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Batch Get URL": {
+      "main": [
+        [
+          {
+            "node": "Read Source Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Source Rows": {
+      "main": [
+        [
+          {
+            "node": "Normalize Source Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Source Rows": {
+      "main": [
+        [
+          {
+            "node": "Read Destination",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Destination": {
+      "main": [
+        [
+          {
+            "node": "Consolidate Investor Updates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consolidate Investor Updates": {
+      "main": [
+        [
+          {
+            "node": "Is Matched",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Final Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Matched": {
+      "main": [
+        [
+          {
+            "node": "Is Dry Run",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Unmatched Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Dry Run": {
+      "main": [
+        [
+          {
+            "node": "Dry Run Audit",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update Destination",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [
+    {
+      "id": "8765b025-ba0c-4e92-82dc-ce5d575c5275",
+      "name": "Ingest source",
+      "nodeIds": [
+        "d7f27423-e4d8-4477-9f0c-a22c2fa00846",
+        "ae007c97-9d73-4302-9488-229aeae89a74",
+        "2c17a4e9-a042-4c10-8874-1496bae41793",
+        "84dbe369-b2e6-4ac3-9a2f-b6c54bf3cd38",
+        "8f6bea48-49da-4465-ba69-35feee540b5c"
+      ],
+      "description": "Reads all startup tabs from the source workbook and normalizes every investor-deal row by header name."
+    },
+    {
+      "id": "3959a873-e490-4604-98b6-3c52115653d8",
+      "name": "Consolidate & match",
+      "nodeIds": [
+        "0f7e869e-9e4c-46b7-bf6c-3331a8aabfd3",
+        "314437c0-59b1-4732-ae01-a973ac8b4996"
+      ],
+      "description": "Reads the master Deal Tracker and builds one consolidated, preservation-safe update per matched investor."
+    },
+    {
+      "id": "87a6ed08-6263-4279-9c8a-0dc59f7e5272",
+      "name": "Output",
+      "nodeIds": [
+        "12b98653-cdda-4879-898b-e8df3eaf56df",
+        "48b19e74-3d9a-462e-9808-8a80ad1265f8",
+        "3e31282a-e7c6-45bd-9b96-7165f7c251fe",
+        "b06a6e49-8a60-4bc9-baa5-2998ab08a3d6",
+        "bd9a52fb-ab04-4808-b384-9f35e6a0d2f8"
+      ],
+      "description": "Dry-run audit, live update of matched investors, and an unmatched investors report."
+    }
+  ],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": {},
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "AbCzttqDVFAP4zDh",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-08-30T15:11:08.214Z",
+      "updatedAt": "2026-08-30T15:11:08.214Z"
+    }
+  ],
+  "activeVersion": null
+}

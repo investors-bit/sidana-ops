@@ -1,0 +1,207 @@
+{
+  "id": "ZyTqd07izBI5Trmw",
+  "name": "One-off TEST SEND — final PeerCapital email with signature to investors@ (16 Sep)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-16T12:16:15.899Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "846e2e2e-198b-4e1c-a8e8-23abc592731c",
+  "versionCounter": 4,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "f6000001-0000-4000-8000-000000000001",
+      "name": "Webhook",
+      "webhookId": "d3e4f5a6-b7c8-4d9e-0f1a-2b3c4d5e6f7a",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "onb-dryrun-sig-8b24c1",
+        "responseMode": "lastNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "f6000001-0000-4000-8000-000000000002",
+      "name": "Read ONBOARDING",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        240,
+        300
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "id",
+          "value": "38341156"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "f6000001-0000-4000-8000-000000000003",
+      "name": "Get Shradhaa signature",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "position": [
+        480,
+        300
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://gmail.googleapis.com/gmail/v1/users/me/settings/sendAs",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "R5K61omYbU9oT5J8",
+          "name": "Gmail account 5"
+        }
+      }
+    },
+    {
+      "id": "f6000001-0000-4000-8000-000000000004",
+      "name": "Build final (same code as ONB-1)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const sendAs = ($('Get Shradhaa signature').first().json.sendAs) || [];\nconst me = sendAs.find(s => String(s.sendAsEmail || '').toLowerCase() === 'shradhaa@sidanaventures.com') || sendAs.find(s => s.isDefault) || {};\nconst SIG = String(me.signature || '');\nfunction finalise(html) {\n  let h = String(html || '');\n  if (!h.includes('rakeshsidana.org\">rakeshsidana.org</a> ') && !h.includes('LinkedIn</a> | ')) {\n    h = h.replace('LinkedIn</a>)', 'LinkedIn</a> | <a href=\"https://rakeshsidana.org\">rakeshsidana.org</a>)');\n  }\n  if (!h.includes('mail-sig')) {\n    h = h.replace(/<p>Best,<br>Shradhaa<br>[\\s\\S]*?<\\/p>\\s*$/, '');\n    h = h + '<br><div>-- </div>' + SIG;\n  }\n  return h;\n}\nconst r = $('Read ONBOARDING').all().map(i => i.json).find(x => x.firm === 'PeerCapital');\nconst html = finalise(r.body_html);\nconst text = html.replace(/<br\\s*\\/?>/g, '\\n').replace(/<\\/(p|div|li|tr)>/g, '\\n').replace(/<[^>]+>/g, '').replace(/&quot;/g, '\"').replace(/\\n\\s*\\n+/g, '\\n').trim();\nif (!SIG.includes('Investor Relations') || !html.includes('mail-sig')) throw new Error('signature missing - test not sent');\nreturn [{ json: {\n  to: 'investors@sidanaventures.com',\n  subject: r.subject,\n  html: html,\n  signature_found: SIG.includes('Investor Relations'),\n  old_signoff_removed: !html.includes('<p>Best,<br>Shradhaa'),\n  signature_appended: html.includes('mail-sig'),\n  logo_url_present: html.includes('ci3.googleusercontent.com/mail-sig'),\n  founder_links: html.includes('LinkedIn</a> | <a href=\"https://rakeshsidana.org\">rakeshsidana.org</a>)'),\n  html_length: html.length,\n  last_900_chars_as_text: text.slice(-900)\n} }];"
+      }
+    },
+    {
+      "id": "f6000001-0000-4000-8000-000000000005",
+      "name": "Gmail: Send test (Shradhaa)",
+      "webhookId": "e934d8df-04d4-4803-be9b-7200b016c1e3",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        960,
+        300
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "={{ $json.to }}",
+        "subject": "={{ $json.subject }}",
+        "emailType": "html",
+        "message": "={{ $json.html }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "Shradhaa"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "R5K61omYbU9oT5J8",
+          "name": "Gmail account 5"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Read ONBOARDING",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read ONBOARDING": {
+      "main": [
+        [
+          {
+            "node": "Get Shradhaa signature",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Shradhaa signature": {
+      "main": [
+        [
+          {
+            "node": "Build final (same code as ONB-1)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build final (same code as ONB-1)": {
+      "main": [
+        [
+          {
+            "node": "Gmail: Send test (Shradhaa)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "ZyTqd07izBI5Trmw",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-16T12:16:15.902Z",
+      "updatedAt": "2026-09-16T12:16:15.902Z"
+    }
+  ],
+  "activeVersion": null
+}

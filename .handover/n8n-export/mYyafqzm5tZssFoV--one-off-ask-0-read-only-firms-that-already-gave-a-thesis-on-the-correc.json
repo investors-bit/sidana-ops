@@ -1,0 +1,138 @@
+{
+  "id": "mYyafqzm5tZssFoV",
+  "name": "One-off ASK-0 (read-only) — firms that already gave a thesis on the Corrections sheet (17 Sep)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-17T10:24:20.326Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "34726f78-36ba-4fd5-9e15-c27942366147",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "56 15 17 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "g1",
+      "name": "GET corrections",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/1WOErvuYawblG-HkrK5In5YWtEiKKt_DeoVpmL5na6GU/values:batchGet?ranges=' + encodeURIComponent(\"'Thesis correction'!A1:Z400\") + '&ranges=' + encodeURIComponent(\"'Mail correction'!A1:Z400\") }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "c1",
+      "name": "Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v){return String(v==null?'':v).replace(/\\s+/g,' ').trim();}\nconst vr=$('GET corrections').first().json.valueRanges||[];\nconst th=((vr[0]||{}).values||[]).map((r,i)=>(i+1)+' | '+r.map(s).join(' | ').slice(0,260));\nconst mc=((vr[1]||{}).values||[]).map((r,i)=>(i+1)+' | '+r.map(s).join(' | ').slice(0,200));\nreturn [{json:{thesis_rows:th,mail_rows:mc}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once": {
+      "main": [
+        [
+          {
+            "node": "GET corrections",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET corrections": {
+      "main": [
+        [
+          {
+            "node": "Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataSuccessExecution": "all",
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "mYyafqzm5tZssFoV",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-17T10:24:20.328Z",
+      "updatedAt": "2026-09-17T10:24:20.328Z"
+    }
+  ],
+  "activeVersion": null
+}

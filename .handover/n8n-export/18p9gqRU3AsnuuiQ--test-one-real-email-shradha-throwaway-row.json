@@ -1,0 +1,528 @@
+{
+  "id": "18p9gqRU3AsnuuiQ",
+  "name": "TEST — One real email (Shradha, throwaway row)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-02T06:27:31.202Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "3eb887a8-77b1-4857-9312-c669d29c1737",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 0,
+  "nodes": [
+    {
+      "id": "2a1f671a-0d9a-4f9e-8d77-afd2d4288643",
+      "name": "Run (press Execute)",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "e48870fe-94e0-4457-96b4-4eeeba29eafd",
+      "name": "Read CONFIG",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "CONFIG"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      },
+      "executeOnce": true
+    },
+    {
+      "id": "782c493e-c769-4bf7-a065-f409a28c6287",
+      "name": "Build CONFIG object",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst rows = $input.all();\nconst cfg = {};\nfor (const it of rows) {\n  const k = it.json.setting !== undefined ? it.json.setting : it.json.key;\n  if (k === undefined || k === null || String(k).trim() === '') continue;\n  cfg[String(k).trim()] = it.json.value;\n}\ncfg.OWNER_NAME = 'Shradha';\ncfg.SENDER_NAME = 'Shradha';\nreturn [{ json: cfg }];\n"
+      }
+    },
+    {
+      "id": "e27074ba-b71a-4329-ae90-7295e7b0d463",
+      "name": "Read TEMPLATES",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        672,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "TEMPLATES"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      },
+      "executeOnce": true
+    },
+    {
+      "id": "df60b2da-53c4-435e-9abc-8dcbb31068d4",
+      "name": "Read STARTUPS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        896,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "STARTUPS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      },
+      "executeOnce": true
+    },
+    {
+      "id": "878b4b2a-d934-477f-a0b2-449261422963",
+      "name": "Read INVESTORS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1120,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "INVESTORS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      },
+      "executeOnce": true
+    },
+    {
+      "id": "029632e6-029a-4fb4-a657-cff23f36aab4",
+      "name": "Prepare test item",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1344,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst blank = (x) => x === undefined || x === null || String(x).trim() === '';\nconst startups = $('Read STARTUPS').all().map(i => i.json);\nconst investors = $('Read INVESTORS').all().map(i => i.json);\nlet st = null;\nfor (const s of startups) {\n  if (String(s.active).trim().toLowerCase() === 'yes'\n    && !blank(s.memo_html) && !blank(s.highlight_1) && !blank(s.highlight_2) && !blank(s.highlight_3)\n    && !blank(s.deck_link) && !blank(s.sector) && !blank(s.raise_inr_cr)) { st = s; break; }\n}\nlet inv = null;\nfor (const v of investors) { if (!blank(v.contact_person) && !blank(v.investor)) { inv = v; break; } }\nif (!st) throw new Error('No fully-populated active startup found for the test.');\nif (!inv) throw new Error('No investor with contact_person found for the test.');\n// Only real PIPELINE columns here (this row is appended to PIPELINE).\n// pause is set so a real Workflow A run can NEVER pick this row up.\nreturn [{ json: {\n  deal_id: 'TEST-SHRADHA-001',\n  owner: 'Shradha',\n  startup: st.startup,\n  investor: inv.investor,\n  email: '(delivered to test recipient set in Gmail node)',\n  deal_shared: 'No',\n  pause: 'TEST-HOLD — delete this row after the test',\n} }];\n"
+      }
+    },
+    {
+      "id": "27d537c9-cd50-4c54-b3ac-0a81a707c20d",
+      "name": "Append TEST row to PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1568,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "17d08530-9603-412f-80fb-a05171dad3b8",
+      "name": "Build email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1792,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "\nconst cfg = $('Build CONFIG object').first().json;\nconst r = $('Prepare test item').first().json;\nconst stage = 'INITIAL';\n\nlet st = null;\nfor (const s of $('Read STARTUPS').all()) { if (String(s.json.startup).trim() === String(r.startup).trim()) { st = s.json; break; } }\nlet inv = null;\nfor (const v of $('Read INVESTORS').all()) { if (String(v.json.investor).trim() === String(r.investor).trim()) { inv = v.json; break; } }\n\nlet tpl = null;\nfor (const t of $('Read TEMPLATES').all()) { if (String(t.json.template_id).trim() === stage) { tpl = t.json; break; } }\nif (!tpl) throw new Error('Template not found for stage ' + stage);\n\nconst tokens = {\n  '{{InvestorName}}': inv.investor,\n  '{{ContactPerson}}': inv.contact_person,\n  '{{StartupName}}': st.startup,\n  '{{Sector}}': st.sector,\n  '{{FundraiseAmount}}': st.raise_inr_cr,\n  '{{Revenue}}': st.revenue,\n  '{{Highlight1}}': st.highlight_1,\n  '{{Highlight2}}': st.highlight_2,\n  '{{Highlight3}}': st.highlight_3,\n  '{{DeckLink}}': st.deck_link,\n  '{{SenderName}}': cfg.SENDER_NAME,\n};\nconst fill = (s) => {\n  let out = String(s == null ? '' : s);\n  for (const k in tokens) { out = out.split(k).join(String(tokens[k] == null ? '' : tokens[k])); }\n  return out;\n};\nconst subject = fill(tpl.subject);\nconst body0 = fill(tpl.body);\nconst memoHtml = (st.memo_html == null ? '' : String(st.memo_html));\nconst body = String(body0).split('{{MemoBody}}').join('%%MEMOBODY_SLOT%%');\nif (/\\{\\{[^}]+\\}\\}/.test(subject) || /\\{\\{[^}]+\\}\\}/.test(body)) {\n  throw new Error('Unresolved template token for deal ' + r.deal_id);\n}\n\nconst ownerNames = { Aditya: \"Aditya Mishra\", Chaman: \"Chaman Yadav\", Akansha: \"Akansha\", Shradha: \"Shradha\" };\nconst senderFull = ownerNames[String(cfg.SENDER_NAME).trim()] || cfg.SENDER_NAME;\nconst logoUrl = \"https://drive.google.com/uc?export=view&id=1iLMGooCx6B8bmYJxlYMdNg0YhdSoFAFi\";\nconst bodyHtml0 = String(body).split(String.fromCharCode(10)).join(\"<br>\");\nconst bodyHtml = bodyHtml0.split('%%MEMOBODY_SLOT%%').join(\"<div style='height:18px;'></div>\" + memoHtml + \"<div style='height:18px;'></div>\");\nconst sig = \"<br>--<br>\" + \"<img src='\" + logoUrl + \"' alt='Sidana Ventures' width='120' style='display:block;margin-bottom:8px;border:0;'>\" + \"<div style='font-family:Arial,sans-serif;font-size:13px;color:#333333;line-height:1.4;'>\" + \"<span style='font-weight:bold;color:#1a5fb4;'>\" + senderFull + \"</span><br>\" + \"Investor Relations<br>\" + \"<span style='font-weight:bold;'>SIDANA VENTURES LLP</span><br>\" + \"424A Tower B3, Spaze iTech Park, Sector 49, Sohna Road<br>\" + \"Gurgaon, Haryana 122022<br>\" + \"+91 87965 31802<br>\" + \"<a href='https://www.sidanaventures.com' style='color:#1a5fb4;'>www.sidanaventures.com</a>\" + \"</div>\";\nconst html = \"<div style='font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.65;color:#222222;max-width:640px;'>\" + bodyHtml + \"</div>\" + sig;\n\nreturn { json: Object.assign({}, r, { stage, to: r.email, cc: '', subject, body, html }) };\n"
+      }
+    },
+    {
+      "id": "690af7e4-4cf1-4527-8560-d6335532c68e",
+      "name": "Gmail: Send (new)",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2016,
+        0
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "am9256898@gmail.com",
+        "subject": "={{ $json.subject }}",
+        "emailType": "html",
+        "message": "={{ $json.html }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "R5K61omYbU9oT5J8",
+          "name": "Gmail account 5"
+        }
+      },
+      "webhookId": "a8c1b531-da3b-4cec-b728-d9229a64d7bd"
+    },
+    {
+      "id": "8161ed18-ef3a-400b-a2b6-ee9f818f3dff",
+      "name": "Compute PIPELINE write-back",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "\nconst cfg = $('Build CONFIG object').first().json;\nconst tz = cfg.TIMEZONE || 'Asia/Kolkata';\nconst now = DateTime.now().setZone(tz);\nconst today = now.toISODate();\nconst fu1 = parseInt(cfg.FU1_DAYS, 10); const FU1 = isNaN(fu1) ? 4 : fu1;\n\nconst resp = $json;\nconst be = $('Build email').item.json;\nconst gmailId = resp.id || '';\nconst gmailThread = resp.threadId || '';\n\nreturn { json: {\n  deal_id: be.deal_id,\n  last_contact: today,\n  deal_shared: 'Yes',\n  date_shared: today,\n  channel: 'Email',\n  thread_id: gmailThread,\n  message_id: gmailId,\n  next_action: 'Follow-up 1',\n  next_due: now.plus({ days: FU1 }).toISODate(),\n} };\n"
+      }
+    },
+    {
+      "id": "4dbbc9b3-05c8-4022-b07e-c534c43b0c19",
+      "name": "Update TEST row (write-back)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2464,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "deal_id"
+          ],
+          "schema": [
+            {
+              "id": "deal_id",
+              "displayName": "deal_id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {
+          "handlingExtraData": "error"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "b03eca83-4038-4de2-9441-5d8d1acef6c9",
+      "name": "Read back TEST row",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2688,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "deal_id",
+              "lookupValue": "TEST-SHRADHA-001"
+            }
+          ]
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      },
+      "executeOnce": true
+    }
+  ],
+  "connections": {
+    "Run (press Execute)": {
+      "main": [
+        [
+          {
+            "node": "Read CONFIG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read CONFIG": {
+      "main": [
+        [
+          {
+            "node": "Build CONFIG object",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build CONFIG object": {
+      "main": [
+        [
+          {
+            "node": "Read TEMPLATES",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read TEMPLATES": {
+      "main": [
+        [
+          {
+            "node": "Read STARTUPS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read STARTUPS": {
+      "main": [
+        [
+          {
+            "node": "Read INVESTORS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read INVESTORS": {
+      "main": [
+        [
+          {
+            "node": "Prepare test item",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare test item": {
+      "main": [
+        [
+          {
+            "node": "Append TEST row to PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append TEST row to PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Build email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build email": {
+      "main": [
+        [
+          {
+            "node": "Gmail: Send (new)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail: Send (new)": {
+      "main": [
+        [
+          {
+            "node": "Compute PIPELINE write-back",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute PIPELINE write-back": {
+      "main": [
+        [
+          {
+            "node": "Update TEST row (write-back)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update TEST row (write-back)": {
+      "main": [
+        [
+          {
+            "node": "Read back TEST row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": {},
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "18p9gqRU3AsnuuiQ",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-02T06:27:31.204Z",
+      "updatedAt": "2026-09-02T06:27:31.204Z"
+    }
+  ],
+  "activeVersion": null
+}

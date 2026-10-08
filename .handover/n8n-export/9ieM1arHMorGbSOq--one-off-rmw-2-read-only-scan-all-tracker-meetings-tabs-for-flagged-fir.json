@@ -1,0 +1,297 @@
+{
+  "id": "9ieM1arHMorGbSOq",
+  "name": "One-off RMW-2 (read-only) — scan all tracker + meetings tabs for flagged-firm mentions",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-10T14:10:20.486Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "c0901971-54f6-4260-8d9d-1d67d109d97d",
+  "versionCounter": 4,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once 18:57 IST 10 Sep",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "46 19 10 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "h1",
+      "name": "Tracker meta",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1WzrrPelm2HsJNXOUNIEOuRajp70CUY-RrzBOs9LENjs?fields=sheets.properties(sheetId,title,gridProperties)",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "c1",
+      "name": "Tracker ranges",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const sh=($input.first().json.sheets||[]).map(x=>x.properties);\nconst q=sh.map(p=>'ranges='+encodeURIComponent(\"'\"+p.title.replace(/'/g,\"''\")+\"'!A1:BZ3000\")).join('&');\nreturn [{json:{url:'https://sheets.googleapis.com/v4/spreadsheets/1WzrrPelm2HsJNXOUNIEOuRajp70CUY-RrzBOs9LENjs/values:batchGet?'+q,tabs:sh.map(p=>p.sheetId+'='+p.title+' ('+(p.gridProperties?p.gridProperties.rowCount+'x'+p.gridProperties.columnCount:'?')+')')}}];"
+      }
+    },
+    {
+      "id": "h2",
+      "name": "Tracker values",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "h3",
+      "name": "Meetings meta",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1d-wSnDCnC_c9_rqD652Zayu6An-dipeVyC7lCD_TD0Y?fields=sheets.properties(sheetId,title,gridProperties)",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "c2",
+      "name": "Meetings ranges",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const sh=($input.first().json.sheets||[]).map(x=>x.properties);\nconst q=sh.map(p=>'ranges='+encodeURIComponent(\"'\"+p.title.replace(/'/g,\"''\")+\"'!A1:BZ3000\")).join('&');\nreturn [{json:{url:'https://sheets.googleapis.com/v4/spreadsheets/1d-wSnDCnC_c9_rqD652Zayu6An-dipeVyC7lCD_TD0Y/values:batchGet?'+q,tabs:sh.map(p=>p.sheetId+'='+p.title)}}];"
+      }
+    },
+    {
+      "id": "h4",
+      "name": "Meetings values",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        1200,
+        0
+      ],
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "c3",
+      "name": "Scan",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1400,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const KEYS=['riceberg','siana','dsg','blinc','prath'];\nfunction s(v){return String(v==null?'':v).replace(/\\s+/g,' ').trim();}\nconst out={tracker_tabs:$('Tracker ranges').first().json.tabs,meeting_tabs:$('Meetings ranges').first().json.tabs,hits:[],tab_rows:{}};\nfunction scan(label,vr){for(const v of (vr||[])){const rows=v.values||[];out.tab_rows[label+':'+v.range]=rows.length;for(let i=0;i<rows.length;i++){const line=rows[i].map(s).join(' | ');const low=line.toLowerCase();for(const k of KEYS){if(low.indexOf(k)>=0){out.hits.push({src:label,range:v.range,row:i+1,key:k,text:line.slice(0,700)});break;}}}}}\nscan('tracker',$('Tracker values').first().json.valueRanges);\nscan('meetings',$input.first().json.valueRanges);\nreturn [{json:out}];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once 18:57 IST 10 Sep": {
+      "main": [
+        [
+          {
+            "node": "Tracker meta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tracker meta": {
+      "main": [
+        [
+          {
+            "node": "Tracker ranges",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tracker ranges": {
+      "main": [
+        [
+          {
+            "node": "Tracker values",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tracker values": {
+      "main": [
+        [
+          {
+            "node": "Meetings meta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Meetings meta": {
+      "main": [
+        [
+          {
+            "node": "Meetings ranges",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Meetings ranges": {
+      "main": [
+        [
+          {
+            "node": "Meetings values",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Meetings values": {
+      "main": [
+        [
+          {
+            "node": "Scan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once 18:57 IST 10 Sep": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "9ieM1arHMorGbSOq",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-10T14:10:20.487Z",
+      "updatedAt": "2026-09-10T14:10:20.487Z"
+    }
+  ],
+  "activeVersion": null
+}

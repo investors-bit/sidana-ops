@@ -1,0 +1,274 @@
+{
+  "id": "SV10R73wItQId0zj",
+  "name": "One-off FA-2 — append 32 new investors to INVESTORS (dedup, DNC preserved)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-11T10:44:06.189Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "5726987c-da36-48be-9ed5-ef52e4cd89f7",
+  "versionCounter": 4,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once (set before activating)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "20 16 11 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "rb",
+      "name": "Read INVESTORS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "INVESTORS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "ce",
+      "name": "Emit new rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v){return String(v==null?'':v).trim();}\nfunction nz(x){return s(x).toLowerCase().replace(/[^a-z0-9]/g,'');}\nconst existing=$input.all().map(function(i){return i.json;});\nif(existing.length<150){throw new Error('ABORT: INVESTORS only '+existing.length+' rows');}\nconst have={};for(const r of existing){const k=nz(r.investor);if(k)have[k]=1;}\nconst NEW=[{\"investor\":\"Lok Capital\",\"contact_person\":\"Mitanjali\",\"email\":\"mitanjali@lokcapital.com\",\"cc\":\"\",\"sector\":\"FinTech, Food & Agriculture, ClimateTech, Healthcare, Medical Services, EV / Mobility\",\"stage\":\"Series A, Series B\",\"cheque_inr_cr\":\"INR 25-110 Cr\",\"do_not_contact\":\"\"},{\"investor\":\"Flourish Ventures\",\"contact_person\":\"Shivam\",\"email\":\"shivam@flourishventures.com\",\"cc\":\"\",\"sector\":\"FinTech, Digital Banking, Embedded Finance, InsurTech, RegTech, Financial Inclusion\",\"stage\":\"Seed, Pre-Series A, Series A\",\"cheque_inr_cr\":\"INR 15-60 Cr\",\"do_not_contact\":\"\"},{\"investor\":\"ZeCa Ventures\",\"contact_person\":\"Pawan\",\"email\":\"pawan@zeca.vc\",\"cc\":\"aakash@zeca.vc, shreya@zeca.vc\",\"sector\":\"ClimateTech, Clean Energy, EV, Mobility, Sustainability, Biomaterials, Green Supply Chain\",\"stage\":\"Pre-seed, Seed\",\"cheque_inr_cr\":\"INR 2-4 Cr\",\"do_not_contact\":\"\"},{\"investor\":\"Ankur Capital\",\"contact_person\":\"Yagna\",\"email\":\"yagna@ankurcapital.com\",\"cc\":\"\",\"sector\":\"Deep Science, ClimateTech, AgriTech, FinTech, HealthTech, EdTech\",\"stage\":\"Seed, Pre-Series A, Series A\",\"cheque_inr_cr\":\"INR 8-17 Cr\",\"do_not_contact\":\"\"},{\"investor\":\"BDev Ventures\",\"contact_person\":\"Keshia\",\"email\":\"keshia.vangent@bdevventures.com\",\"cc\":\"\",\"sector\":\"SaaS, AI, Automation, B2B Marketplaces, Enterprise Tools, HRTech\",\"stage\":\"Seed, Series A\",\"cheque_inr_cr\":\"INR 2-42 Cr\",\"do_not_contact\":\"Yes\"},{\"investor\":\"WestBridge Capital\",\"contact_person\":\"Lakshraj Doshi\",\"email\":\"lakshraj.doshi@westbridgecap.com\",\"cc\":\"\",\"sector\":\"Enterprise & B2B Software, SaaS, FinTech, HealthTech, Consumer Internet, EdTech, Industrial Tech\",\"stage\":\"Series A, Series B, Growth, Pre-IPO\",\"cheque_inr_cr\":\"INR 85-4250 Cr\",\"do_not_contact\":\"\"},{\"investor\":\"Equirus\",\"contact_person\":\"Rituraj\",\"email\":\"\",\"cc\":\"\",\"sector\":\"FinTech, DeepTech, SaaS, AI\",\"stage\":\"Seed, Pre-Series A\",\"cheque_inr_cr\":\"INR 5-15 Cr\",\"do_not_contact\":\"\"},{\"investor\":\"AWE Funds\",\"contact_person\":\"Sejal\",\"email\":\"sejal@awefunds.com\",\"cc\":\"raman@awefunds.com, annubhav@awefunds.co\",\"sector\":\"ClimateTech, HealthTech, FinTech, Future of Work\",\"stage\":\"Seed, Pre-Series A, Series A\",\"cheque_inr_cr\":\"INR 4-8 Cr\",\"do_not_contact\":\"\"},{\"investor\":\"Theia Ventures\",\"contact_person\":\"Konain Mizba\",\"email\":\"konain.mizba@theia-ventures.com\",\"cc\":\"\",\"sector\":\"ClimateTech, Energy Transition, Decarbonisation, Sustainable Materials, Green Mobility, DeepTech\",\"stage\":\"Pre-seed, Seed\",\"cheque_inr_cr\":\"INR 4-8 Cr\",\"do_not_contact\":\"\"},{\"investor\":\"Colossa Ventures\",\"contact_person\":\"Dev\",\"email\":\"dev.p@colossaventures.com\",\"cc\":\"\",\"sector\":\"Life Sciences, ClimateTech, Sustainability, EdTech, DeepTech, FinTech, Consumer (women-led)\",\"stage\":\"Seed, Pre-Series A, Series A\",\"cheque_inr_cr\":\"INR 4-15 Cr\",\"do_not_contact\":\"\"},{\"investor\":\"GreenFrontier Capital\",\"contact_person\":\"Karishma\",\"email\":\"\",\"cc\":\"\",\"sector\":\"Mobility, Sustainability, ClimateTech, Energy Transition, Decarbonisation\",\"stage\":\"Seed, Pre-Series A, Series A\",\"cheque_inr_cr\":\"INR 4-17 Cr\",\"do_not_contact\":\"\"},{\"investor\":\"Asha Ventures\",\"contact_person\":\"Vatsal\",\"email\":\"vatsal@ashaventures.in\",\"cc\":\"\",\"sector\":\"Financial Empowerment, Healthcare, Education, AgriTech, ClimateTech (impact)\",\"stage\":\"Series A, Series B\",\"cheque_inr_cr\":\"INR 17-85 Cr\",\"do_not_contact\":\"\"},{\"investor\":\"Climate Angels\",\"contact_person\":\"Mayank\",\"email\":\"mayank@gomassive.org\",\"cc\":\"\",\"sector\":\"ClimateTech, Clean Mobility, Renewable Energy, Water, Waste, Sustainable Agriculture\",\"stage\":\"Seed, Pre-Series A\",\"cheque_inr_cr\":\"INR 0.5-10 Cr\",\"do_not_contact\":\"\"},{\"investor\":\"Agna Capital\",\"contact_person\":\"Rahul\",\"email\":\"rahul@agnacapital.com\",\"cc\":\"research@agnacapital.com\",\"sector\":\"Aerospace, Defence, ClimateTech\",\"stage\":\"Pre-seed, Seed, Pre-Series A\",\"cheque_inr_cr\":\"INR 2-8 Cr\",\"do_not_contact\":\"\"},{\"investor\":\"Wavemaker Ventures\",\"contact_person\":\"Paolo\",\"email\":\"paolo@wavemaker.vc\",\"cc\":\"\",\"sector\":\"DeepTech, Frontier Tech, Sustainable Tech, Enterprise Software\",\"stage\":\"Pre-seed, Seed, Pre-Series A, Series A\",\"cheque_inr_cr\":\"INR 4-17 Cr\",\"do_not_contact\":\"\"},{\"investor\":\"Insignia VC\",\"contact_person\":\"Remus\",\"email\":\"remus@insignia.vc\",\"cc\":\"\",\"sector\":\"FinTech, AI, HealthTech, E-commerce, Payments, SaaS, B2B Tech\",\"stage\":\"Seed, Series A\",\"cheque_inr_cr\":\"INR 40-85 Cr\",\"do_not_contact\":\"\"},{\"investor\":\"Sagana\",\"contact_person\":\"Shivank Saxena\",\"email\":\"shivank.saxena@sagana.com\",\"cc\":\"\",\"sector\":\"Biotech, Health, ClimateTech, Sustainable Agriculture, Education, Impact FinTech\",\"stage\":\"Seed, Series A, Series B\",\"cheque_inr_cr\":\"INR 1-8 Cr\",\"do_not_contact\":\"\"},{\"investor\":\"OneSixOne Ventures\",\"contact_person\":\"Hudson\",\"email\":\"hudsonmarchino@ufl.edu\",\"cc\":\"\",\"sector\":\"Cloud & AI Infrastructure, Dual-use Tech\",\"stage\":\"Pre-seed, Seed\",\"cheque_inr_cr\":\"INR 0.4-0.85 Cr\",\"do_not_contact\":\"Yes\"},{\"investor\":\"Argan Global\",\"contact_person\":\"U Singh\",\"email\":\"usingh@argan.global\",\"cc\":\"\",\"sector\":\"AI, DefenceTech\",\"stage\":\"Series A, Growth\",\"cheque_inr_cr\":\"\",\"do_not_contact\":\"\"},{\"investor\":\"Elev8 Venture Partners\",\"contact_person\":\"Kavish\",\"email\":\"Kavish@elev8vp.com\",\"cc\":\"\",\"sector\":\"Consumer, FinTech, SaaS\",\"stage\":\"Series B, Series C, Growth\",\"cheque_inr_cr\":\"INR 68-127 Cr\",\"do_not_contact\":\"\"},{\"investor\":\"Premji Invest\",\"contact_person\":\"Nikhil\",\"email\":\"nikhil@premjiinvest.com\",\"cc\":\"\",\"sector\":\"Consumer, FinTech, Healthcare, Industrial, Impact\",\"stage\":\"Growth, Late (Series C+)\",\"cheque_inr_cr\":\"INR 40-850 Cr\",\"do_not_contact\":\"\"},{\"investor\":\"Creador\",\"contact_person\":\"Pratishtha\",\"email\":\"pratishtha@creador.com\",\"cc\":\"\",\"sector\":\"Consumer, Retail, Financial Services, Business Services, Healthcare, Technology, Manufacturing\",\"stage\":\"Growth, Private Equity\",\"cheque_inr_cr\":\"INR 85-850 Cr\",\"do_not_contact\":\"\"},{\"investor\":\"Asia Partners\",\"contact_person\":\"SC\",\"email\":\"Sc@asiapartners.com\",\"cc\":\"\",\"sector\":\"Sector Agnostic (Southeast Asia growth)\",\"stage\":\"Series B, Series C\",\"cheque_inr_cr\":\"INR 128-213 Cr\",\"do_not_contact\":\"\"},{\"investor\":\"Stride Ventures\",\"contact_person\":\"Yagini\",\"email\":\"yagini@strideventures.uk\",\"cc\":\"\",\"sector\":\"Sector Agnostic (Consumer, FinTech, CleanTech/EV, Agri, Health) - venture debt\",\"stage\":\"Series A onwards (venture debt)\",\"cheque_inr_cr\":\"INR 34-42 Cr\",\"do_not_contact\":\"Yes\"},{\"investor\":\"InnoVen Capital\",\"contact_person\":\"Aditya\",\"email\":\"aditya@innovencapital.com\",\"cc\":\"\",\"sector\":\"Sector Agnostic - venture debt\",\"stage\":\"Series A to pre-IPO (venture debt)\",\"cheque_inr_cr\":\"INR 0.85-85 Cr\",\"do_not_contact\":\"Yes\"},{\"investor\":\"Troy Groups\",\"contact_person\":\"Yatharth\",\"email\":\"yatharths@thetroygroups.com\",\"cc\":\"\",\"sector\":\"Family-office deal network (hospitality, manufacturing, healthtech, medtech)\",\"stage\":\"\",\"cheque_inr_cr\":\"\",\"do_not_contact\":\"Yes\"},{\"investor\":\"She Capital\",\"contact_person\":\"Naman\",\"email\":\"naman@shecapital.vc\",\"cc\":\"\",\"sector\":\"\",\"stage\":\"\",\"cheque_inr_cr\":\"\",\"do_not_contact\":\"\"},{\"investor\":\"Merak Ventures\",\"contact_person\":\"Priyanshu\",\"email\":\"priyanshu@merakventures.com\",\"cc\":\"\",\"sector\":\"\",\"stage\":\"\",\"cheque_inr_cr\":\"\",\"do_not_contact\":\"\"},{\"investor\":\"Capinity\",\"contact_person\":\"\",\"email\":\"\",\"cc\":\"\",\"sector\":\"\",\"stage\":\"\",\"cheque_inr_cr\":\"\",\"do_not_contact\":\"\"},{\"investor\":\"CAPWISE\",\"contact_person\":\"\",\"email\":\"\",\"cc\":\"\",\"sector\":\"Sector Agnostic - venture debt\",\"stage\":\"\",\"cheque_inr_cr\":\"\",\"do_not_contact\":\"Yes\"},{\"investor\":\"EpsilonX Capital\",\"contact_person\":\"\",\"email\":\"\",\"cc\":\"\",\"sector\":\"Venture debt\",\"stage\":\"\",\"cheque_inr_cr\":\"\",\"do_not_contact\":\"Yes\"},{\"investor\":\"Tata Capital\",\"contact_person\":\"\",\"email\":\"\",\"cc\":\"\",\"sector\":\"\",\"stage\":\"\",\"cheque_inr_cr\":\"\",\"do_not_contact\":\"\"}];\nconst out=[],skip=[];\nfor(const r of NEW){if(have[nz(r.investor)]){skip.push(r.investor);}else{out.push({json:r});}}\nif(!out.length){throw new Error('ABORT: all already present');}\nout[0].json.__skip=skip.join(', ');out[0].json.__toadd=out.length;\nreturn out;"
+      }
+    },
+    {
+      "id": "ap",
+      "name": "Append INVESTORS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "INVESTORS"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "ra",
+      "name": "Read INVESTORS after",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        880,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "INVESTORS"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cv",
+      "name": "Verify",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v){return String(v==null?'':v).trim();}\nfunction nz(x){return s(x).toLowerCase().replace(/[^a-z0-9]/g,'');}\nconst after=$input.all().map(function(i){return i.json;});\nconst NEW=[{\"investor\":\"Lok Capital\",\"do_not_contact\":\"\"},{\"investor\":\"Flourish Ventures\",\"do_not_contact\":\"\"},{\"investor\":\"ZeCa Ventures\",\"do_not_contact\":\"\"},{\"investor\":\"Ankur Capital\",\"do_not_contact\":\"\"},{\"investor\":\"BDev Ventures\",\"do_not_contact\":\"Yes\"},{\"investor\":\"WestBridge Capital\",\"do_not_contact\":\"\"},{\"investor\":\"Equirus\",\"do_not_contact\":\"\"},{\"investor\":\"AWE Funds\",\"do_not_contact\":\"\"},{\"investor\":\"Theia Ventures\",\"do_not_contact\":\"\"},{\"investor\":\"Colossa Ventures\",\"do_not_contact\":\"\"},{\"investor\":\"GreenFrontier Capital\",\"do_not_contact\":\"\"},{\"investor\":\"Asha Ventures\",\"do_not_contact\":\"\"},{\"investor\":\"Climate Angels\",\"do_not_contact\":\"\"},{\"investor\":\"Agna Capital\",\"do_not_contact\":\"\"},{\"investor\":\"Wavemaker Ventures\",\"do_not_contact\":\"\"},{\"investor\":\"Insignia VC\",\"do_not_contact\":\"\"},{\"investor\":\"Sagana\",\"do_not_contact\":\"\"},{\"investor\":\"OneSixOne Ventures\",\"do_not_contact\":\"Yes\"},{\"investor\":\"Argan Global\",\"do_not_contact\":\"\"},{\"investor\":\"Elev8 Venture Partners\",\"do_not_contact\":\"\"},{\"investor\":\"Premji Invest\",\"do_not_contact\":\"\"},{\"investor\":\"Creador\",\"do_not_contact\":\"\"},{\"investor\":\"Asia Partners\",\"do_not_contact\":\"\"},{\"investor\":\"Stride Ventures\",\"do_not_contact\":\"Yes\"},{\"investor\":\"InnoVen Capital\",\"do_not_contact\":\"Yes\"},{\"investor\":\"Troy Groups\",\"do_not_contact\":\"Yes\"},{\"investor\":\"She Capital\",\"do_not_contact\":\"\"},{\"investor\":\"Merak Ventures\",\"do_not_contact\":\"\"},{\"investor\":\"Capinity\",\"do_not_contact\":\"\"},{\"investor\":\"CAPWISE\",\"do_not_contact\":\"Yes\"},{\"investor\":\"EpsilonX Capital\",\"do_not_contact\":\"Yes\"},{\"investor\":\"Tata Capital\",\"do_not_contact\":\"\"}];\nconst by={};for(const r of after){by[nz(r.investor)]=r;}\nconst missing=[],dncbad=[];\nfor(const r of NEW){const f=by[nz(r.investor)];if(!f){missing.push(r.investor);continue;}if(s(r.do_not_contact)==='Yes'&&s(f.do_not_contact).toLowerCase()!=='yes'){dncbad.push(r.investor);}}\nreturn [{json:{rows_after:after.length,new_total:NEW.length,missing:missing,dnc_not_applied:dncbad,ok:missing.length===0&&dncbad.length===0}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once (set before activating)": {
+      "main": [
+        [
+          {
+            "node": "Read INVESTORS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read INVESTORS": {
+      "main": [
+        [
+          {
+            "node": "Emit new rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Emit new rows": {
+      "main": [
+        [
+          {
+            "node": "Append INVESTORS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append INVESTORS": {
+      "main": [
+        [
+          {
+            "node": "Read INVESTORS after",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read INVESTORS after": {
+      "main": [
+        [
+          {
+            "node": "Verify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once (set before activating)": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "SV10R73wItQId0zj",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-11T10:44:06.193Z",
+      "updatedAt": "2026-09-11T10:44:06.193Z"
+    }
+  ],
+  "activeVersion": null
+}

@@ -1,0 +1,143 @@
+{
+  "id": "mT8FH010gfFQQJWN",
+  "name": "One-off TR-27 — PREVIEW the angel memo sanitiser output (read only, no send)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-15T16:03:57.410Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "64b1a2e6-0bd1-485c-ac1d-7d83861bdca2",
+  "versionCounter": 5,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once (set before activating)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "50 21 15 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "gb",
+      "name": "GET sheets",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=STARTUPS!A1:N200&ranges=TEMPLATES!A1:E20",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cc",
+      "name": "Preview",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nfunction nz(x) { return s(x).toLowerCase().replace(/[^a-z0-9]/g, ''); }\nconst vr = $('GET sheets').first().json.valueRanges || [];\nconst st = (vr[0] || {}).values || [];\nconst tpl = (vr[1] || {}).values || [];\nif (st.length < 40 || tpl.length < 2) { throw new Error('ABORT: short read'); }\n\nconst HIDE_RAISE = {};\n['Body & Beyond','MonitorExam','Outlanders','ServeAmigo','SkillBytes','Fire Armor','Vira Jal','Washtro','Fuski.AI','Koncite','Pixelence','Tronix.AI','Vilva AI','Formverse','Opulytics','Train Rex','Orbit AI','Xproguard','Indie Stori','Springbase.ai','Appli','Luxova','AI Signal Labs','Desi Machines','Doffair','bezgoFresh','Chayan Karo'].forEach(function (n) { HIDE_RAISE[nz(n)] = 1; });\n// A raise word followed by ANY digit within 40 chars. Currency-token matching failed on \"5Cr\"\n// (no word boundary between digit and unit), so a digit is the reliable signal.\n// \"the fundraising round\" in the template body has no digit after it, so it is not caught.\nconst BAD = /(?:rais(?:e|ed|es|ing)|fund\\s*ask|funding\\s*ask|fund\\s*raise)[^.<]{0,40}?\\d|pre-?\\s*revenue|pre-?\\s*launch|pre-?\\s*monetis|pre-?\\s*monetiz/i;\nfunction cleanSegments(txt) { return s(txt).split('|').map(function (x) { return x.trim(); }).filter(function (x) { return x && !BAD.test(x); }).join(' | '); }\nfunction stripTags(h) { return s(h).replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&mdash;/g, '-').replace(/&ndash;/g, '-').replace(/&rsquo;/g, \"'\").replace(/\\s+/g, ' ').trim(); }\nfunction sanitiseMemo(html) {\n  const blocks = s(html).split(/(?<=<\\/(?:p|div|li|h[1-6]|ul|ol)>)/);\n  const out = []; const dropped = [], edited = [];\n  for (const b of blocks) { const text = stripTags(b);\n    if (!text) { out.push(b); continue; }\n    if (!BAD.test(text)) { out.push(b); continue; }\n    const cleaned = cleanSegments(text);\n    if (cleaned && cleaned.length >= 25 && !BAD.test(cleaned)) {\n      out.push('<div style=\"font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.65;color:#222222;margin:0 0 12px 0;\">' + cleaned + '</div>');\n      edited.push({ was: text.slice(0, 160), now: cleaned.slice(0, 160) }); }\n    else { dropped.push(text.slice(0, 160)); } }\n  return { html: out.join(''), dropped: dropped, edited: edited }; }\n\nconst sh = (st[0] || []).map(s);\nconst S = {}; ['startup','sector','stage','raise_inr_cr','memo_html','highlight_1','highlight_2','highlight_3','active'].forEach(function (n) { S[n] = sh.indexOf(n); });\nconst th = (tpl[0] || []).map(s);\nconst T = {}; ['template_id','subject','body'].forEach(function (n) { T[n] = th.indexOf(n); });\nlet subjTpl = '';\nfor (let r = 1; r < tpl.length; r++) { if (s((tpl[r] || [])[T.template_id]) === 'INITIAL') { subjTpl = s((tpl[r] || [])[T.subject]); } }\nif (!subjTpl) { throw new Error('ABORT: INITIAL subject template not found'); }\n\nconst SHOW = {}; ['ServeAmigo','Vira Jal','Fire Armor','SkillBytes','Train Rex'].forEach(function (n) { SHOW[nz(n)] = 1; });\nconst out = []; let checkedAll = 0, fellBack = 0;\nfor (let r = 1; r < st.length; r++) { const row = st[r] || []; const n = s(row[S.startup]); if (!n) { continue; }\n  if (s(row[S.active]).toLowerCase() !== 'yes') { continue; }\n  if (!HIDE_RAISE[nz(n)]) { continue; }\n  checkedAll++;\n  let subj = subjTpl.split('{{StartupName}}').join(n).split('{{Sector}}').join(s(row[S.sector])).split('{{FundraiseAmount}}').join(s(row[S.raise_inr_cr]));\n  const subjBefore = subj;\n  subj = subj.replace(/\\s*\\|\\s*Rais(?:e|es|ing)\\b[^|]*$/i, '').trim();\n  if (BAD.test(subj)) { subj = n + ' - ' + cleanSegments(s(row[S.sector])); }\n  const res = sanitiseMemo(row[S.memo_html]);\n  let memo = res.html; let usedFallback = false;\n  if (BAD.test(stripTags(memo))) { usedFallback = true; fellBack++;\n    const hs = [s(row[S.highlight_1]), s(row[S.highlight_2]), s(row[S.highlight_3])].filter(function (x) { return x && !BAD.test(x); });\n    memo = '<div style=\"font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.65;color:#222222;\">'\n      + '<div style=\"font-weight:700;color:#000000;margin:0 0 6px 0;\">' + n + '</div>'\n      + '<div style=\"margin:0 0 12px 0;\">' + cleanSegments(s(row[S.sector])) + '</div>'\n      + '<ul style=\"margin:0 0 14px 0;padding-left:20px;\">' + hs.map(function (h) { return '<li style=\"margin:0 0 6px 0;\">' + h + '</li>'; }).join('') + '</ul></div>'; }\n  const leak = BAD.test(stripTags(memo)) || BAD.test(subj);\n  const rec = { startup: n, raise_hidden: s(row[S.raise_inr_cr]), subject_after: subj,\n    blocks_edited: res.edited.length, blocks_dropped: res.dropped.length, used_fallback: usedFallback, LEAK: leak,\n    memo_len_before: s(row[S.memo_html]).length, memo_len_after: memo.length };\n  if (SHOW[nz(n)]) { rec.edited_samples = res.edited.slice(0, 4); rec.dropped_samples = res.dropped.slice(0, 5); rec.memo_text_after = stripTags(memo).slice(0, 700); }\n  out.push(rec); }\nconst leaks = out.filter(function (x) { return x.LEAK; });\n// belt and braces: scan every produced memo for a raise word near a digit one more time\nreturn [{ json: { startups_checked: checkedAll, used_fallback: fellBack, leaks_remaining: leaks.length,\n  leaking: leaks.map(function (x) { return x.startup; }), results: out } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once (set before activating)": {
+      "main": [
+        [
+          {
+            "node": "GET sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET sheets": {
+      "main": [
+        [
+          {
+            "node": "Preview",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once (set before activating)": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "mT8FH010gfFQQJWN",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-15T16:03:57.413Z",
+      "updatedAt": "2026-09-15T16:03:57.413Z"
+    }
+  ],
+  "activeVersion": null
+}

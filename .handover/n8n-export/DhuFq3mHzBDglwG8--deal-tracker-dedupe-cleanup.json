@@ -1,0 +1,227 @@
+{
+  "id": "DhuFq3mHzBDglwG8",
+  "name": "Deal Tracker Dedupe Cleanup",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-08-31T16:21:55.010Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "5744fce9-a6b4-4b5d-855e-76efd353a894",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 0,
+  "nodes": [
+    {
+      "id": "ec62b59a-d954-49f5-b360-382a0eb700ea",
+      "name": "Start",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "4c54239c-8661-4da4-a3cb-566d0f07c0e9",
+      "name": "Read Deal Tracker",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "1WzrrPelm2HsJNXOUNIEOuRajp70CUY-RrzBOs9LENjs"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Deal Tracker"
+        },
+        "options": {
+          "outputFormatting": {
+            "values": {
+              "general": "UNFORMATTED_VALUE",
+              "date": "FORMATTED_STRING"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      },
+      "executeOnce": true
+    },
+    {
+      "id": "525689b0-fe7b-4da7-907a-5fe55475a335",
+      "name": "Dedupe List Columns",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const rows = $('Read Deal Tracker').all().map(i => i.json);\n// Columns that hold comma-separated startup-name lists. Trailing/leading spaces preserved (real header names).\nconst listCols = ['Latest deal shared ', 'All Deals Shared till date', 'Picked / Interested Deals'];\nfunction normKey(s){ return String(s).toLowerCase().replace(/[^a-z0-9]+/g,''); }\nfunction dedupeList(v){\n  if (v == null) return { value: v, changed: false };\n  const parts = String(v).split(',');\n  const seen = {};\n  const out = [];\n  for (const p of parts){\n    const trimmed = p.trim();\n    if (trimmed === '') continue;\n    const k = normKey(trimmed);\n    if (!k) continue;\n    if (!seen[k]){ seen[k] = 1; out.push(trimmed); }\n  }\n  const joined = out.join(', ');\n  const changed = joined !== String(v == null ? '' : v).trim();\n  return { value: joined, changed: changed };\n}\nconst out = [];\nfor (const r of rows){\n  const name = r['Investor / VC Name'];\n  if (name == null || String(name).trim() === '') continue;\n  const payload = { 'Investor / VC Name': name };\n  let anyChanged = false;\n  for (const c of listCols){\n    const res = dedupeList(r[c]);\n    payload[c] = res.value == null ? '' : res.value;\n    if (res.changed) anyChanged = true;\n  }\n  if (anyChanged) out.push({ json: payload });\n}\nreturn out;"
+      }
+    },
+    {
+      "id": "339a4526-af6d-41f4-85d7-d1e4b80dac51",
+      "name": "Write Deduped Rows",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        672,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "1WzrrPelm2HsJNXOUNIEOuRajp70CUY-RrzBOs9LENjs"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Deal Tracker"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "Investor / VC Name"
+          ],
+          "value": {
+            "Investor / VC Name": "={{ $json[\"Investor / VC Name\"] }}",
+            "Latest deal shared ": "={{ $json[\"Latest deal shared \"] }}",
+            "All Deals Shared till date": "={{ $json[\"All Deals Shared till date\"] }}",
+            "Picked / Interested Deals": "={{ $json[\"Picked / Interested Deals\"] }}"
+          },
+          "schema": [
+            {
+              "id": "Investor / VC Name",
+              "displayName": "Investor / VC Name",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Latest deal shared ",
+              "displayName": "Latest deal shared ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "All Deals Shared till date",
+              "displayName": "All Deals Shared till date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Picked / Interested Deals",
+              "displayName": "Picked / Interested Deals",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        },
+        "options": {
+          "cellFormat": "RAW"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Start": {
+      "main": [
+        [
+          {
+            "node": "Read Deal Tracker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Deal Tracker": {
+      "main": [
+        [
+          {
+            "node": "Dedupe List Columns",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dedupe List Columns": {
+      "main": [
+        [
+          {
+            "node": "Write Deduped Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": {},
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "DhuFq3mHzBDglwG8",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-08-31T16:21:55.012Z",
+      "updatedAt": "2026-08-31T16:21:55.012Z"
+    }
+  ],
+  "activeVersion": null
+}

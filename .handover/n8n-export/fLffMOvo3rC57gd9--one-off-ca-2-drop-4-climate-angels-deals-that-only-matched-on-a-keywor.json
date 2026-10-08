@@ -1,0 +1,299 @@
+{
+  "id": "fLffMOvo3rC57gd9",
+  "name": "One-off CA-2 — drop 4 Climate Angels deals that only matched on a keyword (not climate)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-11T16:30:57.431Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "e17e349d-2be8-49cb-ac0d-87fa65409c79",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once (set before activating)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "10 22 11 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "hh",
+      "name": "GET header",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/PIPELINE!1:1",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "r3",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cp",
+      "name": "Plan",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nfunction nz(x) { return s(x).toLowerCase().replace(/[^a-z0-9]/g, ''); }\nfunction colLetter(i) { let n = i + 1, out = ''; while (n > 0) { const m = (n - 1) % 26; out = String.fromCharCode(65 + m) + out; n = Math.floor((n - 1) / 26); } return out; }\nconst yes = function (x) { return s(x).toLowerCase() === 'yes'; };\nconst hdr = (($('GET header').first().json.values || [[]])[0] || []).map(s);\nconst C = {}; for (const h of ['pause', 'next_action', 'match_type', 'notes']) { const i = hdr.indexOf(h); if (i < 0) { throw new Error('ABORT: PIPELINE column missing ' + h); } C[h] = colLetter(i); }\nconst pipe = $input.all().map(function (i) { return i.json; });\nif (pipe.length < 4600) { throw new Error('ABORT: PIPELINE only ' + pipe.length); }\n// deal -> why it is not climate (sector keyword false positive; review 11 Sep)\nconst DROP = { 'D04904': 'Shippin is a hyperlocal 3PL (logistics), not clean mobility', 'D04932': 'Flyment is freight & supply chain, not clean mobility', 'D05024': 'Glazia is window/door supply chain, not climate', 'D04962': \"Sugar's Daddy is clean-label F&B, not climate\" };\nconst data = [], dropped = [], alreadySent = [];\nfor (const id of Object.keys(DROP)) {\n  const rows = pipe.filter(function (p) { return s(p.deal_id) === id; });\n  if (rows.length !== 1) { throw new Error('ABORT: deal ' + id + ' resolves to ' + rows.length + ' rows'); }\n  const p = rows[0];\n  if (nz(p.investor) !== 'climateangels') { throw new Error('ABORT: deal ' + id + ' is for ' + s(p.investor) + ', not Climate Angels'); }\n  if (yes(p.deal_shared)) { alreadySent.push([id, s(p.startup)]); continue; }\n  const rn = p.row_number; const why = 'sector matched on a keyword only - ' + DROP[id] + ' (review 11 Sep)'; const n = s(p.notes);\n  data.push({ range: 'PIPELINE!' + C.pause + rn, values: [['Yes']] }, { range: 'PIPELINE!' + C.next_action + rn, values: [['DROPPED - not per strategy']] },\n    { range: 'PIPELINE!' + C.match_type + rn, values: [['Not per strategy: ' + why]] }, { range: 'PIPELINE!' + C.notes + rn, values: [[(n ? n + ' | ' : '') + 'DROPPED 2026-09-11 - ' + why]] });\n  dropped.push([rn, id, s(p.startup)]); }\nif (!data.length) { data.push({ range: 'PIPELINE!' + C.pause + '1', values: [['pause']] }); }\nreturn [{ json: { pipeline_rows: pipe.length, dropped: dropped, already_sent_left_alone: alreadySent, data: data } }];"
+      }
+    },
+    {
+      "id": "wp",
+      "name": "Write drops",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ valueInputOption: 'RAW', data: $('Plan').first().json.data }) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "ra",
+      "name": "Read PIPELINE after",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        1000,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cv",
+      "name": "Verify",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function s(v) { return String(v == null ? '' : v).trim(); }\nfunction nz(x) { return s(x).toLowerCase().replace(/[^a-z0-9]/g, ''); }\nconst yes = function (x) { return s(x).toLowerCase() === 'yes'; };\nconst plan = $('Plan').first().json;\nconst pipe = $input.all().map(function (i) { return i.json; });\nconst ids = plan.dropped.map(function (d) { return d[1]; });\nconst notPaused = pipe.filter(function (p) { return ids.indexOf(s(p.deal_id)) >= 0 && !yes(p.pause); }).map(function (p) { return s(p.deal_id); });\nconst caActive = pipe.filter(function (p) { return nz(p.investor) === 'climateangels' && !yes(p.deal_shared) && !yes(p.pause); }).map(function (p) { return [s(p.deal_id), s(p.startup), s(p.email), s(p.next_due)]; });\nconst caSent = pipe.filter(function (p) { return nz(p.investor) === 'climateangels' && yes(p.deal_shared); }).map(function (p) { return [s(p.deal_id), s(p.startup)]; });\nreturn [{ json: { pipeline_after: pipe.length, same_rows: pipe.length === plan.pipeline_rows, dropped: plan.dropped, already_sent_left_alone: plan.already_sent_left_alone, not_paused: notPaused, climate_angels_active: caActive, climate_angels_sent_before: caSent, ok: notPaused.length === 0 && pipe.length === plan.pipeline_rows } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run once (set before activating)": {
+      "main": [
+        [
+          {
+            "node": "GET header",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET header": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Plan": {
+      "main": [
+        [
+          {
+            "node": "Write drops",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write drops": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE after",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE after": {
+      "main": [
+        [
+          {
+            "node": "Verify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once (set before activating)": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "fLffMOvo3rC57gd9",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-11T16:30:57.434Z",
+      "updatedAt": "2026-09-11T16:30:57.434Z"
+    }
+  ],
+  "activeVersion": null
+}

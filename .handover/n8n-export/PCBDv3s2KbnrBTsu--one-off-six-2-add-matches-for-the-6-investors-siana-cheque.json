@@ -1,0 +1,277 @@
+{
+  "id": "PCBDv3s2KbnrBTsu",
+  "name": "One-off SIX-2 — add matches for the 6 investors + Siana cheque",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-09T06:36:02.536Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "df280588-7829-42f1-8415-574e4ebf4eb0",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "trg1",
+      "name": "Run once 11:34 IST 9 Sep",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "30 12 9 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "rd1",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cdI",
+      "name": "Siana cheque",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        -180
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Cheque size supplied 2026-09-09; it was blank on both the corrections sheet and PILOT_SHEET.\nreturn [{ json: { investor: 'Siana Capital', cheque_inr_cr: 'US$1-2M (INR 8.5-17 Cr)' } }];"
+      }
+    },
+    {
+      "id": "upI",
+      "name": "Update INVESTORS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "position": [
+        660,
+        -180
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "INVESTORS"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "investor"
+          ],
+          "schema": [
+            {
+              "id": "investor",
+              "displayName": "investor",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cdN",
+      "name": "Build rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        60
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const E = {\"Riceberg Ventures\":\"abhinav.gupta@riceberg.vc\",\"Siana Capital\":\"rajat.shah@sianacapital.com\",\"247 VC Tech Fund\":\"kruti@247vc.in\",\"CedarHill Capital\":\"subit@cedarhill.vc,Hriday@cedarhill.vc\",\"Rainmatter by Zerodha\":\"nihal.shetty@zerodha.com\",\"Atomic Capital\":\"nikhil@atomiccapital.in\"};\nconst M = {\"Riceberg Ventures\":[[\"AI Signal Labs\",\"Shradha\",100],[\"MindWox\",\"Akansha\",100],[\"Spintly\",\"Shradha\",100],[\"Ulai\",\"Shradha\",100]],\"Siana Capital\":[[\"AI Signal Labs\",\"Shradha\",100],[\"Alt F Coworking\",\"Chaman\",100],[\"Desi Machines\",\"Chaman\",100],[\"Flyment\",\"Chaman\",100],[\"GroCliq\",\"Akansha\",100],[\"LearningPad\",\"Aditya\",100],[\"MentorCloud\",\"Shradha\",100],[\"SkillBytes\",\"Aditya\",100],[\"Talent Recruit\",\"Akansha\",100],[\"Vilva AI\",\"Shradha\",100],[\"YUNO\",\"Aditya\",100]],\"247 VC Tech Fund\":[[\"AI Signal Labs\",\"Shradha\",100],[\"Formverse\",\"Akansha\",100],[\"Glazia Windoors\",\"Chaman\",100],[\"Spintly\",\"Shradha\",100],[\"Ulai\",\"Shradha\",100]],\"CedarHill Capital\":[[\"Appli\",\"Akansha\",100],[\"CLIKD\",\"Aditya\",100],[\"Desi Machines\",\"Chaman\",100],[\"EkoSight\",\"Chaman\",100],[\"Flyment\",\"Chaman\",100],[\"Fydo\",\"Shradha\",100],[\"Glazia Windoors\",\"Chaman\",100],[\"GroCliq\",\"Akansha\",100],[\"LearningPad\",\"Aditya\",100],[\"Lex Protector\",\"Akansha\",100],[\"MentorCloud\",\"Shradha\",100],[\"MindWox\",\"Akansha\",100],[\"Nexcore\",\"Akansha\",100],[\"Opulytics\",\"Akansha\",100],[\"Orbo AI\",\"Shradha\",100],[\"Road Athena\",\"Chaman\",100],[\"Shippin\",\"Chaman\",100],[\"Starz AI\",\"Akansha\",100],[\"SureChain\",\"Shradha\",100],[\"Talent Recruit\",\"Akansha\",100],[\"Ulai\",\"Shradha\",100],[\"YUNO\",\"Aditya\",100],[\"Koncite\",\"Akansha\",85],[\"MonitorExam\",\"Aditya\",85],[\"ServeAmigo\",\"Shradha\",85],[\"SkillBytes\",\"Aditya\",85],[\"Springbase.ai\",\"Akansha\",85],[\"Vilva AI\",\"Shradha\",85]],\"Rainmatter by Zerodha\":[[\"AI Signal Labs\",\"Shradha\",100],[\"EkoSight\",\"Chaman\",100],[\"Ela Greens\",\"Chaman\",100],[\"EosNox\",\"Shradha\",100],[\"Formverse\",\"Akansha\",100],[\"Fydo\",\"Shradha\",100],[\"Glazia Windoors\",\"Chaman\",100],[\"Healthy Master\",\"Aditya\",100],[\"MindWox\",\"Akansha\",100],[\"My Soul\",\"Aditya\",100],[\"Nexcore\",\"Akansha\",100],[\"Orbis Lives\",\"Chaman\",100],[\"Sahaj\",\"Shradha\",100],[\"Spintly\",\"Shradha\",100],[\"Sugar's Daddy\",\"Aditya\",100],[\"SureChain\",\"Shradha\",100],[\"Ulai\",\"Shradha\",100],[\"VOLD Energy\",\"Aditya\",100],[\"Fire Armor\",\"Chaman\",85],[\"Pixelence\",\"Akansha\",85],[\"ServeAmigo\",\"Shradha\",85],[\"Vira Jal\",\"Shradha\",85]],\"Atomic Capital\":[[\"Chayan Karo\",\"Shradha\",100],[\"DACBY\",\"Chaman\",100],[\"My Soul\",\"Aditya\",100],[\"Orbo AI\",\"Shradha\",100],[\"Sahaj\",\"Shradha\",100],[\"SureChain\",\"Shradha\",100],[\"VOLD Energy\",\"Aditya\",100],[\"Xproguard\",\"Akansha\",100],[\"YUNO\",\"Aditya\",100]]};\n\nfunction s(v) { return String(v == null ? '' : v).trim(); }\nconst rows = $input.all().map(function (i) { return i.json; });\nif (rows.length < 500) { throw new Error('ABORT: PIPELINE returned only ' + rows.length + ' rows'); }\n\nconst seen = {};\nfor (const r of rows) { seen[s(r.startup).toLowerCase() + '||' + s(r.investor).toLowerCase()] = true; }\n\nlet maxN = 0;\nfor (const r of rows) {\n  const id = s(r.deal_id);\n  if (id.charAt(0) === 'D') { const n = parseInt(id.slice(1), 10); if (!isNaN(n) && n > maxN) { maxN = n; } }\n}\nif (maxN === 0) { throw new Error('ABORT: could not determine max deal_id'); }\n\nfunction weekdays(n, y, m, d) {\n  const out = []; const dt = new Date(Date.UTC(y, m - 1, d));\n  while (out.length < n) { const w = dt.getUTCDay(); if (w !== 0 && w !== 6) { out.push(dt.toISOString().slice(0, 10)); } dt.setUTCDate(dt.getUTCDate() + 1); }\n  return out;\n}\n\nlet n = maxN;\nconst out = [];\nfor (const inv of Object.keys(M)) {\n  const keep = M[inv].filter(function (x) { return !seen[x[0].toLowerCase() + '||' + inv.toLowerCase()]; });\n  const days = weekdays(Math.ceil(keep.length / 2) + 1, 2026, 9, 10);\n  for (let i = 0; i < keep.length; i++) {\n    n++;\n    let pad = String(n);\n    while (pad.length < 5) { pad = '0' + pad; }\n    out.push({ json: { deal_id: 'D' + pad, startup: keep[i][0], owner: keep[i][1], investor: inv,\n      email: E[inv], cc: '', priority: keep[i][2], deal_shared: 'No', next_action: 'Initial',\n      next_due: days[Math.floor(i / 2)],\n      notes: 'Very High match (' + keep[i][2] + ') - updated mandate 2026-09-09, cleared against full Deal Tracker' } });\n  }\n}\nif (out.length === 0) { throw new Error('ABORT: 0 new rows'); }\nif (out.length > 79) { throw new Error('ABORT: ' + out.length + ' exceeds guard of 79'); }\nreturn out;"
+      }
+    },
+    {
+      "id": "apN",
+      "name": "Append PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "position": [
+        660,
+        60
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Run once 11:34 IST 9 Sep": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Siana cheque",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Build rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Siana cheque": {
+      "main": [
+        [
+          {
+            "node": "Update INVESTORS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build rows": {
+      "main": [
+        [
+          {
+            "node": "Append PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once 11:34 IST 9 Sep": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "PCBDv3s2KbnrBTsu",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-09T06:36:02.539Z",
+      "updatedAt": "2026-09-09T06:36:02.539Z"
+    }
+  ],
+  "activeVersion": null
+}

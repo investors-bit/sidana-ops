@@ -1,0 +1,193 @@
+{
+  "id": "NFS5X4I4l7iwGlVh",
+  "name": "One-off CG-4 — confirm PENDING/HOLD rows that have a researched thesis (user-authorised 23 Sep)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-23T16:38:27.905Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "e16c0d3f-ef68-4ab0-b8bc-0d5ad99c58a2",
+  "versionCounter": 4,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "wh",
+      "name": "Webhook",
+      "webhookId": "c48aa602-df2d-4ade-a0f5-a8e9a1bff134",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-confirm-thesis-rows-5e9c14",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      }
+    },
+    {
+      "id": "g",
+      "name": "Read",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=INVESTOR_CRITERIA%21A1%3AAC300&ranges=INVESTORS%21A1%3AJ300",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "v",
+      "name": "Compute",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const R = $json.valueRanges || [];\nconst pick = (n) => (R.find(x => String(x.range||'').indexOf(n) === 0) || {}).values || [];\nconst crit = pick('INVESTOR_CRITERIA');\nconst inv  = pick('INVESTORS!');\nif (!crit.length || !inv.length) throw new Error('Read failed');\n\nconst g = (row,i) => (row && row[i] != null) ? String(row[i]).trim() : '';\n\n// Rows deliberately excluded: researched as NOT investors.\nconst EXCLUDE = { '233':'MK Ventures - cannot confirm it is an investor', '251':'Diadem - deal-flow platform, not a fund', '269':'Seedflex - a company raising its own Series A' };\n\nconst data = [], flipped = [], excluded = [], untouched = [];\n\nfor (let i = 1; i < crit.length; i++) {\n  const c = crit[i];\n  const critRow = i + 1;\n  const key = g(c,0);\n  if (!key || !g(c,1)) continue;\n  const n = parseInt(key, 10);\n  const ivRow = (n > 1 && n <= inv.length) ? inv[n-1] : null;\n  if (!ivRow || !g(ivRow,0)) continue;\n  const name = g(ivRow,0);\n\n  const st = g(c,3).toUpperCase();\n  const cf = g(c,4).toUpperCase();\n  const isHeld = (cf === 'PENDING') || (st === 'HOLD');\n  if (!isHeld) continue;\n\n  if (g(ivRow,9)) { untouched.push(n + ' ' + name + ' :: do_not_contact'); continue; }\n  if (EXCLUDE[String(n)]) { excluded.push(n + ' ' + name + ' :: ' + EXCLUDE[String(n)]); continue; }\n\n  const thesis = g(c,21);\n  if (!thesis) { untouched.push(n + ' ' + name + ' :: no thesis_summary'); continue; }\n  if (!g(ivRow,2)) { untouched.push(n + ' ' + name + ' :: no email'); continue; }\n\n  const willMatch = (g(c,6).toUpperCase() === 'AGNOSTIC') || !!g(c,7);\n\n  const changes = [];\n  if (cf === 'PENDING') { data.push({ range: 'INVESTOR_CRITERIA!E' + critRow, values: [['USER']] }); changes.push('confirmed PENDING->USER'); }\n  if (st === 'HOLD')    { data.push({ range: 'INVESTOR_CRITERIA!D' + critRow, values: [['ACTIVE']] }); changes.push('status HOLD->ACTIVE'); }\n  if (!g(c,25))         { data.push({ range: 'INVESTOR_CRITERIA!Z' + critRow, values: [['2026-09-23: confirmed on Aditya’s instruction after thesis research; if the thesis proves wrong, capture the pass reason and correct.']] }); changes.push('rule_notes'); }\n\n  flipped.push({ row: n, investor: name.slice(0,34), was: st + '/' + cf, changes: changes, will_match_deals: willMatch });\n}\n\nif (!data.length) throw new Error('Nothing to flip');\nif (data.length > 250) throw new Error('Guard: refusing ' + data.length + ' cells (cap 250)');\n\nreturn [{ json: { body: { valueInputOption: 'RAW', data: data }, cells: data.length,\n                  rows: flipped.length,\n                  going_live_now: flipped.filter(f => f.will_match_deals).length,\n                  confirmed_but_no_sector_codes: flipped.filter(f => !f.will_match_deals).length,\n                  flipped: flipped, excluded: excluded, untouched: untouched } }];"
+      }
+    },
+    {
+      "id": "w",
+      "name": "Write",
+      "disabled": false,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {
+          "timeout": 180000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "o",
+      "name": "Out",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const c = $('Compute').first().json;\nconst w = $json;\nreturn [{ json: { updatedCells: w.totalUpdatedCells != null ? w.totalUpdatedCells : null,\n                  planned_cells: c.cells, rows: c.rows,\n                  going_live_now: c.going_live_now,\n                  confirmed_but_no_sector_codes: c.confirmed_but_no_sector_codes,\n                  flipped: c.flipped, excluded: c.excluded, untouched: c.untouched } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read": {
+      "main": [
+        [
+          {
+            "node": "Compute",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute": {
+      "main": [
+        [
+          {
+            "node": "Write",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write": {
+      "main": [
+        [
+          {
+            "node": "Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "NFS5X4I4l7iwGlVh",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-23T16:38:27.907Z",
+      "updatedAt": "2026-09-23T16:38:27.907Z"
+    }
+  ],
+  "activeVersion": null
+}

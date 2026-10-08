@@ -1,0 +1,228 @@
+{
+  "id": "bUfXuRB13SvUmwV1",
+  "name": "SCRATCH-QREFILL-READ",
+  "description": null,
+  "active": true,
+  "activeVersionId": "419ad906-8f55-4997-a89c-7c42a820ef77",
+  "createdAt": "2026-10-06T05:10:50.363Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "419ad906-8f55-4997-a89c-7c42a820ef77",
+  "versionCounter": 6,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "w1",
+      "name": "Webhook",
+      "webhookId": "906e3208-6fb0-4e02-a22e-d19df606626b",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "qrefill-read",
+        "responseMode": "lastNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "h1",
+      "name": "ReadDepth",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=ONBOARDING!K1:L900&majorDimension=ROWS",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "c1",
+      "name": "Summarize",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const v=($input.first().json.valueRanges||[])[0].values||[];\nconst a={},b={};\nfor(let i=1;i<v.length;i++){ const k=String((v[i]||[])[0]||'').trim(), l=String((v[i]||[])[1]||'').trim(); if(k)a[k]=(a[k]||0)+1; if(l)b[l]=(b[l]||0)+1; }\nreturn [{json:{entity_type:a, composition_band:b}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "ReadDepth",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ReadDepth": {
+      "main": [
+        [
+          {
+            "node": "Summarize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "bUfXuRB13SvUmwV1",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-10-06T05:10:50.366Z",
+      "updatedAt": "2026-10-06T05:10:50.366Z"
+    }
+  ],
+  "activeVersion": {
+    "versionId": "419ad906-8f55-4997-a89c-7c42a820ef77",
+    "workflowId": "bUfXuRB13SvUmwV1",
+    "nodes": [
+      {
+        "id": "w1",
+        "name": "Webhook",
+        "webhookId": "906e3208-6fb0-4e02-a22e-d19df606626b",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          0
+        ],
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "qrefill-read",
+          "responseMode": "lastNode",
+          "options": {}
+        }
+      },
+      {
+        "id": "h1",
+        "name": "ReadDepth",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          220,
+          0
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values:batchGet?ranges=ONBOARDING!K1:L900&majorDimension=ROWS",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleSheetsOAuth2Api",
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "isXhjjhrsdp60dv1",
+            "name": "Google Sheets account"
+          }
+        }
+      },
+      {
+        "id": "c1",
+        "name": "Summarize",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          440,
+          0
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const v=($input.first().json.valueRanges||[])[0].values||[];\nconst a={},b={};\nfor(let i=1;i<v.length;i++){ const k=String((v[i]||[])[0]||'').trim(), l=String((v[i]||[])[1]||'').trim(); if(k)a[k]=(a[k]||0)+1; if(l)b[l]=(b[l]||0)+1; }\nreturn [{json:{entity_type:a, composition_band:b}}];"
+        }
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "ReadDepth",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "ReadDepth": {
+        "main": [
+          [
+            {
+              "node": "Summarize",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "Sidana Ventures",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "createdAt": "2026-10-06T05:31:21.210Z",
+    "updatedAt": "2026-10-06T05:31:21.210Z",
+    "workflowPublishHistory": [
+      {
+        "id": 12099,
+        "workflowId": "bUfXuRB13SvUmwV1",
+        "versionId": "419ad906-8f55-4997-a89c-7c42a820ef77",
+        "event": "activated",
+        "userId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-10-06T05:31:21.294Z"
+      }
+    ]
+  }
+}

@@ -1,0 +1,217 @@
+{
+  "id": "vEymxXZYridkIrmP",
+  "name": "One-off TS-BASE — create THESIS SNAPSHOT tab and write today's baseline of the whole Thesis tab (17 Sep)",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-17T06:52:18.324Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "96525418-abaf-47b5-8386-83e7e404624a",
+  "versionCounter": 3,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Run once",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "27 12 17 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "g1",
+      "name": "GET thesis raw",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/1WOErvuYawblG-HkrK5In5YWtEiKKt_DeoVpmL5na6GU/values/' + encodeURIComponent(\"'Thesis correction'!A1:Z400\") }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "a1",
+      "name": "Add tab",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "continueOnFail": true,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"requests\":[{\"addSheet\":{\"properties\":{\"title\":\"THESIS SNAPSHOT\",\"gridProperties\":{\"rowCount\":600,\"columnCount\":6}}}}]}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "c1",
+      "name": "Build snapshot",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Same row_text rule as the THESIS-WATCH row-diff node: every cell of the row, trimmed, joined with ' | ', trailing blanks dropped.\nfunction s(v) { return String(v == null ? '' : v).replace(/\\s+/g, ' ').trim(); }\nconst grid = $('GET thesis raw').first().json.values || [];\nif (grid.length < 5) { throw new Error('ABORT: Thesis tab read only ' + grid.length + ' rows'); }\nconst out = [['sheet_row', 'firm', 'row_text', 'snapshot_date']];\nconst today = new Date(Date.now() + 330 * 60000).toISOString().slice(0, 10);\nlet firm = '';\nfor (let i = 0; i < grid.length; i++) {\n  const cells = (grid[i] || []).map(s); while (cells.length && !cells[cells.length - 1]) { cells.pop(); }\n  if (!cells.length) { continue; }\n  if (cells[0]) { firm = cells[0]; }\n  out.push([String(i + 1), firm, cells.join(' | ').slice(0, 45000), today]);\n}\nwhile (out.length < 600) { out.push(['', '', '', '']); }\nreturn [{ json: { values: out, rows: out.filter(function (r) { return r[0]; }).length - 1 } }];"
+      }
+    },
+    {
+      "id": "w1",
+      "name": "Write snapshot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "method": "PUT",
+        "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/values/' + encodeURIComponent(\"'THESIS SNAPSHOT'!A1:D600\") + '?valueInputOption=RAW' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ values: $('Build snapshot').first().json.values }) }}",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Run once": {
+      "main": [
+        [
+          {
+            "node": "GET thesis raw",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET thesis raw": {
+      "main": [
+        [
+          {
+            "node": "Add tab",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add tab": {
+      "main": [
+        [
+          {
+            "node": "Build snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build snapshot": {
+      "main": [
+        [
+          {
+            "node": "Write snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "saveDataSuccessExecution": "all",
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "vEymxXZYridkIrmP",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-17T06:52:18.326Z",
+      "updatedAt": "2026-09-17T06:52:18.326Z"
+    }
+  ],
+  "activeVersion": null
+}

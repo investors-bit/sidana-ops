@@ -1,0 +1,207 @@
+{
+  "id": "l0mrPo975PptkopW",
+  "name": "One-off — stop all follow-ups on 6 sent duplicate rows",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-06T19:06:34.472Z",
+  "updatedAt": "2026-10-07T05:56:00.558Z",
+  "isArchived": false,
+  "versionId": "565efd5c-a6d4-4462-ac76-5e342fc17ab3",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "trg1",
+      "name": "Run once 00:50 IST 7 Sep",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "50 0 7 9 *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "rd1",
+      "name": "Read PIPELINE",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "cd1",
+      "name": "Build pause rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// The 6 already-sent Deal Tracker duplicates with NO investor reply.\n// D02527 is deliberately excluded - that investor replied (\"Already connected with founder\").\nconst TARGETS = ['D00021','D00664','D01709','D01774','D02484','D02511'];\nfunction s(v) { return String(v == null ? '' : v).trim(); }\n\nconst rows = $input.all().map(function (i) { return i.json; });\nif (rows.length < 500) { throw new Error('ABORT: PIPELINE returned only ' + rows.length + ' rows'); }\n\nconst out = [];\nfor (const t of TARGETS) {\n  const hits = rows.filter(function (r) { return s(r.deal_id) === t; });\n  if (hits.length !== 1) { throw new Error('ABORT: expected 1 row for ' + t + ', found ' + hits.length); }\n  const h = hits[0];\n  if (s(h.deal_shared).toLowerCase() !== 'yes') { throw new Error('ABORT: ' + t + ' is not deal_shared=Yes'); }\n  if (s(h.investor_response) !== '') { throw new Error('ABORT: ' + t + ' has an investor_response - leave it alone'); }\n  if (s(h.pause) !== '') { continue; }\n  const prev = s(h.notes);\n  out.push({ json: {\n    deal_id: t,\n    pause: 'Yes',\n    next_action: 'Stopped - duplicate of Deal Tracker share',\n    notes: (prev ? prev + ' | ' : '') + 'Follow-ups stopped 2026-09-07: deal already shared per Deal Tracker'\n  }});\n}\n\nif (out.length === 0) { throw new Error('ABORT: nothing to pause'); }\nif (out.length > 6) { throw new Error('ABORT: ' + out.length + ' exceeds guard of 6'); }\nreturn out;"
+      }
+    },
+    {
+      "id": "up1",
+      "name": "Update PIPELINE (pause)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4/edit?usp=sharing"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIPELINE"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "deal_id"
+          ],
+          "schema": [
+            {
+              "id": "deal_id",
+              "displayName": "deal_id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "isXhjjhrsdp60dv1",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Run once 00:50 IST 7 Sep": {
+      "main": [
+        [
+          {
+            "node": "Read PIPELINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PIPELINE": {
+      "main": [
+        [
+          {
+            "node": "Build pause rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build pause rows": {
+      "main": [
+        [
+          {
+            "node": "Update PIPELINE (pause)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": {
+    "node:Run once 00:50 IST 7 Sep": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "l0mrPo975PptkopW",
+      "projectId": "g0f15PuOxIWjwQOp",
+      "project": {
+        "id": "g0f15PuOxIWjwQOp",
+        "name": "Sidana Ventures <investors@sidanaventures.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e1831c7f-2a3f-4b9c-9473-cc5f77704bfd",
+        "createdAt": "2026-08-18T11:28:16.036Z",
+        "updatedAt": "2026-08-18T11:28:28.650Z"
+      },
+      "createdAt": "2026-09-06T19:06:34.475Z",
+      "updatedAt": "2026-09-06T19:06:34.475Z"
+    }
+  ],
+  "activeVersion": null
+}
