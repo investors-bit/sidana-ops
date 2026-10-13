@@ -1,0 +1,129 @@
+{
+  "name": "HEARTBEAT-WRITE - cloud routine records its last run (webhook)",
+  "nodes": [
+    {
+      "id": "n1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sidana-heartbeat-write-b41d7e",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "n2",
+      "name": "Gate",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Write-only window onto task_heartbeat for the cloud routines.\n// Cannot touch any other table. Only the named tasks may record a run.\nconst b = $('Webhook').first().json.body || {};\nif (b.secret !== '{{SECRET_HEARTBEAT}}') { throw new Error('bad secret'); }\nconst TASKS = ['dealflow-state-machine','hot-deals-reply-recorder','middle-desk-reply-watch','angel-desk-reply-watch','sidana-reply-capture'];\nif (!TASKS.includes(b.task)) { throw new Error('unknown task'); }\nconst note = String(b.note == null ? '' : b.note).replace(/[\\u0000-\\u001f]/g,' ').slice(0, 500);\nconst now = new Date().toISOString();\nreturn [{ json: { row: { task: b.task, last_run_at: now, note, updated_at: now } } }];"
+      }
+    },
+    {
+      "id": "n3",
+      "name": "Upsert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        0
+      ],
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "ntQxeHO20ZUMASMg",
+          "name": "Supabase service"
+        }
+      },
+      "parameters": {
+        "method": "POST",
+        "url": "https://elwaquzawoscotlojtnv.supabase.co/rest/v1/task_heartbeat?on_conflict=task",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates,return=representation"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.row) }}",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "n4",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ok:true, task:$('Gate').first().json.row.task, last_run_at:$('Gate').first().json.row.last_run_at}) }}",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Gate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gate": {
+      "main": [
+        [
+          {
+            "node": "Upsert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
