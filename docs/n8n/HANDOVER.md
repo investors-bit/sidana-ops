@@ -66,6 +66,7 @@ The send tools throw `DRY OK | ...` unless they are called with `dry:false`. Tha
 | write_cells | `mLNKn6f1T0S7l4XQ` |
 | stamp_mis_asked | `ZkDBRC0CQ92yjapJ` |
 | record_heartbeat | `GFUrk8nPz8mAEom3` |
+| followup_diary_write | `qt7XIAq8aWaIGTX7` (this one HAS a dry mode: writes only with dry:false; add or done) |
 
 **Read tools:**
 
@@ -75,6 +76,7 @@ The send tools throw `DRY OK | ...` unless they are called with `dry:false`. Tha
 | read_book | `pJWAdxMZ1iFYkB0Z` |
 | read_documents | `XLLaf7UhShfqOOGo` |
 | read_calendars | `34Ut7cEwlZkw9pWU` |
+| followup_diary_due | `FQaUHkPL3ncuP0Ve` (read-only; OPEN entries due today or earlier, scope fixed per agent) |
 | search_investors_mail | `yR0XriM9QbwCUq8J` |
 | fireflies_lookup | `TXzEd3ZEz5K8dsUE` |
 | hygiene_audit | `sJAKuXRlM9eCYbhg` |
@@ -86,9 +88,16 @@ The send tools throw `DRY OK | ...` unless they are called with `dry:false`. Tha
 - Google Sheet ("the book"): `1hTpvAl-fj8ON4MiiWVgc478QCdWVcwEe-2dI3sLiGq4`.
 - The Weekly Founder Update workflow `2MG95rlJDoFNz8tJ` now carries investor feedback after a pass ("Passed after meeting: ...").
 
+## Follow-up diary and rematching (added 13 Oct, late evening)
+
+- **FOLLOWUP_DIARY** tab in the book (columns A to P: entry_id, due_date, scope, kind, investor, contact_name, contact_email, startup, thread_id, mailbox, what_to_ask, context, status, created_at, done_at, done_note). Kinds: NEW_FUND_CHECK, FEEDBACK_CHASE, THESIS_CHECK, DATE_THEY_NAMED, OTHER.
+- Each run, step 5b calls followup_diary_due, sends what_to_ask on the thread (unless they already wrote), then closes the entry with the sent_id.
+- **ENGINE-DAILY** (`F4xXHRFIr3gS2VHc`) now runs weekdays at **07:30, 14:30 and 17:30 IST** (was 07:30 only), so a thesis written during the day is rematched the same day. It is idempotent: a run with nothing new changes nothing. Its report-only test is the "Dry hook" webhook.
+- The laptop task `sidana-rematch-watch` did more than rematching (captures, new INVESTORS rows getting criteria rows, criteria health check, bounced email fixes). Those parts are **not** in n8n yet; keep that laptop task on until they are moved. `sidana-1745-brief-prep` was skipped on the user's instruction.
+
 ## Where the rules live
 
-- `deal-flow-agent.instructions.txt` and `hot-deals-agent.instructions.txt`: the core briefs, about 18KB each, exactly what is live.
+- `deal-flow-agent.instructions.txt` and `hot-deals-agent.instructions.txt`: the core briefs, about 22KB each, exactly what is live (rules A to AA).
 - `skills/deal-flow/*` and `skills/hot-deals/*`: detail the agent loads only when needed:
   - meeting-stages;
   - passes or passes-thesis;
@@ -118,6 +127,9 @@ Every rule below came from a real mistake.
 | U and X | Pass replies are written fresh and truthful, with no "quick reply" compliments. |
 | V | Stay out when the founder and the investor are already talking to each other. |
 | W | No empty "our team will come back" promises, no placeholders. |
+| Y | Every pass gets one feedback question: their thesis or this company? Thesis answer goes into the sheet (AA); a company reason is recorded for the founder; no answer gets one chase 7 days later via the diary. |
+| Z | Out of funds or between funds: ask about the new fund, when and with what thesis. A month they name goes in the diary for the 1st of that month (Feb 2027 = 1 Feb 2027); otherwise 90 days. |
+| AA | A new thesis means a rematch. The agent writes it into the structured INVESTOR_CRITERIA columns (G to N, T, AF, plus V and Z), and ENGINE-DAILY rematches at the next of 07:30, 14:30 or 17:30. |
 
 **Fixed facts:**
 
