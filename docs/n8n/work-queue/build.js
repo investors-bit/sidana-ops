@@ -45,7 +45,12 @@ const add = (it) => {
   const from = (lastInMsg && lastInMsg.from_email) || it.from || null;
   if (noise(from, it.subject, gist)) { autoClosed++; if (autoSample.length < 8) autoSample.push((from || '') + ' | ' + String(it.subject || '').slice(0, 70)); return; }
   const box = msgs.filter(isOut).map(m => (String(m.mailbox || m.from_email || '').match(/[a-z0-9._-]+@sidanaventures\.com/i) || [''])[0]).filter(Boolean).pop() || null;
-  items[it.thread_id] = Object.assign(it, { last_in_at: lastInAt, our_last_out_at: lastOutMsg ? lastOutMsg.sent_at : it.our_last_out_at, gist, from, reply_from_mailbox: box, msgs });
+  // Which of our four mailboxes received this mail. Each mailbox holds its own copy under its own thread id.
+  const BOXES = ['investors@sidanaventures.com', 'dealflow@sidanaventures.com', 'shradhaa@sidanaventures.com', 'akansha@sidanaventures.com'];
+  const seen = new Set();
+  msgs.concat(it.to_emails ? [{ to_emails: it.to_emails }] : []).forEach(m => String(m.to_emails || '').toLowerCase().split(/[,;\s]+/).forEach(a => BOXES.includes(a) && seen.add(a)));
+  if (box) seen.add(box.toLowerCase());
+  items[it.thread_id] = Object.assign(it, { last_in_at: lastInAt, our_last_out_at: lastOutMsg ? lastOutMsg.sent_at : it.our_last_out_at, gist, from, reply_from_mailbox: box, candidate_mailboxes: [...seen], msgs });
 };
 rows('Fetch owed').forEach(r => {
   if (!r.thread || items[r.thread]) return;
@@ -55,7 +60,7 @@ rows('Fetch owed').forEach(r => {
 rows('Fetch inbound').forEach(r => {
   const t = r.thread_id; if (!t || items[t]) return;
   add({ thread_id: t, startup: '', startup_id: r.startup_id || null, investor: '', investor_id: r.investor_id || null, bucket: '', owner: '',
-    subject: r.subject || '', last_in_at: r.sent_at, our_last_out_at: null, gist: r.reply_gist || '', from: r.from_email,
+    subject: r.subject || '', last_in_at: r.sent_at, our_last_out_at: null, gist: r.reply_gist || '', from: r.from_email, to_emails: r.to_emails || '',
     source: r.investor_id ? 'inbound_investor' : (r.startup_id ? 'inbound_founder' : 'inbound_unmatched') });
 });
 // One item per startup x investor pair: deals go out from 4 mailboxes, so the same investor can sit on several threads.
@@ -72,7 +77,7 @@ const work = Object.values(groups).map(g => {
   return {
     thread_id: it.thread_id, other_threads_same_pair: g.slice(1).map(x => x.thread_id), type: typeOf(it.gist), wait_hours: waitH,
     startup: it.startup || null, startup_id: it.startup_id, investor: it.investor || null, investor_id: it.investor_id, owner: it.owner || null,
-    from: it.from, reply_from_mailbox: it.reply_from_mailbox, subject: it.subject, last_in_at: it.last_in_at, our_last_out_at: it.our_last_out_at || null, source: it.source,
+    from: it.from, reply_from_mailbox: it.reply_from_mailbox, candidate_mailboxes: [...new Set(g.flatMap(x => x.candidate_mailboxes))], subject: it.subject, last_in_at: it.last_in_at, our_last_out_at: it.our_last_out_at || null, source: it.source,
     latest_message: String(it.gist || '').slice(0, 300),
     thread: it.msgs.slice(-4).map(m => ({ at: m.sent_at, dir: isOut(m) ? 'out' : 'in', from: m.from_email, text: String(m.reply_gist || '').slice(0, 240) })),
   };
@@ -104,6 +109,6 @@ const counts = { total: ordered.length, due_18h_to_7d: due.length, today: today.
 return [{ json: {
   generated_at: new Date(now).toISOString(), scope: P.scope, window_hours: P.hrs, last_run_at: hb ? hb.last_run_at : null,
   counts, skipped: SKIP, returned: Math.max(0, Math.min(ordered.length - SKIP, MAX)), more_not_returned: Math.max(0, ordered.length - SKIP - MAX),
-  how_to_use: 'Work the list top to bottom in batches of 10. Every item ends in one of the five states. type is a keyword hint: confirm it from the thread. Reply on thread_id from reply_from_mailbox. other_threads_same_pair are the same investor on another mailbox: do not answer those separately. thread texts are snippets of about 200 characters; never quote a cut-off snippet.',
+  how_to_use: 'Work the list top to bottom in batches of 10. Every item ends in one of the five states. type is a keyword hint: confirm it from the thread. Reply on thread_id from reply_from_mailbox. If reply_from_mailbox is empty, or the tool says not found, the same mail sits in each of candidate_mailboxes under different thread ids (thread_id and other_threads_same_pair): try thread_id with each candidate mailbox, then the other thread ids, until one works. If it says thread not started by us, retry once with allow_external_start:true. Answer the pair once only. thread texts are snippets of about 200 characters; never quote a cut-off snippet.',
   work: ordered.slice(SKIP, SKIP + MAX), internal_threads: internal, meetings_upcoming_72h: soon, meetings_past_48h: past, auto_closed_sample: autoSample,
 } }];

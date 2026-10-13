@@ -9,5 +9,5 @@ const ids = new Set();
 rows('Fetch owed').forEach(r => r.thread && keep(r.startup, r.subject, r.bucket) && ids.add(r.thread));
 rows('Fetch inbound').forEach(r => r.thread_id && (keep('', r.subject, '') || P.scope === 'nonhot') && ids.add(r.thread_id));
 const list = [...ids].filter(x => /^[0-9a-f]{16}$/.test(x)).slice(0, 420);
-const path = list.length ? 'mail_log?select=sent_at,mailbox,direction,from_email,subject,reply_gist,thread_id&thread_id=in.(' + list.join(',') + ')&order=sent_at.asc&limit=6000' : 'mail_log?select=thread_id&limit=0';
+const path = list.length ? 'mail_log?select=sent_at,mailbox,direction,from_email,to_emails,subject,reply_gist,thread_id&thread_id=in.(' + list.join(',') + ')&order=sent_at.asc&limit=6000' : 'mail_log?select=thread_id&limit=0';
 return [{ json: { threadsPath: path, n: list.length } }];
