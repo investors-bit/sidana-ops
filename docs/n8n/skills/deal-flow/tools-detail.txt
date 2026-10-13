@@ -1,0 +1,32 @@
+TOOL DETAIL. Only these parameter names reach a tool; any other name is silently dropped.
+
+db_read. The selector is query (never task).
+  mail_history: needs at least one of thread_id, investor_id, startup_id, party (part of an address or a domain), subject_like, reply_kind (pass, interested, other, invite). Optional direction (in/out), days_back (default 365), limit (default 50, max 200).
+    One whole thread: {query:"mail_history", thread_id:"<16 hex>"}.
+    Everything with one firm: {query:"mail_history", party:"<their domain>", days_back:60}.
+    Our ANSWER NEEDED / TIME NEEDED threads: {query:"mail_history", subject_like:"ANSWER NEEDED", days_back:14}.
+  founder_mail {days_back, startup_id}: our mail with founders, for the open-ask ledger.
+  startup_mail {startup_id} (positive id or it throws): everything on one startup.
+  owed_replies {sort:"recent", limit:25} and all_inbound {hours, limit:200}: fallback only if work_queue fails.
+  meetings {days_back:7, days_fwd:14}; startups {limit}; investors {limit}; heartbeat {heartbeat_task}.
+  mail_history snippets (reply_gist) are cut at about 200 characters. For the full text of an investor mail use search_investors_mail {q, full:true, maxBody:6000} (investors@ only, max 40 results) or quote nothing.
+
+read_book {ranges:["STARTUPS!A1:P"]}: ranges is an ARRAY and every range names its tab. Never read PIPELINE whole (about 1,900 rows; ranges over 150 PIPELINE rows are refused). Read only the rows you need. Founder names, emails and phones are in the Founders Info tab.
+
+write_pipeline (NO dry mode, always writes):
+  {rows:[{row:123, deal_id:"D00456", set:{"current_stage":"BRIEFED"}}], skip_errors:true}
+  row = the 1-based PIPELINE row number. deal_id must equal the deal_id already in that row (a safety lock). Keys inside set are exact PIPELINE headers. Optional per row: expect_next_action, append_notes:true. Optional top level: allow_sent:true for a row already marked shared.
+  Written only if the response has cells above 0. cells 0 = nothing written: read errs and fix the shape. Never report a row updated without cells above 0. Never retry with a guard removed.
+
+write_cells (NO dry mode): STARTUPS, STARTUP_PROFILE, INVESTOR_CRITERIA only, never PIPELINE. {cells:[{range:"INVESTOR_CRITERIA!F42", expect:"<value you just read, or empty string>", value:"<new>"}]}, max 20 cells. Read the cells with read_book right before; a mismatch writes nothing and throws "guard refused". Success = ok true, cells above 0.
+
+stamp_mis_asked {startup, date:"YYYY-MM-DD"} (NO dry mode). Success = ok true.
+
+book_meeting: required summary (not title), start, end, attendees, dry. start and end are naive IST like 2026-10-13T15:00:00 (no Z, no offset). attendees = plain email strings of the founder and the investor people ONLY (at least two external). The tool adds the Sidana side itself. owner is one of aditya, chaman, akansha, shradha (one a). A real call emails every attendee at once. Booked only with an event id and meet link back.
+
+read_calendars {timeMin, timeMax} (ISO times): result keyed aditya, akansha, dealflow, shradhaa.
+fireflies_lookup {q} to search, {ff_id, full:true} for a transcript. Check it has real content, not 0 characters.
+read_documents {startup}.
+search_investors_mail {q, full:true, maxBody:6000}: investors@ only, at most 40 messages.
+
+Errors: if a tool throws, read the error, fix the call, try at most once more, then report it and move on. Never call a tool twice with identical arguments. Never re-read something you already read this run.

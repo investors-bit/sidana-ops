@@ -1,0 +1,25 @@
+DOCUMENTS, FOUNDERS, AND QUESTIONS WE CANNOT ANSWER.
+
+DOCUMENTS. Every startup's documents are in the Startup Documents sheet: deck, MIS, projections, financials, cap table, one-pager, mis_date, last_mis_asked. Call read_documents {startup} before telling anyone a document exists. A document exists only if its cell holds a link.
+An investor asks for a document:
+  Link exists: send it on their thread from the mailbox that holds it, and make sure it is a real link, not a bare Drive permission wall.
+  No link: email the founder right away (from the mailbox that owns the startup): an investor looking at <Startup> has asked for <document> specifically. One ask. Then stamp_mis_asked {startup, date:"YYYY-MM-DD"} (not in a dry run). Tell the investor you have asked the founder and will revert; promise no date unless the founder committed to one.
+  Example ask: Hi {Founder}, an investor looking at {Startup} has asked for your latest MIS. Could you send it across so I can pass it on? If the numbers have moved since the last one, the current version is ideal.
+This investor-driven ask is the ONLY time a non-hot founder is asked for an MIS. Never do a proactive MIS refresh for a non-hot startup. A founder who asked us to stop, or a paused startup, gets nothing founder-facing.
+A form, term sheet or attachment that sits in an investor's email: you cannot forward it. internal_mail FORWARD NEEDED | <Startup> <> <Investor> to dealflow@sidanaventures.com and shradhaa@sidanaventures.com naming the thread and which founder address it goes to. Tell the founder only that the team will send it across.
+
+WHAT THE FOUNDER SENDS YOU.
+  Founder replies with a time or windows: back to the meeting-stages skill (TIME_PROPOSED).
+  Founder sends a document: tell the investor who asked for it and send the link or say the team will send it. Never broadcast to investors who did not ask.
+  Founder corrects a number (ARR, raise, valuation, customers): write_cells on STARTUPS or STARTUP_PROFILE with expect set to the value you just read, then read it back. Record the old value and who corrected it.
+  Founder says stop or pause: pause every live row for that startup the same run (pause "Yes", next_action "PAUSED - founder stopped outreach <name> <date>"), quote the instruction.
+THE OPEN-ASK LEDGER. A message we sent a founder is an OPEN ASK if it asks for something ("could you", "please send", "please share", "please confirm", "let us know") and the founder has not answered since on that thread. When you need it (founder ladder, founder-owes chases), rebuild it from db_read {query:"founder_mail", days_back:7} or with startup_id, never from memory.
+
+QUESTIONS WE CANNOT ANSWER (rule J). When an investor asks about a startup and the answer is not in STARTUPS, STARTUP_PROFILE, the documents sheet or the thread:
+1. Ask the founder the same run, from the mailbox that owns the startup, quoting the investor's question word for word and saying an investor is asking. Then tell the investor on their thread you are checking and will come back. Give in that same reply anything the book DOES answer.
+2. Founder answers: reply to the investor the same run using only what the founder wrote.
+3. No founder answer 48 hours after you asked: ONE internal_mail to investors@sidanaventures.com, dealflow@sidanaventures.com, shradhaa@sidanaventures.com, subject exactly ANSWER NEEDED | <Startup> <> <Investor>. Body: the investor and person, the question word for word, the founder's name and phone from Founders Info, when you asked the founder, and one line asking them to reply on this same email with the answer. State WAITING on the team.
+4. work_queue internal_threads shows ANSWER NEEDED threads; when team_replied is true, read that thread, answer the investor on their thread without saying who inside Sidana supplied it, and close it. If the founder answered meanwhile, use the founder's answer and tell the team on the ANSWER NEEDED thread it is no longer needed.
+5. No team reply one working day after ANSWER NEEDED: one short nudge on that thread, then raise it at the top of every report. Never guess an answer.
+
+NUMBERS. Every number an investor sees comes from STARTUPS or a transcript they were part of. Keep the currency as stated (US$150K stays US$150K; INR 1 Cr stays INR 1 Cr). Never round in our favour; never state a projection as current revenue. The book beats a transcript.

@@ -1,0 +1,44 @@
+THE MEETING STAGES. One step per row per run. Never skip a step. Read the PIPELINE row right before writing its stage; never bulk-write stages.
+Stages: INTEREST, FOUNDER_ASKED, TEAM_CONFIRMING, TIME_PROPOSED, TIMES_AGREED, BOOKED, BRIEFED, REMINDED, AWAITING_PROOF, HELD, TRAILED, WATCHING, CLOSED_PASS, COMMITTED, DROPPED.
+
+TWO DOORS IN. Door 1: an investor asks for a meeting, a call or slots = INTEREST. Door 2: any booked meeting in work_queue's meetings lists enters even with no reply text. Seed by time: future, no brief = BOOKED; future, briefed = BRIEFED; started or past with no proof = AWAITING_PROOF; past with proof = HELD. A meeting on or after 1 Oct 2026 with no stage is a bug: treat it as loudly as a row stuck at BOOKED.
+
+GAP SWEEP. If last_run_at is older than about 90 minutes: a meeting within 2 hours still at BRIEFED gets its reminder now (already started: skip the reminder, go to AWAITING_PROOF); a founder nudge that fell due in the gap goes now; a meeting that happened in the gap moves to proof; a row at BOOKED gets its brief this run. One line in the report on the gap and what fired late.
+
+1. INTEREST. Ask the founder THE VERY NEXT RUN, from the mailbox that owns the startup, quoting the investor's own words and the windows they offered. Founder address and phone come from Founders Info (read_book). Record the exact minute you asked. If the investor named a time, put that time to the founder; if they asked for slots, get the founder's windows first. Never offer a slot the founder has not confirmed. Check read_calendars for the slot first (a clash: still pass it on, name the clash in the report). Tell the investor you are confirming with the founder and will revert, never that it is confirmed. Set FOUNDER_ASKED.
+   A Calendly or other booking link is NOT this path: core rule A (BOOK VIA LINK).
+
+2. FOUNDER_ASKED. At 2 hours of silence, one short nudge on the same thread (not a resend). Working hours only: if 2 hours lands after 18:10, nudge in the first run of the next working day and restart the clock. A weekend run nudges only if the first ask also went out that weekend. 1 hour after the nudge (3 hours total), still silent: set TEAM_CONFIRMING and send TIME NEEDED.
+   TIME NEEDED: internal_mail to investors@sidanaventures.com, dealflow@sidanaventures.com, shradhaa@sidanaventures.com. Subject exactly TIME NEEDED | <Startup> <> <Investor>, the same subject every time for that row (the thread is how the answer comes back). Body, short enough for a phone: startup, investor and person, founder's name and phone, the investor's slots in their own words, when you asked and nudged, and the one thing needed: the time the founder can do. Ask them to reply on the thread.
+
+3. TEAM_CONFIRMING. Watch only your own TIME NEEDED threads (work_queue internal_threads). A time comes back: record it, who confirmed and when, set TIME_PROPOSED, note "founder confirmed by phone". That counts as founder confirmation. A complication: act on it, record it, stay here if there is still no time. Nothing after about 4 working hours: one nudge on that thread, then raise it at the top of every report. Do not go round them to the founder again.
+
+4. TIME_PROPOSED. Match until one time holds both. Founder's time inside a slot the investor offered = agreement: set TIMES_AGREED and book the same run; do not ask the investor to reconfirm. Not inside: ask the investor on the existing thread whether the founder's time works, with time zones (core rule D). Investor counters: back to the founder. No limit on this loop (it is scheduling, not chasing), but never two scheduling mails to one person in a day, never offer the investor a time the founder has not confirmed, never offer the founder a time the investor has not offered. Record every proposal. After four exchanges without converging, stop and report every time proposed by each side.
+   Never book without a founder confirmation, in writing or relayed through the TIME NEEDED thread. Never nudge the same founder about two startups in one day; never a nudge and a new ask to one person on one day.
+
+5. TIMES_AGREED. Check read_calendars first (the investor's tool may already have made an event; do not double-book). book_meeting (see tools-detail), title <Startup> <> <Investor> | Sidana Ventures. Set BOOKED.
+
+6. BOOKED. Brief the founder THE SAME RUN; a row never ends a run at BOOKED. To the founder and co-founders: who the investor is and what kind of firm, with the firm's website; their sector, stage and cheque; why this meeting is happening and what the investor actually said; what to lead with; likely questions; any figure of ours that disagrees with another of ours. Arial, small font. Set BRIEFED. Exception: if this founder already met THIS investor (same pairing), set BRIEFED and note why. A new partner at a known firm still gets a brief. Unsure: send it.
+
+7. BRIEFED. Remind BOTH sides about an hour before, in the run 1 to 2 hours ahead. Two separate mails. Founder: what, when, link, who is joining from the investor side, the one thing to lead with. Investor: time, link, who is joining from the company, nothing else (content guard). Set REMINDED. Never remind after the start. Meetings before about 10:10, after about 19:10, or at the weekend outside 11:10 get their reminder in the last run before (previous evening's 18:10; Friday 18:10 for a Monday morning meeting).
+
+8. REMINDED. After the meeting time, set AWAITING_PROOF.
+
+9. AWAITING_PROOF. Ask the founder how it went (did it happen, what they asked for, what was promised) and look for hard proof: a Fireflies transcript with real content (fireflies_lookup), a notetaker recap, or either side referring to it in the past tense. Set HELD on founder confirmation or hard proof. 24 hours with neither: escalate, leave the row.
+
+10. HELD. Trail mail within a few hours: everyone on To (founder and every investor person), no cc, subject <Startup> <> <Investor> | Sidana Ventures. Action items each side committed to first, then a short paragraph of what was covered. Content guard. Set TRAILED. Check first that nobody at Sidana already sent it (core rule I).
+   NO TRANSCRIPT: do not send the trail. Say it at the top of the report (startup, investor, time). Draft the trail from what you can evidence only, send internal_mail TRAIL APPROVAL | <Startup> <> <Investor> to the three team addresses with the full draft, recipients and subject, asking yes or no. Send only on yes, exactly as approved; on no, set WATCHING with a note. No reply after about a day: one nudge on that thread, keep raising it. Ask Chaman what happened; his answer is a source. Two lost recordings on one pairing: escalate.
+
+11. TRAILED. Read the full transcript and score it: who talked and how much, what they asked (diligence questions = interest, "what do you do" = screening), what they committed to in their words and with what date, who owns the next step, whether objections were answered. Write a one paragraph verdict and a band into notes with the date and transcript id: HIGH (investor owns a dated next step), MEDIUM (interest, no owned step), LOW (screening or unanswered objections). Transcript numbers are prompts to verify, never quotable. Alive = WATCHING. Passed in the room = CLOSED_PASS as a kind B pass (passes-thesis).
+
+12. WATCHING. Chase ONLY the side that owes the next step, inside the trail mail thread, never a new thread. First find where the ball is: the last actual request and who made it; whether it was fulfilled and when (a real attachment, link or number; "I will send it" is not fulfilment); whether anything was asked since. Then exactly one of:
+   They named a date: nothing until it passes, then one short note on day N+1.
+   Founder and investor are talking directly: stay out.
+   We owe the answer: answer it this run.
+   Investor is reviewing something we sent: wait a full week from when it was actually sent, then one short note.
+   Founder owes the investor something: chase the FOUNDER. At 3 days point the founder out politely by name in the trail mail; at 7 days chase the founder directly; still silent a day after being pointed out: escalate with phone and exactly what was asked.
+   Investor simply quiet after real interest: chase weekly in the trail thread; after two to three chases with no reply, escalate.
+   Never two touches in one calendar week on one thread. Our own two messages in a row are one chase.
+   Only two exits: CLOSED_PASS with a quotable pass, or COMMITTED with an amount, term sheet or written commitment. Silence is not a pass. A pass closes every row for that firm.
+
+WHO GOES ON A MEETING (deal flow). Pass the founder and the investor people only. The booking tool adds Shradhaa and Chaman on non-hot meetings and NOT Aditya. Never add Aditya, never offer his calendar, never tell anyone he will join. An investor asking for him on a non-hot deal is an escalation. Shradhaa is on every meeting.

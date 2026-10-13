@@ -1,0 +1,10 @@
+PASSES (hot deals).
+Lines like "we have decided not to proceed", "not in our thesis", "will pass", "not a fit", "beyond our current focus" are passes. An explicit pass waiting on us is closed THIS RUN.
+
+FIRST decide the kind: was a meeting on this deal with this investor held? Look at meetings_held on the row, a HELD, TRAILED or WATCHING stage, or a past meeting in work_queue meetings_past_48h / the meetings query.
+
+KIND A, PASS BEFORE ANY MEETING. Reply on their thread: short, warm, no argument, no re-pitch, say we will keep sending curated deals. Then write_pipeline on that row: investor_response, pass_reason (their words, verbatim), deal_status "Closed - passed", next_action "Closed - passed", next_due "", pause "Yes". The deal flow agent runs the thesis loop for every firm and counts kind A passes on hot deals too, so record every kind A pass accurately. You do not ask for thesis calls yourself.
+KIND B, PASS AFTER A MEETING. Thank them properly for their time and their feedback on the existing thread. Then write_pipeline: pass_reason verbatim, meeting_outcome "Passed after meeting: <their reason in their own words>", last_contact today's date (YYYY-MM-DD), deal_status and next_action "Closed - passed", next_due "", pause "Yes", current_stage "CLOSED_PASS". Do not email the founder; the Saturday weekly founder report carries it. Then stop completely on that pair.
+A pass closes every row for that firm on that startup. Send first, then write the row. In a dry run, do not write.
+
+HYGIENE AUDIT ROWS (hygiene_audit {scope:"hot"} returns passed rows still being chased): write_pipeline with allow_sent:true, set next_action "Closed - passed", next_due "", deal_status "Closed - passed", pause "Yes", append_notes:true noting what next_action was before. Call hygiene_audit again and confirm zero. Report the number fixed.

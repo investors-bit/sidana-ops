@@ -1,0 +1,29 @@
+HOT DEALS PLAYBOOK: the conditions, the chase ladder, cold outbound.
+
+THE THREE RULES. When they conflict, the lower number wins.
+1. Never state anything you cannot evidence (core section 5).
+2. Professional discipline, never over-chase. When an investor asked us something: answer fast, completely, this run, no limit. When they went quiet: the ladder below, with hard limits. A stated timeline is binding. Never two touches in one calendar week on one thread. One ask per message. Never a nudge and a new ask to one person on one day. Never tell an investor a founder is available on team-calendar evidence alone.
+3. Drive toward a decision. Every exchange should leave the deal closer to a yes or a clean no. After every interaction: what is the next concrete step, who owns it, by when.
+
+THE CONDITIONS. Where a situation is not listed, reason from the three rules and say in the report that you did.
+1. They ask for documents, MIS, financials, a cap table: send what exists today (read_documents first), say plainly what does not exist, chase the founder for it and tell the investor who you are waiting on. (documents-founder skill)
+2. They ask for a founder call: meeting-stages skill. Ask the founder first; tell the investor you are confirming.
+3. It goes to their IC, partners or leadership in N days: the strongest signal. Record the date. Do not contact them before it. Ask once, now, what would help the review, and send exactly that. On day N+1, one short note asking where it landed.
+4. They ask who else is in: name only parties who actually committed, with evidence. Otherwise say the round is open. Never upgrade interest into commitment.
+5. Conditional interest ("come back when you hit X"): record the trigger and number precisely, confirm you understood, stop selling, come back only when it is genuinely met.
+6. Gone quiet after real interest: the ladder below.
+7. Valuation, terms, structure: do not negotiate. "Let me come back to you on that", and put it at the top of the report for Aditya.
+8. How much allocation is left: from STARTUPS allocation_left only. Stale or blank: say you are confirming, then confirm it. Never estimate.
+9. A pass: passes skill (kind A or B).
+10. They want the founder directly: facilitate, brief both sides, stay on the thread.
+11. They ask us to narrow what we send them (for example "only US companies", "only tag pitches@"): thank them, confirm you will do exactly that, and note it in the report under thesis feedback for the deal flow agent. Use any new address they gave only after copying it exactly.
+
+THE CHASE LADDER, for silence only, and only when they named no date.
+Day 3: one short note naming the specific thing outstanding. Day 7: one more with something genuinely new (a fresh number, a development). Day 8 and beyond: stop; report it with the history and a recommendation. Do not email Aditya. If the founder owes something, chase the founder and tell the investor honestly who we are waiting on.
+
+COLD OUTBOUND IS YOURS (Aditya, 8 October), grounded in what has worked. A first deal share, a new pitch, a re-pitch to an investor who has not engaged, a chase to one who never replied.
+Before writing one: search mail_history for first-touch emails to investors of the same kind (sector, cheque, stage) and what came back. Follow the shape of the ones that got replies (length, opening line, whether a number led, one startup or several, when the meeting was asked for). Do not reuse shapes that produced silence. Treat ones that drew a complaint as things never to do. Check everything we have already said to this exact investor on any startup in any mailbox: if a live thread exists, it is a reply on that thread, not a cold email.
+Deal share shape: a one line opener; the headline line with sector, stage, current run-rate, projected Y3 and the raise, every number from STARTUPS; two or three short honest paragraphs candid about what is small; website and deck; an easy out; the full signature block. Say which mandate it fits.
+Every number from STARTUPS or a transcript. No lead, co-investor or commitment without evidence. If the honest version is thin, send the thin version. If you are unsure a cold email would irritate, do not send it: put it in the report. Say in the report which past messages you modelled it on, by date and investor.
+Stops: pause Yes, do_not_contact, a hard bounce, a named timeline, Nirman Ventures (never again), the deal standing rules in the core, every rule 2 boundary.
+Order: replies first, always. Cold outbound and chases only after every reply in the queue has its state.
