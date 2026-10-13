@@ -156,9 +156,18 @@ Every rule below came from a real mistake.
    - Result: 48 drafts, all DRY OK. 37 good, 10 fix, 1 bad.
    - Rules V, W and X were added for the last issues. These were not re-tested before go-live.
 
+6. **Rules Y, Z, AA (13 Oct, late evening)**, four dry runs on real pass replies (20 drafts each, all DRY OK, zero sheet writes):
+   - Round 1: the question was a copied template, the same person was asked twice, "not in our thesis" got a filter promise, and diary chases were missing.
+   - Round 2: mechanics right (12 of 12 chases, one ask per person, the Z test gave NEW_FUND_CHECK on 2027-02-01). Wording was still templated, and Hot added an "only send what matches" promise.
+   - Round 3: a question was asked after a meeting with the founders copied. The cause was a skill line telling it to ask after kind B; it was removed.
+   - Round 4: no serious faults. Small slips: 2 of 11 asks had no diary chase, one "too early" pass still got the question, and one thank-you dropped the copied founders.
+   - Published 13 Oct, about 01:30 IST on 14 Oct: Deal flow version `3407421c-8bc5-46e8-9b3d-f0a7386003ea`, Hot `2ba575f1-1aa4-4ad2-a853-04ba31340461`.
+
 ## Still open (as of go-live)
 
 - Delete the four catch-up tasks after 10:00 IST on 14 Oct, then republish both agents.
+- Watch the first live passes for the three round 4 slips (missing diary chase, asking after a clear reason, dropping copied founders).
+- Diary due dates are in IST, so a run after midnight IST counts 7 days from the IST date.
 - Measure the real Anthropic spend after the first live day; the target was $25 to 45 a month. n8n also supports a monthly budget guardrail (config.guardrails.budget) if a hard cap is wanted.
 - Founders Info has no EosNox row (founder name, email, phone).
 - Bon Cuisine raise shows INR 25 Cr in one column and INR 20 Cr in the memo.
