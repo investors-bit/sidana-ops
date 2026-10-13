@@ -1,0 +1,109 @@
+<title>Investor Reply Flow</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<style>
+/* Layout: one wide flowchart, a legend, three short rule cards underneath */
+:root{
+  --bg:#f5f7fa; --panel:#ffffff; --fg:#1c2430; --muted:#5d6878; --line:#d5dbe3; --accent:#2f6fb2;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0f1622;--panel:#151e2c;--fg:#e3e9f2;--muted:#94a1b4;--line:#2a3648;--accent:#6fa8e6;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f1622;--panel:#151e2c;--fg:#e3e9f2;--muted:#94a1b4;--line:#2a3648;--accent:#6fa8e6;color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:15px;line-height:1.55}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:28px 48px;display:grid;gap:22px}
+h1{font-size:1.6rem;margin:0;text-wrap:balance}
+.lede{margin:6px 0 0;color:var(--muted);max-width:68ch}
+.eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.chart{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;overflow-x:auto}
+.chart pre.mermaid{margin:0;background:transparent;text-align:center;min-width:900px}
+.legend{display:flex;flex-wrap:wrap;gap:16px;font-size:.85rem;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:8px}
+.k{width:22px;height:14px;border:1.5px solid var(--accent);border-radius:3px;display:inline-block}
+.k.d{transform:rotate(45deg);width:12px;height:12px;border-radius:1px}
+.k.o{border-style:dashed}
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.rule{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0}
+.rule h2{font-size:1rem;margin:0 0 6px}
+.rule p{margin:0;color:var(--muted);font-size:.92rem}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Sidana Ventures · deal agents</div>
+    <h1>What happens when an investor replies</h1>
+    <p class="lede">Agent 1 sends the deal. Agent 2 reads every reply and does the next step. Agent 2 is two agents with the same rules: the Hot deals agent handles the 11 hot startups, the Deal flow agent handles everything else.</p>
+  </header>
+
+  <div class="legend">
+    <span><i class="k"></i>action</span>
+    <span><i class="k d"></i>decision</span>
+    <span><i class="k o"></i>outcome</span>
+    <span>→ label = branch taken</span>
+    <span>⇢ dotted = loops back to "Investor reply received"</span>
+  </div>
+
+  <div class="chart"><pre class="mermaid">
+flowchart TB
+  subgraph A1["AGENT 1 · DEAL CIRCULATOR"]
+    direction LR
+    D1["Deal ready: memo and deck finalised"] --> D2["Circulate across 4 email IDs"] --> D3["Reaches the investor list"]
+  end
+  D3 --> R{"Investor reply received"}
+
+  subgraph A2["AGENT 2 · REPLY HANDLER (Hot deals agent / Deal flow agent)"]
+    R -- "asks for documents" --> DOC1["Pull documents from the sheet, or ask the founder"]
+    DOC1 --> DOC2["Send documents to the investor"]
+    DOC2 --> DOC3["Wait for the investor's next reply"]
+    DOC3 -. "investor replies: meeting, pass or question" .-> R
+
+    R -- "asks for a meeting" --> M1["Email founder to propose a time"]
+    M1 --> MQ{"Founder replies with a time?"}
+    MQ -- "no, after a nudge" --> M2["Email Aditya, Chaman and Shradhaa to call the founder"]
+    M2 --> M3
+    MQ -- yes --> M3["Time agreed by both sides"]
+    M3 --> M4["Book the meeting: Shradhaa and Chaman always, Aditya only for hot deals"]
+    M4 --> M5["Send investor brief and website to founder"]
+    M5 --> M6["Reminder 1 hour before, to both sides"]
+    M6 --> M7["After the call: trail mail to everyone from the Fireflies notes"]
+    M7 --> M8["Follow up whoever owes the next step"]
+    M8 --> MO{"Investor decides"}
+    MO -- invests --> MC(["Committed"])
+    MO -- passes --> MP["Thank them, record their feedback"]
+    MP --> MW(["Feedback goes to the founder in the Saturday weekly report"])
+
+    R -- "says no" --> NQ{"Why?"}
+    NQ -- "out of funds or bad timing" --> N1(["Log it and pause until their date"])
+    NQ -- "not a fit" --> N2["Thank them and close the row"]
+    N2 --> N3{"Third pass from the same firm?"}
+    N3 -- yes --> N4["Ask for a 30-minute call to learn their thesis"]
+    N4 --> N5(["Save their thesis so future deals match it"])
+    N3 -- no --> N6(["Reason logged"])
+
+    R -- "asks a question" --> Q1["Answer from the startup sheet"]
+    Q1 --> Q2(["Valuation or terms go to Aditya"])
+    Q1 -. "investor replies again" .-> R
+  end
+
+  classDef act fill:transparent,stroke:#4a86c5,stroke-width:1.5px;
+  classDef dec fill:transparent,stroke:#4a86c5,stroke-width:1.5px;
+  classDef out fill:transparent,stroke:#4a86c5,stroke-width:1.5px,stroke-dasharray:5 4;
+  class D1,D2,D3,DOC1,DOC2,DOC3,M1,M2,M3,M4,M5,M6,M7,M8,MP,N2,N4,Q1 act;
+  class R,MQ,MO,NQ,N3 dec;
+  class MC,MW,N1,N5,N6,Q2 out;
+  </pre></div>
+
+  <section class="rules">
+    <div class="rule"><h2>No reply is left unanswered</h2><p>Every reply gets answered, or is marked as waiting on someone. Nothing waits more than 24 hours, and the oldest replies are handled first.</p></div>
+    <div class="rule"><h2>When the agents run</h2><p>Every hour, Monday to Friday, 9 am to 7 pm IST, plus one run on Saturday and Sunday. Replies that come in overnight are handled in the first run the next morning.</p></div>
+    <div class="rule"><h2>When Aditya gets an email</h2><p>Only when a meeting time is needed from the founder, or a trail mail needs his approval because there are no call notes.</p></div>
+  </section>
+</div>
+
+<script>
+(function(){
+  var dark = document.documentElement.getAttribute('data-theme')==='dark' ||
+    (document.documentElement.getAttribute('data-theme')!=='light' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
+  window.mermaidConfig = { theme: dark ? 'dark' : 'neutral', flowchart: { htmlLabels: true, curve: 'basis', wrappingWidth: 180 } };
+  try { if (window.mermaid && mermaid.initialize) mermaid.initialize(Object.assign({startOnLoad:true}, window.mermaidConfig)); } catch(e) {}
+})();
+</script>

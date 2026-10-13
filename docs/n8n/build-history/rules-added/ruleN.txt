@@ -1,0 +1,5 @@
+
+N. HOT DEALS: DO NOT FREEZE (13 October). In the third test run this agent made 44 reads and did not draft a single email, while every one of its deals had an investor waiting. Reading is not the job; the reply is. So:
+1. The three reads before a reply in section 5 are scaled to the reply. A thank-you for a pass, a scheduling reply, a founder ask, a reminder or a nudge needs read 1 only (the thread). Read 2 (the transcript) only when a meeting has happened on that pair. Read 3 (how we handled similar cases) only for cold outbound, a re-pitch, or a hard question like valuation, terms or who else is in.
+2. Rule 2's "if you are unsure whether a message would irritate, do not send it" applies to messages we start: cold outbound and chases. It never applies to answering someone who wrote to us. An investor who asked for a call, sent times, missed a call or passed always gets an answer this run.
+3. Decide quickly. For each reply: read the thread, decide the state, call the send tool, move on. If you have made ten reads without a send call, stop reading and draft what you already know.

@@ -1,0 +1,234 @@
+<title>Sidana n8n Agent Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,600&display=swap">
+<style>
+/* Layout: one readable column of sections, each a diagram followed by the plain-language notes and tables that explain it. */
+:root{
+  --bg:#f6f7f5; --panel:#ffffff; --fg:#1d2321; --muted:#5b6661; --line:#d9dfdb;
+  --accent:#1f6f5c; --accent-soft:#e3f0ec; --hot:#b4532a; --hot-soft:#f7e7df; --warn:#9a6b00; --warn-soft:#fbf1d6;
+  --display:"Fraunces", Georgia, serif; --body:"IBM Plex Sans", system-ui, sans-serif; --mono:"IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#121614; --panel:#1a201d; --fg:#e4ebe7; --muted:#9aa8a1; --line:#2c3531;
+  --accent:#5fc2a6; --accent-soft:#1d3a32; --hot:#e9895c; --hot-soft:#3a2419; --warn:#e2b44b; --warn-soft:#352b12; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#121614; --panel:#1a201d; --fg:#e4ebe7; --muted:#9aa8a1; --line:#2c3531;
+  --accent:#5fc2a6; --accent-soft:#1d3a32; --hot:#e9895c; --hot-soft:#3a2419; --warn:#e2b44b; --warn-soft:#352b12; color-scheme:dark }
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.6}
+.wrap{max-width:980px;margin:0 auto;padding-inline:16px;padding-block:32px 64px;display:grid;gap:40px}
+h1{font-family:var(--display);font-size:clamp(28px,5vw,40px);line-height:1.15;margin:0;text-wrap:balance}
+h2{font-family:var(--display);font-size:24px;margin:0 0 4px;text-wrap:balance}
+h3{font-size:16px;margin:16px 0 6px;font-weight:600}
+p{margin:0 0 10px;max-width:68ch}
+.lede{color:var(--muted);font-size:16px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+section{display:grid;gap:12px;min-width:0}
+.diagram{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;overflow-x:auto}
+.diagram pre.mermaid{margin:0;background:transparent;text-align:center}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px;min-width:0}
+.card.hot{border-top:3px solid var(--hot)} .card.flow{border-top:3px solid var(--accent)}
+.card ul{margin:6px 0 0;padding-left:18px} .card li{margin:4px 0}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);font-weight:600}
+tr:last-child td{border-bottom:0}
+code,.mono{font-family:var(--mono);font-size:13px}
+.pill{display:inline-block;font-family:var(--mono);font-size:11.5px;padding:1px 8px;border-radius:999px;white-space:nowrap}
+.p-new{background:var(--accent-soft);color:var(--accent)} .p-hot{background:var(--hot-soft);color:var(--hot)} .p-warn{background:var(--warn-soft);color:var(--warn)}
+.status{display:grid;gap:10px}
+.status .row{display:flex;gap:12px;align-items:flex-start;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.status .row>div{min-width:0}
+.dot{flex:none;width:10px;height:10px;border-radius:50%;margin-top:7px}
+.d-ok{background:var(--accent)} .d-wait{background:var(--warn)} .d-bad{background:var(--hot)}
+.states{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.state{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.state b{display:block;font-family:var(--mono);font-size:12.5px;color:var(--accent);margin-bottom:2px}
+.muted{color:var(--muted)}
+</style>
+
+<div class="wrap">
+
+<header style="display:grid;gap:10px">
+  <span class="eyebrow">Sidana Ventures · n8n · 13 Oct 2026</span>
+  <h1>How the two deal agents work in n8n</h1>
+  <p class="lede">Agent 1 (the four Fundraising Outreach workflows) sends the deals. Every reply that comes back is handled by one of two n8n Agents: the <b>Hot deals agent</b> for the 11 hot startups, and the <b>Deal flow agent</b> for everything else. Both think with Claude Haiku 5.5 on your Anthropic key and act only through n8n tool workflows.</p>
+</header>
+
+<section>
+  <span class="eyebrow">1 · The whole system</span>
+  <h2>Where mail comes from and where it goes</h2>
+  <div class="diagram"><pre class="mermaid">
+flowchart TB
+  A1["Agent 1 · Fundraising Outreach A/B/C/D (n8n, 08:00 daily, 4 mailboxes)"] --> INV(("Investors"))
+  INV -- reply --> MB["6 Gmail mailboxes: investors@ · dealflow@ · shradhaa@ · akansha@ · admin@ · ceooffice@"]
+  FND(("Founders")) <--> MB
+  MB -- "copy at :00, 08:00 to 19:00" --> MH["MAIL-HISTORY workflow"] --> DB[("Supabase: mail_log · meetings · task_heartbeat")]
+  SHEET[("Google Sheet: PIPELINE · STARTUPS · INVESTOR_CRITERIA · Founders Info")]
+  DB --> SPLIT{"Is the startup one of the Hot 11?"}
+  SPLIT -- yes --> HOT["Hot deals agent: Mon–Fri hourly 09:40 to 18:40 IST, Sat+Sun 11:40"]
+  SPLIT -- no, or not matched --> DF["Deal flow agent: Mon–Fri hourly 09:10 to 18:10 IST, Sat+Sun 11:10"]
+  HOT --> TOOLS["n8n tool workflows: read · send · book · write"]
+  DF --> TOOLS
+  TOOLS --> MB
+  TOOLS --> SHEET
+  TOOLS --> CAL["Google Calendar + Meet"]
+  TOOLS --> FF["Fireflies transcripts"]
+  </pre></div>
+  <p class="muted">One PIPELINE row has exactly one writer: the hot flag decides which agent owns it. Messages that do not match any startup go to the Deal flow agent so nothing is left without an owner.</p>
+</section>
+
+<section>
+  <span class="eyebrow">2 · Every run, both agents</span>
+  <h2>The seven-step run</h2>
+  <div class="diagram"><pre class="mermaid">
+flowchart LR
+  S1["1 · Gap check: read last run time, fire anything missed"] --> S2["2 · Coverage reads: owed replies · all inbound since last run · meetings"]
+  S2 --> S3["3 · Hygiene + ledger: close passed rows still chased; list open asks to founders"]
+  S3 --> S4["4 · Every reply gets: one of five states"]
+  S4 --> S5["5 · Move each deal: one stage forward (reminders, briefs first)"]
+  S5 --> S6["6 · Thesis loop (deal flow): or cold outbound + chases (hot)"]
+  S6 --> S7["7 · Report, then: record_heartbeat"]
+  </pre></div>
+  <h3>No reply goes unattended</h3>
+  <p>By the end of a run, every message in the agent's scope sits in exactly one of these states, and the report names each one. There is no cap on replies per run.</p>
+  <div class="states">
+    <div class="state"><b>ANSWERED</b>sent this run, with its sent_id</div>
+    <div class="state"><b>ALREADY ANSWERED</b>our reply is already on the thread</div>
+    <div class="state"><b>NO REPLY NEEDED</b>auto-reply, newsletter, calendar note, closing thank-you</div>
+    <div class="state"><b>WAITING</b>on a founder or a team member, with what was asked</div>
+    <div class="state"><b>CARRIED</b>ran out of room; named, and first in the next run</div>
+  </div>
+</section>
+
+<section>
+  <span class="eyebrow">3 · The deal lifecycle, both agents</span>
+  <h2>From interest to a decision</h2>
+  <div class="diagram"><pre class="mermaid">
+flowchart TB
+  SH["Deal shared by email"] -- "investor passes before any meeting" --> CPA["CLOSED_PASS (kind A): thank them; count passes per firm"]
+  CPA -- "3rd pass from the same firm" --> THS["Thesis meeting: ask for a 30-minute call to learn their thesis; record it in INVESTOR_CRITERIA"]
+  SH -- "investor shows interest" --> IN
+  IN["INTEREST: investor asks for a call or a meeting is on the calendar"] --> FA["FOUNDER_ASKED: email founder next run, quote investor's slots"]
+  FA -- "founder replies with a time" --> TP
+  FA -- "2 h silent" --> NUD["one nudge on same thread"]
+  NUD -- "1 h more silent" --> TC["TEAM_CONFIRMING: TIME NEEDED mail to investors@ · dealflow@ · shradhaa@"]
+  TC -- "teammate replies with time after calling founder" --> TP["TIME_PROPOSED: match founder time to investor slots; go back and forth until both agree"]
+  TP --> TA["TIMES_AGREED"] --> BK["BOOKED: check 4 calendars, create invite (Shradhaa + Chaman always; Aditya only if hot)"]
+  BK --> BR["BRIEFED: brief to founder same run, with investor's website"]
+  BR --> RM["REMINDED: separate mails to founder and investor about 1 hour before"]
+  RM --> AP["AWAITING_PROOF: ask founder how it went; look for Fireflies transcript"]
+  AP -- "transcript found" --> HD["HELD → trail mail to everyone"]
+  AP -- "no transcript" --> TAPP["TRAIL APPROVAL mail: send only after a yes"] --> HD
+  HD --> TR["TRAILED: score the call HIGH / MEDIUM / LOW"]
+  TR --> W["WATCHING: chase only the side that owes the next step"]
+  W -- "investor passes after the meeting" --> CPB["CLOSED_PASS (kind B): thank them for their time; record the reason in meeting_outcome"]
+  CPB --> WR["Saturday weekly founder report: lists the investor and their feedback"]
+  W --> CM["COMMITTED: amount, term sheet or written commitment"]
+  </pre></div>
+  <div class="cols">
+    <div class="card">
+      <h3>Who owes the next step (WATCHING)</h3>
+      <ul>
+        <li>They named a date: nothing until it passes, then one note.</li>
+        <li>Founder and investor talking directly: stay out.</li>
+        <li>We owe the answer: answer this run.</li>
+        <li>Investor reviewing something we sent: wait a full week.</li>
+        <li>Founder owes the investor: point him out in the trail mail at day 3, chase him at day 7.</li>
+        <li>Investor quiet: chase weekly; report after 2 to 3 chases.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>When Aditya hears about it</h3>
+      <ul>
+        <li>Only two kinds of email reach him: TIME NEEDED and TRAIL APPROVAL.</li>
+        <li>Escalations go at the top of the run report, never by email.</li>
+        <li>Valuation, terms and structure are routed to him, never negotiated.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <span class="eyebrow">4 · What is different between the two</span>
+  <h2>Deal flow agent and Hot deals agent</h2>
+  <div class="cols">
+    <div class="card flow">
+      <h3>Deal flow agent · every non-hot deal</h3>
+      <ul>
+        <li>Owns every startup that is not hot, plus any message that matches no startup.</li>
+        <li><b>No cold outbound.</b> Only replies on live threads; first deal shares stay with Agent 1.</li>
+        <li><b>Thesis loop:</b> a firm passing on 3 shared deals before any meeting (hot deals included) gets a request for a 30-minute thesis meeting; a pass with no reason, a blank stage band or a complaint triggers a request for their real criteria, written into INVESTOR_CRITERIA.</li>
+        <li>Standing hold: GroCliq × OG Capital, send nothing.</li>
+        <li>MIS asked from a founder only when an investor asks for it.</li>
+      </ul>
+    </div>
+    <div class="card hot">
+      <h3>Hot deals agent · the Hot 11</h3>
+      <ul>
+        <li>Spintly, Bon Cuisine, EosNox, HYRGPT, Talent Recruit, Hoora, CLIKD, MindWox, MentorCloud, Road Athena, LearningPad.</li>
+        <li><b>Sends its own cold outbound</b> (your 8 Oct change), modelled on past emails across all mailboxes that got replies, avoiding ones that drew silence or complaints.</li>
+        <li><b>Chase ladder:</b> day 3, day 7, then stop and report.</li>
+        <li>Applies founder corrections to STARTUPS and STARTUP_PROFILE.</li>
+        <li>Asks founders for a fresh MIS at most once a month.</li>
+        <li>Deal rules: MentorCloud founder-facing steps skipped; Orbo and Nexcore paused; CLIKD never to Vinners or Udyat.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="diagram"><pre class="mermaid">
+flowchart LR
+  Q["Hot agent wants to send: a cold email"] --> STOP{"Paused row, do-not-contact, hard bounce, named timeline, or deal rule?"}
+  STOP -- yes --> NO["Do not send; note it in the report"]
+  STOP -- no --> LIVE{"Live thread with this investor already?"}
+  LIVE -- yes --> REPLY["Reply on that thread instead"]
+  LIVE -- no --> HIST["mail_history: past first touches: to similar investors and what came back"]
+  HIST --> SHAPE["Follow the shape that got replies: numbers only from STARTUPS"]
+  SHAPE --> GUARD["Content guard: no other investor named,: no unsourced figure, no dashes"] --> SEND["Send; report which past emails it was modelled on"]
+  </pre></div>
+</section>
+
+<section>
+  <span class="eyebrow">5 · How it acts</span>
+  <h2>The tools each agent calls</h2>
+  <p>The agents never touch Gmail, Sheets or the database directly. Each action goes through one n8n workflow with its own guard.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Tool</th><th>What it does</th><th>Guard</th></tr></thead>
+    <tbody>
+      <tr><td><code>db_read</code></td><td>Reads Supabase: owed replies, meetings, startups, investors, last run time. <span class="pill p-new">new</span> <code>all_inbound</code>, <code>mail_history</code> (all mailboxes), <code>founder_mail</code></td><td>Read-only, fixed queries</td></tr>
+      <tr><td><code>read_book</code></td><td>Reads tabs of the Google Sheet</td><td>PIPELINE capped at 150 rows a read</td></tr>
+      <tr><td><code>reply_from_*</code> ×4</td><td>Replies in an existing thread as Aditya, Chaman, Akansha or Shradhaa</td><td>Sends only with <code>dry:false</code>; refuses if someone replied since</td></tr>
+      <tr><td><code>new_email_from_*</code> ×4</td><td>Starts a new thread to one address</td><td>Address typed twice; dry by default</td></tr>
+      <tr><td><code>internal_mail</code></td><td>TIME NEEDED and TRAIL APPROVAL to the team</td><td>Refuses any address outside sidanaventures.com</td></tr>
+      <tr><td><code>book_meeting</code></td><td>Creates the calendar invite and Meet link</td><td>Adds the Sidana side itself; dry by default</td></tr>
+      <tr><td><code>read_calendars</code>, <code>fireflies_lookup</code>, <code>read_documents</code>, <code>search_investors_mail</code></td><td>Checks clashes, transcripts, the documents sheet, investors@</td><td>Read-only</td></tr>
+      <tr><td><code>write_pipeline</code></td><td>Writes stage and fields on a PIPELINE row</td><td>Row number and deal_id must match</td></tr>
+      <tr><td><code>stamp_mis_asked</code></td><td>Records when a founder was asked for MIS</td><td>Strict date format</td></tr>
+      <tr><td><code>write_cells</code> <span class="pill p-new">new</span></td><td>Edits STARTUPS, STARTUP_PROFILE, INVESTOR_CRITERIA</td><td>Writes nothing if any cell changed since it was read</td></tr>
+      <tr><td><code>hygiene_audit</code> <span class="pill p-new">new</span></td><td>Finds rows where the investor passed but a follow-up is still queued</td><td>Read-only; returns candidates to confirm</td></tr>
+      <tr><td><code>record_heartbeat</code> <span class="pill p-new">new</span></td><td>Saves the time each run finished, so the next run sees any gap</td><td>Two task names only</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <span class="eyebrow">6 · Where things stand</span>
+  <h2>Status on 13 October</h2>
+  <div class="status">
+    <div class="row"><span class="dot d-ok"></span><div><b>Both agents updated and tested on your Claude key.</b> Instructions match the laptop agents; all new tools ran successfully in preview.</div></div>
+    <div class="row"><span class="dot d-wait"></span><div><b>Saved as drafts, schedules ready but off.</b> Nothing is sent until you publish both agents and switch the laptop agents off at the same time.</div></div>
+    <div class="row"><span class="dot d-ok"></span><div><b>Mail matching fixed.</b> The database time limit was raised, matching ran again and caught up the backlog since 9 October; the owed-replies list is current.</div></div>
+    <div class="row"><span class="dot d-ok"></span><div><b>Schedule set.</b> Monday to Friday every hour from 09:00 to 19:00 IST, plus one weekend run on Saturday and Sunday. Mail that arrives overnight is handled in the first run next morning; nothing waits more than 24 hours, and anything older than 18 hours is handled first.</div></div>
+    <div class="row"><span class="dot d-ok"></span><div><b>Passes split in two.</b> A pass after a meeting is recorded with the reason and goes to the founder in the Saturday report. Three passes from one firm before any meeting trigger a thesis meeting request.</div></div>
+  </div>
+</section>
+
+</div>
+<script>
+(function(){
+  var dark = document.documentElement.getAttribute('data-theme')==='dark' ||
+    (document.documentElement.getAttribute('data-theme')!=='light' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
+  window.mermaidConfig = { theme: dark ? 'dark' : 'neutral', flowchart: { htmlLabels: true, curve: 'basis' } };
+  try { if (window.mermaid && mermaid.initialize) mermaid.initialize(Object.assign({startOnLoad:true}, window.mermaidConfig)); } catch(e) {}
+})();
+</script>

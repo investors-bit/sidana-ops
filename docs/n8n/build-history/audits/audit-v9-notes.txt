@@ -1,0 +1,116 @@
+18321 reply_from_aditya DF run_4d4c5e53 thread 1a114416cc509ff9 Sugar's Daddy x Mistry. to_only proposals@ expect proposals@. DRY OK to=proposals@ msgs=2. Thread: Aditya to proposals@ cc charles@; reply "MV Proposals" signed Charles: unable to participate in this round.
+ DRAFT: Hi Mistry team, / Thanks for going through the Sugar's Daddy proposal and for telling us so quickly. Understood on the round. We appreciate the time you gave it. / Best, Aditya
+18322 reply_from_aditya DF thread 1a11440222941a02 MonitorExam x Mistry. same pass (signed Charles). to proposals@ DRY OK msgs=2.
+ DRAFT: Hi Mistry team, / Thank you for reviewing MonitorExam and for the quick answer. We understand it is not one for you in this round. / Best, Aditya
+18323 reply_from_aditya DF thread 1a109f14bce6dc6c Caffena x Colossa. to_only anuj.k@ DRY OK msgs=3. Thread: Aditya intro "Hi Anuj"; nudge; reply from "Anuj Kokate" "Hi Aditya, Our core theme is women-led or co-led... exception climate... suggest to share relevant deals". Signature not visible in snippet.
+ DRAFT: Hi Colossa Ventures team, / Thanks, that is useful. We have noted the women-led or co-led focus and the climate exception, and we will keep both in mind for what we send you. / Best, Aditya
+ -> L fail: individual sender Anuj, greeted as team.
+18324 reply_from_chaman DF thread 1a109fafc2a0f306 DACBY x Omnivore. to aaushi@ DRY OK msgs=3. Reply "Aaushi Sharma": "Hey Chaman This is not in our thesis" (no signature).
+ DRAFT: Hi Omnivore team, / Thanks for the quick answer on DACBY. Understood, it is outside what you back, and we appreciate you saying so plainly. / Best, Chaman
+ -> L: individual (Aaushi) greeted as team. "quick answer" after a nudge.
+18325 reply_from_chaman DF thread 1a11447c86cc4ac7 DACBY x Green Frontier. to_only ar@ DRY OK msgs=2. Thread: intro to ar@ cc kg@ ("Hi Karishma"); reply Apoorva Rathore cc kg@: "decarbonization-focused fund... pass... Best, Apoorva".
+ DRAFT: Hi GreenFrontier team, / Thank you for the reply on DACBY and for being clear about your decarbonisation focus. That helps us send you the right things. / Best, Chaman
+ -> L NOT fixed (signed Apoorva, same as 18204). R: kg@ (cc'd by Apoorva) dropped, no cc.
+18326 reply_from_akansha DF thread 1a114622471d87fd Springbase x Dexter. to deals@ DRY OK msgs=2. Intro to urvi@ cc deals@, ayushi.goyal@, sorabh@. Reply "Deals Dexter" cc anuradha@dexter.ventures: "already passed this deal on our mail dated 23rd Sept... Investment Team".
+ DRAFT: Hi Dexter team, / Thanks for flagging that, and sorry for sending it again. Noted on our side that you passed on Springbase.ai on 23 September. / Best, Akansha
+ -> GOOD (team signature). Minor: anuradha@ cc dropped.
+18327 reply_from_shradhaa DF thread 1a0f58c64d7e7630 Ulai x GrowthCap. to neeti.b@ DRY OK msgs=4. Neeti pass ("doesn't fully align with our current investment focus") cc Pratekk Agarwaal pratekk@growthcap.vc.
+ DRAFT: Hi Neeti, / Thank you for going through the Ulai deck and for being clear about where it sits against your focus. That helps. / Best, Shradhaa
+ -> R: Pratekk cc dropped.
+18328 reply_from_chaman DF thread 1a0f564083c7b1a9 Fire Armor x GrowthCap. to neeti.b@ DRY OK msgs=4. Same pass text cc pratekk@.
+ DRAFT: Hi Neeti, / Thanks for reviewing Fire Armor and for the answer. Understood on the fit. / Best, Chaman
+ -> R: Pratekk dropped. Short, OK.
+18329 reply_from_akansha DF thread 1a11981123ec4220 RECEX x GrowthCap. to neeti.b@ DRY OK msgs=2. Neeti pass ("Hi Akanasha... doesn't fully align").
+ DRAFT: Hi Neeti, / Thanks for reviewing RECEX and for telling us where it stands for you. Understood. / Best, Akansha
+ -> GOOD. Neeti gets 3 mails this run (18327, 18328, 18329) but different text.
+=== HOT agent run_92f5be21 (E4dPrqOZm4GXpfJA) ===
+18330 reply_from_aditya HOT thread 1a114e2ad4ad9205 Bon Cuisine x Beyond Seed. to_only indiaops@ expect indiaops@. NO allow_external_start. ERROR "thread not started by us [line 7]". Thread (1 msg): Siddharth Patel <indiaops@beyondseed.com> cc Harsh Jain harsh@beyondseed.com: "Hope this email finds you well... does not align closely with our current..."
+ DRAFT: Hi Beyond Seed team, / Thanks for looking at Bon Cuisine and for telling us so quickly. Understood on the fit with your current focus. / Best, Aditya
+ -> L fail (Siddharth signed, named in From). Harsh cc dropped.
+18331 reply_from_aditya HOT thread 1a0f028e79685e76 Bon Cuisine x VCMint. to biswadeep@ DRY OK msgs=2. Biswadeep Das cc partnerdeals@: "beyond our current sectors of focus. Good luck. Best, Biswadeep".
+ DRAFT: Hi Mint VC team, / Thanks for writing back and being clear on the sector. Understood. / Best, Aditya
+ -> L fail (signed Biswadeep; also firm is "VCMint" not "Mint VC"). partnerdeals@ cc dropped.
+18332 reply_from_aditya HOT thread 1a0f027f8cffab6e LearningPad x VCMint. to biswadeep@ DRY OK msgs=2. Same Biswadeep pass ("beyond our current sectors of focus. Best, Biswadeep"), cc partnerdeals@.
+ DRAFT: Hi Mint VC team, / Thanks for the quick answer on LearningPad. Understood on the sector fit. / Best, Aditya
+ -> L fail; "quick answer" (he replied 13 days later: sent 30 Sep, reply ~12 Oct). Biswadeep gets 2 mails (18331, 18332).
+18333 reply_from_aditya HOT thread 1a0e5dd41e8b5be4 LearningPad x Sunicon. to aakansh@ DRY OK msgs=4. Aakansh Jain: "decided not to move forward... doesn't fit our current". 3 nudges by us.
+ DRAFT: Hi Sun Icon team, / Thank you for looking at LearningPad and for coming back to us. Understood on the fit. / Best, Aditya
+ -> L fail: From "Aakansh Jain", individual; also firm misnamed "Sun Icon" (it is Sunicon). (v8 18244 greeted him correctly? v8 graded GOOD.)
+18334 reply_from_aditya HOT thread 1a0e5e64497df994 Hoora x SucSEED. to_only deet@sucseed.co DRY OK msgs=3. Thread: we wrote "Hi Arya" to ir@; DEET|SucSEED reply cc nemikaS@, pitch@sucseed.biz, pitch@sucseedindovation.com (Abishek C Mouli): "Going forward, please only tag pitch@sucseedindovation.com... Please share the relevant details and the..."
+ DRAFT: Hi Arnav, / Noted, thank you. From now on we will tag only pitch@sucseedindovation.com on the deals we send you. / Best, Aditya
+ -> FIX: "Arnav" appears nowhere in thread metadata (same as v8 18243). Sends to deet@ only, not pitch@ (which is on thread), contrary to their ask; drops Nemika/Abishek. Also ignores "share relevant details and the [deck]" ask. 
+18335 reply_from_aditya HOT thread 1a0fa72e569d1bec Hoora x Mount Judi. to areeb@ DRY OK msgs=3. Areeb Khan: "While the traction is interesting, this doesn't align with our current investment focus, so we will pass... Best regards, Areeb".
+ DRAFT: Hi Mount Judi team, / Thanks for following up and for the honest view on the traction. Understood on the focus. / Best, Aditya
+ -> L fail (signed Areeb). "Thanks for following up" is wrong way round: WE followed up, he replied.
+18336 reply_from_aditya HOT thread 1a0d83d026aeacaa MentorCloud x Prana (Hammad, Huzaif). to_only hammad@, huzaif@ DRY OK msgs=2. Thread: Aditya opened thread to hammad@, huzaif@, ravi@mentorcloud.com (founder). Hammad's reply is To ravi@ cc investors@, huzaif@: "Hello Dr. Ravishankar Thank you for the call on Friday. We are reviewing... will revert... In the meantime, a few [questions]".
+ DRAFT: Hi Hammad, / Thank you for the call and for the three points. We have noted the product walkthrough, the question on how the IP would be restructured depending on who leads the round, and the request for MSME outcome data. We will come back to you on them. / Best, Aditya
+ -> FIX: Hammad's questions were addressed to founder Ravi; draft drops ravi@ from a shared thread and answers on his behalf with vague "We will come back to you". "Thank you for the call" - Aditya not the addressee. Check if any founder mail to ravi@ exists.
+18337 reply_from_aditya HOT thread 1a0d89f632676511 MindWox x Prana. to_only hammad@ DRY OK msgs=4. Hammad To investors@ cc sathya@, huzaif@, srini@, cfo@, pradeep@madrasmindworks: "Sathya - thank you for the videos... in-person meeting, please allow me until Tuesday this coming week to provide further steps. Regards Hammad".
+ DRAFT: Hi Hammad, / Thanks for the update. We will wait for your next steps on the in-person meeting. / Best, Aditya
+ -> FIX (R): drops Huzaif (Hammad's colleague he cc'd) and the founder team from a shared thread. Content fine.
+18338 reply_from_aditya HOT thread 1a0f0270d79e1d13 CLIKD x GVFL (Hemang). to hemang@ DRY OK msgs=5. 3 nudges from us (30 Sep, 7 Oct?, 12 Oct "Even a no is fine"), Hemang reply "pass. Regards, Hemang Vaidya ... Mobile: +91-7698738013".
+ DRAFT: Hi Hemang, / Thanks for coming back so quickly. Understood. / Best, Aditya
+ -> FIX minor: "so quickly" false after 4 mails over 2 weeks. Greeting correct.
+18339 reply_from_aditya HOT thread 1a114e2ad4ad9205 Bon Cuisine x Beyond Seed RETRY of 18330 with allow_external_start:true. DRY OK to=indiaops@ msgs=1 first_from=Siddharth Patel.
+ DRAFT identical to 18330: Hi Beyond Seed team, / Thanks for looking at Bon Cuisine and for telling us so quickly. Understood on the fit with your current focus. / Best, Aditya
+ -> allowed retry pattern (H). But L fail (Siddharth), Harsh Jain cc dropped (R).
+18340 reply_from_akansha HOT thread 1a10a0fc25da8718 HYRGPT x IvyCap (Devesh). to_only devesh@ DRY OK msgs=3. Intro to harshit@ cc devesh@; Devesh reply cc harshit@: "As discussed can we please take one deal at a time? It will be easy for both of us".
+ DRAFT: Hi Devesh, / Understood, and fair. We will take one deal at a time with you. HYRGPT is the one we are talking about now, and I will keep the next note to that alone. / Best, Akansha
+ -> FIX (R): Harshit (cc'd by Devesh) dropped. Also: same agent replied to Harshit/IvyCap on Bon Cuisine in this run? (check 1a134efa*) - contradicts "one deal at a time" if Bon Cuisine also being pushed.
+18341 reply_from_shradhaa HOT thread 1a0f06193017ff5e EosNox x Zerodha/Rainmatter (Shradha Pujar). to shradha.pujar@ DRY OK msgs=6. Earlier pass ("space is crowded... unless niche with deep insights and IP"); our question; her reply "It sort of sometimes need to be accessed case by case basis Shradhaa :)" (no cc).
+ DRAFT: Hi Shradha, / Thanks for the clear answer, and for taking the time to reply. Case by case works for us, and I will keep that in mind for EosNox. / Best, Shradhaa
+ -> GOOD (minor: "keep that in mind for EosNox" vague since she passed on EosNox).
+18342 reply_from_shradhaa HOT thread 1a10f44f98d6de82 EosNox x Mucker Capital (Amol Bhat). to amol@ DRY OK msgs=3. Amol: "please narrow down distribution to me for only US companies, for now. Thanks Best, Amol Bhat Head of IR".
+ DRAFT: Hi Mucker Capital team, / Thanks, noted. We will keep you to US companies for now and will not send you EosNox or other India-based deals. / Best, Shradhaa
+ -> L fail (signed Amol, wrote personally).
+18343 reply_from_chaman HOT thread 1a0841e292c7ca83 Road Athena x M Venture Partners (Rahil Parekh). to_only rahil@ DRY OK msgs=5. Rahil reply cc Chiranjeev Anand: "MVP primarily invests in the early stages... strong focus on India..."
+ DRAFT: Hi M Venture Partners team, / Thanks for coming back on RoadAthena and for being clear on your early-stage focus in India. Understood, and thank you for the time. / Best, Chaman
+ -> L fail (From Rahil Parekh, individual); R: Chiranjeev (cc'd by Rahil, original addressee) dropped. Hot agent used reply_from_chaman: fine (mailbox matches thread).
+18344 reply_from_shradhaa HOT thread 1a0d176da7c2ab3b MentorCloud x M Venture Partners (Rahil). to_only rahil@ DRY OK msgs=2. Intro to shalini@, chiranjeev@ ("Hi Chiranjeevi"); Rahil Parekh reply cc Chiranjeev: "Apologies for the delayed reply... MentorCloud does not fit within our current investment thesis".
+ DRAFT: Hi M Venture Partners team, / Thank you for taking the time to review MentorCloud and for telling us so directly. Understood on the thesis fit. / Best, Shradhaa
+ -> L fail (Rahil); R: Chiranjeev dropped. Rahil gets 2 mails this run (18343, 18344) both "Hi M Venture Partners team".
+18345 reply_from_shradhaa HOT thread 1a0d17770fb18072 MentorCloud x Inflexor (Pratik Ahuja). to pratik@ DRY OK msgs=2. Pratik: "unable to build conviction... mainly because of the competitive segment".
+ DRAFT: Hi Inflexor team, / Thanks for the honest view on MentorCloud, and for the time your team gave it. Understood on the competitive segment. / Best, Shradhaa
+ -> L fail (individual Pratik).
+18346 reply_from_shradhaa HOT thread 1a0eb3a109fd049e Spintly x OG Capital (Deeksha Keswani). to_only deeksha@ DRY OK msgs=3. Deeksha cc Enterprise@ogcapital.one, Sayan Ghosh sayan@: "while the business is genuinely interesting, we will unfortunately be unable to partner at [this time]".
+ DRAFT: Hi OG Capital team, / Thanks for looking at Spintly and for coming back to us. Understood on the partnership, and we appreciate the time you gave it. / Best, Shradhaa
+ -> L fail (Deeksha); R: Sayan (original addressee) and Enterprise@ dropped. "Understood on the partnership" garbled.
+18352 reply_from_akansha HOT thread 1a0cc3ee29eff0e3 Talent Recruit x M Venture Partners (Rahil). to_only rahil@ DRY OK msgs=6. 3 nudges, bounce for shalini@, Rahil Parekh reply cc Chiranjeev: "Apologies for the delayed reply... decided to pass at this stage. Our hesitation..."
+ DRAFT: Hi M Venture Partners team, / Thanks for coming back on Talent Recruit and for being direct about the decision. Understood, and thank you for the time you put into looking at it. / Best, Akansha
+ -> L fail (Rahil); R: Chiranjeev dropped. Rahil now gets 3 mails this run (18343, 18344, 18352), all "Hi M Venture Partners team".
+18353 reply_from_shradhaa HOT thread 1a0e6224be2fd228 Spintly x Beyond Seed (Harsh Jain). to_only harsh@ DRY OK msgs=3. Harsh Jain cc suraj@: "Hi Shradha, Hope this email finds you well!... does not quite align with our current investment thesis".
+ DRAFT: Hi Beyond Seed team, / Thanks for looking at Spintly and for telling us where it sits against your current thesis. Understood, and thank you for the time. / Best, Shradhaa
+ -> L fail (Harsh); R: Suraj dropped.
+18354 reply_from_shradhaa HOT thread 1a0d6a53acaf51c9 EosNox x OG Capital (Deeksha). to_only deeksha@ DRY OK msgs=3. Deeksha cc Enterprise@, Sayan: "while we appreciate what the team is building, we will unfortunately be unable to partner".
+ DRAFT: Hi OG Capital team, / Thanks for taking a look at EosNox and for letting us know where you landed. We appreciate the time you gave it. / Best, Shradhaa
+ -> L fail; R: Sayan + Enterprise@ dropped. Deeksha gets 2 (18346, 18354).
+18355 new_email_from_shradhaa HOT founder Spintly. to rohin@spintly.com cc sherilyn.f@spintly.com DRY OK. subject "Spintly: windows for a 247 VC Tech Fund follow-up call".
+ DRAFT: Hi Rohin, / Kruti at 247 VC Tech Fund would like a follow-up call with you and the team. The windows Sherilyn sent on 6 October have passed, so could you send two or three fresh slots in IST for the next few days? / Once you reply, I will confirm the time with Kruti and send the invite. / Best, Shradhaa
+ -> GOOD-ish. Minor D: Rohin is in California (v8), asks only IST slots. Fixes v8 18250 stale-window problem. No Kruti reply in this run (no investor-side mail for 247VC) - fine.
+18356 new_email_from_shradhaa HOT founder EosNox. to eosnox.info@gmail.com DRY OK. subject "EosNox: an investor would like a call with you".
+ DRAFT: Hi Abhimanyu, / An investor would like a call with you. Michele wrote that he is interested to have a call with the founder and asked about 14, 15 or 16 October at 11:00 Central European Summer Time. / Thursday 15 October at 2:30 PM IST (11:00 AM Central European Summer Time) works for us. Can you confirm that works for you? If it does, I will confirm it with Michele and send the invite. / Best, Shradhaa
+ -> D correct (11:00 CEST = 09:00 UTC = 14:30 IST). Check weekday. No Michele reply in this run on EosNox thread (v8 18239 earlier).
+18357 internal_mail HOT. to investors@, dealflow@, shradhaa@ DRY OK. subject "TIME NEEDED | Bon Cuisine <> IvyCap Ventures".
+ DRAFT: Harshit at IvyCap said the 5:30 PM IST slot today (13 October) does not work for him. Vikash at Bon Cuisine has asked for our availability for tomorrow (14 October) in the second half of the day, and offered to come to our office. / Calendar read for 14 October afternoon: Aditya has a call at 3:30 PM IST, Shradhaa has calls at 2:30 PM, 3:00 PM and 3:30 PM IST. Please pick a slot that works with Harshit and Vikash and reply on this thread so I can confirm it with Vikash. / Founder contact from Founders Info: Vikash, 96328 77771. POC Khushbu, 97310 41631. Nothing has been booked.
+ -> FIX: "offered to come to our office" contradicts brief (Vikash offered to come to IvyCap's office) - verify vs thread. Internal, so phone numbers OK. Correct escalation pattern otherwise.
+18358 reply_from_shradhaa HOT thread 1a0d6faabdfabf28 Spintly x 247 VC (Kruti). to_only kruti@ expect_last_from kruti@. REAL ERROR: "latest message is from sherilyn.f@spintly.com, expected kruti@247vc.in - someone replied since; not sending [line 8]". Thread: shared thread (Kruti, Khushi@247vc, Rohin, Malcolm, Sherilyn, Aditya, Shradhaa). Last = Sherilyn 6 Oct: "Rohin is based in California and is generally available... 9:00 AM - 12:30 PM IST, 8:30 PM - 11:00 PM IST". Before that Kruti: "I wanted to do another follow up call with the team. Let me know a few timeslots".
+ DRAFT: Hi Kruti, / Thanks for your patience. The windows Sherilyn sent on 6 October have passed, so I have asked Rohin for fresh slots for a follow-up call with you and the team. I will come back to you with a time once he replies. / Best, Shradhaa
+ -> Guard error (agent passed wrong expect_last_from). Content fine and backed by 18355 (T ok). Also would drop founders + Khushi from shared thread (R). Not retried (check). Net: Kruti gets no update.
+18359 reply_from_shradhaa HOT thread 1a0eb3d27f7eceb6 EosNox x Michele Barbazza. to_only micel_brzz@ DRY OK msgs=3. Michele cc his own vatgroup/vat.ch addresses: "Yes I'm interested to have a call with the founder. What about October 14, 15, or 16 at 11:00CET? Regards, Michele".
+ DRAFT: Hi Michele, / Thanks for your patience. I have asked the founder for a call with you on Thursday 15 October at 11:00 AM Central European Summer Time, which is one of the windows you offered. I will come back to you once they confirm. / Best, Shradhaa
+ -> GOOD. T backed by 18356. D: he wrote "CET"; agent reads as CEST (correct for mid-Oct local time). Minor R: his 2 cc addresses dropped. Note "Thanks for your patience" is odd: Michele was the one thanking us for patience.
+18360 reply_from_akansha HOT thread 19e07277366af2f5 HYRGPT x Udyat (Naman Bhardwaj). to_only naman@ DRY OK msgs=7 (first_from Tanishq SV investors@ - mailbox is akansha but thread copy exists there). Naman To akansha cc debi@hyrgpt, neha@hyrgpt: "We've reviewed the opportunity internally... decided not to take this forward at this [time]".
+ DRAFT: Hi Naman, / Thanks for reviewing HYRGPT properly and for letting us know. Understood. / Best, Akansha
+ -> GOOD (minor: "properly" reads oddly; founders Debi/Neha, whom Naman cc'd, dropped from shared thread).
+18361 reply_from_akansha HOT thread 1a0e6094b95b2956 HYRGPT x OG Capital (Deeksha). to_only deeksha@ DRY OK msgs=5. Deeksha cc Enterprise@: "while we truly appreciate what the team is building, we will unfortunately be unable to [partner]".
+ DRAFT: Hi Deeksha, / Thanks for taking a look at HYRGPT and for letting us know where you landed. We appreciate the time. / Best, Akansha
+ -> GOOD greeting (contrast 18346/18354 "Hi OG Capital team" to the same Deeksha). R: Enterprise@ dropped. Deeksha gets 3 mails this run (18346, 18354, 18361); "letting us know where you landed. We appreciate the time" nearly identical to 18354.
+18362 reply_from_akansha HOT thread 1a10a0a754d8a78b MindWox x GVFL (Hemang). to hemang@ DRY OK msgs=4. Two nudges then Hemang "pass." (with his mobile in sig).
+ DRAFT: Hi Hemang, / Thanks for coming back on MindWox so quickly. Understood. / Best, Akansha
+ -> FIX minor: "so quickly" false; near-copy of 18338 (Aditya to the same Hemang). Hemang gets 2 mails this run.
+18363 reply_from_aditya HOT thread 1a0f03a28dd680c6 CLIKD x Baldota FO (Swarup). to swarup@ DRY OK msgs=5. Swarup: "Please send all the investment decks to investment-proposals@baldota.co.in Thanks, Swarup Ravichandran".
+ DRAFT: Hi Swarup, / Thanks, noted on the address. Our team will send the CLIKD deck to investment-proposals@baldota.co.in. / Best, Aditya
+ -> GOOD; backed by internal 18364.
+18364 internal_mail HOT. to dealflow@, shradhaa@ DRY OK. "FORWARD NEEDED | CLIKD <> Baldota Family Office".
+ DRAFT: Swarup Ravichandran at Baldota Family Office asked on 12 October that all investment decks go to investment-proposals@baldota.co.in. Please send the CLIKD deck to that address. The deck link on the documents sheet is https://bit.ly/42YwZuB. The one-pager is at https://drive.google.com/file/d/1qP4iEkY5YoLSqANq7m2J4FAiz4dOYzDY/view?usp=drivesdk. Founder: Raghav, 85869 46001.
+ -> GOOD (internal; phone OK). Not sent to investors@ (Aditya owns the thread) - minor.
